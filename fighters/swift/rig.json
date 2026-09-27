@@ -1,0 +1,179 @@
+{
+  "backLimbDarken": 0.7, 
+  "bones": [
+    {
+      "name": "Hip", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": null, 
+      "part": null
+    }, 
+    {
+      "name": "LegBack_Upper", 
+      "offset": [
+        -9, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "LegBack_Upper"
+    }, 
+    {
+      "name": "LegBack_Lower", 
+      "offset": [
+        0, 
+        132
+      ], 
+      "parent": "LegBack_Upper", 
+      "part": "LegBack_Lower"
+    }, 
+    {
+      "name": "LegFront_Upper", 
+      "offset": [
+        9, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "LegFront_Upper"
+    }, 
+    {
+      "name": "LegFront_Lower", 
+      "offset": [
+        0, 
+        132
+      ], 
+      "parent": "LegFront_Upper", 
+      "part": "LegFront_Lower"
+    }, 
+    {
+      "name": "Torso", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "Torso"
+    }, 
+    {
+      "name": "ArmBack_Upper", 
+      "offset": [
+        -5.3999999999999995, 
+        -184.5
+      ], 
+      "parent": "Torso", 
+      "part": "ArmBack_Upper"
+    }, 
+    {
+      "name": "ArmBack_Lower", 
+      "offset": [
+        0, 
+        104
+      ], 
+      "parent": "ArmBack_Upper", 
+      "part": "ArmBack_Lower"
+    }, 
+    {
+      "name": "Head", 
+      "offset": [
+        0, 
+        -205
+      ], 
+      "parent": "Torso", 
+      "part": "Head"
+    }, 
+    {
+      "name": "ArmFront_Upper", 
+      "offset": [
+        5.3999999999999995, 
+        -184.5
+      ], 
+      "parent": "Torso", 
+      "part": "ArmFront_Upper"
+    }, 
+    {
+      "name": "ArmFront_Lower", 
+      "offset": [
+        0, 
+        104
+      ], 
+      "parent": "ArmFront_Upper", 
+      "part": "ArmFront_Lower"
+    }
+  ], 
+  "canonicalHeight": 355, 
+  "legLength": 258, 
+  "name": "Swift", 
+  "parts": {
+    "ArmBack_Lower": {
+      "pivot": [
+        15.5, 
+        15.98
+      ], 
+      "texture": "parts/ArmBack_Lower.png"
+    }, 
+    "ArmBack_Upper": {
+      "pivot": [
+        16.5, 
+        16.5
+      ], 
+      "texture": "parts/ArmBack_Upper.png"
+    }, 
+    "ArmFront_Lower": {
+      "pivot": [
+        15.5, 
+        15.98
+      ], 
+      "texture": "parts/ArmFront_Lower.png"
+    }, 
+    "ArmFront_Upper": {
+      "pivot": [
+        16.5, 
+        16.5
+      ], 
+      "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "Head": {
+      "pivot": [
+        70.0, 
+        153.5
+      ], 
+      "texture": "parts/Head.png"
+    }, 
+    "LegBack_Lower": {
+      "pivot": [
+        16.5, 
+        16.5
+      ], 
+      "texture": "parts/LegBack_Lower.png"
+    }, 
+    "LegBack_Upper": {
+      "pivot": [
+        17.0, 
+        17.02
+      ], 
+      "texture": "parts/LegBack_Upper.png"
+    }, 
+    "LegFront_Lower": {
+      "pivot": [
+        16.5, 
+        16.5
+      ], 
+      "texture": "parts/LegFront_Lower.png"
+    }, 
+    "LegFront_Upper": {
+      "pivot": [
+        17.0, 
+        17.02
+      ], 
+      "texture": "parts/LegFront_Upper.png"
+    }, 
+    "Torso": {
+      "pivot": [
+        24.0, 
+        221.5
+      ], 
+      "texture": "parts/Torso.png"
+    }
+  }
+}

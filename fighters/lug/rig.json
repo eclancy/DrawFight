@@ -1,0 +1,195 @@
+{
+  "backLimbDarken": 0.7, 
+  "bones": [
+    {
+      "name": "Hip", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": null, 
+      "part": null
+    }, 
+    {
+      "name": "LegBack_Upper", 
+      "offset": [
+        -20, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "LegBack_Upper"
+    }, 
+    {
+      "name": "LegBack_Lower", 
+      "offset": [
+        0, 
+        112
+      ], 
+      "parent": "LegBack_Upper", 
+      "part": "LegBack_Lower"
+    }, 
+    {
+      "name": "LegFront_Upper", 
+      "offset": [
+        20, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "LegFront_Upper"
+    }, 
+    {
+      "name": "LegFront_Lower", 
+      "offset": [
+        0, 
+        112
+      ], 
+      "parent": "LegFront_Upper", 
+      "part": "LegFront_Lower"
+    }, 
+    {
+      "name": "Torso", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "Torso"
+    }, 
+    {
+      "name": "ArmBack_Upper", 
+      "offset": [
+        -12.0, 
+        -171.0
+      ], 
+      "parent": "Torso", 
+      "part": "ArmBack_Upper"
+    }, 
+    {
+      "name": "ArmBack_Lower", 
+      "offset": [
+        0, 
+        96
+      ], 
+      "parent": "ArmBack_Upper", 
+      "part": "ArmBack_Lower"
+    }, 
+    {
+      "name": "Head", 
+      "offset": [
+        0, 
+        -190
+      ], 
+      "parent": "Torso", 
+      "part": "Head"
+    }, 
+    {
+      "name": "ArmFront_Upper", 
+      "offset": [
+        12.0, 
+        -171.0
+      ], 
+      "parent": "Torso", 
+      "part": "ArmFront_Upper"
+    }, 
+    {
+      "name": "ArmFront_Lower", 
+      "offset": [
+        0, 
+        96
+      ], 
+      "parent": "ArmFront_Upper", 
+      "part": "ArmFront_Lower"
+    }, 
+    {
+      "name": "PropFront", 
+      "offset": [
+        0, 
+        92
+      ], 
+      "parent": "ArmFront_Lower", 
+      "part": "PropFront"
+    }
+  ], 
+  "canonicalHeight": 372, 
+  "legLength": 216, 
+  "name": "Lug", 
+  "parts": {
+    "ArmBack_Lower": {
+      "pivot": [
+        18.5, 
+        18.74
+      ], 
+      "texture": "parts/ArmBack_Lower.png"
+    }, 
+    "ArmBack_Upper": {
+      "pivot": [
+        19.5, 
+        19.5
+      ], 
+      "texture": "parts/ArmBack_Upper.png"
+    }, 
+    "ArmFront_Lower": {
+      "pivot": [
+        18.5, 
+        18.74
+      ], 
+      "texture": "parts/ArmFront_Lower.png"
+    }, 
+    "ArmFront_Upper": {
+      "pivot": [
+        19.5, 
+        19.5
+      ], 
+      "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "Head": {
+      "pivot": [
+        86.0, 
+        182.5
+      ], 
+      "texture": "parts/Head.png"
+    }, 
+    "LegBack_Lower": {
+      "pivot": [
+        19.5, 
+        19.5
+      ], 
+      "texture": "parts/LegBack_Lower.png"
+    }, 
+    "LegBack_Upper": {
+      "pivot": [
+        20.0, 
+        20.26
+      ], 
+      "texture": "parts/LegBack_Upper.png"
+    }, 
+    "LegFront_Lower": {
+      "pivot": [
+        19.5, 
+        19.5
+      ], 
+      "texture": "parts/LegFront_Lower.png"
+    }, 
+    "LegFront_Upper": {
+      "pivot": [
+        20.0, 
+        20.26
+      ], 
+      "texture": "parts/LegFront_Upper.png"
+    }, 
+    "PropFront": {
+      "pivot": [
+        56.0, 
+        206.0
+      ], 
+      "texture": "parts/PropFront.png"
+    }, 
+    "Torso": {
+      "pivot": [
+        71.5, 
+        209.5
+      ], 
+      "texture": "parts/Torso.png"
+    }
+  }
+}
