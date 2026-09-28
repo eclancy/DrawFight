@@ -15,6 +15,9 @@ public struct InputState
 	public bool SpecialPressed;
 	public bool BlockHeld;
 
+	/// <summary>Start / Enter. Menus only; the fight itself never reads it.</summary>
+	public bool StartPressed;
+
 	public static InputState None => new InputState { Move = Vector2.Zero };
 }
 
@@ -35,7 +38,7 @@ public class KeyboardInputSource : IInputSource
 {
 	readonly Key left, right, up, down, jump, attack, special, block;
 
-	bool jumpWasDown, attackWasDown, specialWasDown;
+	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown;
 
 	public KeyboardInputSource(
 		Key left, Key right, Key up, Key down,
@@ -66,6 +69,7 @@ public class KeyboardInputSource : IInputSource
 		bool jumpDown = Input.IsPhysicalKeyPressed(jump);
 		bool attackDown = Input.IsPhysicalKeyPressed(attack);
 		bool specialDown = Input.IsPhysicalKeyPressed(special);
+		bool startDown = Input.IsPhysicalKeyPressed(Key.Enter) || Input.IsPhysicalKeyPressed(Key.Space);
 
 		var state = new InputState
 		{
@@ -76,11 +80,13 @@ public class KeyboardInputSource : IInputSource
 			AttackPressed = attackDown && !attackWasDown,
 			SpecialPressed = specialDown && !specialWasDown,
 			BlockHeld = Input.IsPhysicalKeyPressed(block),
+			StartPressed = startDown && !startWasDown,
 		};
 
 		jumpWasDown = jumpDown;
 		attackWasDown = attackDown;
 		specialWasDown = specialDown;
+		startWasDown = startDown;
 		return state;
 	}
 }

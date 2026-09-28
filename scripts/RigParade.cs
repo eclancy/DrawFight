@@ -18,8 +18,6 @@ public partial class RigParade : Node2D
 		public FighterRig Rig;
 		public AnimationClip Clip;
 		public Pose Direct;
-		public MoveData Move;
-		public float MoveFrame;
 	}
 
 	readonly List<Slot> slots = new List<Slot>();
@@ -40,9 +38,10 @@ public partial class RigParade : Node2D
 			("hurt", FighterAnimations.Hurt, null),
 			("windup", null, FighterAnimations.AttackWindup),
 			("strike", null, FighterAnimations.AttackStrike),
+			("dash", null, FighterAnimations.LungeStrike),
 		};
 
-		const float ColumnWidth = 260.0f;
+		const float ColumnWidth = 238.0f;
 		const float RowHeight = 420.0f;
 
 		for (int row = 0; row < fighters.Length; row++)

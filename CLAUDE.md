@@ -1,19 +1,25 @@
-# DuskFight — agent instructions
+# DrawFight — agent instructions
 
 A local-multiplayer platform fighter (Super Smash Bros. rules) where every fighter is a
 drawing made by a kid, cut into parts and puppeted on a shared skeleton.
 
-**`Dusk` is the kid's online handle** — the project is named after him. Never propose renaming
-it.
+The game was called `DuskFight` after the kid's own online handle, `Dusk`, and was renamed to
+**DrawFight** on his uncle's call. Do not rename it again without being asked.
 
 Godot 4.5.1 Mono (.NET 9), C#, 2D. **M0, M1 and most of M2 are built** — the fight runs, Xbox
 pads work, and two rigged cutout puppets play the shared animation library. What M2 still owes
 is a rig built from a **real drawing**; the two in `fighters/` are generated stick figures, and
 `fighters/README.md` says when to delete them. M3 is the import tool.
 
-Everything is built in code, with no `.tscn` beyond a two-line `scenes/Match.tscn` that attaches
-`MatchManager`. Do not treat "no scenes" as a convention to preserve — it is just what has not
+Everything is built in code, with no `.tscn` beyond a two-line `scenes/Main.tscn` that attaches
+`GameRoot`. Do not treat "no scenes" as a convention to preserve — it is just what has not
 needed one yet.
+
+**Screen flow** is owned by `GameRoot`, which swaps screens as its own children rather than
+changing Godot scenes: title → character select → stage select → match → title. Selections live
+in ordinary fields on `GameRoot`, so there is no global for a screen to forget to write.
+`ControllerAssignment` hands out pads for menus and matches alike — a pad that works in a fight
+has to work on the select screen without a second mapping to keep in step.
 
 ## Design docs — read before designing
 
@@ -26,6 +32,9 @@ content decision. Do not restate its contents here.
   hitboxes, knockback, or any move's numbers.**
 - `.ai/art-pipeline.md` — the shared skeleton, how a photo becomes a rigged fighter, the
   import tool. **Read before touching the rig, the importer, or anything under `fighters/`.**
+- `.ai/art-direction.md` — the visual contract for everything the kids do NOT draw: the value
+  ladder, the two crayon styles, what an outline means, and why night is lavender. **Read
+  before adding any stage, prop, effect or UI colour.**
 - `.ai/character-design.md` — how a kid's description becomes a balanced moveset, the special
   archetype library, the weakness rule. **Read before designing any character.**
 - `.ai/roadmap.md` — milestones and what is deliberately deferred
@@ -50,7 +59,7 @@ they read drifts from the version we maintain.
 
 ## Build & run
 
-- **`dotnet build DuskFight.sln`** — the default verification loop. Catches essentially all C#
+- **`dotnet build DrawFight.sln`** — the default verification loop. Catches essentially all C#
   errors, no Godot needed.
 - **`"$GODOT_BIN" --path .`** — run the game. `$GODOT_BIN` is set in `.claude/settings.json`;
   if it is unset or missing, stop and say so rather than guessing a path.
@@ -59,6 +68,10 @@ they read drifts from the version we maintain.
   changes get verified.** A wrong pivot or a flipped rotation sign is obvious here and invisible
   in a match. `--shot=N` works on the match too; `F12` grabs a frame while playing.
 - **`python tools/art/stickfigures.py`** — regenerate the two generated test fighters.
+- **`"$GODOT_BIN" --path . -- --stage=N --shot=120`** — boot straight into one stage and
+  screenshot it. `F4` cycles stages while playing.
+- **`--match`, `--select`, `--stages`, `--parade`** each boot straight to that screen, so a
+  screen can be checked without clicking through the flow to reach it.
 - **`"$GODOT_BIN" --headless --path . --quit-after 120`** — boot the match headless and read
   the `RegressionChecks:` calibration table it prints. This is how you find out what percent a
   move KOs at without picking up a controller. **Read it before and after changing any
@@ -108,8 +121,18 @@ something is unstated here, default to however that project does it.
 - Redraw or "improve" his art. (Rule 1. It bears repeating.)
 - Author durations in seconds.
 - Create subdirectories under `scripts/` or `scenes/`.
-- Add new root-level status `.md` files. Durable notes go in `.ai/`.
-- Give a fighter an up-special that does not provide real vertical recovery.
+- Add new root-level status `.md` files. Durable notes go in `.ai/`. The only root markdown is
+  `README.md` (the front page, for a human arriving at the repo) and this file — keep it that
+  way, and keep the README in step when milestones or controls change.
+- Give a fighter an up-special that does not provide real vertical recovery. `RegressionChecks`
+  now fails the build loudly if one does not beat a standing jump.
+- Author the ten normal attacks per character. They live once, at medium weight, in
+  `DefaultMoveset.cs` and are scaled by weight class. Only the **four specials** are per
+  character, because those come from the kid's own description.
+- Scale a heavy fighter's knockback growth **up**. Damage already raises knockback, so the two
+  compound - see `.ai/character-design.md`.
+- Build a new roster entry by calling a catalog in a loop. `FighterCatalog` and `StageCatalog`
+  cache their entries because each one now owns fourteen `MoveData` Resources.
 - Ship a move with both high base knockback and high knockback growth.
 - Add universal grabs or throws, or leave hooks for them. **Settled and out**, not deferred —
   see `.ai/fighting-design.md`.
@@ -117,14 +140,24 @@ something is unstated here, default to however that project does it.
   There is no shield health, no shield break, and no shield poking, and the cost of blocking is
   paid in chip damage raising your percent.
 - Accept or request a drawing that is not in **side view facing right**.
+- Write a PSD parser for the importer. Layered art arrives as a folder of exported PNGs, which
+  every tablet app can produce and Godot can already read. `.ora` is the only single-file format
+  worth adding later. See `.ai/art-pipeline.md`.
 - Route player input through Godot's `InputMap`. Both input sources **poll devices directly**,
   because every buffer window in the game is counted in frames from a button's rising edge and
   polling makes that edge unambiguous. New devices implement `IInputSource`; nothing in
   `Fighter` should learn what kind of device is driving it.
 - Apply a per-axis stick deadzone. It must be radial — see `.ai/fighting-design.md`.
-- Add anything light-coloured to the world or the HUD. **The stage is paper**: the background is
-  cream and everything on it is dark ink, because his art is dark marker on a white page and
-  vanishes on a dark stage. White-on-cream has already been shipped invisible twice.
+- Let anything outside a character go darker than about 30% value. **Characters own black**;
+  that band is reserved, and it is the whole art direction. See `.ai/art-direction.md`.
+- Assume the HUD can borrow the stage background. Stage palettes are free to be grass or
+  brickwork, so the HUD carries its own paper bands. White-on-cream shipped invisible twice.
+- Draw a soft platform with a solid outline. **Solid outline means solid ground, dashed means
+  you can drop through** — that grammar is how the mechanic stays visible.
+- Write per-stage drawing code. There is one renderer; a stage is a palette and a list of
+  rectangles in `StageCatalog.cs`. Add a reusable `PlatformLook` or `PropKind` instead.
+- Randomise the crayon wobble. It is hashed from a seed so redraws are identical; a
+  re-randomising shape shimmers and reads as a rendering bug.
 - Use `Skeleton2D`/`Bone2D` for the rig. Cutout parts are rigid and rotate about a joint; the
   rig is a `Node2D` tree with `Centered = false` sprites offset by `-pivot`. See
   `.ai/art-pipeline.md`.

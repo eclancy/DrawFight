@@ -18,17 +18,38 @@ public sealed class GamepadLayout
 	/// <summary>A one-line binding summary for the HUD.</summary>
 	public string Describe()
 	{
-		string block = BlockUsesRightTrigger ? $"{Block}/RT block" : $"{Block} block";
-		return $"{Jump}/{AltJump} jump   {Attack} attack   {Special} special   {block}";
+		string jump = Jump == AltJump ? $"{Jump} jump" : $"{Jump}/{AltJump} jump";
+		string block = BlockUsesRightTrigger ? $"{Block} or RT block" : $"{Block} block";
+		return $"{jump}   {Attack} attack   {Special} special   {block}   down+{Jump} drop through";
 	}
 
 	/// <summary>Distinguishes the two presets without exposing every field.</summary>
 	public bool IsSmashLayout => Jump == JoyButton.X;
 
+	/// <summary>True for the default DrawFight layout: A jumps.</summary>
+	public bool IsStandardLayout => Jump == JoyButton.A;
+
 	/// <summary>
-	/// Matches Smash Ultimate's default pad layout: A attacks, B specials, X and Y both jump.
-	/// This is the default because he almost certainly plays Smash, and muscle memory
-	/// transferring from the game we are imitating is worth more than internal tidiness.
+	/// The layout DrawFight uses. A jumps, X attacks, B specials, Y defends.
+	///
+	/// This is the one that was asked for, so it is the default and it wins over any argument
+	/// from another game about what the buttons ought to be.
+	/// </summary>
+	public static GamepadLayout Standard()
+	{
+		return new GamepadLayout
+		{
+			Jump = JoyButton.A,
+			AltJump = JoyButton.A,
+			Attack = JoyButton.X,
+			Special = JoyButton.B,
+			Block = JoyButton.Y,
+		};
+	}
+
+	/// <summary>
+	/// Smash Ultimate’s own pad layout, kept only so the two can be compared with F3 by anyone
+	/// whose hands already know it. Not the default.
 	/// </summary>
 	public static GamepadLayout Smash()
 	{
@@ -42,21 +63,6 @@ public sealed class GamepadLayout
 		};
 	}
 
-	/// <summary>
-	/// Jump on A, the way most platformers do it. Easier for someone who has never played
-	/// Smash; worse for someone who has.
-	/// </summary>
-	public static GamepadLayout Platformer()
-	{
-		return new GamepadLayout
-		{
-			Attack = JoyButton.B,
-			Special = JoyButton.X,
-			Jump = JoyButton.A,
-			AltJump = JoyButton.Y,
-			Block = JoyButton.RightShoulder,
-		};
-	}
 }
 
 /// <summary>
@@ -77,11 +83,14 @@ public interface IHapticInputSource
 public class GamepadInputSource : IInputSource, IHapticInputSource
 {
 	/// <summary>
-	/// Radial deadzone. Applied to the stick's magnitude, never per-axis - a per-axis deadzone
+	/// Radial deadzone. Applied to the stick magnitude, never per-axis - a per-axis deadzone
 	/// carves a square hole out of a round stick and makes diagonals feel wrong, which matters
 	/// here because diagonals are how directional attacks and DI are aimed.
+	///
+	/// Kept small on purpose. How hard the stick is pushed sets how fast the fighter runs, so
+	/// every degree of travel swallowed here is walking speed the player cannot reach.
 	/// </summary>
-	const float Deadzone = 0.22f;
+	const float Deadzone = 0.15f;
 
 	/// <summary>How far the analogue trigger must travel to count as a press.</summary>
 	const float TriggerThreshold = 0.45f;
@@ -89,7 +98,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 	readonly int device;
 	readonly GamepadLayout layout;
 
-	bool jumpWasDown, attackWasDown, specialWasDown;
+	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown;
 
 	public GamepadInputSource(int device, GamepadLayout layout)
 	{
@@ -109,7 +118,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 		// held direction, so the fighter just stands still until it comes back.
 		if (!IsConnected)
 		{
-			jumpWasDown = attackWasDown = specialWasDown = false;
+			jumpWasDown = attackWasDown = specialWasDown = startWasDown = false;
 			return InputState.None;
 		}
 
@@ -117,6 +126,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			|| Input.IsJoyButtonPressed(device, layout.AltJump);
 		bool attackDown = Input.IsJoyButtonPressed(device, layout.Attack);
 		bool specialDown = Input.IsJoyButtonPressed(device, layout.Special);
+		bool startDown = Input.IsJoyButtonPressed(device, JoyButton.Start);
 
 		bool blockDown = Input.IsJoyButtonPressed(device, layout.Block)
 			|| (layout.BlockUsesRightTrigger
@@ -129,11 +139,13 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			AttackPressed = attackDown && !attackWasDown,
 			SpecialPressed = specialDown && !specialWasDown,
 			BlockHeld = blockDown,
+			StartPressed = startDown && !startWasDown,
 		};
 
 		jumpWasDown = jumpDown;
 		attackWasDown = attackDown;
 		specialWasDown = specialDown;
+		startWasDown = startDown;
 		return state;
 	}
 

@@ -17,7 +17,9 @@ public partial class MatchManager : Node2D
 	/// Which pad layout every gamepad uses. One knob for now; M5 makes it per-player on the
 	/// controls screen.
 	/// </summary>
-	GamepadLayout padLayout = GamepadLayout.Smash();
+	/// <summary>Set by GameRoot before this node enters the tree.</summary>
+	public int StageIndex;
+	public int[] FighterIndices = { 0, 1 };
 
 	Stage stage;
 	GameCamera camera;
@@ -36,43 +38,19 @@ public partial class MatchManager : Node2D
 
 	public override void _Ready()
 	{
-		RegressionChecks.RunAll();
-
-		// Hot-plug: a pad plugged in or yanked out mid-match is reassigned immediately rather
-		// than at the next restart, because the actual failure mode here is a kid picking up a
-		// controller that went to sleep and concluding the game is broken.
-		Input.Singleton.JoyConnectionChanged += OnJoyConnectionChanged;
-
-		bool parade = false;
-		foreach (string arg in OS.GetCmdlineUserArgs())
-		{
-			if (arg.StartsWith("--shot=")) shotAfterFrames = Mathf.Max(2, arg.Substring(7).ToInt());
-			if (arg == "--parade") parade = true;
-		}
-
-		if (parade)
-		{
-			// The parade replaces the match entirely - it is an inspection view, not a mode.
-			AddChild(new RigParade());
-			SetPhysicsProcess(false);
-			return;
-		}
-
 		BuildMatch();
-	}
-
-	public override void _ExitTree()
-	{
-		Input.Singleton.JoyConnectionChanged -= OnJoyConnectionChanged;
 	}
 
 	void BuildMatch()
 	{
 		stage = new Stage();
 		AddChild(stage);
+		stage.Build(StageCatalog.Get(StageIndex));
 
-		SpawnFighter(FighterData.PlaceholderLight(), 0);
-		SpawnFighter(FighterData.PlaceholderHeavy(), 1);
+		for (int i = 0; i < FighterIndices.Length; i++)
+		{
+			SpawnFighter(FighterCatalog.Get(FighterIndices[i]), i);
+		}
 		AssignControllers();
 
 		fx = new HitFx();
@@ -87,7 +65,8 @@ public partial class MatchManager : Node2D
 		hud = new MatchHud();
 		AddChild(hud);
 		hud.Build(Fighters);
-		hud.SetControllerLabels(DescribeControllers(), padLayout.Describe());
+		hud.SetControllerLabels(DescribeControllers(), ControllerAssignment.Layout.Describe());
+		hud.SetStageName(StageCatalog.NameOf(StageIndex));
 	}
 
 	void SpawnFighter(FighterData data, int index)
@@ -101,57 +80,39 @@ public partial class MatchManager : Node2D
 
 	// --- Controllers ---------------------------------------------------------
 
-	/// <summary>
-	/// Pads are handed out in connection order, then keyboard schemes fill whoever is left.
-	/// Keyboard schemes are handed out in order too, so that the one person on a keyboard in a
-	/// pad-plus-keyboard match gets the comfortable WASD half rather than the arrow keys.
-	/// </summary>
-	void AssignControllers()
+	/// <summary>Rebuilds every player's controller. Called on hot-plug by GameRoot.</summary>
+	public void ReassignControllers()
 	{
-		Godot.Collections.Array<int> pads = Input.GetConnectedJoypads();
-		int keyboardsUsed = 0;
-
-		for (int i = 0; i < Fighters.Count; i++)
-		{
-			if (i < pads.Count)
-			{
-				Fighters[i].Controller = new GamepadInputSource(pads[i], padLayout);
-				continue;
-			}
-
-			Fighters[i].Controller = keyboardsUsed++ == 0
-				? KeyboardInputSource.Player1()
-				: KeyboardInputSource.Player2();
-		}
+		IInputSource[] sources = ControllerAssignment.ForPlayers(Fighters.Count);
+		for (int i = 0; i < Fighters.Count; i++) Fighters[i].Controller = sources[i];
+		hud?.SetControllerLabels(DescribeControllers(), ControllerAssignment.Layout.Describe());
 	}
 
-	void OnJoyConnectionChanged(long device, bool connected)
-	{
-		string name = connected ? Input.GetJoyName((int)device) : "(disconnected)";
-		GD.Print($"MatchManager: pad {device} {(connected ? "connected" : "disconnected")} {name}");
-
-		AssignControllers();
-		hud?.SetControllerLabels(DescribeControllers(), padLayout.Describe());
-	}
+	void AssignControllers() => ReassignControllers();
 
 	List<string> DescribeControllers()
 	{
 		var labels = new List<string>();
-		foreach (Fighter fighter in Fighters)
-		{
-			labels.Add(fighter.Controller switch
-			{
-				GamepadInputSource pad => $"pad {pad.Device + 1}",
-				KeyboardInputSource => "keyboard",
-				_ => "none",
-			});
-		}
+		foreach (Fighter fighter in Fighters) labels.Add(ControllerAssignment.Describe(fighter.Controller));
 		return labels;
 	}
 
 	public bool AnyPadConnected => Input.GetConnectedJoypads().Count > 0;
 
 	// --- Match flow ----------------------------------------------------------
+
+	/// <summary>The blast zone, for anything that needs to know when it has left the stage.</summary>
+	public Rect2 StageBounds => stage.BlastZone;
+
+	public System.Collections.Generic.List<Vector2> Ledges => stage.Ledges;
+
+	/// <summary>Spawns a fireball, a thrown hammer, a falling anvil or a patch of fire.</summary>
+	public void SpawnHazard(Fighter owner, MoveData move, Vector2 position, Vector2 velocity)
+	{
+		var hazard = new Hazard();
+		AddChild(hazard);
+		hazard.Launch(owner, move, this, position, velocity, move.SpecialGravity, move.SpecialLifetime);
+	}
 
 	public override void _PhysicsProcess(double delta)
 	{
@@ -199,7 +160,9 @@ public partial class MatchManager : Node2D
 		if (alive <= 1)
 		{
 			matchOver = true;
-			status = last != null ? $"{last.Data.DisplayName} wins!   R to restart" : "Draw!   R to restart";
+			status = last != null
+				? $"{last.Data.DisplayName} wins!   Start for the title screen, R to rematch"
+				: "Draw!   Start for the title screen, R to rematch";
 		}
 	}
 
@@ -273,10 +236,12 @@ public partial class MatchManager : Node2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is InputEventJoypadButton pad && pad.Pressed && !matchOver)
+		if (@event is InputEventJoypadButton pad && pad.Pressed)
 		{
-			// Start on any pad restarts, so a match can be reset without reaching for the keyboard.
-			if (pad.ButtonIndex == JoyButton.Start) Restart();
+			// Start restarts a live match, and returns to the title once it is over.
+			if (pad.ButtonIndex != JoyButton.Start) return;
+			if (matchOver) GameRoot.Instance.GoTitle();
+			else Restart();
 			return;
 		}
 
@@ -290,32 +255,32 @@ public partial class MatchManager : Node2D
 				break;
 
 			case Key.F2:
-				// Slow motion is the most useful M1 tuning tool there is - startup and active
+				// Slow motion is the most useful tuning tool there is - startup and active
 				// frames are invisible at full speed and obvious at a quarter of it.
 				Engine.TimeScale = Engine.TimeScale > 0.9f ? 0.25f : 1.0f;
 				break;
 
 			case Key.F3:
-				// Flip every pad between the Smash layout and the platformer one, so the two
-				// can be compared back to back rather than argued about.
-				padLayout = padLayout.IsSmashLayout
-					? GamepadLayout.Platformer()
-					: GamepadLayout.Smash();
-				AssignControllers();
-				hud.SetControllerLabels(DescribeControllers(), padLayout.Describe());
-				GD.Print($"MatchManager: pad layout is now {(padLayout.IsSmashLayout ? "Smash" : "Platformer")}");
+				ControllerAssignment.Layout = ControllerAssignment.Layout.IsStandardLayout
+					? GamepadLayout.Smash()
+					: GamepadLayout.Standard();
+				ReassignControllers();
+				GD.Print($"MatchManager: pad layout is now " +
+					$"{(ControllerAssignment.Layout.IsStandardLayout ? "Standard" : "Smash")}");
 				break;
 
-			case Key.F12:
-				Capture($"shot_{framesElapsed}");
+			case Key.F4:
+				StageIndex = (StageIndex + 1) % StageCatalog.Count;
+				GD.Print($"MatchManager: stage is now {StageCatalog.NameOf(StageIndex)}");
+				Restart();
+				break;
+
+			case Key.Enter:
+				if (matchOver) GameRoot.Instance.GoTitle();
 				break;
 
 			case Key.R:
 				Restart();
-				break;
-
-			case Key.Escape:
-				GetTree().Quit();
 				break;
 		}
 	}

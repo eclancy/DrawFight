@@ -75,18 +75,32 @@ paired with `LaunchSpeedPerKnockback`, not as a number copied from another game.
 
 ## Checking the numbers without playing
 
-`RegressionChecks.RunAll()` runs at startup and prints a calibration table to the Godot
-console: for each move against each fighter, how far the victim travels at 0/50/100/150%, how
-that compares to the distance from the stage edge to the blast zone, and the resulting hitstun.
+`RegressionChecks.RunAll()` runs at startup and prints, for each move against each fighter,
+**the percent at which it starts KOing** — by simulating the launch, not by estimating a
+distance.
 
-**Read that table before and after changing any knockback number.** Launch distance scales with
-the *square* of knockback, so a change that looks small in the move data is not small on the
-stage — the first pass of these placeholder moves killed at 50% and it was not obvious from the
-numbers alone. The table makes "what percent does this kill at" answerable without a
-controller, which is the only way to tune moves in bulk.
+It flies the victim from the edge of the stage under the real numbers: launch velocity decays
+horizontally during hitstun, gravity pulls the whole time, air drag takes over afterwards. A
+launch counts as a KO only if it carries the victim clean off the **side or the top**. Landing
+back on the stage counts as survived, and so does falling below it — every hit eventually
+pushes someone off the bottom if you simulate long enough and never let them recover, so
+counting that made every move read as a 0% kill and told us nothing.
 
-Current placeholder calibration: the jab never KOs at any percent, and the heavy swing KOs the
-light fighter around 85% and the heavy fighter around 110%.
+**Read it before and after changing any knockback number, and after changing gravity, fall
+speed or stage size.** Two traps it exists to catch:
+
+- Launch distance scales with the *square* of knockback, so a change that looks small in the
+  move data is not small on the stage. The first pass of these placeholder moves killed at 50%.
+- **How far a launch carries depends on how long the victim stays in the air.** When gravity
+  nearly doubled to make the game less floaty, every KO percent moved up by roughly a third
+  — the knockback numbers had not been touched at all. An earlier version of this table
+  estimated horizontal distance and ignored gravity, so it printed identical numbers before and
+  after that change. A number that does not move when the thing it measures does is worse than
+  no number.
+
+Current placeholder calibration: the jab effectively never KOs (230% and 295%), the heavy swing
+KOs the light fighter at 110% and the heavy one at 145%, and the two dash attacks land at 85%
+and 205%.
 
 ## Game feel: the part that is easy to skip and must not be
 
@@ -105,7 +119,11 @@ polish, they are the feature:
 
 ## Movement
 
-Platform-fighter movement, which is floatier and more controllable than a normal platformer:
+Platform-fighter movement — more controllable than a normal platformer, but deliberately **not**
+floaty. An earlier pass was, and it made the game feel slow: jumps hung, top speed was low, and
+acceleration was gentle enough that top speed barely mattered. Gravity, jump force, run speed
+and acceleration all went up together. Raising top speed alone does nothing, because a fighter
+that takes half a second to reach it never gets there in a fight.
 
 - Ground: accelerate to a run speed, with a distinct initial-dash speed.
 - **Double jump** in the air, refreshed on landing or on grabbing a ledge.
@@ -116,6 +134,8 @@ Platform-fighter movement, which is floatier and more controllable than a normal
   it rewards him for learning something real.
 - **Ledges** can be grabbed, with a generous snap radius. Recovering from off-stage should feel
   possible, not punishing.
+- **Soft platforms can be dropped through** by holding down and pressing jump.
+- **Running into an attack gives a dash attack** rather than the standing jab.
 
 Input forgiveness, all of it non-negotiable:
 
@@ -128,23 +148,25 @@ Input forgiveness, all of it non-negotiable:
 Xbox pads are the primary input. Keyboard exists so that development and a missing-controller
 match both work, not as the intended way to play.
 
-| Xbox pad           | result                                    |
-|--------------------|-------------------------------------------|
+| Xbox pad           | result                                     |
+|--------------------|--------------------------------------------|
 | left stick / d-pad | move, fast-fall, DI                        |
-| X or Y             | jump, double jump                          |
-| A                  | attack — neutral, or `←` `→` `↑` `↓` tilts |
-| A in air           | aerials — neutral, forward, back, up, down |
-| B                  | special — neutral, or `←` `→` `↑` `↓`      |
-| RB or RT           | block — reduces damage and knockback       |
-| RB + stick         | dodge roll / spot dodge / air dodge        |
+| **A**              | jump, double jump                          |
+| **X**              | attack — neutral, or `←` `→` `↑` `↓` tilts |
+| **X** in air       | aerials — neutral, forward, back, up, down |
+| **X** while running| dash attack                                |
+| **B**              | special — neutral, or `←` `→` `↑` `↓`      |
+| **Y**              | block — reduces damage and knockback       |
+| **Y** + stick      | dodge roll / spot dodge / air dodge        |
+| hold `↓` + **A**    | drop through a soft platform               |
 | Start              | restart the match                          |
 
-**This is Smash Ultimate's default pad layout, deliberately.** An earlier draft of this document
-put jump on A the way most platformers do. That was wrong for this audience: he almost certainly
-plays Smash, and muscle memory transferring from the game we are imitating is worth more than
-matching platformer convention. `GamepadLayout.Platformer()` keeps the A-jumps mapping for
-anyone who has not played Smash, and `F3` swaps between the two live so they can be compared
-back to back rather than argued about.
+**This layout was specified, and it wins.** Earlier drafts argued first for platformer
+convention and then for Smash Ultimate’s layout; both are now overruled. `GamepadLayout.Smash()`
+survives only as an F3-swappable alternate for anyone whose hands already know that game.
+
+The right trigger also blocks, as a bonus rather than a replacement — a kid who grabs for a
+shoulder button under pressure should get a block rather than nothing.
 
 Two details that are not optional on a pad:
 
@@ -152,8 +174,11 @@ Two details that are not optional on a pad:
   deadzone carves a square hole out of a round stick and makes diagonals unreliable, which
   matters here because diagonals are how directional attacks and DI are aimed. Past the
   deadzone the magnitude is rescaled from zero rather than snapping to the deadzone value.
-- **Stick magnitude is preserved, not normalised**, which gives analogue walk speed for free and
-  gives DI something finer than eight directions.
+- **The stick is a speed dial, not a switch.** Target speed is stick deflection times top
+  speed, so a light push walks and a full push runs with everything in between. Two numbers
+  protect that: the pad deadzone is small (0.15) and the movement threshold is smaller (0.08),
+  because every degree of stick travel swallowed by either is walking speed the player cannot
+  reach. Preserving magnitude also gives DI something finer than eight directions.
 
 **Rumble is part of the feel budget, not a nicety.** It is hitlag you can hold, and it is the
 cheapest large win available on a pad. The victim's pad gets intensity scaled by knockback
@@ -163,6 +188,50 @@ the game.
 
 Keyboard fallback: P1 is `WASD` + `G` jump, `H` attack, `J` special, `F` block. P2 is the arrow
 keys + numpad `1` `2` `3` `0`.
+
+## Dropping through platforms
+
+Holding down and pressing jump falls through a soft platform. It is implemented by collision
+layer rather than by any special case in the platform: **solid ground is layer 1, soft platforms
+are layer 2**, and a drop-through masks layer 2 off for 12 frames. The same input on solid ground
+therefore does nothing at all, rather than dropping a fighter out of the bottom of the stage.
+
+It only fires when the surface underfoot is actually a soft platform, read from the slide
+collisions that `MoveAndSlide` already computed. Pressing down and jump on solid ground gives a
+normal jump, which is what a player expects.
+
+## Dodging
+
+Block plus a direction **rolls**, block on its own **spot-dodges**, and block in the air is an
+**air dodge**. All three are vulnerable at the edges and invulnerable only in the middle
+(roughly frames 4-17), which is what makes a dodge a read rather than a panic button: mistime it
+and you are hit during the startup or the recovery.
+
+## Ledges
+
+Solid platform corners inside the blast zone are **grabbable**, with a generous snap radius,
+because recovering from off-stage should feel possible rather than punishing. Grabbing refreshes
+the air jump and grants a moment of invulnerability.
+
+Which corners qualify is derived rather than authored: soft platforms are excluded because you
+pass through them, and corners outside the blast zone are excluded because no fighter can be
+there. **Open Plains therefore has no ledges at all without anything having to say so** - its
+floor runs past both blast zones, so both corners fall outside and there is simply nothing to
+grab. A stage gets ledges by having edges.
+
+From a hang: up or toward the stage climbs back on, jump climbs on with height, and down or away
+lets go. A short re-grab cooldown stops a fighter bouncing back onto the same ledge forever.
+
+## Dash attacks
+
+Pressing attack while running gives a different move from the standing jab. It is selected by
+**actual speed** (above 55% of top speed) rather than by whether a direction is held, so a
+fighter who has turned around and is still sliding backwards does not get one by accident.
+
+A dash attack sets `CarriesMomentum`, which does two things: it sheds far less speed during the
+move, so the attack slides the whole way through instead of stopping dead on startup, and it
+selects the lunging attack pose so the move looks like a committed charge rather than a jab that
+happens to be moving. A dash attack that stops on contact is just a slow jab.
 
 That is roughly **16 moves per fighter**: 5 grounded attacks, 5 aerials, 4 specials, plus
 block and dodge. It sounds like a lot, but most of them are shared behaviour driven by data —

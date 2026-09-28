@@ -13,6 +13,7 @@ public partial class MatchHud : CanvasLayer
 	readonly List<Label> deviceLabels = new List<Label>();
 
 	Label statusLabel;
+	Label stageLabel;
 	Label helpLabel;
 
 	public void Build(List<Fighter> fighters)
@@ -24,6 +25,30 @@ public partial class MatchHud : CanvasLayer
 		};
 		AddChild(root);
 
+		// Paper bands behind the readouts. Added before the labels so they render underneath.
+		//
+		// These are not decoration. The HUD was built against a cream stage and became
+		// illegible the moment a stage had grass or brickwork under it. A stage palette is
+		// free to be anything, so the HUD has to carry its own background rather than borrow
+		// the stage one.
+		var paper = new Color(0.97f, 0.96f, 0.93f, 0.86f);
+
+		root.AddChild(new ColorRect
+		{
+			Color = paper,
+			Position = new Vector2(0.0f, 762.0f),
+			Size = new Vector2(1920.0f, 320.0f),
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		});
+
+		root.AddChild(new ColorRect
+		{
+			Color = paper,
+			Position = new Vector2(0.0f, 0.0f),
+			Size = new Vector2(760.0f, 156.0f),
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		});
+
 		for (int i = 0; i < fighters.Count; i++)
 		{
 			float x = 120.0f + i * 420.0f;
@@ -31,7 +56,7 @@ public partial class MatchHud : CanvasLayer
 			var name = new Label
 			{
 				Text = fighters[i].Data.DisplayName,
-				Position = new Vector2(x, 838.0f),
+				Position = new Vector2(x, 784.0f),
 			};
 			name.AddThemeFontSizeOverride("font_size", 26);
 			name.AddThemeColorOverride("font_color", fighters[i].Data.PlaceholderColor);
@@ -42,7 +67,7 @@ public partial class MatchHud : CanvasLayer
 			var device = new Label
 			{
 				Text = "",
-				Position = new Vector2(x, 868.0f),
+				Position = new Vector2(x, 814.0f),
 			};
 			device.AddThemeFontSizeOverride("font_size", 19);
 			device.AddThemeColorOverride("font_color", new Color(0.38f, 0.40f, 0.46f));
@@ -52,7 +77,7 @@ public partial class MatchHud : CanvasLayer
 			var percent = new Label
 			{
 				Text = "0%",
-				Position = new Vector2(x, 890.0f),
+				Position = new Vector2(x, 836.0f),
 			};
 			percent.AddThemeFontSizeOverride("font_size", 76);
 			root.AddChild(percent);
@@ -61,7 +86,7 @@ public partial class MatchHud : CanvasLayer
 			var stocks = new Label
 			{
 				Text = "",
-				Position = new Vector2(x, 985.0f),
+				Position = new Vector2(x, 934.0f),
 			};
 			stocks.AddThemeFontSizeOverride("font_size", 30);
 			stocks.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
@@ -78,14 +103,28 @@ public partial class MatchHud : CanvasLayer
 		statusLabel.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
 		root.AddChild(statusLabel);
 
+		stageLabel = new Label
+		{
+			Text = "",
+			Position = new Vector2(120.0f, 116.0f),
+		};
+		stageLabel.AddThemeFontSizeOverride("font_size", 22);
+		stageLabel.AddThemeColorOverride("font_color", new Color(0.44f, 0.46f, 0.52f));
+		root.AddChild(stageLabel);
+
 		helpLabel = new Label
 		{
 			Text = "",
-			Position = new Vector2(120.0f, 992.0f),
+			Position = new Vector2(120.0f, 972.0f),
 		};
-		helpLabel.AddThemeFontSizeOverride("font_size", 19);
+		helpLabel.AddThemeFontSizeOverride("font_size", 18);
 		helpLabel.AddThemeColorOverride("font_color", new Color(0.44f, 0.46f, 0.52f));
 		root.AddChild(helpLabel);
+	}
+
+	public void SetStageName(string name)
+	{
+		if (stageLabel != null) stageLabel.Text = name + "   (F4 to change)";
 	}
 
 	public void SetControllerLabels(List<string> labels, string padLayoutHelp)
@@ -98,9 +137,10 @@ public partial class MatchHud : CanvasLayer
 		if (helpLabel == null) return;
 
 		helpLabel.Text =
-			"pad   L-stick move   " + padLayoutHelp + "   Start restart\n"
+			"pad   L-stick move, harder = faster   " + padLayoutHelp + "   Start restart\n"
 			+ "keys  P1 WASD / G jump H attack J special F block      "
 			+ "P2 arrows / Num1 jump Num2 attack Num3 special Num0 block\n"
+			+ "attack while running = dash attack     hold down + jump = drop through\n"
 			+ "F1 hitboxes   F2 slow-motion   F3 swap pad layout   R restart   Esc quit";
 	}
 

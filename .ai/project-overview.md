@@ -52,8 +52,9 @@ of stages, a character-select screen, the in-editor import tool, as many fighter
 project of its own), story mode, unlockables and progression, mobile, controller remapping UI
 beyond a basic screen, anything resembling monetisation.
 
-**The name is not a placeholder.** `Dusk` is his online handle, so `DuskFight` is named after
-him. Do not propose renaming it.
+**The name.** This started as `DuskFight`, after the kid's own online handle `Dusk`, and was
+renamed to **DrawFight** because the drawings are the point and the name should say so. Do not
+rename it again without being asked.
 
 ## Engine and house style
 

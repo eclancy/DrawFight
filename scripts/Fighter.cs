@@ -6,6 +6,8 @@ public enum FighterState
 	Grounded,
 	Airborne,
 	Attacking,
+	Dodging,
+	LedgeHang,
 	Hitstun,
 	Respawning,
 	Eliminated,
@@ -46,7 +48,11 @@ public partial class Fighter : CharacterBody2D
 	// --- Active move ---------------------------------------------------------
 
 	MoveData currentMove;
+	MoveSlot currentSlot;
 	int moveFrame;
+	int specialBufferFrames;
+	int dodgeStartFrames;
+	bool hazardSpawned;
 	readonly HashSet<Fighter> alreadyHitThisMove = new HashSet<Fighter>();
 
 	// --- Misc ----------------------------------------------------------------
@@ -62,6 +68,53 @@ public partial class Fighter : CharacterBody2D
 	readonly Pose attackPose = new Pose();
 	int landFrames;
 
+	/// <summary>
+	/// Frames left ignoring soft platforms after a deliberate drop-through. Long enough to
+	/// clear the thickest platform at fall speed, short enough that the next one still catches.
+	/// </summary>
+	int dropThroughFrames;
+
+	/// <summary>Whether the surface underfoot is a soft platform, so it can be dropped through.</summary>
+	bool standingOnOneWay;
+
+	/// <summary>Stick deflection below this reads as centred. Above it, it is a speed dial.</summary>
+	const float MoveDeadzone = 0.08f;
+
+	/// <summary>Fraction of top speed that counts as running, for dash-attack purposes.</summary>
+	const float DashThreshold = 0.55f;
+
+	// --- Dodging ---------------------------------------------------------------
+
+	int dodgeFrames;
+	Vector2 dodgeVelocity;
+
+	const int RollFrames = 26;
+	const int SpotDodgeFrames = 22;
+	const int AirDodgeFrames = 28;
+
+	/// <summary>Frames of invulnerability inside a dodge, starting a few frames in.</summary>
+	const int DodgeInvulnStart = 4;
+	const int DodgeInvulnEnd = 17;
+
+	// --- Ledges ----------------------------------------------------------------
+
+	Vector2 heldLedge;
+	int ledgeCooldownFrames;
+
+	/// <summary>How close a falling fighter has to be to a corner to catch it.</summary>
+	const float LedgeSnapRadius = 76.0f;
+
+	/// <summary>Frames after letting go before the same fighter can grab again.</summary>
+	const int LedgeRegrabCooldown = 26;
+
+	const int LedgeGrabInvulnFrames = 24;
+
+	/// <summary>Solid ground (layer 1) plus soft platforms (layer 2).</summary>
+	const uint GroundMask = 0b11;
+
+	/// <summary>Solid ground only. What a fighter collides with while dropping through.</summary>
+	const uint SolidOnlyMask = 0b01;
+
 	public void Configure(FighterData data, IInputSource controller, int playerIndex, MatchManager match)
 	{
 		Data = data;
@@ -73,7 +126,7 @@ public partial class Fighter : CharacterBody2D
 		// Fighters collide with the stage (layer 1) but never with each other, which is how
 		// platform fighters behave - two players standing on the same tile is normal.
 		CollisionLayer = 0;
-		CollisionMask = 1;
+		CollisionMask = GroundMask;
 
 		var shape = new CollisionShape2D
 		{
@@ -128,11 +181,13 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Grounded: TickGrounded(input, dt); break;
 			case FighterState.Airborne: TickAirborne(input, dt); break;
 			case FighterState.Attacking: TickAttacking(input, dt); break;
+			case FighterState.Dodging: TickDodging(dt); break;
+			case FighterState.LedgeHang: TickLedgeHang(input); break;
 			case FighterState.Hitstun: TickHitstun(dt); break;
 			case FighterState.Respawning: TickRespawning(); break;
 		}
 
-		if (State != FighterState.Respawning)
+		if (State != FighterState.Respawning && State != FighterState.LedgeHang)
 		{
 			ApplyGravity(dt);
 			MoveAndSlide();
@@ -140,9 +195,62 @@ public partial class Fighter : CharacterBody2D
 
 		if (landFrames > 0) landFrames--;
 
+		if (dropThroughFrames > 0 && --dropThroughFrames == 0)
+		{
+			CollisionMask = GroundMask;
+		}
+
+		UpdateGroundInfo();
 		UpdateRig();
 		UpdateRigTint();
 		QueueRedraw();
+	}
+
+	// --- Ground ---------------------------------------------------------------
+
+	/// <summary>
+	/// Works out whether the floor underfoot is a soft platform. Read from the slide
+	/// collisions rather than a raycast, because those are already computed by MoveAndSlide
+	/// and they describe the surface actually being stood on.
+	/// </summary>
+	void UpdateGroundInfo()
+	{
+		standingOnOneWay = false;
+
+		for (int i = 0; i < GetSlideCollisionCount(); i++)
+		{
+			KinematicCollision2D collision = GetSlideCollision(i);
+
+			// Floor normals point up, which is negative Y on screen.
+			if (collision.GetNormal().Y > -0.7f) continue;
+
+			if (collision.GetCollider() is CollisionObject2D body && (body.CollisionLayer & 2) != 0)
+			{
+				standingOnOneWay = true;
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Holding down and pressing jump falls through a soft platform. Only soft platforms are
+	/// masked off, so the same input on solid ground does nothing rather than dropping the
+	/// fighter out of the stage.
+	/// </summary>
+	bool TryDropThrough(InputState input)
+	{
+		if (jumpBufferFrames <= 0 || input.Move.Y < 0.5f || !standingOnOneWay) return false;
+
+		jumpBufferFrames = 0;
+		dropThroughFrames = 12;
+		CollisionMask = SolidOnlyMask;
+
+		// A small nudge downward, so the fighter is clear of the platform on the same frame
+		// rather than resting on it until gravity builds up.
+		GlobalPosition += new Vector2(0.0f, 4.0f);
+		Velocity = new Vector2(Velocity.X, Mathf.Max(Velocity.Y, 240.0f));
+		State = FighterState.Airborne;
+		return true;
 	}
 
 	// --- Rig -----------------------------------------------------------------
@@ -162,8 +270,8 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Attacking when currentMove != null:
 				// Sampled against the move's own frame counts, so the strike pose arrives on
 				// the exact frame the hitbox does.
-				FighterAnimations.SampleAttack(currentMove, moveFrame, attackPose);
-				rig.ApplyDirect(attackPose);
+				FighterAnimations.SampleAttack(currentMove, moveFrame, attackPose, currentMove.CarriesMomentum);
+				rig.ApplyDirect(attackPose, FighterAnimations.AttackBlend(currentMove, moveFrame));
 				break;
 
 			case FighterState.Hitstun:
@@ -227,16 +335,20 @@ public partial class Fighter : CharacterBody2D
 		if (invulnFrames > 0) invulnFrames--;
 		if (blockReleaseLagFrames > 0) blockReleaseLagFrames--;
 		if (coyoteFrames > 0) coyoteFrames--;
+		if (ledgeCooldownFrames > 0) ledgeCooldownFrames--;
 		if (jumpBufferFrames > 0) jumpBufferFrames--;
 		if (attackBufferFrames > 0) attackBufferFrames--;
+		if (specialBufferFrames > 0) specialBufferFrames--;
 
 		// Buffering is what makes the controls feel forgiving rather than strict. An input
 		// pressed slightly too early still comes out when it legally can.
 		if (input.JumpPressed) jumpBufferFrames = Tuning.JumpBufferFrames;
 		if (input.AttackPressed) attackBufferFrames = Tuning.AttackBufferFrames;
+		if (input.SpecialPressed) specialBufferFrames = Tuning.AttackBufferFrames;
 
 		bool wantsBlock = input.BlockHeld
 			&& State == FighterState.Grounded
+			&& dodgeFrames == 0
 			&& blockReleaseLagFrames == 0;
 
 		if (IsBlocking && !wantsBlock)
@@ -262,13 +374,18 @@ public partial class Fighter : CharacterBody2D
 
 		if (IsBlocking)
 		{
-			// Cannot move or attack while blocking. The cost of holding it is chip damage
-			// raising your percent, plus being slid toward the ledge by reduced knockback.
+			// A direction or a fresh press turns a held block into a dodge; otherwise blocking
+			// costs chip damage and being slid toward the ledge by reduced knockback.
+			if (Mathf.Abs(input.Move.X) > 0.5f && TryStartDodge(input)) return;
 			ApplyFriction(dt, Data.GroundFriction);
 			return;
 		}
 
-		if (TryStartAttack()) return;
+		if (TryStartAttack(input)) return;
+
+		// Checked before the jump, because down plus jump is a drop-through and not a jump
+		// that happens to be pressed while crouching.
+		if (TryDropThrough(input)) return;
 
 		if (jumpBufferFrames > 0)
 		{
@@ -278,8 +395,10 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
+		// The stick is a speed dial, not a switch: target speed is the deflection times top
+		// speed, so a light push walks and a full push runs, with everything in between.
 		float target = input.Move.X * Data.RunSpeed;
-		if (Mathf.Abs(input.Move.X) > 0.2f)
+		if (Mathf.Abs(input.Move.X) > MoveDeadzone)
 		{
 			Velocity = new Vector2(
 				Mathf.MoveToward(Velocity.X, target, Data.GroundAcceleration * dt),
@@ -302,7 +421,21 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
-		if (TryStartAttack()) return;
+		// Airborne drop-through: holding down and pressing jump while already falling passes
+		// through the next soft platform rather than spending an air jump on it.
+		if (jumpBufferFrames > 0 && input.Move.Y > 0.5f && Velocity.Y > 0.0f && dropThroughFrames == 0)
+		{
+			jumpBufferFrames = 0;
+			dropThroughFrames = 12;
+			CollisionMask = SolidOnlyMask;
+		}
+
+		// Checked before anything else: catching a ledge beats every other airborne option,
+		// because missing one costs a stock.
+		if (TryGrabLedge()) return;
+
+		if (input.BlockHeld && TryStartDodge(input)) return;
+		if (TryStartAttack(input)) return;
 
 		if (jumpBufferFrames > 0)
 		{
@@ -322,7 +455,7 @@ public partial class Fighter : CharacterBody2D
 			}
 		}
 
-		if (Mathf.Abs(input.Move.X) > 0.2f)
+		if (Mathf.Abs(input.Move.X) > MoveDeadzone)
 		{
 			float target = input.Move.X * Data.AirSpeed;
 			Velocity = new Vector2(
@@ -353,11 +486,15 @@ public partial class Fighter : CharacterBody2D
 
 		if (moveFrame > activeStart && moveFrame <= activeEnd)
 		{
+			SpawnSpecialHazard(currentMove);
 			QueryHits();
 		}
 
 		// Attacks keep their momentum but shed it - you commit to a move, you do not steer it.
-		ApplyFriction(dt, IsOnFloor() ? Data.GroundFriction * 0.5f : Data.AirAcceleration * 0.15f);
+		// A dash attack sheds far less, so it slides the whole way through; stopping dead on
+		// startup would make it a slow jab rather than a dash attack.
+		float shed = currentMove.CarriesMomentum ? 0.12f : 0.5f;
+		ApplyFriction(dt, IsOnFloor() ? Data.GroundFriction * shed : Data.AirAcceleration * 0.15f);
 
 		if (moveFrame >= currentMove.TotalFrames)
 		{
@@ -397,16 +534,236 @@ public partial class Fighter : CharacterBody2D
 
 	// --- Attacking -----------------------------------------------------------
 
-	bool TryStartAttack()
+	/// <summary>
+	/// Picks which of the fourteen moves this press means, from the state the fighter is in
+	/// and the direction being held. This is the whole directional-attack system: one button
+	/// and a stick, resolved here.
+	/// </summary>
+	bool TryStartAttack(InputState input)
 	{
-		if (attackBufferFrames <= 0 || Data.Jab == null) return false;
+		bool wantsAttack = attackBufferFrames > 0;
+		bool wantsSpecial = specialBufferFrames > 0;
+		if (!wantsAttack && !wantsSpecial) return false;
+
+		MoveSlot slot = wantsSpecial ? ChooseSpecialSlot(input) : ChooseAttackSlot(input);
+		MoveData chosen = Data.Move(slot);
+		if (chosen == null) return false;
 
 		attackBufferFrames = 0;
-		currentMove = Data.Jab;
+		specialBufferFrames = 0;
+
+		currentMove = chosen;
+		currentSlot = slot;
 		moveFrame = 0;
 		alreadyHitThisMove.Clear();
+		hazardSpawned = false;
 		State = FighterState.Attacking;
+
+		StartSpecialMotion(chosen);
 		return true;
+	}
+
+	MoveSlot ChooseAttackSlot(InputState input)
+	{
+		bool airborne = !IsOnFloor();
+		float x = input.Move.X;
+		float y = input.Move.Y;
+
+		if (airborne)
+		{
+			if (y < -0.5f) return MoveSlot.UpAir;
+			if (y > 0.5f) return MoveSlot.DownAir;
+			if (Mathf.Abs(x) > 0.4f)
+			{
+				// Forward and back are relative to facing, not to the screen. That is what
+				// makes a back air a deliberate choice rather than an accident of which way
+				// you happen to be pointing.
+				return Mathf.Sign(x) == Facing ? MoveSlot.ForwardAir : MoveSlot.BackAir;
+			}
+			return MoveSlot.NeutralAir;
+		}
+
+		// Attacking out of a run gives the dash attack, decided by actual speed rather than by
+		// a held direction, so a fighter still sliding from a turnaround does not get one.
+		if (Mathf.Abs(Velocity.X) > Data.RunSpeed * DashThreshold) return MoveSlot.DashAttack;
+
+		if (y < -0.5f) return MoveSlot.UpTilt;
+		if (y > 0.5f) return MoveSlot.DownTilt;
+		if (Mathf.Abs(x) > 0.4f) return MoveSlot.ForwardTilt;
+		return MoveSlot.Jab;
+	}
+
+	static MoveSlot ChooseSpecialSlot(InputState input)
+	{
+		if (input.Move.Y < -0.5f) return MoveSlot.UpSpecial;
+		if (input.Move.Y > 0.5f) return MoveSlot.DownSpecial;
+		if (Mathf.Abs(input.Move.X) > 0.4f) return MoveSlot.SideSpecial;
+		return MoveSlot.NeutralSpecial;
+	}
+
+	/// <summary>
+	/// The movement half of a special, applied the instant it starts. The hazard half waits
+	/// for the active frames, in <see cref="TickAttacking"/>.
+	/// </summary>
+	void StartSpecialMotion(MoveData move)
+	{
+		switch (move.Special)
+		{
+			case SpecialKind.Dash:
+				Velocity = new Vector2(Facing * move.SpecialSpeed, Velocity.Y * 0.2f);
+				break;
+
+			case SpecialKind.Recovery:
+				// An up-special always gives real height, and always refreshes the air jump,
+				// because the whole job of this slot is getting home.
+				Velocity = new Vector2(Velocity.X * 0.4f + Facing * move.SpecialSpeed, -move.SpecialRise);
+				airJumpsUsed = 0;
+				break;
+		}
+	}
+
+	/// <summary>Spawns whatever the special leaves behind, once, on its first active frame.</summary>
+	void SpawnSpecialHazard(MoveData move)
+	{
+		if (hazardSpawned || Match == null) return;
+
+		Vector2 origin = GlobalPosition + new Vector2(move.HitboxOffset.X * Facing, move.HitboxOffset.Y);
+
+		switch (move.Special)
+		{
+			case SpecialKind.Projectile:
+				hazardSpawned = true;
+				Match.SpawnHazard(this, move, origin, new Vector2(Facing * move.SpecialSpeed, -120.0f));
+				break;
+
+			case SpecialKind.Drop:
+				hazardSpawned = true;
+				Match.SpawnHazard(this, move, origin, new Vector2(Velocity.X * 0.3f, move.SpecialSpeed));
+				break;
+
+			case SpecialKind.Trap:
+				hazardSpawned = true;
+				Match.SpawnHazard(this, move, origin, Vector2.Zero);
+				break;
+		}
+	}
+
+	// --- Dodging ---------------------------------------------------------------
+
+	/// <summary>
+	/// Block plus a direction rolls, block on its own spot-dodges, and block in the air is an
+	/// air dodge. All three are invulnerable in the middle and vulnerable at the edges, which
+	/// is what makes dodging a read rather than a panic button.
+	/// </summary>
+	bool TryStartDodge(InputState input)
+	{
+		if (!input.BlockHeld || blockReleaseLagFrames > 0) return false;
+
+		bool airborne = !IsOnFloor();
+		bool directional = Mathf.Abs(input.Move.X) > 0.5f;
+
+		if (airborne)
+		{
+			dodgeFrames = AirDodgeFrames;
+			dodgeVelocity = directional
+				? new Vector2(Mathf.Sign(input.Move.X) * 720.0f, input.Move.Y * 520.0f)
+				: Vector2.Zero;
+		}
+		else if (directional)
+		{
+			dodgeFrames = RollFrames;
+			dodgeVelocity = new Vector2(Mathf.Sign(input.Move.X) * Data.RunSpeed * 1.15f, 0.0f);
+		}
+		else
+		{
+			dodgeFrames = SpotDodgeFrames;
+			dodgeVelocity = Vector2.Zero;
+		}
+
+		dodgeStartFrames = dodgeFrames;
+		IsBlocking = false;
+		Velocity = dodgeVelocity;
+		State = FighterState.Dodging;
+		return true;
+	}
+
+	void TickDodging(float dt)
+	{
+		int elapsed = (State == FighterState.Dodging) ? dodgeStartFrames - dodgeFrames : 0;
+		dodgeFrames--;
+
+		if (elapsed >= DodgeInvulnStart && elapsed <= DodgeInvulnEnd) invulnFrames = 2;
+
+		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0.0f, 2600.0f * dt), Velocity.Y);
+
+		if (dodgeFrames <= 0)
+		{
+			blockReleaseLagFrames = Tuning.BlockReleaseLagFrames;
+			State = IsOnFloor() ? FighterState.Grounded : FighterState.Airborne;
+		}
+	}
+
+	// --- Ledges ----------------------------------------------------------------
+
+	/// <summary>
+	/// Catches a stage corner when falling past it. Recovering from off-stage should feel
+	/// possible rather than punishing, so the snap radius is generous and grabbing grants a
+	/// moment of invulnerability.
+	/// </summary>
+	bool TryGrabLedge()
+	{
+		if (Match == null || ledgeCooldownFrames > 0) return false;
+		if (Velocity.Y < -140.0f) return false;
+
+		foreach (Vector2 ledge in Match.Ledges)
+		{
+			// Only from outside the platform, and only from at or below the lip - otherwise a
+			// fighter standing on the edge would grab the floor they are already on.
+			bool outside = Mathf.Sign(GlobalPosition.X - ledge.X) != 0;
+			if (!outside) continue;
+			if (GlobalPosition.Y < ledge.Y - 30.0f) continue;
+			if (GlobalPosition.DistanceSquaredTo(ledge) > LedgeSnapRadius * LedgeSnapRadius) continue;
+
+			heldLedge = ledge;
+			Facing = GlobalPosition.X < ledge.X ? 1 : -1;
+			GlobalPosition = ledge + new Vector2(-Facing * Data.BodySize.X * 0.45f, Data.BodySize.Y * 0.42f);
+			Velocity = Vector2.Zero;
+			airJumpsUsed = 0;
+			invulnFrames = Mathf.Max(invulnFrames, LedgeGrabInvulnFrames);
+			State = FighterState.LedgeHang;
+			return true;
+		}
+
+		return false;
+	}
+
+	void TickLedgeHang(InputState input)
+	{
+		Velocity = Vector2.Zero;
+
+		// Away from the stage, or down: let go.
+		bool awayFromStage = Mathf.Abs(input.Move.X) > 0.5f && Mathf.Sign(input.Move.X) != Facing;
+		if (awayFromStage || input.Move.Y > 0.6f)
+		{
+			ReleaseLedge();
+			return;
+		}
+
+		// Up, toward the stage, or jump: climb back on.
+		if (jumpBufferFrames > 0 || input.Move.Y < -0.5f
+			|| (Mathf.Abs(input.Move.X) > 0.5f && Mathf.Sign(input.Move.X) == Facing))
+		{
+			jumpBufferFrames = 0;
+			ReleaseLedge();
+			GlobalPosition = heldLedge + new Vector2(Facing * 30.0f, -Data.BodySize.Y * 0.55f);
+			Velocity = new Vector2(Facing * 180.0f, -Data.JumpForce * 0.72f);
+		}
+	}
+
+	void ReleaseLedge()
+	{
+		ledgeCooldownFrames = LedgeRegrabCooldown;
+		State = FighterState.Airborne;
 	}
 
 	/// <summary>
@@ -458,6 +815,8 @@ public partial class Fighter : CharacterBody2D
 
 	public float CurrentHitboxRadius => currentMove?.HitboxRadius ?? 0.0f;
 
+	public bool CanBeHitByHazard => CanBeHit;
+
 	bool CanBeHit =>
 		invulnFrames <= 0
 		&& State != FighterState.Eliminated
@@ -475,7 +834,7 @@ public partial class Fighter : CharacterBody2D
 		Percent += damage;
 
 		float knockback = Knockback.Compute(
-			Percent, damage, Data.Weight, move.BaseKnockback, move.KnockbackGrowth);
+			Percent, damage, Data.BodyWeight, move.BaseKnockback, move.KnockbackGrowth);
 
 		if (blocked) knockback *= Tuning.BlockKnockbackMultiplier;
 
@@ -507,6 +866,10 @@ public partial class Fighter : CharacterBody2D
 		hitstunFrames = 0;
 		hitlagFrames = 0;
 		airJumpsUsed = 0;
+		dropThroughFrames = 0;
+		dodgeFrames = 0;
+		ledgeCooldownFrames = 0;
+		CollisionMask = GroundMask;
 
 		if (Stocks <= 0)
 		{

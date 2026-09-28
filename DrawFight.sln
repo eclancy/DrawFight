@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DuskFight", "DuskFight.csproj", "{7A3C1E42-9B58-4D21-A6F3-2C8E5B1D9047}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DrawFight", "DrawFight.csproj", "{7A3C1E42-9B58-4D21-A6F3-2C8E5B1D9047}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

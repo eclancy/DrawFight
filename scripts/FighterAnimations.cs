@@ -161,6 +161,23 @@ public static class FighterAnimations
 		(LFU, -26), (LFL, 10), (LBU, 20), (LBL, 14),
 		(Prop, -66));
 
+	/// <summary>
+	/// The lunging variant, used by moves that carry their momentum. Weight is thrown forward
+	/// and the trailing leg is left behind, so a dash attack reads as a committed charge
+	/// rather than as a jab that happens to be sliding.
+	/// </summary>
+	public static readonly Pose LungeWindup = new Pose(new Vector2(-6, 6),
+		(Torso, 24), (Head, -10),
+		(AFU, 48), (AFL, 40), (ABU, -30), (ABL, -20),
+		(LFU, -34), (LFL, 40), (LBU, 26), (LBL, 18),
+		(Prop, 60));
+
+	public static readonly Pose LungeStrike = new Pose(new Vector2(14, 4),
+		(Torso, -30), (Head, 16),
+		(AFU, -92), (AFL, -20), (ABU, 52), (ABL, 30),
+		(LFU, -52), (LFL, 16), (LBU, 42), (LBL, 34),
+		(Prop, -74));
+
 	public static readonly Pose AttackRecover = new Pose(new Vector2(1, 3),
 		(Torso, -4), (Head, 3),
 		(AFU, -34), (AFL, -38), (ABU, 16), (ABL, 18),
@@ -169,31 +186,45 @@ public static class FighterAnimations
 
 	/// <summary>
 	/// Samples an attack against a move's frame data. Startup eases into the windup, the strike
-	/// snaps over two frames so the hit reads as sharp, and endlag drifts back toward neutral.
+	/// is fully out on the first active frame, and endlag drifts back toward neutral.
 	/// </summary>
-	public static void SampleAttack(MoveData move, float moveFrame, Pose into)
+	public static void SampleAttack(MoveData move, float moveFrame, Pose into, bool lunging = false)
 	{
+		Pose windup = lunging ? LungeWindup : AttackWindup;
+		Pose strike = lunging ? LungeStrike : AttackStrike;
+
 		float startup = Mathf.Max(1, move.StartupFrames);
 		float activeEnd = move.StartupFrames + move.ActiveFrames;
 
 		if (moveFrame <= startup)
 		{
 			float t = moveFrame / startup;
-			Pose.Blend(AttackRecover, AttackWindup, t * t, into);
+			Pose.Blend(AttackRecover, windup, t * t, into);
 			return;
 		}
 
 		if (moveFrame <= activeEnd)
 		{
-			// Deliberately fast: the whole point of a strike pose is that it arrives, not that
-			// it eases in.
-			float t = Mathf.Min(1.0f, (moveFrame - startup) / 2.0f);
-			Pose.Blend(AttackWindup, AttackStrike, t, into);
+			// Most hits connect on the first active frame, and hitlag then freezes the puppet on
+			// whatever pose it has - so the strike must already be fully out, not on its way.
+			Pose.Blend(windup, strike, 1.0f, into);
 			return;
 		}
 
 		float endlag = Mathf.Max(1, move.EndlagFrames);
 		float e = Mathf.Clamp((moveFrame - activeEnd) / endlag, 0.0f, 1.0f);
-		Pose.Blend(AttackStrike, AttackRecover, e * e * (3.0f - 2.0f * e), into);
+		Pose.Blend(strike, AttackRecover, e * e * (3.0f - 2.0f * e), into);
+	}
+
+	/// <summary>
+	/// How hard the rig chases an attack pose. Active frames snap: easing there leaves the arm a
+	/// third extended on the frame the hitbox connects. Startup and endlag still ease, so entering
+	/// and leaving a move does not pop.
+	/// </summary>
+	public static float AttackBlend(MoveData move, float moveFrame)
+	{
+		bool active = moveFrame > move.StartupFrames
+			&& moveFrame <= move.StartupFrames + move.ActiveFrames;
+		return active ? 1.0f : 0.6f;
 	}
 }

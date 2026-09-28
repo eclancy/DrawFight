@@ -90,6 +90,48 @@ this machine has only Python 2.7 with PIL and no numpy, which makes per-pixel wo
 awkward, and keeping the tool in C# inside the editor means it can generate scenes and resources
 directly and can eventually be handed to him to use himself.
 
+**It has two input paths, and they are not equally good.** Which one a drawing arrives on is
+decided by how it was made, and the drawing guide now pushes tablet users toward the good one.
+
+### Path A: layered art (preferred)
+
+A drawing made on a tablet with **one body part per layer**, exported as separate PNGs. Almost
+every tablet app can do this - Procreate, Krita, Photoshop, Clip Studio all have some form of
+"export layers as individual files".
+
+This path **skips the two hardest and most error-prone steps entirely**:
+
+- There is no background to remove, because a layer exported with transparency has none.
+- There is no cutting, because the layers *are* the parts. Nothing can be cut in the wrong
+  place, so the fighter comes out exactly as it was drawn.
+
+It also hands us something unexpected for free. Apps export layers at **full canvas size** with
+each part sitting where it was drawn, so the parts arrive already in their correct positions
+relative to one another. The bone offsets can be computed from the layer contents rather than
+measured by hand.
+
+What the tool still has to do:
+
+1. **Match layers to bones** by filename, case and punctuation insensitive, so `front arm.png`,
+   `Front_Arm.png` and `armFront.png` all land on the same bone. Anything it cannot match gets a
+   dropdown, because a nine-year-old naming layers is not a spec.
+2. **Auto-crop** each layer to its own non-transparent pixels, recording the offset it trimmed.
+3. **Guess the pivots**, which is newly possible: each part is already isolated, so the joint is
+   the end of the part nearest its parent bone. Guessing then letting someone nudge is far less
+   work than placing every pivot from scratch.
+4. **Rotate each part to canonical orientation**, since a layer is drawn in a pose and the rig
+   expects limbs pointing down. The angle comes from the part's own long axis.
+
+**Do not make a PSD parser.** Godot reads PNG and not PSD, and a folder of exported PNGs is
+both easier for a kid to produce and trivial to read. If a single-file format ever becomes
+worth it, OpenRaster (`.ora`) is the one to add - it is a zip of PNGs plus an XML manifest, and
+Godot has `ZIPReader`.
+
+### Path B: a flat image
+
+A photograph of paper, or a tablet drawing exported as one flattened picture. This is the
+original flow and it stays, because paper is still how most of these will arrive.
+
 The flow:
 
 1. **Load the photo.** Any JPEG or PNG.
@@ -106,6 +148,10 @@ The flow:
    rotation preview so a bad pivot is obvious immediately.
 5. **Generate.** Writes the sliced part PNGs and a `rig.json` manifest, plus a
    `FighterData_<Name>.tres` stub with default stats ready to be filled in.
+
+**Both paths converge on step 5.** They differ only in how the parts and pivots are obtained, so
+everything downstream - the manifest, the rig, the animation library - never learns which path a
+fighter came in on.
 
 ## The rig is a Node2D tree, not a Skeleton2D
 

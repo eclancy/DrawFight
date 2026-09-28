@@ -18,26 +18,23 @@ public partial class FighterData : Resource
 
 	// --- Survivability -------------------------------------------------------
 
-	/// <summary>100 is average. Heavier survives to higher percent but is easier to hit.</summary>
-	[Export] public float Weight { get; set; } = 100.0f;
-
 	// --- Ground movement -----------------------------------------------------
 
-	[Export] public float RunSpeed { get; set; } = 620.0f;
-	[Export] public float GroundAcceleration { get; set; } = 6000.0f;
-	[Export] public float GroundFriction { get; set; } = 5200.0f;
+	[Export] public float RunSpeed { get; set; } = 880.0f;
+	[Export] public float GroundAcceleration { get; set; } = 9500.0f;
+	[Export] public float GroundFriction { get; set; } = 7400.0f;
 
 	// --- Air movement --------------------------------------------------------
 
-	[Export] public float AirSpeed { get; set; } = 500.0f;
-	[Export] public float AirAcceleration { get; set; } = 2600.0f;
-	[Export] public float JumpForce { get; set; } = 1180.0f;
-	[Export] public float AirJumpForce { get; set; } = 1080.0f;
+	[Export] public float AirSpeed { get; set; } = 720.0f;
+	[Export] public float AirAcceleration { get; set; } = 4300.0f;
+	[Export] public float JumpForce { get; set; } = 1640.0f;
+	[Export] public float AirJumpForce { get; set; } = 1500.0f;
 	[Export] public int AirJumps { get; set; } = 1;
 
-	[Export] public float Gravity { get; set; } = 2900.0f;
-	[Export] public float MaxFallSpeed { get; set; } = 1150.0f;
-	[Export] public float FastFallSpeed { get; set; } = 1900.0f;
+	[Export] public float Gravity { get; set; } = 5200.0f;
+	[Export] public float MaxFallSpeed { get; set; } = 1850.0f;
+	[Export] public float FastFallSpeed { get; set; } = 2900.0f;
 
 	// --- Presentation --------------------------------------------------------
 
@@ -58,7 +55,27 @@ public partial class FighterData : Resource
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
 
-	[Export] public MoveData Jab { get; set; }
+	/// <summary>
+	/// Weight is not only a survivability stat - it retunes the whole moveset. Heavy hits
+	/// harder and slower, light faster and weaker. See .ai/character-design.md.
+	/// </summary>
+	[Export] public WeightClass Weight { get; set; } = WeightClass.Medium;
+
+	/// <summary>
+	/// All fourteen moves, indexed by <see cref="MoveSlot"/>. Built by
+	/// <see cref="DefaultMoveset.Build"/>: ten shared normals retuned by weight, plus four
+	/// specials authored per character.
+	/// </summary>
+	public MoveData[] Moves = System.Array.Empty<MoveData>();
+
+	public MoveData Move(MoveSlot slot)
+	{
+		int i = (int)slot;
+		return i >= 0 && i < Moves.Length ? Moves[i] : null;
+	}
+
+	/// <summary>Body weight for the knockback formula, derived from the weight class.</summary>
+	public float BodyWeight => WeightProfiles.BodyWeight(Weight);
 
 	/// <summary>
 	/// Two fighters with deliberately different feel, so M1 can be judged on whether weight
@@ -66,39 +83,41 @@ public partial class FighterData : Resource
 	/// </summary>
 	public static FighterData PlaceholderLight()
 	{
-		return new FighterData
+		var data = new FighterData
 		{
 			DisplayName = "Swift",
 			PlaceholderColor = new Color(0.36f, 0.72f, 0.98f),
-			Weight = 82.0f,
-			RunSpeed = 700.0f,
-			AirSpeed = 560.0f,
-			JumpForce = 1260.0f,
-			AirJumpForce = 1160.0f,
-			Gravity = 2750.0f,
+			Weight = WeightClass.Light,
+			RunSpeed = 980.0f,
+			AirSpeed = 790.0f,
+			JumpForce = 1720.0f,
+			AirJumpForce = 1570.0f,
+			Gravity = 5000.0f,
 			BodySize = new Vector2(64.0f, 118.0f),
 			RigPath = "res://fighters/swift/rig.json",
 			VisualScale = 1.06f,
-			Jab = MoveData.PlaceholderJab(),
 		};
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire());
+		return data;
 	}
 
 	public static FighterData PlaceholderHeavy()
 	{
-		return new FighterData
+		var data = new FighterData
 		{
 			DisplayName = "Lug",
 			PlaceholderColor = new Color(0.97f, 0.55f, 0.29f),
-			Weight = 128.0f,
-			RunSpeed = 500.0f,
-			AirSpeed = 420.0f,
-			JumpForce = 1080.0f,
-			AirJumpForce = 980.0f,
-			Gravity = 3150.0f,
+			Weight = WeightClass.Heavy,
+			RunSpeed = 740.0f,
+			AirSpeed = 620.0f,
+			JumpForce = 1650.0f,
+			AirJumpForce = 1480.0f,
+			Gravity = 5900.0f,
 			BodySize = new Vector2(84.0f, 142.0f),
 			RigPath = "res://fighters/lug/rig.json",
 			VisualScale = 1.12f,
-			Jab = MoveData.PlaceholderHeavySwing(),
 		};
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.HeavyWeapons());
+		return data;
 	}
 }

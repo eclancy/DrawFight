@@ -1,0 +1,168 @@
+# DrawFight
+
+**A Super Smash Bros.-style platform fighter where every character is a drawing made by a kid.**
+
+You draw a character on paper or on a tablet. It gets cut into pieces, hung on a skeleton, and
+put in a fighting game. Then it runs, jumps, and knocks other people's drawings off the screen.
+
+![The DrawFight title screen: two stick figures fighting on ruled notebook paper](docs/images/title.png)
+
+---
+
+## The trick
+
+One drawing, sliced into body parts, animated as a paper puppet:
+
+![One stick figure shown in ten poses: idle, run, jump, fall, land, block, hurt, attack windup, attack strike, dash](docs/images/poses.png)
+
+That drawing was never redrawn, traced or cleaned up. Those are the same pixels, rotated about
+their joints — which is the entire point of the project. If a limb is lumpy, the limb is lumpy
+in the game.
+
+**Every fighter rigs to the same skeleton**, so the animation library is authored once and
+inherited by all of them. Adding a character is an afternoon of cutting up a photo, not a week
+of animating. That single decision is what makes the project survivable: if a new drawing took a
+weekend to get in the game, a kid would draw three characters and stop.
+
+---
+
+## Status
+
+Playable, and nowhere near finished. Nothing in it has been balanced by anyone who has actually
+played it.
+
+| | |
+|---|---|
+| **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
+| **Moves** | 14 per fighter — jab, 3 tilts, dash attack, 5 aerials, 4 specials |
+| **Fighters** | 2, both **generated stick figures** standing in until real drawings arrive |
+| **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
+| **Screens** | title, character select, stage select, match |
+| **Input** | Xbox pads (hot-pluggable) and keyboard |
+| **Not yet** | CPU opponents, 3–4 players, the art import tool, results screen, sound |
+
+The two fighters in `fighters/` are **scaffolding, not content** — see
+[`fighters/README.md`](fighters/README.md). They exist so the engine could be built and played
+before any real drawing existed, and they get deleted when real ones land.
+
+---
+
+## Running it
+
+Needs [Godot 4.5.1 **Mono**](https://godotengine.org/download) (the C#/.NET build) and .NET 9.
+
+```sh
+dotnet build DrawFight.sln     # ~2s, catches essentially all C# errors
+"$GODOT_BIN" --path .          # run it
+```
+
+Handy flags — each boots straight to one screen and can screenshot itself:
+
+```sh
+"$GODOT_BIN" --path . -- --match --stage=1   # skip the menus
+"$GODOT_BIN" --path . -- --parade --shot=70  # every fighter in every animation
+"$GODOT_BIN" --path . -- --shot=120          # screenshot after 120 frames, then quit
+```
+
+## Controls
+
+| Xbox pad | |
+|---|---|
+| left stick | move — **the harder you push, the faster you run** |
+| A | jump, double jump |
+| X | attack (+ a direction for tilts and aerials, or while running for a dash attack) |
+| B | special (+ a direction for all four) |
+| Y or RT | block — reduces damage and knockback, never negates it |
+| Y + stick | roll, spot dodge, air dodge |
+| hold ↓ + A | drop through a soft platform |
+
+Keyboard: P1 `WASD` + `G`/`H`/`J`/`F`, P2 arrows + numpad `1`/`2`/`3`/`0`.
+In a match: `F1` hitboxes, `F2` slow motion, `F3` swap pad layout, `F4` cycle stage, `R` restart.
+
+---
+
+## Three ideas the whole codebase rests on
+
+**One skeleton, shared by everyone.** `RigBone` *is* the skeleton. Every fighter has exactly
+those bones, so one animation library drives all of them. A drawing's parts are stored in a
+canonical orientation — limbs pointing straight down — so a bone rotation of zero means the same
+thing for every fighter regardless of the pose it was drawn in.
+
+**Everything is an integer frame count.** The game logic runs at a fixed 60 Hz and no duration
+is ever a float in seconds. Startup, active frames, endlag, hitstun, buffers — all frames. That
+is what makes moves feel consistent and balance arguments concrete, and retrofitting it would
+mean rewriting every move.
+
+**A stage is data, not a renderer.** There is one stage renderer for the whole game. A stage is
+a palette, a list of rectangles and a list of props in `StageCatalog.cs`. If adding one seems to
+need new drawing code, the data model is wrong.
+
+![The Open Plains stage: stick figures fighting on green fields with crayon-drawn oak houses under a blue sky](docs/images/stage-plains.png)
+
+---
+
+## Adding content
+
+**A fighter** — put its parts and a `rig.json` under `fighters/<name>/`, then add an entry to
+`FighterCatalog`. Pick a weight class (Light / Medium / Heavy) and it inherits ten retuned
+normal attacks automatically; only the **four specials** are authored per character, because
+those come from the kid's own description of what their fighter does.
+
+**A stage** — one entry in `StageCatalog`: a palette, some rectangles, some props. No drawing
+code.
+
+**Checking your numbers** — `RegressionChecks` runs on every boot and prints the percent at
+which each move starts KOing, by simulating the launch. Read it before and after touching any
+knockback number. It has already caught a swing that killed at 50% and a jab that caused 38
+frames of hitstun.
+
+---
+
+## Layout
+
+```
+scripts/        all the code, flat — engine, rig, stages, screens, tools
+scenes/         one 2-line .tscn that attaches GameRoot; everything else is built in code
+fighters/       one folder per fighter: source art, sliced parts, rig.json
+tools/art/      the generator that made the placeholder stick figures (Python 2.7 + PIL)
+.ai/            design docs — the source of truth for anything design-shaped
+for-nephew/     written for a 10-12 year old, not for developers
+```
+
+### Design docs
+
+`.ai/` is where decisions live, and why. Worth reading before changing anything design-shaped:
+
+- [`project-overview.md`](.ai/project-overview.md) — the pitch and the five pillars
+- [`fighting-design.md`](.ai/fighting-design.md) — the combat contract, the knockback formula
+- [`art-pipeline.md`](.ai/art-pipeline.md) — how a photo becomes a rigged fighter
+- [`art-direction.md`](.ai/art-direction.md) — crayon and marker, and why night is lavender
+- [`character-design.md`](.ai/character-design.md) — a kid's description → a balanced moveset
+- [`roadmap.md`](.ai/roadmap.md) — what is built and what is deliberately deferred
+
+---
+
+## For the kids
+
+[`for-nephew/`](for-nephew/) is written for a 10–12 year old: how to draw a fighter so it can
+actually be rigged, and a character sheet to fill in. There is a nicer illustrated version of
+the guide [here](https://claude.ai/artifact/DmdTZS491FFJs28Cj8g5qL).
+
+The most important question on the character sheet is **"what is your fighter TERRIBLE at?"** —
+asked before anything is built. A kid designing a fighter will make it fast *and* strong *and*
+tough; a kid asked what it is bad at will cheerfully invent a weakness, because weaknesses are
+characterful and they know that already. That question does the balance work and is disguised
+as the fun one.
+
+---
+
+## A note on the art
+
+This repository is **private**, and the reason is the art rather than the code.
+
+Any real child's artwork that ends up in `fighters/` belongs to the child who drew it. If this
+is ever opened up or shared, the code and the drawings need separate terms, and the drawings
+should almost certainly stay out — the whole point is that they are somebody's.
+
+The stick figures currently in `fighters/` are script-generated and carry no such claim, so they
+are safe to show anywhere.

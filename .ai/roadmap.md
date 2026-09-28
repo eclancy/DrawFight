@@ -52,8 +52,16 @@ it.
 
 ## M3 — The import tool
 
-The `EditorPlugin` dock: load photo, threshold background, box parts, place pivots, generate
-scene and `FighterData` stub. Re-import must preserve hand-tuned stats.
+The `EditorPlugin` dock, with **two input paths** (see `.ai/art-pipeline.md`):
+
+- **Layered art** from a tablet, one body part per layer, exported as separate PNGs. Skips
+  background removal and cutting entirely, and the layer positions give the bone offsets for
+  free. Build this path first - it is both simpler and better, and the drawing guide now
+  steers tablet users toward it.
+- **A flat image**, photographed or flattened: threshold the background, box the parts, place
+  the pivots by hand.
+
+Both converge on the same generate step. Re-import must preserve hand-tuned stats.
 
 Built *after* M2 because M2 teaches us what the tool actually needs to produce. Building the
 tool first means building it against a guess.
@@ -71,9 +79,13 @@ of his own drawings.
 
 ## M5 — A game around the fight
 
-- the stage proper: main platform, two or three soft platforms, grabbable ledges, blast zones
+- ~~the stage proper~~ **done early**: `StageData` + `StageCatalog` + one renderer, and three
+  stages (Fridge Door, Open Plains, City Rooftops). See `.ai/art-direction.md`. Grabbable
+  ledges are still outstanding.
 - HUD: portraits, percent, stock icons
-- title, character select, stage select, results
+- ~~title, character select, stage select~~ **done early.** The title animates two real rigs
+  through the shared animation library rather than a bespoke title animation, so it improves on
+  its own whenever the animations do or a real drawing lands. Results screen still outstanding.
 - a training mode with infinite stocks and hitbox display — this doubles as the debug tool and
   as how he learns his characters
 

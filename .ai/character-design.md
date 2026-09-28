@@ -21,6 +21,36 @@ and he knows that from every cartoon he has ever watched. **Always ask it before
 built, never after** — retroactively nerfing his character is a fight, but a weakness he
 authored himself is canon.
 
+## Weight class comes first
+
+Every fighter is **Light, Medium or Heavy**, and the weight is not only a survivability stat -
+it retunes the whole moveset:
+
+| weight | attacks | survives |
+|--------|---------|----------|
+| Light  | fast, weak, short reach | dies early |
+| Medium | the baseline everything is authored at | average |
+| Heavy  | slow, hard-hitting, long reach | dies late |
+
+This is why the ten normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
+scaled per weight by `WeightProfiles`. A balance change to a tilt then lands on all three
+weights at once instead of being fixed in three places.
+
+The scaling is not symmetrical, on purpose. Heavy pays more in endlag than it gains in startup,
+so a heavy fighter is *punishable when it misses* rather than merely slower to start.
+
+### Knockback growth scales DOWN for heavies
+
+The one that is easy to get wrong, and did get wrong. Knockback already depends on damage, so
+raising a heavy fighter's damage raises its knockback for free. Scaling knockback growth up as
+well double-dips, and the two **compound**: the first pass gave the heavy fighter a back air
+that KO'd at 50%.
+
+So `MoveScale.Growth` moves opposite to `MoveScale.Damage` - heavies trade growth away to pay
+for the damage they gained. Current result: the heavy KOs the light fighter from about 75-95%,
+and the light KOs the heavy from about 145%. Heavy kills early and dies late; light kills late
+and dies early. Read the calibration table after touching any of it.
+
 ## Description to stats
 
 Answers 3 and 4 map onto the `FighterData` stat block from `.ai/fighting-design.md`. The
@@ -86,7 +116,7 @@ he made for fun finds its way into the game without needing a whole fighter buil
 
 ## The normal attacks
 
-The eleven non-special moves — five grounded, five aerial, plus block and dodge behaviour — do
+The ten non-special moves — five grounded, five aerial — do
 **not** need bespoke design per character. Start every fighter from a **shared default moveset**
 that is retuned rather than re-authored:
 

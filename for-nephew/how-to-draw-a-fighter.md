@@ -1,6 +1,7 @@
 # How to draw a fighter
 
-You draw it. We put it in the game. It walks, it jumps, it punches people off the screen.
+You draw it — on paper or on a tablet, whichever you like. We put it in the game. It walks, it
+jumps, it punches people off the screen.
 
 Here is how to draw one so that it works. These rules are not about making your drawing *good* —
 draw whatever you want, it is your character. They are about making it possible for the computer
@@ -26,12 +27,20 @@ those anyway if you want them — keep them for later, and see the last line of 
 
 ## The four rules that matter most
 
-**1. Outline in dark marker or pen. Not pencil.**
+**1. Outline in something dark and solid.**
 
-The computer finds your character by looking for dark lines on white paper. Pencil is too faint
-and too grey — it gets confused with the paper itself. Use a black marker, a Sharpie, or a
-ballpoint pen and press hard. You can colour it in with pencil crayon afterwards, that part is
-fine. It is the **outline** that has to be dark.
+The computer finds your character by looking for dark lines against a pale background. Anything
+faint, grey or fuzzy gets confused with the background itself.
+
+*On paper:* a black marker, a Sharpie, or a ballpoint pen pressed hard. Not pencil — too faint
+and too grey.
+
+*On a tablet:* a thick, hard-edged brush in black. Not a soft airbrush, not a pale colour, and
+not a grainy textured brush. A fuzzy edge is the digital version of a faint pencil line and it
+causes exactly the same trouble.
+
+Either way you can colour it in afterwards with whatever you like. It is the **outline** that
+has to be dark.
 
 **2. Draw big. Fill the whole page.**
 
@@ -97,12 +106,14 @@ the pieces best.
 
 ## The rest
 
-**Plain white paper.** No lines, no grid, no graph paper. Printer paper is perfect.
+**A plain background.** On paper: no lines, no grid, no graph paper — printer paper is perfect.
+On a tablet: a plain white canvas, or better still no background at all.
 
 **Close all your lines.** If you are going to colour it in, make sure the outline has no gaps
 for the colour to leak out of.
 
-**Do not smudge or shade with the side of your pencil.** Smudges look like dirt to the computer
+**No smudging or soft shading.** On a tablet this means airbrushed shadows and glow effects
+too. Smudges look like dirt to the computer
 and it tries to cut them out as if they were part of your character.
 
 **Both arms and both legs, all four visible.** From the side, a real person would have one arm
@@ -137,7 +148,29 @@ time — a small fireball, a medium one, a big one. We play them in order and it
 
 ---
 
-## Taking the photo
+## Drawing on a tablet
+
+All four rules still count — side view, facing right, limbs spread, bends at the joints. But a
+tablet can do three things paper cannot, and they save a lot of work.
+
+- **Turn the background off.** Hide the background layer and export with a see-through
+  background if you can. Then there is nothing to cut away from around the character, and
+  nothing to go wrong doing it.
+- **Export a PNG, not a JPG.** JPGs smear grey smudges around every dark line, which is the
+  exact thing the rules above are trying to avoid. PNG keeps the lines clean and is the only
+  one that can hold a see-through background.
+- **Make the canvas big** — at least 1500 pixels tall. This is the tablet version of filling
+  the whole page.
+
+**The best thing you can do is put one body part on each layer.** Head on one, body on another,
+then each arm and each leg. That is already the hardest part of this job done: we can lift the
+pieces straight out instead of cutting them, so nothing gets cut in the wrong place and the
+character comes out exactly as it was drawn. Name the layers if you can — "head", "front arm",
+"back leg" is plenty.
+
+---
+
+## Sending a paper drawing
 
 This part is easy to get wrong and it wastes a good drawing, so:
 
@@ -163,3 +196,68 @@ answers are what we use to decide how it plays.
 The "what is it **terrible** at" question is not a trick. Every good fighter in every game is
 bad at something, and that is what makes fighting them interesting. A character that is the best
 at everything is boring and nobody picks it.
+
+---
+
+## Where to send it
+
+Email everything to **ericlclancy@gmail.com**.
+
+Put these in the email:
+
+- **The drawing.** A photo if it is on paper, the PNG if it is on a tablet. Send the separate
+  layers too, if you have them.
+- **The effects page** — your fireball, your lightning bolt, whatever your coolest move looks
+  like.
+- **Your filled-in character sheet.**
+- **Anything else you drew** — pets, sidekicks, monsters. They all have somewhere to go.
+
+---
+
+## Want to draw a place to fight in?
+
+Characters are not the only thing you can draw. Somebody has to decide what the **stages** look
+like — the places the fighting happens.
+
+A stage is two things: a **background** (where is this?) and the **platforms** (what can you
+stand on?). Draw both.
+
+**1. Draw it WIDE, not tall.**
+
+Turn the paper sideways. A stage is much wider than it is tall, because people get knocked
+*sideways* off it. A tall drawing has to get chopped.
+
+**2. Keep it pale.**
+
+This is the big one, and it is the opposite of the character rules. Characters are drawn
+**dark**, so the place they fight in has to be **light** — pale blue sky, soft green grass,
+faded colours — or the fighters disappear into it and nobody can see what is happening.
+
+Drawing night-time? Use pale purple with a big moon and little yellow windows. Do not colour the
+sky in black. Night in a game has to be lighter than real night, or you cannot see anyone.
+
+**3. Leave the middle fairly empty.**
+
+The middle is where the fighting happens, and two characters plus a fireball is already a lot to
+look at. Put your detail around the outside — up in the sky, off in the distance, down at the
+bottom.
+
+**4. Show what is holding the platforms up.**
+
+Floating platforms look odd unless something explains them. Tree branches, fridge magnets,
+girders, clouds, rooftops, bits of a climbing frame. Pick a place where things are *already* at
+different heights and the platforms come for free.
+
+### Can you fall off the bottom?
+
+Some stages have one long floor all the way across, so the only way out is sideways or over the
+top. Those are the friendly ones — nobody ever dies from missing a jump.
+
+Other stages are separate islands with gaps between them, and falling down a gap is a real way
+to lose. Those are meaner and more exciting. **Say which one you meant** when you send it.
+
+### Ideas, if you want them
+
+A treehouse. The roof of a school. A pirate ship. The inside of a fridge. A skatepark. A castle
+wall. The moon. A giant kitchen table with cereal boxes to stand on. Your bedroom, but you are
+tiny.
