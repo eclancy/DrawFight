@@ -6,7 +6,7 @@ using Godot;
 ///
 /// Pads go first in connection order, then keyboard schemes fill whoever is left - and the
 /// keyboard schemes are handed out in order too, so the one person on a keyboard in a
-/// pad-plus-keyboard game gets the comfortable WASD half rather than the arrow keys.
+/// pad-plus-keyboard game gets the player 1 keys (arrows + A/Q/W/S) rather than the number pad.
 ///
 /// Menus and the fight share this on purpose. A pad that works in a match has to work on the
 /// character select screen without a second mapping to keep in step.
@@ -44,6 +44,7 @@ public static class ControllerAssignment
 		{
 			GamepadInputSource pad => $"pad {pad.Device + 1}",
 			KeyboardInputSource => "keyboard",
+			CpuInputSource => "CPU",
 			_ => "none",
 		};
 	}

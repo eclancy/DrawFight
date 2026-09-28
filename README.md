@@ -39,7 +39,8 @@ played it.
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
 | **Input** | Xbox pads (hot-pluggable) and keyboard |
-| **Not yet** | CPU opponents, 3–4 players, the art import tool, results screen, sound |
+| **CPU** | one basic computer opponent, for playing alone |
+| **Not yet** | CPU difficulty levels, 3–4 players, the art import tool, results screen, sound |
 
 Swift and Lug are **scaffolding, not content** — see [`fighters/README.md`](fighters/README.md).
 They exist so the engine could be built and played before any real drawing existed, and they get
@@ -77,10 +78,15 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | Y + stick | roll, spot dodge, air dodge |
 | hold ↓ + A | drop through a soft platform |
 
-Keyboard: P1 `WASD` + `G`/`H`/`J`/`F`, P2 arrows + numpad `1`/`2`/`3`/`0`.
+Keyboard: P1 arrow keys to move, `A` jump, `Q` attack, `W` special, `S` block. With no second
+pad, P2 is the number pad: `8`/`4`/`5`/`6` move, `1` jump, `2` attack, `3` special, `0` block.
 
 In menus, each player presses **A** to join, then drags a cursor with the left stick and presses
 **A** to pick; **B** takes a pick back. **QUIT** is on the fighter select screen.
+
+**Playing alone:** press **CPU** in the other player's panel. **CHANGE** cycles the computer's
+fighter and **REMOVE** takes it out; a second player pressing A on their own controller takes
+the seat back.
 
 In a match: `F1` hitboxes, `F2` slow motion, `F3` swap pad layout, `F4` cycle stage, `R` restart.
 

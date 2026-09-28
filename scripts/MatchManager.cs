@@ -21,6 +21,10 @@ public partial class MatchManager : Node2D
 	public int StageIndex;
 	public int[] FighterIndices = { 0, 1 };
 
+	/// <summary>Which players the computer plays. Set by GameRoot, like the fighters.</summary>
+	public bool[] CpuPlayers = { false, false };
+	CpuInputSource[] cpus;
+
 	Stage stage;
 	GameCamera camera;
 	HitFx fx;
@@ -83,12 +87,36 @@ public partial class MatchManager : Node2D
 	/// <summary>Rebuilds every player's controller. Called on hot-plug by GameRoot.</summary>
 	public void ReassignControllers()
 	{
-		IInputSource[] sources = ControllerAssignment.ForPlayers(Fighters.Count);
-		for (int i = 0; i < Fighters.Count; i++) Fighters[i].Controller = sources[i];
+		// A CPU keeps its slot through hot-plugging: plugging in a pad should not replace the
+		// computer player, and the humans still get pads in connection order.
+		cpus ??= new CpuInputSource[Fighters.Count];
+		int humans = 0;
+		for (int i = 0; i < Fighters.Count; i++) if (!IsCpu(i)) humans++;
+		IInputSource[] sources = ControllerAssignment.ForPlayers(Mathf.Max(1, humans));
+
+		int next = 0;
+		for (int i = 0; i < Fighters.Count; i++)
+		{
+			if (IsCpu(i))
+			{
+				if (cpus[i] == null)
+				{
+					cpus[i] = new CpuInputSource(this, i);
+					cpus[i].Drive(Fighters[i]);
+				}
+				Fighters[i].Controller = cpus[i];
+			}
+			else
+			{
+				Fighters[i].Controller = sources[next++];
+			}
+		}
 		hud?.SetControllerLabels(DescribeControllers(), ControllerAssignment.Layout.Describe());
 	}
 
 	void AssignControllers() => ReassignControllers();
+
+	bool IsCpu(int player) => player < CpuPlayers.Length && CpuPlayers[player];
 
 	List<string> DescribeControllers()
 	{

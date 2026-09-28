@@ -1082,6 +1082,12 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>Still on the stage and fighting - not respawning and not out of the match.</summary>
 	public bool IsInPlay => State != FighterState.Eliminated && State != FighterState.Respawning;
 
+	/// <summary>Whether the air jump is still available. Read by the CPU to plan a recovery.</summary>
+	public bool HasAirJump => airJumpsUsed < Data.AirJumps;
+
+	/// <summary>The move in progress, or null. Read by the CPU to see an attack coming.</summary>
+	public MoveData CurrentMove => State == FighterState.Attacking ? currentMove : null;
+
 	/// <summary>
 	/// Where a beam comes out: his hands, held out in front of the body. It is asked every frame,
 	/// so a beam fired in the air follows him down.

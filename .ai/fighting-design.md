@@ -189,8 +189,8 @@ cheapest large win available on a pad. The victim's pad gets intensity scaled by
 hit confirms on both sides without the two buzzes competing. A KO gets the strongest rumble in
 the game.
 
-Keyboard fallback: P1 is `WASD` + `G` jump, `H` attack, `J` special, `F` block. P2 is the arrow
-keys + numpad `1` `2` `3` `0`.
+Keyboard fallback: P1 is the arrow keys + `A` jump, `Q` attack, `W` special, `S` block. P2 is
+all number pad: `8` `4` `5` `6` to move, `1` jump, `2` attack, `3` special, `0` block.
 
 ## Dropping through platforms
 

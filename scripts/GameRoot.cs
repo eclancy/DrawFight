@@ -16,6 +16,9 @@ public partial class GameRoot : Node2D
 	public const int PlayerCount = 2;
 
 	public int[] SelectedFighters = { 0, 1 };
+
+	/// <summary>Which players the computer plays, chosen on the fighter select screen.</summary>
+	public bool[] CpuPlayers = { false, false };
 	public int SelectedStage;
 
 	Node currentScreen;
@@ -45,6 +48,7 @@ public partial class GameRoot : Node2D
 					SelectedFighters[i] = picks[i].ToInt();
 				}
 			}
+			if (arg == "--cpu") CpuPlayers[1] = true;
 			if (arg == "--parade") startAt = "parade";
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
@@ -91,6 +95,7 @@ public partial class GameRoot : Node2D
 		{
 			StageIndex = SelectedStage,
 			FighterIndices = (int[])SelectedFighters.Clone(),
+			CpuPlayers = (bool[])CpuPlayers.Clone(),
 		};
 		Show(match);
 	}

@@ -2,8 +2,8 @@ using Godot;
 
 /// <summary>
 /// Pick where to fight: either player points at a stage and presses A. B goes back to the
-/// fighters. Both players have a cursor, because they both just joined on the previous screen
-/// and a cursor that vanishes for one of them reads as "you are not playing any more".
+/// fighters. Every person playing has a cursor, because they all just joined on the previous
+/// screen and a cursor that vanishes reads as "you are not playing any more". A CPU has none.
 ///
 /// Every stage shows a live preview built from its own <see cref="StageData"/>, so a stage
 /// added to <see cref="StageCatalog"/> appears here with no work: the preview is the same
@@ -11,7 +11,7 @@ using Godot;
 /// </summary>
 public partial class StageSelectScreen : Node2D
 {
-	readonly MenuCursor[] cursors = new MenuCursor[2];
+	MenuCursor[] cursors;
 	readonly StageData[] stages = new StageData[StageCatalog.Count];
 	readonly Rect2[] cards = new Rect2[StageCatalog.Count];
 
@@ -25,6 +25,11 @@ public partial class StageSelectScreen : Node2D
 
 	public override void _Ready()
 	{
+		bool[] cpu = GameRoot.Instance.CpuPlayers;
+		int humans = 0;
+		foreach (bool isCpu in cpu) if (!isCpu) humans++;
+		cursors = new MenuCursor[Mathf.Max(1, humans)];
+
 		IInputSource[] sources = ControllerAssignment.ForPlayers(cursors.Length);
 		Vector2 viewport = GetViewportRect().Size;
 
@@ -37,10 +42,14 @@ public partial class StageSelectScreen : Node2D
 			cards[i] = new Rect2(left + i * (CardWidth + CardGap), 262.0f, CardWidth, 440.0f);
 		}
 
-		for (int i = 0; i < cursors.Length; i++)
+		// Humans keep their player number and colour; the CPU's seat is simply skipped.
+		for (int player = 0, next = 0; player < cpu.Length && next < cursors.Length; player++)
 		{
-			Color tint = i == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
-			cursors[i] = new MenuCursor(sources[i], i, tint, new Vector2(viewport.X * (0.4f + i * 0.2f), 900.0f));
+			if (cpu[player] && humans > 0) continue;
+			Color tint = player == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
+			cursors[next] = new MenuCursor(sources[next], player, tint,
+				new Vector2(viewport.X * (0.4f + player * 0.2f), 900.0f));
+			next++;
 		}
 
 		var layer = new CanvasLayer();

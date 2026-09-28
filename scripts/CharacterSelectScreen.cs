@@ -11,6 +11,10 @@ using Godot;
 ///
 /// Each fighter gets a short description of how it plays, never a list of its moves. Finding
 /// out what a fighter's specials do is part of playing it.
+///
+/// A seat nobody has joined offers a CPU button, so one person can play alone. Any joined player
+/// can add the CPU, change its fighter or remove it; and whoever owns that seat's controller
+/// takes it back just by pressing A.
 /// </summary>
 public partial class CharacterSelectScreen : Node2D
 {
@@ -24,6 +28,8 @@ public partial class CharacterSelectScreen : Node2D
 		public Label State;
 		public Color Tint;
 		public bool Locked => Index >= 0;
+		public bool IsCpu;
+		public bool Human => Joined && !IsCpu;
 	}
 
 	sealed class Card
@@ -123,6 +129,13 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			slots[i] = slot;
+
+			// Coming back from stage select, a CPU picked earlier is still sitting there.
+			if (GameRoot.Instance.CpuPlayers[i])
+			{
+				slot.Joined = slot.IsCpu = true;
+				slot.Index = GameRoot.Instance.SelectedFighters[i];
+			}
 		}
 
 		var quitLabel = MenuTheme.MakeLabel("QUIT", QuitBox.Position, 40, MenuTheme.Text);
@@ -135,7 +148,7 @@ public partial class CharacterSelectScreen : Node2D
 		{
 			foreach (Slot slot in slots)
 			{
-				if (slot.Joined) slot.Cursor.Draw(canvas);
+				if (slot.Human) slot.Cursor.Draw(canvas);
 			}
 		});
 
@@ -162,6 +175,65 @@ public partial class CharacterSelectScreen : Node2D
 		}
 	}
 
+	/// <summary>The CPU buttons live in the bottom corner of a seat's panel.</summary>
+	Rect2 CpuButton(int player, int which)
+	{
+		Rect2 panel = PanelRect(player, GetViewportRect().Size);
+		const float W = 170.0f;
+		const float H = 58.0f;
+		return new Rect2(panel.End.X - 24.0f - W - which * (W + 14.0f), panel.End.Y - 24.0f - H, W, H);
+	}
+
+	/// <summary>
+	/// A joined player pressing A on another seat's CPU buttons. Returns true if it was one, so
+	/// the press is not also taken as a fighter pick.
+	/// </summary>
+	bool TryCpuButtons(Vector2 point)
+	{
+		for (int i = 0; i < slots.Length; i++)
+		{
+			Slot seat = slots[i];
+
+			if (!seat.Joined && CpuButton(i, 0).HasPoint(point))
+			{
+				seat.Joined = seat.IsCpu = true;
+				seat.Index = (int)(GD.Randi() % (uint)FighterCatalog.Count);
+				return true;
+			}
+
+			if (!seat.IsCpu) continue;
+
+			if (CpuButton(i, 1).HasPoint(point))
+			{
+				seat.Index = (seat.Index + 1) % FighterCatalog.Count;
+				return true;
+			}
+
+			if (CpuButton(i, 0).HasPoint(point))
+			{
+				seat.Joined = seat.IsCpu = false;
+				seat.Index = -1;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>A small crayon button, outlined in the colour of any cursor over it.</summary>
+	void DrawButton(Rect2 box, string text, int seed)
+	{
+		Color ink = MenuTheme.Rule;
+		foreach (Slot slot in slots)
+		{
+			if (slot.Human && box.HasPoint(slot.Cursor.Position)) ink = slot.Tint;
+		}
+
+		DrawRect(box, new Color(1.0f, 1.0f, 1.0f, 0.85f));
+		CrayonBrush.InkRect(this, box, ink, ink == MenuTheme.Rule ? 3.0f : 6.0f, seed, 2.2f);
+		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + 11.0f), text,
+			HorizontalAlignment.Center, box.Size.X, 30, MenuTheme.Text);
+	}
+
 	int CardUnder(Vector2 point)
 	{
 		for (int i = 0; i < cards.Length; i++)
@@ -180,9 +252,16 @@ public partial class CharacterSelectScreen : Node2D
 			MenuCursor cursor = slot.Cursor;
 			cursor.Update(viewport);
 
-			if (!slot.Joined)
+			if (!slot.Joined || slot.IsCpu)
 			{
-				if (cursor.Confirm) slot.Joined = true;
+				// Pressing A on this seat's own controller joins it - replacing a CPU if one is
+				// sitting there, because a person who wants to play always beats the computer.
+				if (cursor.Confirm)
+				{
+					slot.Joined = true;
+					slot.IsCpu = false;
+					slot.Index = -1;
+				}
 				continue;
 			}
 
@@ -208,6 +287,8 @@ public partial class CharacterSelectScreen : Node2D
 				return;
 			}
 
+			if (TryCpuButtons(cursor.Position)) continue;
+
 			int picked = CardUnder(cursor.Position);
 			if (picked >= 0) slot.Index = picked;
 		}
@@ -225,12 +306,22 @@ public partial class CharacterSelectScreen : Node2D
 		cursorLayer.QueueRedraw();
 
 		bool everyoneReady = true;
-		foreach (Slot slot in slots) everyoneReady &= slot.Joined && slot.Locked;
+		bool anyHuman = false;
+		foreach (Slot slot in slots)
+		{
+			everyoneReady &= slot.Joined && slot.Locked;
+			anyHuman |= slot.Human;
+		}
+		everyoneReady &= anyHuman;
 
 		readyFrames = everyoneReady ? readyFrames + 1 : 0;
 		if (readyFrames < ReadyHoldFrames) return;
 
-		for (int i = 0; i < slots.Length; i++) GameRoot.Instance.SelectedFighters[i] = slots[i].Index;
+		for (int i = 0; i < slots.Length; i++)
+		{
+			GameRoot.Instance.SelectedFighters[i] = slots[i].Index;
+			GameRoot.Instance.CpuPlayers[i] = slots[i].IsCpu;
+		}
 		GameRoot.Instance.GoStageSelect();
 	}
 
@@ -243,6 +334,14 @@ public partial class CharacterSelectScreen : Node2D
 				slot.Name.Text = "";
 				slot.Blurb.Text = "";
 				slot.State.Text = "Press A to join";
+				continue;
+			}
+
+			if (slot.IsCpu)
+			{
+				slot.Name.Text = FighterCatalog.NameOf(slot.Index);
+				slot.Blurb.Text = FighterCatalog.BlurbOf(slot.Index);
+				slot.State.Text = "CPU";
 				continue;
 			}
 
@@ -285,6 +384,22 @@ public partial class CharacterSelectScreen : Node2D
 			DrawRect(panel, new Color(1.0f, 1.0f, 1.0f, slot.Joined ? 0.55f : 0.3f));
 			CrayonBrush.InkRect(this, panel, slot.Locked ? slot.Tint : MenuTheme.Rule,
 				slot.Locked ? 6.0f : 3.0f, 51 + i * 7, 2.6f);
+		}
+
+		for (int i = 0; i < slots.Length; i++)
+		{
+			Slot seat = slots[i];
+			if (seat.Human) continue;
+
+			if (seat.IsCpu)
+			{
+				DrawButton(CpuButton(i, 1), "CHANGE", 91 + i);
+				DrawButton(CpuButton(i, 0), "REMOVE", 93 + i);
+			}
+			else
+			{
+				DrawButton(CpuButton(i, 0), "CPU", 95 + i);
+			}
 		}
 
 		bool quitHovered = mouseOverQuit;

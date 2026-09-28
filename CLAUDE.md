@@ -81,7 +81,8 @@ they read drifts from the version we maintain.
   screenshot it. `F4` cycles stages while playing.
 - **`--match`, `--select`, `--stages`, `--parade`** each boot straight to that screen, so a
   screen can be checked without clicking through the flow to reach it. **`--fighters=2,0`**
-  picks the matchup (player one, player two) by catalog index.
+  picks the matchup (player one, player two) by catalog index, and **`--cpu`** makes player two
+  the computer.
 - **`"$GODOT_BIN" --headless --path . --quit-after 120`** — boot the match headless and read
   the `RegressionChecks:` calibration table it prints. This is how you find out what percent a
   move KOs at without picking up a controller. **Read it before and after changing any

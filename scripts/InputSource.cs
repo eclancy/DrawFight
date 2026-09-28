@@ -60,14 +60,17 @@ public class KeyboardInputSource : IInputSource
 		this.block = block;
 	}
 
-	/// <summary>Player 1: WASD to move, left hand cluster to act.</summary>
+	/// <summary>Player 1: arrow keys to move; A jump, Q attack, W special, S block.</summary>
 	public static KeyboardInputSource Player1() => new KeyboardInputSource(
-		Key.A, Key.D, Key.W, Key.S,
-		Key.G, Key.H, Key.J, Key.F);
-
-	/// <summary>Player 2: arrow keys to move, numpad to act.</summary>
-	public static KeyboardInputSource Player2() => new KeyboardInputSource(
 		Key.Left, Key.Right, Key.Up, Key.Down,
+		Key.A, Key.Q, Key.W, Key.S);
+
+	/// <summary>
+	/// Player 2, only when there is no second pad: all on the number pad, since player 1 has the
+	/// arrows. 8/4/5/6 move; 1 jump, 2 attack, 3 special, 0 block.
+	/// </summary>
+	public static KeyboardInputSource Player2() => new KeyboardInputSource(
+		Key.Kp4, Key.Kp6, Key.Kp8, Key.Kp5,
 		Key.Kp1, Key.Kp2, Key.Kp3, Key.Kp0);
 
 	public InputState Poll()
