@@ -1,12 +1,11 @@
 using Godot;
 
 /// <summary>
-/// The four specials for each example fighter.
+/// The four specials for each fighter.
 ///
-/// These are placeholders built to the shape a real kid's answers would take, so the machinery
-/// is ready when the character sheets come back. When they do, a character's specials get
-/// written here from HIS description - see .ai/character-design.md - and these go away with the
-/// stick figures.
+/// Swift's and Lug's are placeholders built to the shape a real kid's answers would take, and go
+/// away with the stick figures. Circy's are the first real ones, written from Elim's character
+/// sheet - see .ai/character-design.md for how a description becomes a special.
 ///
 /// Two rules hold whatever a kid asks for:
 ///   - the UP special must give real vertical recovery, always, or the fighter is unplayable
@@ -77,6 +76,111 @@ public static class Specials
 		Special = SpecialKind.Trap,
 		SpecialLifetime = 260,
 		FxColor = new Color(0.95f, 0.42f, 0.22f), FxRadius = 46.0f,
+	};
+
+	// =========================================================================
+	// CIRCY - drawn and described by Elim
+	//
+	// "A yellow sphere with limbs, eyes and a mouth." Amazing at stretching, falling slowly
+	// and self-destructing; terrible at jumping, and rolls over when he gets hit.
+	// =========================================================================
+
+	public static MoveData[] Circy()
+	{
+		return new[] { Stretch(), LaserBeam(), GrapplingHook(), CircyBomb() };
+	}
+
+	/// <summary>One of Elim's effect drawings, or null so the move falls back to a crayon circle.</summary>
+	static Texture2D CircyFx(string name)
+	{
+		string path = $"res://fighters/circy/poses/{name}.png";
+		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+	}
+
+	/// <summary>
+	/// Neutral: the signature, and Elim's coolest move. Hold special and push the stick up to
+	/// grow his legs long, down to squash them short. Tall makes the laser bigger; short makes
+	/// him faster. See <see cref="SizeLevels"/> for what each size costs.
+	///
+	/// On the sheet it was "special with the stick up / down", but up-special and down-special
+	/// are the grappling hook and the bomb. So you press special on its own and THEN steer with
+	/// the stick - the same gesture, one beat later, and the recovery stays where it must be.
+	/// </summary>
+	static MoveData Stretch() => new MoveData
+	{
+		MoveName = "Stretch",
+		// The active window is how long the stance lasts while the button is held. Letting go
+		// ends it early, so a quick change costs only a few frames.
+		StartupFrames = 4, ActiveFrames = 60, EndlagFrames = 6,
+		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
+		HitboxRadius = 0.0f,
+		Special = SpecialKind.Resize,
+		FxColor = new Color(0.98f, 0.86f, 0.30f), FxRadius = 0.0f,
+	};
+
+	/// <summary>
+	/// Side: "a move for reaching someone far away - he can shoot a laser beam." Fast, straight,
+	/// long-range and light: a poke that stops people camping at a distance, not a finisher. Its
+	/// size and damage follow his height, which is the payoff for being tall.
+	/// </summary>
+	static MoveData LaserBeam() => new MoveData
+	{
+		MoveName = "Laser Beam",
+		StartupFrames = 13, ActiveFrames = 2, EndlagFrames = 22,
+		Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.8f,
+		LaunchAngleDegrees = 30.0f,
+		HitboxOffset = new Vector2(58.0f, -30.0f), HitboxRadius = 20.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 1500.0f, SpecialGravity = 0.0f, SpecialLifetime = 44,
+		Beam = true,
+		FxColor = new Color(0.95f, 0.30f, 0.36f), FxRadius = 20.0f,
+		FxTexture = CircyFx("laser"),
+	};
+
+	/// <summary>
+	/// Up: the recovery. "The grappling hook fires diagonally based on the direction you're
+	/// facing. Whether it hits anything or not, it launches Circy toward the hook. He hits anyone
+	/// in the way, and takes some damage too."
+	///
+	/// He hangs in the air while the hook flies out, then is pulled up and forward at 56 degrees.
+	/// The hook never needs to catch on anything, because a recovery that can miss is a recovery
+	/// that loses stocks for reasons a kid cannot see.
+	/// </summary>
+	static MoveData GrapplingHook() => new MoveData
+	{
+		MoveName = "Grappling Hook",
+		StartupFrames = 12, ActiveFrames = 14, EndlagFrames = 18,
+		Damage = 9.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.9f,
+		LaunchAngleDegrees = 60.0f,
+		HitboxOffset = new Vector2(18.0f, -10.0f), HitboxRadius = 58.0f,
+		Special = SpecialKind.Recovery,
+		DelayedLaunch = true, TetherLength = 420.0f,
+		SpecialRise = 1500.0f, SpecialSpeed = 1000.0f,
+		SelfDamage = 3.0f,
+		FxColor = new Color(0.42f, 0.44f, 0.52f), FxRadius = 18.0f,
+	};
+
+	/// <summary>
+	/// Down: "a move that protects you." He stands still, shrinks down and turns into a bomb.
+	/// When someone attacks him, or the fuse runs out, he explodes: the other fighter takes the
+	/// damage and the knockback, and Circy takes less damage and no knockback.
+	///
+	/// It is a counter with a price. Hit it and it goes off in your face; wait it out and he has
+	/// spent two seconds standing still for nothing, and still pays the self-damage. Hitting it
+	/// from a distance with a projectile is the answer, and the reason it is not unbeatable.
+	/// </summary>
+	static MoveData CircyBomb() => new MoveData
+	{
+		MoveName = "Circy Bomb",
+		StartupFrames = 18, ActiveFrames = 120, EndlagFrames = 22,
+		Damage = 16.0f, BaseKnockback = 42.0f, KnockbackGrowth = 0.95f,
+		LaunchAngleDegrees = 58.0f,
+		HitboxOffset = Vector2.Zero, HitboxRadius = 0.0f,
+		Special = SpecialKind.Bomb,
+		SpecialLifetime = 9,
+		SelfDamage = 5.0f,
+		FxColor = new Color(0.98f, 0.62f, 0.22f), FxRadius = 128.0f,
+		FxTexture = CircyFx("boom"),
 	};
 
 	// =========================================================================

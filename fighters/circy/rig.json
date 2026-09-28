@@ -1,0 +1,268 @@
+{
+  "artist": "Elim", 
+  "backLimbDarken": 1.0, 
+  "ballWidth": 906, 
+  "bones": [
+    {
+      "name": "Hip", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": null, 
+      "part": null
+    }, 
+    {
+      "name": "LegBack_Upper", 
+      "offset": [
+        -214.5, 
+        -42.0
+      ], 
+      "parent": "Hip", 
+      "part": "LegBack_Upper"
+    }, 
+    {
+      "name": "LegBack_Lower", 
+      "offset": [
+        0, 
+        422.4
+      ], 
+      "parent": "LegBack_Upper", 
+      "part": "LegBack_Lower"
+    }, 
+    {
+      "name": "LegFront_Upper", 
+      "offset": [
+        124.5, 
+        -9.0
+      ], 
+      "parent": "Hip", 
+      "part": "LegFront_Upper"
+    }, 
+    {
+      "name": "LegFront_Lower", 
+      "offset": [
+        0, 
+        438.6
+      ], 
+      "parent": "LegFront_Upper", 
+      "part": "LegFront_Lower"
+    }, 
+    {
+      "name": "Torso", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "Torso"
+    }, 
+    {
+      "name": "ArmBack_Upper", 
+      "offset": [
+        -357.5, 
+        -144.0
+      ], 
+      "parent": "Torso", 
+      "part": "ArmBack_Upper"
+    }, 
+    {
+      "name": "ArmBack_Lower", 
+      "offset": [
+        0, 
+        277.1
+      ], 
+      "parent": "ArmBack_Upper", 
+      "part": "ArmBack_Lower"
+    }, 
+    {
+      "name": "Head", 
+      "offset": [
+        0, 
+        -792.0
+      ], 
+      "parent": "Torso", 
+      "part": null
+    }, 
+    {
+      "name": "ArmFront_Upper", 
+      "offset": [
+        334.5, 
+        -142.0
+      ], 
+      "parent": "Torso", 
+      "part": "ArmFront_Upper"
+    }, 
+    {
+      "name": "ArmFront_Lower", 
+      "offset": [
+        0, 
+        184.2
+      ], 
+      "parent": "ArmFront_Upper", 
+      "part": "ArmFront_Lower"
+    }
+  ], 
+  "canonicalHeight": 792.0, 
+  "legLength": 861.1, 
+  "name": "Circy", 
+  "parts": {
+    "ArmBack_Lower": {
+      "pivot": [
+        33.0, 
+        10.14
+      ], 
+      "texture": "parts/ArmBack_Lower.png"
+    }, 
+    "ArmBack_Upper": {
+      "pivot": [
+        0.0, 
+        1.0
+      ], 
+      "texture": "parts/ArmBack_Upper.png"
+    }, 
+    "ArmFront_Lower": {
+      "pivot": [
+        70.0, 
+        10.22
+      ], 
+      "texture": "parts/ArmFront_Lower.png"
+    }, 
+    "ArmFront_Upper": {
+      "pivot": [
+        70.0, 
+        6.0
+      ], 
+      "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "LegBack_Lower": {
+      "pivot": [
+        187.5, 
+        10.94
+      ], 
+      "texture": "parts/LegBack_Lower.png"
+    }, 
+    "LegBack_Upper": {
+      "pivot": [
+        92.5, 
+        6.5
+      ], 
+      "texture": "parts/LegBack_Upper.png"
+    }, 
+    "LegFront_Lower": {
+      "pivot": [
+        16.0, 
+        10.63
+      ], 
+      "texture": "parts/LegFront_Lower.png"
+    }, 
+    "LegFront_Upper": {
+      "pivot": [
+        0.0, 
+        0.0
+      ], 
+      "texture": "parts/LegFront_Upper.png"
+    }, 
+    "Torso": {
+      "pivot": [
+        462.5, 
+        784.0
+      ], 
+      "texture": "parts/Torso.png"
+    }
+  }, 
+  "poses": {
+    "bash": {
+      "anchor": [
+        718.0, 
+        1503
+      ], 
+      "ballWidth": 826, 
+      "texture": "poses/bash.png"
+    }, 
+    "bomb": {
+      "anchor": [
+        416.0, 
+        1080
+      ], 
+      "ballWidth": 818, 
+      "texture": "poses/bomb.png"
+    }, 
+    "boom": {
+      "anchor": [
+        1114.0, 
+        804.0
+      ], 
+      "texture": "poses/boom.png"
+    }, 
+    "gun": {
+      "anchor": [
+        350.5, 
+        368.0
+      ], 
+      "texture": "poses/gun.png"
+    }, 
+    "hook": {
+      "anchor": [
+        303.0, 
+        301.0
+      ], 
+      "texture": "poses/hook.png"
+    }, 
+    "laser": {
+      "anchor": [
+        1200.0, 
+        435.5
+      ], 
+      "texture": "poses/laser.png"
+    }, 
+    "lookout": {
+      "anchor": [
+        591.0, 
+        1397
+      ], 
+      "ballWidth": 602, 
+      "texture": "poses/lookout.png"
+    }, 
+    "rope": {
+      "anchor": [
+        1200.0, 
+        113.5
+      ], 
+      "texture": "poses/rope.png"
+    }, 
+    "shrinking": {
+      "anchor": [
+        66.0, 
+        239
+      ], 
+      "ballWidth": 80, 
+      "scaleLike": "lookout", 
+      "texture": "poses/shrinking.png"
+    }, 
+    "small": {
+      "anchor": [
+        204.0, 
+        509
+      ], 
+      "ballWidth": 246, 
+      "texture": "poses/small.png"
+    }, 
+    "stand": {
+      "anchor": [
+        692.0, 
+        1652
+      ], 
+      "ballWidth": 906, 
+      "texture": "poses/stand.png"
+    }, 
+    "tall": {
+      "anchor": [
+        336.0, 
+        1771
+      ], 
+      "ballWidth": 630, 
+      "texture": "poses/tall.png"
+    }
+  }
+}

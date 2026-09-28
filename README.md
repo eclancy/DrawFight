@@ -35,15 +35,16 @@ played it.
 |---|---|
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 14 per fighter — jab, 3 tilts, dash attack, 5 aerials, 4 specials |
-| **Fighters** | 2, both **generated stick figures** standing in until real drawings arrive |
+| **Fighters** | 3 — **Circy**, the first fighter designed by a kid (Elim), plus two generated stick figures |
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
 | **Input** | Xbox pads (hot-pluggable) and keyboard |
 | **Not yet** | CPU opponents, 3–4 players, the art import tool, results screen, sound |
 
-The two fighters in `fighters/` are **scaffolding, not content** — see
-[`fighters/README.md`](fighters/README.md). They exist so the engine could be built and played
-before any real drawing existed, and they get deleted when real ones land.
+Swift and Lug are **scaffolding, not content** — see [`fighters/README.md`](fighters/README.md).
+They exist so the engine could be built and played before any real drawing existed, and they get
+deleted when real ones land. Circy is the real thing: designed and drawn by Elim, and cut
+straight from Elim's drawings without a line redrawn.
 
 ---
 
@@ -77,6 +78,10 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | hold ↓ + A | drop through a soft platform |
 
 Keyboard: P1 `WASD` + `G`/`H`/`J`/`F`, P2 arrows + numpad `1`/`2`/`3`/`0`.
+
+In menus, each player presses **A** to join, then drags a cursor with the left stick and presses
+**A** to pick; **B** takes a pick back. **QUIT** is on the fighter select screen.
+
 In a match: `F1` hitboxes, `F2` slow motion, `F3` swap pad layout, `F4` cycle stage, `R` restart.
 
 ---
@@ -164,5 +169,5 @@ Any real child's artwork that ends up in `fighters/` belongs to the child who dr
 is ever opened up or shared, the code and the drawings need separate terms, and the drawings
 should almost certainly stay out — the whole point is that they are somebody's.
 
-The stick figures currently in `fighters/` are script-generated and carry no such claim, so they
-are safe to show anywhere.
+Swift and Lug are script-generated and carry no such claim. **Circy is Elim's** — the
+character, the name, the moves, and every drawing under `fighters/circy/source/`.

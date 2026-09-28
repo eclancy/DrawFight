@@ -39,11 +39,17 @@ Not "it works" — fun. If it is not, stay here. Everything downstream is worthl
 - one test fighter, **cut up by hand** rather than by the tool, to prove the rig before
   investing in tooling
 
-**Status: built, except for the part that needs him.** The skeleton, the animation library, the
-rig loader and the parade inspection view all exist and run, driven by two *generated* stick
-figures (`fighters/README.md`). What is still outstanding is the only thing that actually proves
-the pipeline: a rig built from a real photographed drawing. Everything downstream is ready for
-it.
+**Status: built.** The skeleton, the animation library, the rig loader and the parade inspection
+view all exist and run. The real-drawing proof is **Circy**, drawn by Elim and cut by
+`tools/art/cut_circy.py`. It taught two things the importer (M3) must handle:
+
+- **Kids draw whole poses, not just a fighter.** Elim sent ten drawings: the fighter, tall and
+  small versions, a bomb sequence, an explosion, a laser and the pieces of a grappling hook. The
+  rig carries these as **held poses** (shown instead of the puppet while a move holds still) and
+  **effect art** on `MoveData.FxTexture`. The importer needs a place to put both.
+- **Digital drawings arrive on a transparent canvas**, which makes cutting mechanical: the body
+  is the filled shape, every other stroke is a limb. Thin digital lines survive the cut but read
+  faint at match size.
 - add **blocking and dodging** here, not in M1 — blocking is two multipliers on the damage
   pipeline (see `.ai/fighting-design.md`) and is not needed to answer the question M1 exists to
   answer

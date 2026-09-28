@@ -3,7 +3,7 @@ using Godot;
 
 /// <summary>
 /// The front door: two fighters trading a punch on a loop, the name of the game, and
-/// PRESS START.
+/// PRESS START - nothing else.
 ///
 /// The fight is driven by the real rig and the real shared animation library rather than by a
 /// bespoke title animation. That is deliberate - the title screen then shows exactly what the
@@ -50,12 +50,10 @@ public partial class TitleScreen : Node2D
 			"a fighting game made out of your drawings",
 			new Vector2(200.0f, 338.0f), 30, MenuTheme.Soft));
 
+		// The only instruction on the page. Any button works, so there is nothing else to say,
+		// and quitting lives on the fighter select screen.
 		pressStart = MenuTheme.MakeLabel("PRESS  START", new Vector2(200.0f, 830.0f), 54, MenuTheme.Ink);
 		root.AddChild(pressStart);
-
-		root.AddChild(MenuTheme.MakeLabel(
-			"or A on a controller        Esc quits",
-			new Vector2(204.0f, 902.0f), 24, MenuTheme.Soft));
 	}
 
 	Label pressStart;

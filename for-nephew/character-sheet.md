@@ -69,7 +69,8 @@ _______________________________________________
 ### 6. Three more moves
 
 Every fighter gets four special moves. Number 5 is the first one. Here are the other three, and
-each one has a job:
+each one has a job. Just describe what each one does and what it looks like — we'll come up
+with the names.
 
 **A move for getting to someone far away** — a dash, a charge, a leap, something thrown.
 
@@ -90,16 +91,6 @@ invisible for a second, something that protects you.
 
 ```
 _______________________________________________
-```
-
-### 7. Name your moves
-
-Move names show up on the screen. Name them whatever you want.
-
-```
-1. _____________________  2. _____________________
-
-3. _____________________  4. _____________________
 ```
 
 ---

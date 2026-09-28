@@ -25,7 +25,8 @@ public partial class RigParade : Node2D
 
 	public override void _Ready()
 	{
-		var fighters = new[] { FighterData.PlaceholderLight(), FighterData.PlaceholderHeavy() };
+		var fighters = new FighterData[FighterCatalog.Count];
+		for (int i = 0; i < fighters.Length; i++) fighters[i] = FighterCatalog.Get(i);
 
 		var columns = new (string label, AnimationClip clip, Pose direct)[]
 		{
@@ -93,8 +94,10 @@ public partial class RigParade : Node2D
 
 		var camera = new Camera2D
 		{
-			Position = new Vector2(ColumnWidth * (columns.Length - 1) * 0.5f, RowHeight * 0.4f),
-			Zoom = new Vector2(0.78f, 0.78f),
+			Position = new Vector2(ColumnWidth * (columns.Length - 1) * 0.5f,
+				RowHeight * (fighters.Length - 1) * 0.5f - 60.0f),
+			// Zoomed out as the roster grows, so every fighter stays on one screen.
+			Zoom = Vector2.One * Mathf.Min(0.78f, 1000.0f / (fighters.Length * RowHeight + 120.0f)),
 		};
 		AddChild(camera);
 		camera.MakeCurrent();

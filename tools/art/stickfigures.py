@@ -164,7 +164,7 @@ def head_part(cfg):
 
 def torso_part(cfg):
     """Torso in canonical orientation: extending UP from a pivot at the hip."""
-    length = cfg['torso_len']
+    length = cfg.get('torso_len', 0)
     ink = cfg['ink']
     stroke = cfg['stroke']
 
@@ -317,7 +317,7 @@ def build(cfg):
     root = os.path.join(REPO, 'fighters', name.lower())
     parts_dir = os.path.join(root, 'parts')
     source_dir = os.path.join(root, 'source')
-    for d in (parts_dir, source_dir):
+    for d in (parts_dir, source_dir) if cfg.get('composite', True) else (parts_dir,):
         if not os.path.isdir(d):
             os.makedirs(d)
 
@@ -333,7 +333,8 @@ def build(cfg):
             'pivot': [round(pivot[0], 2), round(pivot[1], 2)],
         }
 
-    emit('Head', head_part(cfg))
+    if cfg['head_style']:
+        emit('Head', head_part(cfg))
     emit('Torso', torso_part(cfg))
     for side in ('Front', 'Back'):
         emit('Arm%s_Upper' % side, limb_part(cfg['upper_arm'], stroke, ink, taper=0.92))
@@ -343,7 +344,8 @@ def build(cfg):
     if cfg['prop']:
         emit(cfg['prop']['name'], prop_part(cfg))
 
-    shoulder_y = -cfg['torso_len'] * 0.90
+    torso_len = cfg['torso_len']
+    shoulder_y = -torso_len * 0.90
 
     # Bone offsets are relative to the PARENT bone, in canonical space. FighterRig.cs walks this
     # tree directly; the order of "children" is also the draw order, back-to-front.
@@ -368,7 +370,7 @@ def build(cfg):
          'offset': [0, cfg['upper_arm']], 'part': 'ArmBack_Lower'},
 
         {'name': 'Head', 'parent': 'Torso',
-         'offset': [0, -cfg['torso_len']], 'part': 'Head'},
+         'offset': [0, -torso_len], 'part': 'Head' if cfg['head_style'] else None},
 
         {'name': 'ArmFront_Upper', 'parent': 'Torso',
          'offset': [cfg['hip_split'] * 0.6, shoulder_y], 'part': 'ArmFront_Upper'},
@@ -383,7 +385,10 @@ def build(cfg):
     # Hip-to-crown in canonical space. FighterRig scales every fighter so this maps to one
     # standard height, so that how big a fighter is in game is a deliberate choice rather than
     # an accident of how close the camera was held.
-    canonical_height = cfg['torso_len'] + cfg['head_radius'] * 2 + 30
+    if cfg['head_style']:
+        canonical_height = torso_len + cfg['head_radius'] * 2 + 30
+    else:
+        canonical_height = torso_len
 
     rig = {
         'name': name,
@@ -397,14 +402,21 @@ def build(cfg):
     with open(os.path.join(root, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
 
-    composite_drawing(cfg).save(os.path.join(source_dir, 'drawing.png'))
+    # A stand-in has no source drawing: source/ is reserved for the photographed original.
+    if cfg.get('composite', True):
+        composite_drawing(cfg).save(os.path.join(source_dir, 'drawing.png'))
 
     print('%-6s -> %d parts, canonical height %d' % (name, len(parts), canonical_height))
 
 
 def main():
+    import sys
+    # Optional names on the command line build only those figures, e.g. "stickfigures.py circy".
+    wanted = [a.lower() for a in sys.argv[1:]]
     random.seed(7)
     for cfg in FIGURES:
+        if wanted and cfg['name'].lower() not in wanted:
+            continue
         build(cfg)
     print('done')
 

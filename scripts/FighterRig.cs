@@ -12,6 +12,34 @@ public partial class FighterRig : Node2D
 {
 	readonly Node2D[] bones = new Node2D[(int)RigBone.Count];
 	readonly bool[] present = new bool[(int)RigBone.Count];
+	readonly Sprite2D[] sprites = new Sprite2D[(int)RigBone.Count];
+	readonly Vector2[] restOffsets = new Vector2[(int)RigBone.Count];
+
+	/// <summary>
+	/// A whole drawing shown as-is instead of the puppet, for a moment a kid drew as a pose -
+	/// Circy looking out at the player before he turns into a bomb. Or an effect drawing, like
+	/// his laser, that the game sizes to fit the move.
+	/// </summary>
+	public sealed class PoseArt
+	{
+		public Texture2D Texture;
+
+		/// <summary>The point in the texture that stands on the fighter's feet (or its centre, for an effect).</summary>
+		public Vector2 Anchor;
+
+		/// <summary>How wide the body is in this drawing, so it can be matched to the puppet's.</summary>
+		public float BallWidth;
+
+		/// <summary>Size this pose the same as another one, keeping the size the kid drew it relative to that.</summary>
+		public string ScaleLike;
+	}
+
+	readonly Dictionary<string, PoseArt> poses = new Dictionary<string, PoseArt>();
+	float ballWidth;
+
+	float puppetScale = 1.0f;
+	float bodyHalfHeight;
+	float legStretch = 1.0f;
 
 	readonly Pose current = new Pose();
 	readonly Pose target = new Pose();
@@ -53,6 +81,8 @@ public partial class FighterRig : Node2D
 		CanonicalHeight = (float)root["canonicalHeight"];
 		LegLength = (float)root["legLength"];
 		float darken = root.ContainsKey("backLimbDarken") ? (float)root["backLimbDarken"] : 0.7f;
+		ballWidth = root.ContainsKey("ballWidth") ? (float)root["ballWidth"] : 0.0f;
+		LoadPoses(root, baseDir);
 
 		var parts = (Godot.Collections.Dictionary)root["parts"];
 
@@ -87,6 +117,7 @@ public partial class FighterRig : Node2D
 			parent.AddChild(node);
 			bones[(int)bone] = node;
 			present[(int)bone] = true;
+			restOffsets[(int)bone] = node.Position;
 
 			Variant partValue = entry["part"];
 			if (partValue.VariantType != Variant.Type.String) continue;
@@ -120,11 +151,49 @@ public partial class FighterRig : Node2D
 			}
 
 			node.AddChild(sprite);
+			sprites[(int)bone] = sprite;
 		}
 
 		Loaded = true;
 		Play(FighterAnimations.Idle);
 		return true;
+	}
+
+	void LoadPoses(Godot.Collections.Dictionary root, string baseDir)
+	{
+		poses.Clear();
+		if (!root.ContainsKey("poses")) return;
+
+		foreach (var pair in (Godot.Collections.Dictionary)root["poses"])
+		{
+			var entry = (Godot.Collections.Dictionary)pair.Value;
+			var texture = GD.Load<Texture2D>(baseDir.PathJoin((string)entry["texture"]));
+			if (texture == null) continue;
+
+			var anchor = (Godot.Collections.Array)entry["anchor"];
+			poses[(string)pair.Key] = new PoseArt
+			{
+				Texture = texture,
+				Anchor = new Vector2((float)anchor[0], (float)anchor[1]),
+				BallWidth = entry.ContainsKey("ballWidth") ? (float)entry["ballWidth"] : 0.0f,
+				ScaleLike = entry.ContainsKey("scaleLike") ? (string)entry["scaleLike"] : null,
+			};
+		}
+	}
+
+	public PoseArt PoseArtFor(string name) => name != null && poses.TryGetValue(name, out PoseArt art) ? art : null;
+
+	/// <summary>
+	/// World pixels per texture pixel for a body pose: its body drawn the same width as the
+	/// puppet's, so swapping between puppet and pose never makes him pop bigger or smaller.
+	/// </summary>
+	public float PoseScale(string name)
+	{
+		PoseArt art = PoseArtFor(name);
+		if (art == null) return 0.0f;
+		if (art.ScaleLike != null && art.ScaleLike != name) return PoseScale(art.ScaleLike);
+		if (art.BallWidth <= 0.0f || ballWidth <= 0.0f) return puppetScale;
+		return puppetScale * ballWidth / art.BallWidth;
 	}
 
 	/// <summary>
@@ -140,9 +209,57 @@ public partial class FighterRig : Node2D
 		if (total <= 0.0f) return;
 
 		float scale = targetHeight / total * visualScale;
+		puppetScale = scale;
+		this.bodyHalfHeight = bodyHalfHeight;
 		Scale = new Vector2(scale, scale);
-		Position = new Vector2(0.0f, bodyHalfHeight - LegLength * scale);
+		PlaceHip();
 	}
+
+	/// <summary>World pixels per canonical unit, after <see cref="Normalise"/>.</summary>
+	public float PuppetScale => puppetScale;
+
+	/// <summary>How much taller the puppet is than as drawn, in world pixels, at this stretch.</summary>
+	public float LegGrowth(float stretch) => LegLength * (stretch - 1.0f) * puppetScale;
+
+	/// <summary>
+	/// Lengthens or shortens both legs, for a fighter who stretches. The leg ART is scaled along
+	/// its own length and nothing else - no part is redrawn - and the knees move with it, so the
+	/// joints still line up. The hip rises by the same amount so the feet stay on the floor.
+	/// </summary>
+	public void SetLegStretch(float stretch, float newBodyHalfHeight)
+	{
+		if (!Loaded) return;
+		legStretch = stretch;
+		bodyHalfHeight = newBodyHalfHeight;
+
+		foreach (RigBone bone in new[]
+		{
+			RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower,
+		})
+		{
+			int i = (int)bone;
+			if (sprites[i] != null) sprites[i].Scale = new Vector2(1.0f, stretch);
+		}
+
+		foreach (RigBone knee in new[] { RigBone.LegBackLower, RigBone.LegFrontLower })
+		{
+			int i = (int)knee;
+			if (present[i]) bones[i].Position = restOffsets[i] * stretch;
+		}
+
+		PlaceHip();
+	}
+
+	void PlaceHip()
+	{
+		Position = new Vector2(0.0f, bodyHalfHeight - LegLength * legStretch * puppetScale);
+	}
+
+	/// <summary>
+	/// The drawn texture on a bone, for a fighter drawn as one piece while its limbs are hidden -
+	/// Circy rolling, or curled into a bomb.
+	/// </summary>
+	public Texture2D PartTexture(RigBone bone) => sprites[(int)bone]?.Texture;
 
 	public void Play(AnimationClip next, bool restart = false)
 	{

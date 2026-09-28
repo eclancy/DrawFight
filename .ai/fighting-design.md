@@ -126,7 +126,10 @@ and acceleration all went up together. Raising top speed alone does nothing, bec
 that takes half a second to reach it never gets there in a fight.
 
 - Ground: accelerate to a run speed, with a distinct initial-dash speed.
-- **Double jump** in the air, refreshed on landing or on grabbing a ledge.
+- **Two jumps** for everyone: the ground jump and one air jump. The air jump is refreshed on
+  landing, on grabbing a ledge, and **on being hit** - a fighter knocked off the stage always
+  has a jump to get back with once hitstun ends, even if they had spent it before the hit. A
+  buffered jump press fires on the first actionable frame, so mashing jump during a launch works.
 - **Fast-fall**: tapping down while falling increases fall speed. Free expressiveness.
 - **Air control** is strong — you can meaningfully steer your own trajectory mid-launch.
 - **Directional influence (DI)**: holding a direction while in hitstun slightly angles your

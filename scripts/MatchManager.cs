@@ -114,6 +114,16 @@ public partial class MatchManager : Node2D
 		hazard.Launch(owner, move, this, position, velocity, move.SpecialGravity, move.SpecialLifetime);
 	}
 
+	/// <summary>
+	/// A fighter blew up - Circy's bomb. The flash and the shake happen whether or not anyone
+	/// is caught in it, so a bomb that goes off in empty air still reads as a bomb.
+	/// </summary>
+	public void OnExplosion(Vector2 position)
+	{
+		fx.SpawnBlastFlash(position);
+		camera.AddShake(60.0f);
+	}
+
 	public override void _PhysicsProcess(double delta)
 	{
 		if (matchOver) return;

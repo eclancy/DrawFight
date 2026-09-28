@@ -124,7 +124,7 @@ public partial class MatchHud : CanvasLayer
 
 	public void SetStageName(string name)
 	{
-		if (stageLabel != null) stageLabel.Text = name + "   (F4 to change)";
+		if (stageLabel != null) stageLabel.Text = name;
 	}
 
 	public void SetControllerLabels(List<string> labels, string padLayoutHelp)
@@ -136,12 +136,11 @@ public partial class MatchHud : CanvasLayer
 
 		if (helpLabel == null) return;
 
+		// Controller only. Everyone plays on a pad, so keyboard keys and the F-key debug
+		// toggles are not on screen - they still work, and README.md lists them.
 		helpLabel.Text =
-			"pad   L-stick move, harder = faster   " + padLayoutHelp + "   Start restart\n"
-			+ "keys  P1 WASD / G jump H attack J special F block      "
-			+ "P2 arrows / Num1 jump Num2 attack Num3 special Num0 block\n"
-			+ "attack while running = dash attack     hold down + jump = drop through\n"
-			+ "F1 hitboxes   F2 slow-motion   F3 swap pad layout   R restart   Esc quit";
+			"L-stick move, harder = faster   " + padLayoutHelp + "   Start restart\n"
+			+ "attack while running = dash attack";
 	}
 
 	public void Refresh(List<Fighter> fighters, string status)

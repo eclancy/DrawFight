@@ -201,7 +201,7 @@ at everything is boring and nobody picks it.
 
 ## Where to send it
 
-Email everything to **ericlclancy@gmail.com**.
+Email everything to **Eric@ecec.dev**.
 
 Put these in the email:
 

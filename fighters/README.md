@@ -33,6 +33,31 @@ The `source/drawing.png` it also emits — the assembled figure on paper, with g
 lighting — exists precisely so that importer has something realistic to be tested against
 before real drawings are at stake.
 
+## `circy/` is Elim's — the first real fighter
+
+Circy was designed **and drawn** by **Elim**: name, body, strengths, weakness and all four
+specials come from Elim's character sheet, and every pixel of him comes from Elim's drawings in
+`circy/source/`. Those ten PNGs are the master copy and are never edited.
+
+Everything else in `circy/` is generated from them by `python tools/art/cut_circy.py`:
+
+- **`parts/`** — the main drawing (`circytcircle.png`) cut into a rig. The ball, face and all, is
+  the Torso; he has no separate head. Each limb stroke is rotated to hang straight down from its
+  joint and split in half at the elbow or knee. Nothing is redrawn or thickened.
+- **`poses/`** — Elim's other drawings, trimmed of empty canvas and shown exactly as drawn:
+  - **held poses** that replace the puppet while he holds still: `tall` / `small` / `stand`
+    while he Stretches, `lookout` then `shrinking` before the bomb, `bomb` while the fuse burns,
+    and `bash` while the grappling hook pulls him in
+  - **effects** sized to the move: the `laser`, the `boom`, and the `rope`, `gun` and `hook`
+
+Two things about Elim's art that the code works around rather than changes:
+
+- **He drew Circy facing the viewer, not in side view.** A round face mirrors cleanly, so it is
+  used as drawn; the limbs on the right of the page are treated as the front limbs.
+- **The limbs are thin lines.** At match size they come out close to one pixel wide. That is
+  his linework and it stays; if it reads too faint, the fix is to ask Elim for thicker legs
+  and arms, never to thicken them here.
+
 ## The canonical orientation contract
 
 `rig.json` and `FighterRig.cs` agree on this, and nothing works if it is broken:

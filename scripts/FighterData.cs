@@ -51,6 +51,13 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public float VisualScale { get; set; } = 1.0f;
 
+	/// <summary>
+	/// Knocked over by a real hit: rolls along the ground as a ball with no arms or legs until
+	/// he gets back up, and can roll right off the stage. Circy's declared weakness, and a
+	/// reusable trait for any round or top-heavy fighter.
+	/// </summary>
+	[Export] public bool TumblesWhenHit { get; set; } = false;
+
 	// --- Moveset -------------------------------------------------------------
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
@@ -118,6 +125,43 @@ public partial class FighterData : Resource
 			VisualScale = 1.12f,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.HeavyWeapons());
+		return data;
+	}
+
+	/// <summary>
+	/// Circy, drawn and designed by Elim - the first fighter made by a kid rather than generated
+	/// as scaffolding. The art is cut from Elim's own drawings by tools/art/cut_circy.py.
+	///
+	/// Medium, because his weaknesses already do a lot of work: a light fighter who also rolls
+	/// off the stage when hit and cannot jump would just lose. What he asked for, in stats:
+	///   - "falls slowly": low gravity and a low fall-speed cap
+	///   - "terrible at jumping": a jump about 60% the height of anyone else's, both jumps
+	///   - "easy to knock over": TumblesWhenHit
+	/// </summary>
+	public static FighterData Circy()
+	{
+		var data = new FighterData
+		{
+			DisplayName = "Circy",
+			PlaceholderColor = new Color(0.98f, 0.86f, 0.30f),
+			Weight = WeightClass.Medium,
+			RunSpeed = 860.0f,
+			AirSpeed = 700.0f,
+			AirAcceleration = 4000.0f,
+			// Jump height is v^2 / 2g, so the low gravity would hand back most of the height a
+			// low jump force takes away. These are solved for roughly 180px and 150px.
+			JumpForce = 1140.0f,
+			AirJumpForce = 1040.0f,
+			Gravity = 3600.0f,
+			MaxFallSpeed = 1250.0f,
+			FastFallSpeed = 2200.0f,
+			// Elim drew him with a wide ball on long legs, so the box is taller than the stand-in's.
+			BodySize = new Vector2(84.0f, 150.0f),
+			RigPath = "res://fighters/circy/rig.json",
+			VisualScale = 1.0f,
+			TumblesWhenHit = true,
+		};
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy());
 		return data;
 	}
 }

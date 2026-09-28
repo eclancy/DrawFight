@@ -71,6 +71,9 @@ public sealed class MenuNav
 	public bool Cancel { get; private set; }
 	public bool Start { get; private set; }
 
+	/// <summary>The raw stick this frame, for a cursor that moves with it rather than in steps.</summary>
+	public Vector2 Stick { get; private set; }
+
 	/// <summary>True if any button at all was pressed this frame. Used by the title screen.</summary>
 	public bool AnyPress => Confirm || Cancel || Start;
 
@@ -81,6 +84,7 @@ public sealed class MenuNav
 		Confirm = input.JumpPressed;
 		Cancel = input.SpecialPressed;
 		Start = input.StartPressed;
+		Stick = input.Move;
 
 		StepX = 0;
 		StepY = 0;

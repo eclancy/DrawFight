@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Godot;
+using RigArt = FighterRig.PoseArt;
 
 public enum FighterState
 {
@@ -9,6 +10,10 @@ public enum FighterState
 	Dodging,
 	LedgeHang,
 	Hitstun,
+
+	/// <summary>Knocked over and rolling, for a fighter with TumblesWhenHit. No control.</summary>
+	Tumbling,
+
 	Respawning,
 	Eliminated,
 }
@@ -109,6 +114,39 @@ public partial class Fighter : CharacterBody2D
 
 	const int LedgeGrabInvulnFrames = 24;
 
+	// --- Size, for a fighter with a Resize special -------------------------------
+
+	/// <summary>The hurtbox as it is right now. Differs from Data.BodySize only while resized.</summary>
+	Vector2 bodySize;
+	RectangleShape2D bodyShape;
+	int sizeLevel = SizeLevels.Normal;
+	int resizeStickDir;
+	readonly Dictionary<MoveData, MoveData> sizedMoves = new Dictionary<MoveData, MoveData>();
+
+	float RunSpeed => Data.RunSpeed * SizeLevels.Speed(sizeLevel);
+
+	// --- Tumbling, for a fighter with TumblesWhenHit ---------------------------
+
+	/// <summary>
+	/// A hit this hard knocks a tumbling fighter over. Below it a jab is just a jab, so being
+	/// poked at low percent does not take control away every time.
+	/// </summary>
+	const float TumbleKnockback = 60.0f;
+
+	/// <summary>How easily a knocked-over fighter keeps rolling. Low, so a roll can carry off the edge.</summary>
+	const float TumbleFriction = 900.0f;
+
+	int tumbleFrames;
+	int pendingTumbleFrames;
+	bool drawnAsBall;
+	float rollAngle;
+
+	// --- Grappling hook and bomb -------------------------------------------------
+
+	Vector2 hookPoint;
+	bool hookFired;
+	bool bombDetonated;
+
 	/// <summary>Solid ground (layer 1) plus soft platforms (layer 2).</summary>
 	const uint GroundMask = 0b11;
 
@@ -128,11 +166,9 @@ public partial class Fighter : CharacterBody2D
 		CollisionLayer = 0;
 		CollisionMask = GroundMask;
 
-		var shape = new CollisionShape2D
-		{
-			Shape = new RectangleShape2D { Size = data.BodySize },
-		};
-		AddChild(shape);
+		bodySize = data.BodySize;
+		bodyShape = new RectangleShape2D { Size = bodySize };
+		AddChild(new CollisionShape2D { Shape = bodyShape });
 
 		if (string.IsNullOrEmpty(data.RigPath)) return;
 
@@ -184,6 +220,7 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Dodging: TickDodging(dt); break;
 			case FighterState.LedgeHang: TickLedgeHang(input); break;
 			case FighterState.Hitstun: TickHitstun(dt); break;
+			case FighterState.Tumbling: TickTumbling(dt); break;
 			case FighterState.Respawning: TickRespawning(); break;
 		}
 
@@ -265,8 +302,20 @@ public partial class Fighter : CharacterBody2D
 
 		rig.SetFacing(Facing);
 
+		// Knocked over, or curled into a bomb: the limbs are gone and he is drawn as one piece in
+		// _Draw. Elim asked for exactly that - "get rid of his arms and legs until he gets back up".
+		rig.Visible = HeldPoseName() == null && !IsDrawnAsBall && !IsBombArmed;
+		if (!rig.Visible) return;
+
 		switch (State)
 		{
+			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Resize:
+			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Bomb:
+				// Standing still: stretching, or about to curl up. Neither is a swing.
+				rig.Play(FighterAnimations.Idle);
+				rig.Advance();
+				break;
+
 			case FighterState.Attacking when currentMove != null:
 				// Sampled against the move's own frame counts, so the strike pose arrives on
 				// the exact frame the hitbox does.
@@ -292,7 +341,7 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Grounded when Mathf.Abs(Velocity.X) > 45.0f:
 				rig.Play(FighterAnimations.Run);
 				// Playback follows actual ground speed, so the feet do not skate.
-				rig.Advance(Mathf.Clamp(Mathf.Abs(Velocity.X) / Data.RunSpeed, 0.35f, 1.8f) * 1.25f);
+				rig.Advance(Mathf.Clamp(Mathf.Abs(Velocity.X) / RunSpeed, 0.35f, 1.8f) * 1.25f);
 				break;
 
 			case FighterState.Grounded:
@@ -397,7 +446,7 @@ public partial class Fighter : CharacterBody2D
 
 		// The stick is a speed dial, not a switch: target speed is the deflection times top
 		// speed, so a light push walks and a full push runs, with everything in between.
-		float target = input.Move.X * Data.RunSpeed;
+		float target = input.Move.X * RunSpeed;
 		if (Mathf.Abs(input.Move.X) > MoveDeadzone)
 		{
 			Velocity = new Vector2(
@@ -457,7 +506,7 @@ public partial class Fighter : CharacterBody2D
 
 		if (Mathf.Abs(input.Move.X) > MoveDeadzone)
 		{
-			float target = input.Move.X * Data.AirSpeed;
+			float target = input.Move.X * Data.AirSpeed * SizeLevels.Speed(sizeLevel);
 			Velocity = new Vector2(
 				Mathf.MoveToward(Velocity.X, target, Data.AirAcceleration * dt),
 				Velocity.Y);
@@ -484,10 +533,30 @@ public partial class Fighter : CharacterBody2D
 		int activeStart = currentMove.StartupFrames;
 		int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
 
-		if (moveFrame > activeStart && moveFrame <= activeEnd)
+		bool active = moveFrame > activeStart && moveFrame <= activeEnd;
+
+		switch (currentMove.Special)
 		{
-			SpawnSpecialHazard(currentMove);
-			QueryHits();
+			case SpecialKind.Resize:
+				if (active) TickResize(input, activeEnd);
+				break;
+
+			case SpecialKind.Bomb:
+				TickBomb(activeEnd);
+				break;
+
+			case SpecialKind.Recovery when currentMove.DelayedLaunch:
+				TickGrapple(activeStart);
+				if (active) QueryHits();
+				break;
+
+			default:
+				if (active)
+				{
+					SpawnSpecialHazard(currentMove);
+					QueryHits();
+				}
+				break;
 		}
 
 		// Attacks keep their momentum but shed it - you commit to a move, you do not steer it.
@@ -514,9 +583,53 @@ public partial class Fighter : CharacterBody2D
 			new Vector2(0.0f, Velocity.Y),
 			Tuning.LaunchDecay * dt);
 
+		if (drawnAsBall) rollAngle += Velocity.X * dt / BallRadius();
+
 		if (hitstunFrames <= 0)
 		{
+			if (pendingTumbleFrames > 0)
+			{
+				tumbleFrames = pendingTumbleFrames;
+				pendingTumbleFrames = 0;
+				State = FighterState.Tumbling;
+
+				// Knocked over on the ground, he keeps rolling the way the hit sent him, which is
+				// how he ends up rolling off the edge. That is the weakness Elim asked for.
+				if (IsOnFloor() && Mathf.Abs(Velocity.X) > 1.0f)
+				{
+					Velocity = new Vector2(
+						Mathf.Sign(Velocity.X) * Mathf.Max(Mathf.Abs(Velocity.X), 380.0f), Velocity.Y);
+				}
+				return;
+			}
+
+			drawnAsBall = false;
 			State = IsOnFloor() ? FighterState.Grounded : FighterState.Airborne;
+		}
+	}
+
+	/// <summary>
+	/// Rolling as a ball, with no control, until he gets back up. Still hittable - being knocked
+	/// over is supposed to be dangerous - and air control and both jumps come back the moment it
+	/// ends, even if he has rolled off the stage, so he can always try to get home.
+	/// </summary>
+	void TickTumbling(float dt)
+	{
+		tumbleFrames--;
+		ApplyFriction(dt, IsOnFloor() ? TumbleFriction : AirDrag);
+		rollAngle += Velocity.X * dt / BallRadius();
+
+		if (tumbleFrames > 0) return;
+
+		drawnAsBall = false;
+		if (IsOnFloor())
+		{
+			landFrames = 9;
+			State = FighterState.Grounded;
+		}
+		else
+		{
+			State = FighterState.Airborne;
 		}
 	}
 
@@ -552,6 +665,10 @@ public partial class Fighter : CharacterBody2D
 		attackBufferFrames = 0;
 		specialBufferFrames = 0;
 
+		// A special points where the stick points when it is pressed, so a recovery aimed back
+		// at the stage goes toward the stage even if he was facing away from it.
+		if (wantsSpecial && Mathf.Abs(input.Move.X) > 0.4f) Facing = input.Move.X > 0.0f ? 1 : -1;
+
 		currentMove = chosen;
 		currentSlot = slot;
 		moveFrame = 0;
@@ -585,7 +702,7 @@ public partial class Fighter : CharacterBody2D
 
 		// Attacking out of a run gives the dash attack, decided by actual speed rather than by
 		// a held direction, so a fighter still sliding from a turnaround does not get one.
-		if (Mathf.Abs(Velocity.X) > Data.RunSpeed * DashThreshold) return MoveSlot.DashAttack;
+		if (Mathf.Abs(Velocity.X) > RunSpeed * DashThreshold) return MoveSlot.DashAttack;
 
 		if (y < -0.5f) return MoveSlot.UpTilt;
 		if (y > 0.5f) return MoveSlot.DownTilt;
@@ -613,11 +730,26 @@ public partial class Fighter : CharacterBody2D
 				Velocity = new Vector2(Facing * move.SpecialSpeed, Velocity.Y * 0.2f);
 				break;
 
+			case SpecialKind.Recovery when move.DelayedLaunch:
+				// The launch waits for the hook; startup only brakes the fall.
+				hookFired = false;
+				airJumpsUsed = 0;
+				break;
+
 			case SpecialKind.Recovery:
 				// An up-special always gives real height, and always refreshes the air jump,
 				// because the whole job of this slot is getting home.
 				Velocity = new Vector2(Velocity.X * 0.4f + Facing * move.SpecialSpeed, -move.SpecialRise);
 				airJumpsUsed = 0;
+				break;
+
+			case SpecialKind.Resize:
+				resizeStickDir = 0;
+				break;
+
+			case SpecialKind.Bomb:
+				bombDetonated = false;
+				Velocity = new Vector2(0.0f, Velocity.Y);
 				break;
 		}
 	}
@@ -633,7 +765,9 @@ public partial class Fighter : CharacterBody2D
 		{
 			case SpecialKind.Projectile:
 				hazardSpawned = true;
-				Match.SpawnHazard(this, move, origin, new Vector2(Facing * move.SpecialSpeed, -120.0f));
+				// Only an arcing projectile gets the little upward toss; a beam flies flat.
+				float toss = move.SpecialGravity > 0.0f ? -120.0f : 0.0f;
+				Match.SpawnHazard(this, SizedFor(move), origin, new Vector2(Facing * move.SpecialSpeed, toss));
 				break;
 
 			case SpecialKind.Drop:
@@ -726,7 +860,7 @@ public partial class Fighter : CharacterBody2D
 
 			heldLedge = ledge;
 			Facing = GlobalPosition.X < ledge.X ? 1 : -1;
-			GlobalPosition = ledge + new Vector2(-Facing * Data.BodySize.X * 0.45f, Data.BodySize.Y * 0.42f);
+			GlobalPosition = ledge + new Vector2(-Facing * bodySize.X * 0.45f, bodySize.Y * 0.42f);
 			Velocity = Vector2.Zero;
 			airJumpsUsed = 0;
 			invulnFrames = Mathf.Max(invulnFrames, LedgeGrabInvulnFrames);
@@ -755,7 +889,7 @@ public partial class Fighter : CharacterBody2D
 		{
 			jumpBufferFrames = 0;
 			ReleaseLedge();
-			GlobalPosition = heldLedge + new Vector2(Facing * 30.0f, -Data.BodySize.Y * 0.55f);
+			GlobalPosition = heldLedge + new Vector2(Facing * 30.0f, -bodySize.Y * 0.55f);
 			Velocity = new Vector2(Facing * 180.0f, -Data.JumpForce * 0.72f);
 		}
 	}
@@ -794,6 +928,9 @@ public partial class Fighter : CharacterBody2D
 			alreadyHitThisMove.Add(other);
 			other.ReceiveHit(this, currentMove, nearest);
 
+			// "He will also take some damage." Percent only - never knockback.
+			Percent += currentMove.SelfDamage;
+
 			// The attacker shares the victim's hitlag, so both sides feel the impact.
 			hitlagFrames = Knockback.HitlagFrames(currentMove.Damage);
 		}
@@ -826,6 +963,13 @@ public partial class Fighter : CharacterBody2D
 
 	public void ReceiveHit(Fighter attacker, MoveData move, Vector2 contactPoint)
 	{
+		// Hitting a bomb sets it off. The hit itself does nothing; the explosion is the answer.
+		if (IsBombArmed)
+		{
+			DetonateBomb();
+			return;
+		}
+
 		bool blocked = IsBlocking && !move.Unblockable;
 
 		// Blocking reduces; it never negates. Chip damage still raises percent, which is the
@@ -843,6 +987,17 @@ public partial class Fighter : CharacterBody2D
 		hitlagFrames = Knockback.HitlagFrames(damage);
 		State = FighterState.Hitstun;
 		IsBlocking = false;
+
+		// A fighter who tumbles is knocked over by any real hit, and rolls from the moment it lands.
+		if (Data.TumblesWhenHit && !blocked && knockback >= TumbleKnockback)
+		{
+			drawnAsBall = true;
+			pendingTumbleFrames = Mathf.Clamp(Mathf.RoundToInt(knockback * 0.2f), 12, 36);
+		}
+
+		// Being launched gives the air jump back, so a fighter knocked off the stage always has a
+		// jump to come home with once hitstun ends - even one who had spent it before the hit.
+		if (!blocked) airJumpsUsed = 0;
 
 		if (blocked)
 		{
@@ -869,6 +1024,10 @@ public partial class Fighter : CharacterBody2D
 		dropThroughFrames = 0;
 		dodgeFrames = 0;
 		ledgeCooldownFrames = 0;
+		tumbleFrames = 0;
+		pendingTumbleFrames = 0;
+		drawnAsBall = false;
+		SetSizeLevel(SizeLevels.Normal);
 		CollisionMask = GroundMask;
 
 		if (Stocks <= 0)
@@ -904,11 +1063,318 @@ public partial class Fighter : CharacterBody2D
 
 	public Rect2 BodyRect()
 	{
-		return new Rect2(GlobalPosition - Data.BodySize * 0.5f, Data.BodySize);
+		// Rolled up or curled into a bomb, the thing to hit is the ball on the floor - not the
+		// empty space where his legs were. What you can see is what you can hit.
+		if (IsDrawnAsBall || IsBombArmed)
+		{
+			float side = BallRadius() * 2.0f * (IsBombArmed ? 0.62f : 1.0f);
+			Vector2 feet = GlobalPosition + new Vector2(0.0f, bodySize.Y * 0.5f);
+			return new Rect2(feet - new Vector2(side * 0.5f, side), new Vector2(side, side));
+		}
+
+		return new Rect2(GlobalPosition - bodySize * 0.5f, bodySize);
 	}
 
 	public bool IsInvulnerable => invulnFrames > 0;
 	public bool IsInHitlag => hitlagFrames > 0;
+
+	// --- Size ------------------------------------------------------------------
+
+	/// <summary>
+	/// Holding special keeps the stance open; each fresh push of the stick changes size by one
+	/// step, up to grow and down to shrink. Letting go of special ends it straight away.
+	/// </summary>
+	void TickResize(InputState input, int activeEnd)
+	{
+		if (!input.SpecialHeld)
+		{
+			moveFrame = activeEnd;
+			return;
+		}
+
+		int dir = input.Move.Y < -0.5f ? 1 : input.Move.Y > 0.5f ? -1 : 0;
+		if (dir != 0 && dir != resizeStickDir)
+		{
+			SetSizeLevel(Mathf.Clamp(sizeLevel + dir, SizeLevels.Short, SizeLevels.Tall));
+		}
+		resizeStickDir = dir;
+	}
+
+	/// <summary>
+	/// Changes size by stretching the legs. The hurtbox grows with the drawing - a tall fighter
+	/// really is easier to hit - and the body moves so the feet stay exactly where they were.
+	/// </summary>
+	void SetSizeLevel(int level)
+	{
+		if (bodyShape == null) return;
+		sizeLevel = level;
+
+		float stretch = SizeLevels.LegStretch(level);
+		float growth = rig != null && rig.Loaded
+			? rig.LegGrowth(stretch)
+			: Data.BodySize.Y * 0.4f * (stretch - 1.0f);
+
+		float oldHeight = bodySize.Y;
+		bodySize = new Vector2(Data.BodySize.X, Data.BodySize.Y + growth * 0.9f);
+		bodyShape.Size = bodySize;
+		GlobalPosition -= new Vector2(0.0f, (bodySize.Y - oldHeight) * 0.5f);
+
+		rig?.SetLegStretch(stretch, bodySize.Y * 0.5f);
+	}
+
+	public int SizeLevel => sizeLevel;
+
+	/// <summary>
+	/// A projectile at this fighter's current size. One cached copy per move per size, so firing
+	/// never allocates - a Resource per shot is the kind of leak FighterCatalog already hit once.
+	/// </summary>
+	MoveData SizedFor(MoveData move)
+	{
+		if (sizeLevel == SizeLevels.Normal) return move;
+
+		float size = SizeLevels.ProjectileSize(sizeLevel);
+		if (!sizedMoves.TryGetValue(move, out MoveData sized)
+			|| !Mathf.IsEqualApprox(sized.FxRadius, move.FxRadius * size))
+		{
+			sized = move.Sized(size, SizeLevels.ProjectileDamage(sizeLevel));
+			sizedMoves[move] = sized;
+		}
+		return sized;
+	}
+
+	// --- Grappling hook ----------------------------------------------------------
+
+	/// <summary>
+	/// Hangs through startup while the hook flies out, then yanks him along it on the first
+	/// active frame. The hook never has to catch on anything - a recovery that can miss loses
+	/// stocks for reasons a player cannot see.
+	/// </summary>
+	void TickGrapple(int activeStart)
+	{
+		if (moveFrame <= activeStart)
+		{
+			Velocity = new Vector2(Velocity.X * 0.8f, Mathf.Min(Velocity.Y * 0.8f, 120.0f));
+			return;
+		}
+
+		if (hookFired) return;
+		hookFired = true;
+
+		Vector2 pull = new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise);
+		hookPoint = HookOrigin() + pull.Normalized() * currentMove.TetherLength;
+		Velocity = pull;
+	}
+
+	Vector2 HookOrigin() => GlobalPosition + new Vector2(Facing * bodySize.X * 0.3f, -bodySize.Y * 0.15f);
+
+	void DrawTether()
+	{
+		if (State != FighterState.Attacking || currentMove == null || !currentMove.DelayedLaunch) return;
+		if (moveFrame > currentMove.StartupFrames + currentMove.ActiveFrames) return;
+
+		Vector2 dir = new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise).Normalized();
+		float reach = Mathf.Clamp(moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames), 0.0f, 1.0f);
+		Vector2 tip = hookFired ? hookPoint : HookOrigin() + dir * currentMove.TetherLength * reach;
+
+		Vector2 from = HookOrigin() - GlobalPosition;
+		Vector2 to = tip - GlobalPosition;
+
+		// Elim drew the rope, the gun and the hook. When they are there, those are what fly.
+		RigArt ropeArt = rig?.PoseArtFor("rope");
+		RigArt gunArt = rig?.PoseArtFor("gun");
+		RigArt hookArt = rig?.PoseArtFor("hook");
+		if (ropeArt != null && gunArt != null && hookArt != null)
+		{
+			float angle = (to - from).Angle();
+			Vector2 ropeSize = ropeArt.Texture.GetSize();
+			DrawArtTransform(from, angle, new Vector2(from.DistanceTo(to) / ropeSize.X, 14.0f / ropeSize.Y));
+			DrawTexture(ropeArt.Texture, new Vector2(0.0f, -ropeSize.Y * 0.5f));
+			DrawArtAt(gunArt, from, angle, 46.0f);
+			DrawArtAt(hookArt, to, angle, 46.0f);
+			DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+			return;
+		}
+
+		var rope = new Color(0.24f, 0.26f, 0.32f);
+		CrayonBrush.InkLine(this, from, to, rope, 4.0f, 17, 1.2f);
+
+		// The hook itself: a small barbed V at the tip, pointing the way it flew.
+		Vector2 back = -dir * 18.0f;
+		CrayonBrush.InkLine(this, to, to + back.Rotated(0.6f), rope, 5.0f, 23, 0.8f);
+		CrayonBrush.InkLine(this, to, to + back.Rotated(-0.6f), rope, 5.0f, 29, 0.8f);
+	}
+
+	/// <summary>
+	/// A drawing fitted to <paramref name="size"/> pixels and turned to <paramref name="angle"/>.
+	/// Flipped top-to-bottom when facing left, so a gun drawn grip-down stays grip-down.
+	/// </summary>
+	void DrawArtAt(RigArt art, Vector2 at, float angle, float size)
+	{
+		Vector2 texSize = art.Texture.GetSize();
+		float s = size / Mathf.Max(texSize.X, texSize.Y);
+		DrawArtTransform(at, angle, new Vector2(s, s * Facing));
+		DrawTexture(art.Texture, -art.Anchor);
+		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+	}
+
+	/// <summary>
+	/// Scale in the drawing's own axes, THEN turn it. DrawSetTransform scales after rotating, so
+	/// a rope stretched along its length came out skewed off its angle and too short, and a
+	/// mirrored hook turned the wrong way.
+	/// </summary>
+	void DrawArtTransform(Vector2 at, float angle, Vector2 scale)
+	{
+		DrawSetTransformMatrix(new Transform2D(angle, scale, 0.0f, at));
+	}
+
+	// --- Bomb --------------------------------------------------------------------
+
+	bool IsBombArmed =>
+		State == FighterState.Attacking
+		&& currentMove != null
+		&& currentMove.Special == SpecialKind.Bomb
+		&& !bombDetonated
+		&& moveFrame > currentMove.StartupFrames
+		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
+
+	void TickBomb(int activeEnd)
+	{
+		// Planted: he does not slide, and a bomb in the air drops rather than floating.
+		Velocity = new Vector2(0.0f, Velocity.Y);
+		if (IsBombArmed && !IsOnFloor())
+		{
+			Velocity = new Vector2(0.0f, Mathf.Max(Velocity.Y, Data.FastFallSpeed * 0.5f));
+		}
+
+		if (!bombDetonated && moveFrame >= activeEnd) DetonateBomb();
+	}
+
+	/// <summary>
+	/// The explosion is a short-lived hazard carrying the bomb move's own damage and knockback,
+	/// so it hits everyone in range except him. He pays the self-damage and takes no knockback.
+	/// </summary>
+	void DetonateBomb()
+	{
+		if (bombDetonated || currentMove == null) return;
+		bombDetonated = true;
+		hazardSpawned = true;
+
+		Match?.SpawnHazard(this, currentMove, GlobalPosition, Vector2.Zero);
+		Match?.OnExplosion(GlobalPosition);
+		Percent += currentMove.SelfDamage;
+
+		// Straight into endlag: the fuse is over whichever way it ended.
+		moveFrame = Mathf.Max(moveFrame, currentMove.StartupFrames + currentMove.ActiveFrames);
+	}
+
+	// --- Drawing the fighter as one piece ------------------------------------------
+
+	bool IsDrawnAsBall => drawnAsBall && (State == FighterState.Hitstun || State == FighterState.Tumbling);
+
+	/// <summary>World radius of the drawn body as a ball. Decides how fast he appears to roll.</summary>
+	float BallRadius()
+	{
+		Texture2D body = rig?.PartTexture(RigBone.Torso);
+		if (body == null) return bodySize.X * 0.5f;
+		return Mathf.Max(8.0f, body.GetSize().Y * 0.5f * rig.PuppetScale);
+	}
+
+	/// <summary>
+	/// Draws his body part on its own, turned about its centre and resting on the floor. The part
+	/// is his own drawing, only moved and rotated - exactly what the rig does to it anyway.
+	/// </summary>
+	void DrawBall(float scale, float angle)
+	{
+		Texture2D body = rig?.PartTexture(RigBone.Torso);
+		if (body == null) return;
+
+		float s = rig.PuppetScale * scale;
+		Vector2 size = body.GetSize();
+		Vector2 centre = new Vector2(0.0f, bodySize.Y * 0.5f - size.Y * 0.5f * s);
+
+		DrawArtTransform(centre, angle, new Vector2(s * Facing, s));
+		DrawTexture(body, -size * 0.5f, rig.Modulate);
+		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+	}
+
+	/// <summary>Shrunk down with a lit fuse. The spark blinks faster as the fuse runs out.</summary>
+	void DrawBomb()
+	{
+		const float Shrink = 0.62f;
+		DrawBall(Shrink, 0.0f);
+
+		Texture2D body = rig?.PartTexture(RigBone.Torso);
+		float radius = body != null ? body.GetSize().Y * 0.5f * rig.PuppetScale * Shrink : 30.0f;
+		Vector2 top = new Vector2(0.0f, bodySize.Y * 0.5f - radius * 2.0f);
+		Vector2 fuseEnd = top + new Vector2(Facing * 14.0f, -24.0f);
+
+		CrayonBrush.InkLine(this, top, fuseEnd, new Color(0.24f, 0.22f, 0.20f), 5.0f, 41, 1.0f);
+
+		int left = currentMove.StartupFrames + currentMove.ActiveFrames - moveFrame;
+		int period = left > 60 ? 16 : left > 25 ? 8 : 4;
+		if ((moveFrame / period) % 2 == 0)
+		{
+			DrawCircle(fuseEnd, 9.0f, new Color(0.99f, 0.78f, 0.28f));
+			DrawCircle(fuseEnd, 4.5f, new Color(0.96f, 0.36f, 0.20f));
+		}
+	}
+
+	/// <summary>
+	/// The whole drawing a kid made for this moment, if there is one. Circy's are held poses:
+	/// standing tall or small while he stretches, looking out at the player and then shrinking
+	/// before the bomb, the bomb itself, and the shoulder bash while the hook pulls him in.
+	/// Null means the puppet is showing.
+	/// </summary>
+	string HeldPoseName()
+	{
+		if (rig == null || !rig.Loaded || State != FighterState.Attacking || currentMove == null) return null;
+
+		string name = null;
+		int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
+
+		switch (currentMove.Special)
+		{
+			case SpecialKind.Resize:
+				name = sizeLevel > 0 ? "tall" : sizeLevel < 0 ? "small" : "stand";
+				break;
+
+			case SpecialKind.Bomb when moveFrame <= currentMove.StartupFrames:
+				name = moveFrame <= currentMove.StartupFrames * 0.6f ? "lookout" : "shrinking";
+				break;
+
+			case SpecialKind.Bomb when IsBombArmed:
+				name = "bomb";
+				break;
+
+			case SpecialKind.Recovery when currentMove.DelayedLaunch && hookFired && moveFrame <= activeEnd:
+				name = "bash";
+				break;
+		}
+
+		return rig.PoseArtFor(name) != null ? name : null;
+	}
+
+	/// <summary>
+	/// A held pose, standing on his feet and mirrored with his facing. Moved and scaled only.
+	/// The bomb swells in and out as the fuse runs down, so "about to go off" is visible.
+	/// </summary>
+	void DrawHeldPose(string name)
+	{
+		RigArt art = rig.PoseArtFor(name);
+		float s = rig.PoseScale(name);
+
+		if (name == "bomb")
+		{
+			int left = currentMove.StartupFrames + currentMove.ActiveFrames - moveFrame;
+			s *= 0.7f;
+			if (left < 45) s *= 1.0f + 0.07f * Mathf.Sin(moveFrame * (left < 20 ? 1.6f : 0.8f));
+		}
+
+		Vector2 feet = new Vector2(0.0f, bodySize.Y * 0.5f);
+		DrawSetTransform(feet, 0.0f, new Vector2(s * Facing, s));
+		DrawTexture(art.Texture, -art.Anchor, rig.Modulate);
+		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+	}
 
 	// --- Drawing (M1 placeholder) --------------------------------------------
 
@@ -918,7 +1384,15 @@ public partial class Fighter : CharacterBody2D
 
 		// Once a rig is loaded the puppet IS the fighter; the rectangle below only exists so a
 		// missing or broken manifest degrades to something playable instead of invisible.
-		if (rig != null && rig.Loaded) return;
+		if (rig != null && rig.Loaded)
+		{
+			string pose = HeldPoseName();
+			if (IsDrawnAsBall) DrawBall(1.0f, rollAngle);
+			else if (pose != null) DrawHeldPose(pose);
+			else if (IsBombArmed) DrawBomb();
+			DrawTether();
+			return;
+		}
 
 		Color body = Data.PlaceholderColor;
 
@@ -930,14 +1404,14 @@ public partial class Fighter : CharacterBody2D
 		// Blink while respawn-invulnerable.
 		if (invulnFrames > 0 && (invulnFrames / 4) % 2 == 0) body.A = 0.45f;
 
-		var rect = new Rect2(-Data.BodySize * 0.5f, Data.BodySize);
+		var rect = new Rect2(-bodySize * 0.5f, bodySize);
 		DrawRect(rect, body);
 		DrawRect(rect, new Color(0.08f, 0.08f, 0.1f), false, 3.0f);
 
 		// Facing indicator - a stand-in for "which way is this fighter pointing", which the
 		// side-view drawing answers on its own from M2 onward.
 		var eye = new Rect2(
-			new Vector2(Facing * (Data.BodySize.X * 0.5f - 16.0f) - 6.0f, -Data.BodySize.Y * 0.32f),
+			new Vector2(Facing * (bodySize.X * 0.5f - 16.0f) - 6.0f, -bodySize.Y * 0.32f),
 			new Vector2(12.0f, 12.0f));
 		DrawRect(eye, new Color(0.08f, 0.08f, 0.1f));
 	}

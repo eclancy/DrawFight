@@ -104,6 +104,44 @@ the signal to build one.
 | `Reflect`       | turns projectiles around                              | down           |
 | `Multihit`      | a sustained move that hits repeatedly then launches   | neutral, side  |
 | `CommandGrab`   | unblockable; seizes the victim and throws them        | neutral, side  |
+| `Resize`        | held stance; stick up grows, down shrinks. Each size is a trade (`SizeLevels`) | neutral |
+| `Bomb`          | a counter that explodes: hit it or wait out the fuse, it hits everyone near, user takes `SelfDamage` | down |
+
+Built so far: `Projectile`, `Dash`, `Recovery`, `Trap`, `Drop` (as `SpecialKind.Drop`, a falling
+spike), `Resize` and `Bomb`. The rest are designs, not code.
+
+Some behaviour is a **flag on `MoveData`** rather than a whole archetype, because it bolts onto
+any of them:
+
+- `SelfDamage` — the user takes this much percent (never knockback) when the move connects.
+  How "it hurts him too" is honoured without making the move useless.
+- `DelayedLaunch` + `TetherLength` — a `Recovery` that hangs while a hook flies out, then yanks
+  the user along it. A grappling hook. It never needs to catch on anything: a recovery that can
+  miss loses stocks for reasons a player cannot see.
+- `Beam` — draw a projectile as a streak instead of a ball.
+
+And one is a **trait on `FighterData`**: `TumblesWhenHit`. A real hit knocks the fighter over into
+a ball with no arms or legs, which rolls until it gets back up and can roll off the edge. Control
+and both jumps come back when it ends, even off-stage, so it is dangerous without being a death
+sentence.
+
+### Worked example: Circy
+
+Circy, by Elim, is the first fighter built from a real sheet. Worth reading
+`Specials.Circy()` and `FighterData.Circy()` as the pattern. Three calls a future sheet will
+need again:
+
+- **A direction clash.** The coolest move was "special with the stick up grows, down shrinks" -
+  but up and down special are the recovery and the defence. Resolved by making it neutral
+  special, held, then steered: the same gesture one beat later, and the recovery stays where the
+  rules need it.
+- **Low gravity hands jump height back.** "Falls slowly" and "terrible at jumping" fight each
+  other, because jump height is v² / 2g. Solve the jump force for the height you want *after*
+  setting gravity.
+- **Weaknesses stack.** He is Medium, not Light, because rolling off the stage when hit and a
+  short jump already cost him a lot. Floaty fighters still die early off the side and top - the
+  calibration table has him dying to Lug about as early as Swift does - so watch his KO
+  percents first if he plays too weak.
 
 `CommandGrab` is the one archetype with a standing restriction: **at most one fighter in the
 roster may have one.** Universal grabs are out of scope (see `.ai/fighting-design.md`), and the
@@ -139,8 +177,10 @@ takes a month instead of an afternoon.
   as his.** "He can turn invisible and never be hit" becomes a down special that grants a few
   frames of invulnerability. The answer is never a flat no, and it is never quietly replacing
   his idea with ours and calling it his.
-- **Let him name the moves.** It costs nothing, the names go in the game and on the character
-  select screen, and a move he named is a move he cares about.
+- **The sheet asks for descriptions of the specials, not names.** What a move does and looks
+  like is what we build from; a blank row of name slots is one more thing to fill in before a
+  kid can send the sheet. We name each special from his description, taking any name he used
+  in it, and he can rename it whenever he likes.
 - **Show him the numbers.** A 10-12 year old can absolutely understand "this one does 12 damage
   and this one does 18 but it is slower". Letting him turn the knobs in a `.tres` file is a
   genuinely good way to teach him what balance is.

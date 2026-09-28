@@ -36,6 +36,15 @@ public partial class GameRoot : Node2D
 		{
 			if (arg.StartsWith("--shot=")) shotAfter = Mathf.Max(2, arg.Substring(7).ToInt());
 			if (arg.StartsWith("--stage=")) SelectedStage = arg.Substring(8).ToInt();
+			if (arg.StartsWith("--fighters="))
+			{
+				// "--fighters=2,0": player one is fighter 2, player two is fighter 0.
+				string[] picks = arg.Substring(11).Split(',');
+				for (int i = 0; i < picks.Length && i < SelectedFighters.Length; i++)
+				{
+					SelectedFighters[i] = picks[i].ToInt();
+				}
+			}
 			if (arg == "--parade") startAt = "parade";
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";

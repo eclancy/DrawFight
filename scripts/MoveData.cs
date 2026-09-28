@@ -28,6 +28,20 @@ public enum SpecialKind
 
 	/// <summary>Spawns a hazard that falls, and spikes whatever it lands on.</summary>
 	Drop,
+
+	/// <summary>
+	/// A stance that changes the fighter's size while the button is held: stick up grows, stick
+	/// down shrinks. Big and small are real trade-offs - see <see cref="SizeLevels"/>.
+	/// </summary>
+	Resize,
+
+	/// <summary>
+	/// Turns the fighter into a bomb for the active window. Being hit, or the fuse running out,
+	/// sets it off: the explosion carries this move's damage and knockback to everyone nearby,
+	/// and the fighter pays <see cref="MoveData.SelfDamage"/> with no knockback. The hit that set
+	/// it off does nothing, which is what makes it a counter rather than just a trap.
+	/// </summary>
+	Bomb,
 }
 
 [GlobalClass]
@@ -104,11 +118,37 @@ public partial class MoveData : Resource
 	/// <summary>Upward launch for a Recovery special. Every up-special must have a real one.</summary>
 	[Export] public float SpecialRise { get; set; } = 1500.0f;
 
+	/// <summary>
+	/// Percent the USER takes when the move connects (or, for a bomb, when it goes off). Never
+	/// knockback. This is how "it hurts him too" gets honoured without making the move useless.
+	/// </summary>
+	[Export] public float SelfDamage { get; set; } = 0.0f;
+
+	/// <summary>
+	/// A Recovery that waits: the fighter hangs in the air through startup while a tether flies
+	/// out, and the launch happens on the first active frame. A grappling hook rather than a
+	/// jump - slower to start, and readable, because the line shows where it is going.
+	/// </summary>
+	[Export] public bool DelayedLaunch { get; set; } = false;
+
+	/// <summary>How far the drawn tether reaches for a <see cref="DelayedLaunch"/> recovery.</summary>
+	[Export] public float TetherLength { get; set; } = 0.0f;
+
+	/// <summary>Draw the projectile as a long beam rather than a ball. Presentation only.</summary>
+	[Export] public bool Beam { get; set; } = false;
+
 	/// <summary>Colour of the hand-drawn effect. Crayon-bright; see .ai/art-direction.md.</summary>
 	[Export] public Color FxColor { get; set; } = new Color(0.97f, 0.62f, 0.25f);
 
 	/// <summary>Size of the drawn effect, in pixels.</summary>
 	[Export] public float FxRadius { get; set; } = 34.0f;
+
+	/// <summary>
+	/// The kid's own drawing of the effect - Circy's laser, his explosion. Drawn instead of the
+	/// crayon circle when present, sized to <see cref="FxRadius"/> so the art always matches
+	/// what actually hits.
+	/// </summary>
+	[Export] public Texture2D FxTexture { get; set; }
 
 	/// <summary>
 	/// A copy of this move retuned for a weight class. The shared default moveset is authored
@@ -137,9 +177,26 @@ public partial class MoveData : Resource
 			SpecialGravity = SpecialGravity,
 			SpecialLifetime = SpecialLifetime,
 			SpecialRise = SpecialRise,
+			SelfDamage = SelfDamage,
+			DelayedLaunch = DelayedLaunch,
+			TetherLength = TetherLength,
+			Beam = Beam,
 			FxColor = FxColor,
 			FxRadius = FxRadius,
+			FxTexture = FxTexture,
 		};
+	}
+
+	/// <summary>
+	/// A copy of a projectile resized for a fighter's current size: a bigger beam that hits
+	/// harder when tall, a thinner weaker one when short. Knockback growth is left alone so
+	/// size never turns a zoning tool into a finisher.
+	/// </summary>
+	public MoveData Sized(float size, float damage)
+	{
+		MoveData copy = Scaled(new MoveScale(1.0f, 1.0f, damage, 1.0f, 1.0f, 1.0f));
+		copy.FxRadius = FxRadius * size;
+		return copy;
 	}
 
 	/// <summary>

@@ -15,6 +15,12 @@ public struct InputState
 	public bool SpecialPressed;
 	public bool BlockHeld;
 
+	/// <summary>
+	/// The special button's level rather than its edge. Only a special that is steered while
+	/// held reads it - Circy's Stretch keeps going for as long as the button stays down.
+	/// </summary>
+	public bool SpecialHeld;
+
 	/// <summary>Start / Enter. Menus only; the fight itself never reads it.</summary>
 	public bool StartPressed;
 
@@ -80,6 +86,7 @@ public class KeyboardInputSource : IInputSource
 			AttackPressed = attackDown && !attackWasDown,
 			SpecialPressed = specialDown && !specialWasDown,
 			BlockHeld = Input.IsPhysicalKeyPressed(block),
+			SpecialHeld = specialDown,
 			StartPressed = startDown && !startWasDown,
 		};
 

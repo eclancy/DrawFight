@@ -6,10 +6,13 @@ drawing made by a kid, cut into parts and puppeted on a shared skeleton.
 The game was called `DuskFight` after the kid's own online handle, `Dusk`, and was renamed to
 **DrawFight** on his uncle's call. Do not rename it again without being asked.
 
-Godot 4.5.1 Mono (.NET 9), C#, 2D. **M0, M1 and most of M2 are built** — the fight runs, Xbox
-pads work, and two rigged cutout puppets play the shared animation library. What M2 still owes
-is a rig built from a **real drawing**; the two in `fighters/` are generated stick figures, and
-`fighters/README.md` says when to delete them. M3 is the import tool.
+Godot 4.5.1 Mono (.NET 9), C#, 2D. **M0, M1 and M2 are built** — the fight runs, Xbox pads work,
+and rigged cutout puppets play the shared animation library. M2's last piece, a rig built from
+a **real drawing**, is **Circy**: designed and drawn by Elim, cut from Elim's drawings by
+`tools/art/cut_circy.py`. `fighters/` also holds two generated stick figures (Swift, Lug);
+`fighters/README.md` says when they go. M3 is the import tool.
+
+Every rule about "his" linework below applies to every kid who sends a fighter, Elim included.
 
 Everything is built in code, with no `.tscn` beyond a two-line `scenes/Main.tscn` that attaches
 `GameRoot`. Do not treat "no scenes" as a convention to preserve — it is just what has not
@@ -67,11 +70,18 @@ they read drifts from the version we maintain.
   side by side and large, and write a screenshot to `.shots/`. **This is how rig and animation
   changes get verified.** A wrong pivot or a flipped rotation sign is obvious here and invisible
   in a match. `--shot=N` works on the match too; `F12` grabs a frame while playing.
-- **`python tools/art/stickfigures.py`** — regenerate the two generated test fighters.
+- **`python tools/art/stickfigures.py [name]`** — regenerate the two generated test fighters.
+  A name builds just that one.
+- **`python tools/art/cut_circy.py`** — re-cut Circy's parts and poses from Elim's drawings in
+  `fighters/circy/source/`. Takes about 20 seconds; Python 2.7 without numpy is slow per pixel.
+- **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real title-screen
+  frame (Lug's face). The icon is never drawn separately; when a real drawing replaces the
+  stick figures, re-shoot and re-crop per the script's docstring.
 - **`"$GODOT_BIN" --path . -- --stage=N --shot=120`** — boot straight into one stage and
   screenshot it. `F4` cycles stages while playing.
 - **`--match`, `--select`, `--stages`, `--parade`** each boot straight to that screen, so a
-  screen can be checked without clicking through the flow to reach it.
+  screen can be checked without clicking through the flow to reach it. **`--fighters=2,0`**
+  picks the matchup (player one, player two) by catalog index.
 - **`"$GODOT_BIN" --headless --path . --quit-after 120`** — boot the match headless and read
   the `RegressionChecks:` calibration table it prints. This is how you find out what percent a
   move KOs at without picking up a controller. **Read it before and after changing any
