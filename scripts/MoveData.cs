@@ -134,8 +134,15 @@ public partial class MoveData : Resource
 	/// <summary>How far the drawn tether reaches for a <see cref="DelayedLaunch"/> recovery.</summary>
 	[Export] public float TetherLength { get; set; } = 0.0f;
 
-	/// <summary>Draw the projectile as a long beam rather than a ball. Presentation only.</summary>
+	/// <summary>
+	/// A beam instead of a flying projectile: it stays attached to the fighter's hands and grows
+	/// outward at <see cref="SpecialSpeed"/> up to <see cref="Reach"/>, hitting anything along
+	/// its length. Because it moves with the fighter, it works the same on the ground or in the air.
+	/// </summary>
 	[Export] public bool Beam { get; set; } = false;
+
+	/// <summary>How far a <see cref="Beam"/> reaches, in pixels.</summary>
+	[Export] public float Reach { get; set; } = 0.0f;
 
 	/// <summary>Colour of the hand-drawn effect. Crayon-bright; see .ai/art-direction.md.</summary>
 	[Export] public Color FxColor { get; set; } = new Color(0.97f, 0.62f, 0.25f);
@@ -181,6 +188,7 @@ public partial class MoveData : Resource
 			DelayedLaunch = DelayedLaunch,
 			TetherLength = TetherLength,
 			Beam = Beam,
+			Reach = Reach,
 			FxColor = FxColor,
 			FxRadius = FxRadius,
 			FxTexture = FxTexture,

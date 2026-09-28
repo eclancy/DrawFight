@@ -118,7 +118,9 @@ any of them:
 - `DelayedLaunch` + `TetherLength` — a `Recovery` that hangs while a hook flies out, then yanks
   the user along it. A grappling hook. It never needs to catch on anything: a recovery that can
   miss loses stocks for reasons a player cannot see.
-- `Beam` — draw a projectile as a streak instead of a ball.
+- `Beam` + `Reach` — a projectile that does not fly: it grows out from the user's hands, far
+  end first, and stays attached to them, so it works the same fired in the air. Give it a real
+  charge-up (startup) — a long beam with no warning is the only move worth using.
 
 And one is a **trait on `FighterData`**: `TumblesWhenHit`. A real hit knocks the fighter over into
 a ball with no arms or legs, which rolls until it gets back up and can roll off the edge. Control

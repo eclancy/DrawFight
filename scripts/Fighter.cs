@@ -765,9 +765,11 @@ public partial class Fighter : CharacterBody2D
 		{
 			case SpecialKind.Projectile:
 				hazardSpawned = true;
-				// Only an arcing projectile gets the little upward toss; a beam flies flat.
+				// Only an arcing projectile gets the little upward toss; a beam starts at the hands
+				// and grows straight out.
 				float toss = move.SpecialGravity > 0.0f ? -120.0f : 0.0f;
-				Match.SpawnHazard(this, SizedFor(move), origin, new Vector2(Facing * move.SpecialSpeed, toss));
+				Vector2 start = move.Beam ? BeamOrigin() : origin;
+				Match.SpawnHazard(this, SizedFor(move), start, new Vector2(Facing * move.SpecialSpeed, toss));
 				break;
 
 			case SpecialKind.Drop:
@@ -1076,6 +1078,37 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	public bool IsInvulnerable => invulnFrames > 0;
+
+	/// <summary>Still on the stage and fighting - not respawning and not out of the match.</summary>
+	public bool IsInPlay => State != FighterState.Eliminated && State != FighterState.Respawning;
+
+	/// <summary>
+	/// Where a beam comes out: his hands, held out in front of the body. It is asked every frame,
+	/// so a beam fired in the air follows him down.
+	/// </summary>
+	public Vector2 BeamOrigin() => GlobalPosition + new Vector2(Facing * bodySize.X * 0.45f, -bodySize.Y * 0.05f);
+
+	/// <summary>
+	/// The charge before a beam: a glow at his hands that grows until it fires, so a player can
+	/// see it coming and get out of the way. That warning is what makes a long beam fair.
+	/// </summary>
+	void DrawBeamCharge()
+	{
+		if (State != FighterState.Attacking || currentMove == null || !currentMove.Beam) return;
+		if (moveFrame > currentMove.StartupFrames) return;
+
+		float t = moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames);
+		Vector2 at = BeamOrigin() - GlobalPosition;
+		float radius = currentMove.FxRadius * SizeLevels.ProjectileSize(sizeLevel) * (0.3f + 0.9f * t);
+		float pulse = 1.0f + 0.12f * Mathf.Sin(moveFrame * 1.3f);
+
+		Color glow = currentMove.FxColor;
+		glow.A = 0.35f;
+		DrawCircle(at, radius * 1.6f * pulse, glow);
+		glow.A = 0.9f;
+		DrawCircle(at, radius * pulse, glow);
+		DrawCircle(at, radius * 0.45f * pulse, new Color(1.0f, 0.95f, 0.85f, 0.95f));
+	}
 	public bool IsInHitlag => hitlagFrames > 0;
 
 	// --- Size ------------------------------------------------------------------
@@ -1391,6 +1424,7 @@ public partial class Fighter : CharacterBody2D
 			else if (pose != null) DrawHeldPose(pose);
 			else if (IsBombArmed) DrawBomb();
 			DrawTether();
+			DrawBeamCharge();
 			return;
 		}
 

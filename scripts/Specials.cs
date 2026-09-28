@@ -119,20 +119,25 @@ public static class Specials
 	};
 
 	/// <summary>
-	/// Side: "a move for reaching someone far away - he can shoot a laser beam." Fast, straight,
-	/// long-range and light: a poke that stops people camping at a distance, not a finisher. Its
-	/// size and damage follow his height, which is the payoff for being tall.
+	/// Side: "a move for reaching someone far away - he can shoot a laser beam." He charges it at
+	/// his hands for a third of a second, then it shoots out from them, burst end first, and
+	/// stays attached to him - so it works just as well fired in the air. Long-range and light: a
+	/// poke that stops people camping at a distance, not a finisher. Its thickness and damage
+	/// follow his height, which is the payoff for being tall.
+	///
+	/// The charge is the price of the reach. A beam this long with no wind-up would be the only
+	/// move worth using.
 	/// </summary>
 	static MoveData LaserBeam() => new MoveData
 	{
 		MoveName = "Laser Beam",
-		StartupFrames = 13, ActiveFrames = 2, EndlagFrames = 22,
+		StartupFrames = 20, ActiveFrames = 2, EndlagFrames = 24,
 		Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.8f,
 		LaunchAngleDegrees = 30.0f,
 		HitboxOffset = new Vector2(58.0f, -30.0f), HitboxRadius = 20.0f,
 		Special = SpecialKind.Projectile,
-		SpecialSpeed = 1500.0f, SpecialGravity = 0.0f, SpecialLifetime = 44,
-		Beam = true,
+		SpecialSpeed = 2600.0f, SpecialGravity = 0.0f, SpecialLifetime = 30,
+		Beam = true, Reach = 760.0f,
 		FxColor = new Color(0.95f, 0.30f, 0.36f), FxRadius = 20.0f,
 		FxTexture = CircyFx("laser"),
 	};
