@@ -163,11 +163,12 @@ as the fun one.
 
 ## A note on the art
 
-This repository is **private**, and the reason is the art rather than the code.
+This repository is public, but the drawings in it are not up for grabs.
 
-Any real child's artwork that ends up in `fighters/` belongs to the child who drew it. If this
-is ever opened up or shared, the code and the drawings need separate terms, and the drawings
-should almost certainly stay out — the whole point is that they are somebody's.
+Any real child's artwork in `fighters/` belongs to the child who drew it. **Circy is Elim's** —
+the character, the name, the moves, and every drawing under `fighters/circy/` — and is shared
+here so people can see the game, not for reuse. Please don't copy the drawings into anything
+else.
 
-Swift and Lug are script-generated and carry no such claim. **Circy is Elim's** — the
-character, the name, the moves, and every drawing under `fighters/circy/source/`.
+Swift and Lug are script-generated and carry no such claim. No licence has been chosen for the
+code yet; until one is, the default applies and it is all rights reserved.
