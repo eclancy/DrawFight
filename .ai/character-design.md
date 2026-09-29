@@ -38,14 +38,14 @@ an edit of the shared baseline: its own name, animation, and a reshaped hitbox, 
 that fits who the character is. Weight still scales them afterwards, and the jab combo's length
 follows weight — light fighters get quick multi-hit strings, heavies get two slow hard hits.
 
-| | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, club) |
+| | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, construction) |
 |---|---|---|---|
-| theme | quick martial artist | ball on long stretchy legs | everything is the club |
+| theme | quick martial artist | ball on long stretchy legs | a construction worker: sledgehammer normals, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); hard hat when blocking |
 | jab | punch, punch, kick | kick, low kick, ball bonk | two slow heavy punches |
-| tilts | roundhouse, flip kick, pop-up sweep | long-reach kicks all round | club poke, club arc, ground pound |
-| dash | flying knee | rolls into them as a ball | shoulder barge |
-| smashes | blaze palm, rising flame, split | ball headbutt, spring up, splits | club slam, club twirl, club sweep |
-| aerials | flame spin, axe kick, back kick, bicycle, drill kick (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | belly spin, club chop, back smack, club swipe, butt stomp |
+| tilts | roundhouse, flip kick, pop-up sweep | long-reach kicks all round | sledge poke, sledge arc, sledge sweep (low, from a crouch) |
+| dash | flying knee | rolls into them as a ball | hard-hat barge |
+| smashes | blaze palm, rising flame, split | ball headbutt, spring up, splits | sledge slam, overhead swing (big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
+| aerials | flame spin, axe kick, back kick, bicycle, drill kick (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | toolbelt spin, sledge chop, back swing, sledge swipe, pile driver |
 
 This is why the normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
 scaled per weight by `WeightProfiles`. A balance change to a tilt then lands on all three
@@ -121,9 +121,11 @@ the signal to build one.
 | `CommandGrab`   | unblockable; seizes the victim and throws them        | neutral, side  |
 | `Resize`        | held stance; stick up grows, down shrinks. Each size is a trade (`SizeLevels`) | neutral |
 | `Bomb`          | a counter that explodes: hit it or wait out the fuse, it hits everyone near, user takes `SelfDamage` | down |
+| `Choice`        | a stance showing four moves round the fighter; the stick picks one (`Choices`: up, forward, back, down) | neutral |
 
 Built so far: `Projectile`, `Dash`, `Recovery`, `Trap`, `Drop` (as `SpecialKind.Drop`, a falling
-spike), `Resize` and `Bomb`. The rest are designs, not code.
+spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform` and `Choice`. `CommandGrab` exists only as
+a flag on a tether recovery (`GrabThrow`, below). The rest are designs, not code.
 
 Some behaviour is a **flag on `MoveData`** rather than a whole archetype, because it bolts onto
 any of them:
@@ -136,6 +138,17 @@ any of them:
 - `Beam` + `Reach` — a projectile that does not fly: it grows out from the user's hands, far
   end first, and stays attached to them, so it works the same fired in the air. Give it a real
   charge-up (startup) — a long beam with no warning is the only move worth using.
+
+- `Blink` - a `Dash` so fast it reads as a teleport: it stands and glints through a long startup,
+  then crosses the whole distance in its active frames. The glint is the price of the speed.
+- `OncePerAirtime` - usable once until landing, like every up special. Any special that moves
+  a fighter far must have it, or chaining it becomes a second recovery.
+- `GrabThrow` - on a `DelayedLaunch` recovery, the tether catches the first fighter it touches,
+  reels them in, and throws them with this move as the launch fires. The recovery happens
+  either way. **This is the roster's one command grab** (EdgeLord's Grapple Arm).
+- `MaxOut` - how many of a move's hazards can exist at once; another removes the oldest.
+- `Spin` + `RehitFrames` + `LinkHit` - a spin on the spot drawn with the fighter's turning
+  frames, hitting repeatedly with a weak link hit and launching on the last window.
 
 And one is a **trait on `FighterData`**: `TumblesWhenHit`. A real hit knocks the fighter over into
 a ball with no arms or legs, which rolls until it gets back up and can roll off the edge. Control
@@ -161,7 +174,7 @@ need again:
   percents first if he plays too weak.
 
 `CommandGrab` is the one archetype with a standing restriction: **at most one fighter in the
-roster may have one.** Universal grabs are out of scope (see `.ai/fighting-design.md`), and the
+roster may have one** - and EdgeLord's Grapple Arm now is it. Universal grabs are out of scope (see `.ai/fighting-design.md`), and the
 reason a single command grab is still fine is that it reads as that character's identity rather
 than as a mechanic everyone must learn. Two of them and it is a mechanic again.
 

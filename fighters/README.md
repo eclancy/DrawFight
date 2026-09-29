@@ -58,6 +58,25 @@ Two things about Elim's art that the code works around rather than changes:
   his linework and it stays; if it reads too faint, the fix is to ask Elim for thicker legs
   and arms, never to thicken them here.
 
+## `edgelord/` - a hand drawing, with stand-in colour and move art
+
+EdgeLord ("stretchy arms, super speed, infinite swords") plays in the game now, but most of
+what you see is a **placeholder** until the finished drawings arrive:
+
+- **`source/edgelord.webp`** is the photographed pencil drawing - the master copy, never edited.
+- **`source/edgelord_colored.png`** is our colouring of it (`tools/art/color_edgelord.py`),
+  done on request: thicker, darker lines, new glowing eyes, teeth, outlined scars.
+- **`parts/`, `poses/`, `rig.json`** are cut from that colouring by
+  `python tools/art/cut_edgelord.py` (about a minute). The V is the Torso, as Circy's ball is;
+  the turning frames for his spin hang on the Torso as extras (`turn0`..`turn4`); every sword
+  is ours (`tools/art/edgelord_extras.py`, which also writes review sheets to `draft/`).
+
+When his own coloured drawing and move drawings arrive, they replace all of this. The cut
+follows shapes traced from **this** drawing, so the new art needs its own cut - ideally sent
+as layered PNGs, one part per layer.
+
+He is drawn facing the viewer, like Circy; the limbs on the right of the page are the front.
+
 ## The canonical orientation contract
 
 `rig.json` and `FighterRig.cs` agree on this, and nothing works if it is broken:

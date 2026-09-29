@@ -102,6 +102,7 @@
     }
   ], 
   "canonicalHeight": 355, 
+  "extras": [], 
   "legLength": 258, 
   "name": "Swift", 
   "parts": {
@@ -175,5 +176,6 @@
       ], 
       "texture": "parts/Torso.png"
     }
-  }
+  }, 
+  "poses": {}
 }

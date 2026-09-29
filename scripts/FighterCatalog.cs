@@ -6,10 +6,11 @@ using Godot;
 ///
 /// Swift and Lug are generated test scaffolding - see fighters/README.md - and are deleted once
 /// real drawings replace them. Circy is the first kid-designed fighter, from Elim's sheet.
+/// EdgeLord plays with placeholder colouring and move art until his own drawings arrive.
 /// </summary>
 public static class FighterCatalog
 {
-	public const int Count = 3;
+	public const int Count = 4;
 
 	// Built once and kept. Each FighterData now carries seventeen MoveData Resources, so
 	// rebuilding the roster on every lookup allocated hundreds of Godot Resources that were
@@ -26,6 +27,7 @@ public static class FighterCatalog
 		{
 			case 1: cache[i] = FighterData.PlaceholderHeavy(); break;
 			case 2: cache[i] = FighterData.Circy(); break;
+			case 3: cache[i] = FighterData.EdgeLord(); break;
 			default: cache[i] = FighterData.PlaceholderLight(); break;
 		}
 		return cache[i];
@@ -45,8 +47,9 @@ public static class FighterCatalog
 
 		switch (((index % Count) + Count) % Count)
 		{
-			case 1: return $"{weight}. Hits hard and slow. Hard to launch, hard to move.";
+			case 1: return $"{weight}. A construction worker with a sledgehammer and site tools. Hits hard and slow; hard to launch.";
 			case 2: return $"{weight}. Stretches tall or short. Falls slowly, jumps badly, rolls when hit.";
+			case 3: return $"{weight}. Super fast, with endless swords and a stretchy arm. Easy to launch.";
 			default: return $"{weight}. Hits fast and light. Quick to move, easy to launch.";
 		}
 	}

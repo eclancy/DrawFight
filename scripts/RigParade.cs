@@ -78,6 +78,7 @@ public partial class RigParade : Node2D
 				("jump", FighterAnimations.Jump, null),
 				("fall", FighterAnimations.Fall, null),
 				("land", FighterAnimations.Land, null),
+				("crouch", FighterAnimations.Crouch, null),
 				("block", FighterAnimations.Block, null),
 				("hurt", FighterAnimations.Hurt, null),
 				("windup", null, d => FighterAnimations.AttackWindup),
@@ -119,6 +120,9 @@ public partial class RigParade : Node2D
 
 				// Much larger than in a match, which is the entire point of this view.
 				rig.Normalise(300.0f, 150.0f, 1.0f);
+
+				// Blocking puts on any block-only extra (Lug's hard hat), exactly as in a match.
+				if (columns[col].clip == FighterAnimations.Block) rig.SetExtraVisible("hardhat", true);
 
 				slots.Add(new Slot
 				{

@@ -2,19 +2,42 @@ using System.Collections.Generic;
 using Godot;
 
 /// <summary>
-/// M1 heads-up display: percent, stocks, and which device each player is holding, plus the
-/// controls reminder and the debug readout. Deliberately plain - M5 builds the real one with
-/// portraits.
+/// The match heads-up display: each player's name, damage percent and stocks along the bottom,
+/// and a big banner in the middle for the 3-2-1 countdown and the winner. Nothing else - no
+/// boxes, no control reminders.
+///
+/// There are no paper bands behind the readouts any more. Legibility comes from the text itself:
+/// every label carries a thick paper-coloured outline, so it reads on cream, grass or brickwork
+/// alike. That is the lesson the bands were learned from (white-on-cream shipped invisible
+/// twice), solved without covering the stage.
 /// </summary>
 public partial class MatchHud : CanvasLayer
 {
 	readonly List<Label> percentLabels = new List<Label>();
 	readonly List<Label> stockLabels = new List<Label>();
-	readonly List<Label> deviceLabels = new List<Label>();
 
-	Label statusLabel;
-	Label stageLabel;
-	Label helpLabel;
+	Label bannerLabel;
+	Label subBannerLabel;
+	Label countdownLabel;
+	Label debugLabel;
+
+	static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
+	static readonly Color Ink = new Color(0.14f, 0.14f, 0.18f);
+
+	static Label MakeLabel(Control root, int size, Color colour, int outline)
+	{
+		var label = new Label
+		{
+			HorizontalAlignment = HorizontalAlignment.Center,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		label.AddThemeFontSizeOverride("font_size", size);
+		label.AddThemeColorOverride("font_color", colour);
+		label.AddThemeColorOverride("font_outline_color", Paper);
+		label.AddThemeConstantOverride("outline_size", outline);
+		root.AddChild(label);
+		return label;
+	}
 
 	public void Build(List<Fighter> fighters)
 	{
@@ -25,125 +48,87 @@ public partial class MatchHud : CanvasLayer
 		};
 		AddChild(root);
 
-		// Paper bands behind the readouts. Added before the labels so they render underneath.
-		//
-		// These are not decoration. The HUD was built against a cream stage and became
-		// illegible the moment a stage had grass or brickwork under it. A stage palette is
-		// free to be anything, so the HUD has to carry its own background rather than borrow
-		// the stage one.
-		var paper = new Color(0.97f, 0.96f, 0.93f, 0.86f);
-
-		root.AddChild(new ColorRect
-		{
-			Color = paper,
-			Position = new Vector2(0.0f, 762.0f),
-			Size = new Vector2(1920.0f, 320.0f),
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-		});
-
-		root.AddChild(new ColorRect
-		{
-			Color = paper,
-			Position = new Vector2(0.0f, 0.0f),
-			Size = new Vector2(760.0f, 156.0f),
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-		});
+		const float Width = 1920.0f;
+		const float Column = 420.0f;
 
 		for (int i = 0; i < fighters.Count; i++)
 		{
-			float x = 120.0f + i * 420.0f;
+			// Players spread evenly across the bottom, each in their own column.
+			float centreX = Width * (i + 1) / (fighters.Count + 1);
+			float left = centreX - Column * 0.5f;
 
-			var name = new Label
-			{
-				Text = fighters[i].Data.DisplayName,
-				Position = new Vector2(x, 784.0f),
-			};
-			name.AddThemeFontSizeOverride("font_size", 26);
-			name.AddThemeColorOverride("font_color", fighters[i].Data.PlaceholderColor);
-			root.AddChild(name);
+			Label name = MakeLabel(root, 34, fighters[i].Data.PlaceholderColor, 10);
+			name.Text = fighters[i].Data.DisplayName;
+			name.Position = new Vector2(left, 842.0f);
+			name.Size = new Vector2(Column, 44.0f);
 
-			// Showing the device per player is not decoration - with hot-plugging, "which
-			// controller am I" is a real question and the answer can change mid-match.
-			var device = new Label
-			{
-				Text = "",
-				Position = new Vector2(x, 814.0f),
-			};
-			device.AddThemeFontSizeOverride("font_size", 19);
-			device.AddThemeColorOverride("font_color", new Color(0.38f, 0.40f, 0.46f));
-			root.AddChild(device);
-			deviceLabels.Add(device);
-
-			var percent = new Label
-			{
-				Text = "0%",
-				Position = new Vector2(x, 836.0f),
-			};
-			percent.AddThemeFontSizeOverride("font_size", 76);
-			root.AddChild(percent);
+			Label percent = MakeLabel(root, 112, Ink, 18);
+			percent.Text = "0%";
+			percent.Position = new Vector2(left, 872.0f);
+			percent.Size = new Vector2(Column, 130.0f);
 			percentLabels.Add(percent);
 
-			var stocks = new Label
-			{
-				Text = "",
-				Position = new Vector2(x, 934.0f),
-			};
-			stocks.AddThemeFontSizeOverride("font_size", 30);
-			stocks.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
-			root.AddChild(stocks);
+			Label stocks = MakeLabel(root, 34, Ink, 10);
+			stocks.Position = new Vector2(left, 1000.0f);
+			stocks.Size = new Vector2(Column, 44.0f);
 			stockLabels.Add(stocks);
 		}
 
-		statusLabel = new Label
-		{
-			Text = "",
-			Position = new Vector2(120.0f, 60.0f),
-		};
-		statusLabel.AddThemeFontSizeOverride("font_size", 48);
-		statusLabel.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
-		root.AddChild(statusLabel);
+		bannerLabel = MakeLabel(root, 190, Ink, 26);
+		bannerLabel.Position = new Vector2(0.0f, 300.0f);
+		bannerLabel.Size = new Vector2(Width, 240.0f);
+		bannerLabel.PivotOffset = new Vector2(Width * 0.5f, 120.0f);
 
-		stageLabel = new Label
-		{
-			Text = "",
-			Position = new Vector2(120.0f, 116.0f),
-		};
-		stageLabel.AddThemeFontSizeOverride("font_size", 22);
-		stageLabel.AddThemeColorOverride("font_color", new Color(0.44f, 0.46f, 0.52f));
-		root.AddChild(stageLabel);
+		// The countdown is its own label: huge, crayon-coloured, with an ink outline and a paper
+		// halo round that, so a bright yellow "1" still reads on a cream page or on grass.
+		countdownLabel = MakeLabel(root, 330, Ink, 30);
+		countdownLabel.AddThemeColorOverride("font_outline_color", Ink);
+		countdownLabel.AddThemeColorOverride("font_shadow_color", Paper);
+		countdownLabel.AddThemeConstantOverride("shadow_outline_size", 64);
+		countdownLabel.AddThemeConstantOverride("shadow_offset_x", 0);
+		countdownLabel.AddThemeConstantOverride("shadow_offset_y", 0);
+		countdownLabel.Position = new Vector2(0.0f, 180.0f);
+		countdownLabel.Size = new Vector2(Width, 420.0f);
+		countdownLabel.PivotOffset = new Vector2(Width * 0.5f, 210.0f);
 
-		helpLabel = new Label
-		{
-			Text = "",
-			Position = new Vector2(120.0f, 972.0f),
-		};
-		helpLabel.AddThemeFontSizeOverride("font_size", 18);
-		helpLabel.AddThemeColorOverride("font_color", new Color(0.44f, 0.46f, 0.52f));
-		root.AddChild(helpLabel);
+		subBannerLabel = MakeLabel(root, 40, Ink, 12);
+		subBannerLabel.Position = new Vector2(0.0f, 540.0f);
+		subBannerLabel.Size = new Vector2(Width, 60.0f);
+
+		// The knockback readout, only while hitboxes are shown with F1. A tuning aid, not HUD.
+		debugLabel = MakeLabel(root, 26, Ink, 8);
+		debugLabel.HorizontalAlignment = HorizontalAlignment.Left;
+		debugLabel.Position = new Vector2(40.0f, 30.0f);
 	}
 
-	public void SetStageName(string name)
+	/// <summary>
+	/// The big centre text: "3", "2", "1", "FIGHT!", or the winner. <paramref name="punch"/>
+	/// runs 1 to 0 over a number's time on screen, so each one lands big and settles.
+	/// </summary>
+	public void SetBanner(string text, string subText = "", float punch = 0.0f)
 	{
-		if (stageLabel != null) stageLabel.Text = name;
+		if (bannerLabel == null) return;
+		bannerLabel.Text = text;
+		bannerLabel.Scale = Vector2.One * (1.0f + 0.35f * punch * punch);
+		subBannerLabel.Text = subText;
 	}
 
-	public void SetControllerLabels(List<string> labels, string padLayoutHelp)
+	/// <summary>
+	/// One beat of the 3-2-1-FIGHT countdown, in its own colour. <paramref name="punch"/> runs 1
+	/// to 0 over the beat: it slams in oversized and settles, and <paramref name="fade"/> lets
+	/// FIGHT! melt away as control is handed over. Empty text hides it.
+	/// </summary>
+	public void SetCountdown(string text, Color colour, float punch, float tilt, float fade = 1.0f)
 	{
-		for (int i = 0; i < labels.Count && i < deviceLabels.Count; i++)
-		{
-			deviceLabels[i].Text = labels[i];
-		}
-
-		if (helpLabel == null) return;
-
-		// Controller only. Everyone plays on a pad, so keyboard keys and the F-key debug
-		// toggles are not on screen - they still work, and README.md lists them.
-		helpLabel.Text =
-			"L-stick move, harder = faster   " + padLayoutHelp + "   Start restart\n"
-			+ "tap attack = combo    flick + attack = smash (hold to charge)    attack while running = dash attack";
+		if (countdownLabel == null) return;
+		countdownLabel.Text = text;
+		countdownLabel.AddThemeColorOverride("font_color", colour);
+		countdownLabel.Scale = Vector2.One * (1.0f + 0.6f * punch * punch * punch);
+		countdownLabel.Rotation = tilt * (0.4f + 0.6f * punch);
+		countdownLabel.Modulate = new Color(1.0f, 1.0f, 1.0f, fade);
 	}
 
-	public void Refresh(List<Fighter> fighters, string status)
+	public void Refresh(List<Fighter> fighters, string debug)
 	{
 		for (int i = 0; i < fighters.Count && i < percentLabels.Count; i++)
 		{
@@ -154,11 +139,14 @@ public partial class MatchHud : CanvasLayer
 			// fastest way to read "this one is about to die" from across the couch.
 			float danger = Mathf.Clamp(f.Percent / 150.0f, 0.0f, 1.0f);
 			percentLabels[i].AddThemeColorOverride("font_color",
-				new Color(0.16f + danger * 0.68f, 0.16f, 0.20f));
+				new Color(0.14f + danger * 0.72f, 0.14f, 0.18f));
 
-			stockLabels[i].Text = f.Stocks > 0 ? new string('*', f.Stocks) : "OUT";
+			// One dot per stock left.
+			stockLabels[i].Text = f.Stocks > 0
+				? string.Join(" ", new string('●', f.Stocks).ToCharArray())
+				: "OUT";
 		}
 
-		if (statusLabel != null) statusLabel.Text = status;
+		if (debugLabel != null) debugLabel.Text = debug;
 	}
 }

@@ -195,73 +195,271 @@ public static class Specials
 	};
 
 	// =========================================================================
-	// LUG - heavy weapons
+	// EDGELORD - light, swords. "Stretchy arms, super speed, infinite swords."
+	//
+	// His art here is a placeholder: every sword and effect is ours, standing in until his own
+	// drawings of the moves arrive (see tools/art/cut_edgelord.py).
 	// =========================================================================
 
-	public static MoveData[] HeavyWeapons()
+	public static MoveData[] EdgeLord()
 	{
-		return new[] { HammerThrow(), AnvilCharge(), HammerJump(), AnvilDrop() };
+		return new[] { InfiniteSwords(), BlurSlash(), GrappleArm(), PlantedBlade() };
 	}
 
-	/// <summary>Neutral: the signature. Hurls the hammer, which arcs heavily and hits hard.</summary>
-	static MoveData HammerThrow() => new MoveData
+	static Texture2D EdgeFx(string name)
 	{
-		MoveName = "Hammer Throw",
-		Anim = AttackAnim.SmashSwing,
-		StartupFrames = 19, ActiveFrames = 2, EndlagFrames = 30,
-		Damage = 15.0f, BaseKnockback = 36.0f, KnockbackGrowth = 1.05f,
-		LaunchAngleDegrees = 44.0f,
-		HitboxOffset = new Vector2(74.0f, -26.0f), HitboxRadius = 44.0f,
-		Special = SpecialKind.Projectile,
-		SpecialSpeed = 820.0f, SpecialGravity = 900.0f, SpecialLifetime = 110,
-		FxColor = new Color(0.46f, 0.50f, 0.62f), FxRadius = 40.0f,
+		string path = $"res://fighters/edgelord/poses/{name}.png";
+		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+	}
+
+	/// <summary>
+	/// Neutral: the signature. Press special and four swords appear around him - up, forward,
+	/// back and down - and pushing the stick throws that one. Each is a different tool, so the
+	/// choice is the skill: the greatsword for someone above, the rapier for someone far away, the
+	/// daggers for someone behind, the saw-blade for someone on the ground or below.
+	/// </summary>
+	static MoveData InfiniteSwords() => new MoveData
+	{
+		MoveName = "Infinite Swords",
+		// The active window is how long the swords stay up to choose from. Letting it run out
+		// throws the forward one, so a tap is never wasted.
+		StartupFrames = 3, ActiveFrames = 40, EndlagFrames = 8,
+		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
+		HitboxRadius = 0.0f,
+		Special = SpecialKind.Choice,
+		Choices = new[] { ThrownGreatsword(), ThrownRapier(), ThrownDaggers(), ThrownSawblade() },
+		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 0.0f,
 	};
 
-	/// <summary>Side: shoulders an anvil and charges. Slow to start, very hard to stop.</summary>
-	static MoveData AnvilCharge() => new MoveData
+	/// <summary>Up: a greatsword lobbed high and forward, tumbling. Slow, heavy, and it kills.</summary>
+	static MoveData ThrownGreatsword() => new MoveData
 	{
-		MoveName = "Anvil Charge",
-		Anim = AttackAnim.Lunge,
-		StartupFrames = 16, ActiveFrames = 10, EndlagFrames = 32,
-		Damage = 16.0f, BaseKnockback = 44.0f, KnockbackGrowth = 1.0f,
-		LaunchAngleDegrees = 42.0f,
-		HitboxOffset = new Vector2(62.0f, -18.0f), HitboxRadius = 64.0f,
-		CarriesMomentum = true,
-		Special = SpecialKind.Dash,
-		SpecialSpeed = 1180.0f,
-		FxColor = new Color(0.42f, 0.46f, 0.58f), FxRadius = 46.0f,
+		MoveName = "Greatsword",
+		Anim = AttackAnim.Uppercut,
+		StartupFrames = 16, ActiveFrames = 2, EndlagFrames = 24,
+		Damage = 14.0f, BaseKnockback = 30.0f, KnockbackGrowth = 1.0f,
+		LaunchAngleDegrees = 62.0f,
+		HitboxOffset = new Vector2(30.0f, -60.0f), HitboxRadius = 34.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 520.0f, LaunchLift = 1250.0f, SpecialGravity = 2300.0f, SpecialLifetime = 100,
+		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 34.0f,
+		FxTexture = EdgeFx("sword_greatsword"), FxArtSize = 150.0f, FxSpin = 17.0f,
+	};
+
+	/// <summary>Forward: a rapier, point first, faster and further than anything. Weak - it is for reach.</summary>
+	static MoveData ThrownRapier() => new MoveData
+	{
+		MoveName = "Rapier",
+		Anim = AttackAnim.Punch,
+		StartupFrames = 9, ActiveFrames = 2, EndlagFrames = 16,
+		Damage = 6.0f, BaseKnockback = 24.0f, KnockbackGrowth = 0.6f,
+		LaunchAngleDegrees = 24.0f,
+		HitboxOffset = new Vector2(64.0f, -24.0f), HitboxRadius = 16.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 1900.0f, SpecialGravity = 0.0f, SpecialLifetime = 34,
+		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 16.0f,
+		FxTexture = EdgeFx("sword_rapier"), FxArtSize = 116.0f, FxAlongFlight = true,
+	};
+
+	/// <summary>Back: he turns round and fans three daggers. Quick and short - a get-off-my-back.</summary>
+	static MoveData ThrownDaggers() => new MoveData
+	{
+		MoveName = "Daggers",
+		Anim = AttackAnim.PunchBack,
+		StartupFrames = 7, ActiveFrames = 12, EndlagFrames = 16,
+		Damage = 3.0f, BaseKnockback = 16.0f, KnockbackGrowth = 0.35f,
+		LaunchAngleDegrees = 30.0f,
+		HitboxOffset = new Vector2(56.0f, -22.0f), HitboxRadius = 12.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 1450.0f, SpecialGravity = 0.0f, SpecialLifetime = 22,
+		BurstCount = 3, BurstInterval = 5,
+		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 12.0f,
+		FxTexture = EdgeFx("sword_dagger"), FxArtSize = 58.0f, FxAlongFlight = true,
 	};
 
 	/// <summary>
-	/// Up: the recovery. Swings the hammer down hard enough to throw himself up. A heavy
-	/// fighter still needs a real way home, and this is deliberately the shortest one in the
-	/// game rather than a missing one.
+	/// Down: the saw-toothed edgeblade, spun low along the floor like a buzzsaw. Slow, lingers
+	/// in the way, and pops whoever it catches up into the air for a follow-up.
 	/// </summary>
-	static MoveData HammerJump() => new MoveData
+	static MoveData ThrownSawblade() => new MoveData
 	{
-		MoveName = "Hammer Jump",
-		Anim = AttackAnim.UpSmash,
-		StartupFrames = 10, ActiveFrames = 8, EndlagFrames = 26,
-		Damage = 13.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.95f,
-		LaunchAngleDegrees = 80.0f,
-		HitboxOffset = new Vector2(16.0f, -34.0f), HitboxRadius = 58.0f,
-		Special = SpecialKind.Recovery,
-		SpecialRise = 1480.0f, SpecialSpeed = 260.0f,
-		FxColor = new Color(0.50f, 0.54f, 0.66f), FxRadius = 46.0f,
+		MoveName = "Sawblade",
+		Anim = AttackAnim.LowSweep,
+		StartupFrames = 12, ActiveFrames = 2, EndlagFrames = 20,
+		Damage = 8.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.6f,
+		LaunchAngleDegrees = 82.0f,
+		HitboxOffset = new Vector2(50.0f, 40.0f), HitboxRadius = 26.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 640.0f, SpecialGravity = 0.0f, SpecialLifetime = 70,
+		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 26.0f,
+		FxTexture = EdgeFx("sword_edgeblade"), FxArtSize = 96.0f, FxSpin = 26.0f,
 	};
 
-	/// <summary>Down: drops an anvil. Spikes whatever is underneath, which off-stage is lethal.</summary>
-	static MoveData AnvilDrop() => new MoveData
+	/// <summary>
+	/// Side: Blur Slash. He stands and his blade glints - a star of light that grows and flares -
+	/// then he is simply on the other side of you, cutting through on the way. The glint is the
+	/// price: it is a long, obvious warning, because a hit this fast with no warning would be
+	/// unfair. Once per trip into the air, or it would be a second recovery.
+	///
+	/// SOUND, when there is any: this is the move that most needs it. A rising ring through the
+	/// glint that peaks on the frame he goes, then a sharp cut.
+	/// </summary>
+	static MoveData BlurSlash() => new MoveData
 	{
-		MoveName = "Anvil Drop",
-		Anim = AttackAnim.Dair,
-		StartupFrames = 15, ActiveFrames = 3, EndlagFrames = 30,
-		Damage = 17.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.85f,
+		MoveName = "Blur Slash",
+		Anim = AttackAnim.Lunge,
+		StartupFrames = 22, ActiveFrames = 5, EndlagFrames = 22,
+		Damage = 11.0f, BaseKnockback = 36.0f, KnockbackGrowth = 0.85f,
+		LaunchAngleDegrees = 40.0f,
+		HitboxOffset = new Vector2(24.0f, -10.0f), HitboxRadius = 60.0f,
+		Special = SpecialKind.Dash,
+		Blink = true, OncePerAirtime = true,
+		// About 350px in five frames.
+		SpecialSpeed = 4200.0f,
+		FxColor = new Color(0.97f, 0.93f, 0.70f), FxRadius = 40.0f,
+	};
+
+	/// <summary>
+	/// Up: the recovery. His arm stretches up and forward and yanks him after it. If it catches
+	/// someone on the way out, he reels them in and throws them down as he goes up - one pull
+	/// that sends them down and him up. Grabbing never costs the recovery: he rises either way.
+	/// This is the roster's one command grab (see .ai/character-design.md).
+	/// </summary>
+	static MoveData GrappleArm() => new MoveData
+	{
+		MoveName = "Grapple Arm",
+		Anim = AttackAnim.Uppercut,
+		StartupFrames = 14, ActiveFrames = 14, EndlagFrames = 18,
+		Damage = 7.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.85f,
+		LaunchAngleDegrees = 70.0f,
+		HitboxOffset = new Vector2(18.0f, -20.0f), HitboxRadius = 54.0f,
+		Special = SpecialKind.Recovery,
+		DelayedLaunch = true, TetherLength = 400.0f, StretchArm = true,
+		SpecialRise = 1520.0f, SpecialSpeed = 640.0f,
+		GrabThrow = new MoveData
+		{
+			MoveName = "Grapple Throw",
+			Damage = 9.0f, BaseKnockback = 44.0f, KnockbackGrowth = 0.6f,
+			LaunchAngleDegrees = -84.0f,
+			Spikes = true, Unblockable = true,
+		},
+		FxColor = new Color(0.49f, 0.06f, 0.09f), FxRadius = 18.0f,
+	};
+
+	/// <summary>
+	/// Down: he stabs a sword into the ground in front of him and leaves it. Anyone who runs into
+	/// it is cut and popped up. Two can be out; a third pulls up the oldest. Put down in the air,
+	/// it falls point-first until it sticks in whatever is below.
+	/// </summary>
+	static MoveData PlantedBlade() => new MoveData
+	{
+		MoveName = "Planted Blade",
+		Anim = AttackAnim.BuildDown,
+		StartupFrames = 14, ActiveFrames = 2, EndlagFrames = 20,
+		Damage = 9.0f, BaseKnockback = 38.0f, KnockbackGrowth = 0.7f,
+		LaunchAngleDegrees = 72.0f,
+		// Low enough that, on the ground, the point is in the floor.
+		HitboxOffset = new Vector2(62.0f, 13.0f), HitboxRadius = 30.0f,
+		Special = SpecialKind.Trap,
+		SpecialLifetime = 420, SpecialGravity = 3000.0f, MaxOut = 2,
+		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 30.0f,
+		FxTexture = EdgeFx("planted"), FxArtSize = 110.0f,
+	};
+
+	// =========================================================================
+	// LUG - heavy, construction site. Every special is a tool you would find on a building
+	// site: a nail gun, a wheelbarrow, a wrecking ball and a steel beam.
+	// =========================================================================
+
+	public static MoveData[] Construction()
+	{
+		return new[] { NailGun(), WheelbarrowCharge(), WreckingBallSwing(), SteelBeamDrop() };
+	}
+
+	/// <summary>One of Lug's tool drawings, or null so the move falls back to a crayon shape.</summary>
+	static Texture2D LugFx(string name)
+	{
+		string path = $"res://fighters/lug/poses/{name}.png";
+		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+	}
+
+	/// <summary>
+	/// Neutral: the signature. A burst of four nails, straight ahead and fast. Each one is weak
+	/// and barely pushes, so it is a way to chip at someone who stays out of reach of his
+	/// sledgehammer - the one thing a heavy is otherwise bad at.
+	/// </summary>
+	static MoveData NailGun() => new MoveData
+	{
+		MoveName = "Nail Gun",
+		Anim = AttackAnim.Punch,
+		StartupFrames = 12, ActiveFrames = 14, EndlagFrames = 20,
+		Damage = 2.5f, BaseKnockback = 12.0f, KnockbackGrowth = 0.35f,
+		LaunchAngleDegrees = 20.0f,
+		HitboxOffset = new Vector2(70.0f, -26.0f), HitboxRadius = 10.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 1700.0f, SpecialGravity = 0.0f, SpecialLifetime = 32,
+		BurstCount = 4, BurstInterval = 4,
+		Streak = true,
+		FxColor = new Color(0.30f, 0.32f, 0.38f), FxRadius = 10.0f,
+	};
+
+	/// <summary>
+	/// Side: charges forward behind a wheelbarrow that scoops up whoever is in the way and
+	/// dumps them up and forward. Slow to get going, hard to stop once it is.
+	/// </summary>
+	static MoveData WheelbarrowCharge() => new MoveData
+	{
+		MoveName = "Wheelbarrow Charge",
+		Anim = AttackAnim.Lunge,
+		StartupFrames = 14, ActiveFrames = 12, EndlagFrames = 30,
+		Damage = 14.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.95f,
+		LaunchAngleDegrees = 68.0f,
+		HitboxOffset = new Vector2(96.0f, 10.0f), HitboxRadius = 60.0f,
+		CarriesMomentum = true,
+		Special = SpecialKind.Dash,
+		SpecialSpeed = 1100.0f,
+		HeldArt = "wheelbarrow", HeldArtOffset = new Vector2(92.0f, 22.0f), HeldArtSize = 130.0f,
+		FxColor = new Color(0.92f, 0.49f, 0.22f), FxRadius = 46.0f,
+	};
+
+	/// <summary>
+	/// Up: the recovery. He swings the wrecking ball up and over his head, and it hauls him up
+	/// after it. The ball hits anyone above him on the way. A heavy fighter still needs a real
+	/// way home; this is a slower one, since he waits for the swing before he rises.
+	/// </summary>
+	static MoveData WreckingBallSwing() => new MoveData
+	{
+		MoveName = "Wrecking Ball",
+		Anim = AttackAnim.UpSmash,
+		StartupFrames = 10, ActiveFrames = 12, EndlagFrames = 26,
+		Damage = 13.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.95f,
+		LaunchAngleDegrees = 78.0f,
+		HitboxRadius = 58.0f,
+		Special = SpecialKind.Recovery,
+		DelayedLaunch = true,
+		SpecialRise = 1560.0f, SpecialSpeed = 360.0f,
+		SwingArt = "wreckingball", SwingLength = 120.0f, SwingArtSize = 78.0f,
+		FxColor = new Color(0.30f, 0.30f, 0.34f), FxRadius = 40.0f,
+	};
+
+	/// <summary>
+	/// Down: he leans down and hammers a steel girder into place under his own feet, and stands
+	/// on it. After a moment it shakes and falls - he can jump off it before it goes, and anyone
+	/// underneath when it drops is spiked. On the stage it is a step up; off it, it is a place to
+	/// stand. Once per trip into the air, and standing on it gives back no jumps.
+	/// </summary>
+	static MoveData SteelBeamDrop() => new MoveData
+	{
+		MoveName = "Steel Beam",
+		Anim = AttackAnim.BuildDown,
+		StartupFrames = 12, ActiveFrames = 3, EndlagFrames = 16,
+		Damage = 13.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.8f,
 		LaunchAngleDegrees = -80.0f,
-		HitboxOffset = new Vector2(26.0f, 44.0f), HitboxRadius = 48.0f,
+		HitboxRadius = 0.0f,
 		Spikes = true,
-		Special = SpecialKind.Drop,
-		SpecialSpeed = 260.0f, SpecialGravity = 2600.0f, SpecialLifetime = 120,
-		FxColor = new Color(0.38f, 0.42f, 0.54f), FxRadius = 44.0f,
+		Special = SpecialKind.BuildPlatform,
+		PlatformHoldFrames = 80, PlatformWidth = 200.0f,
+		FxColor = new Color(0.70f, 0.26f, 0.22f), FxRadius = 40.0f,
+		FxTexture = LugFx("girder"),
 	};
 }

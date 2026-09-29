@@ -35,9 +35,26 @@ public partial class FighterRig : Node2D
 	}
 
 	readonly Dictionary<string, PoseArt> poses = new Dictionary<string, PoseArt>();
+
+	/// <summary>
+	/// Drawings hung on an existing bone and shown only at certain moments - Lug's hard hat,
+	/// which goes on when he blocks. They add no bones, so the shared skeleton never changes.
+	/// </summary>
+	readonly Dictionary<string, Sprite2D> extras = new Dictionary<string, Sprite2D>();
 	float ballWidth;
 
 	float puppetScale = 1.0f;
+	float squash = 1.0f;
+	int facingSign = 1;
+	readonly Pose exaggerated = new Pose();
+
+	/// <summary>
+	/// Every pose is pushed this much further from rest when it is shown. Authored poses read
+	/// stiff on a cutout puppet - parts only rotate, nothing bends - so the whole library is
+	/// played bigger than it is written. One knob for "more dramatic".
+	/// </summary>
+	public const float Drama = 1.25f;
+	public const float HipDrama = 1.4f;
 	float bodyHalfHeight;
 	float legStretch = 1.0f;
 
@@ -154,9 +171,76 @@ public partial class FighterRig : Node2D
 			sprites[(int)bone] = sprite;
 		}
 
+		LoadExtras(root, parts, baseDir);
+
 		Loaded = true;
 		Play(FighterAnimations.Idle);
 		return true;
+	}
+
+	void LoadExtras(Godot.Collections.Dictionary root, Godot.Collections.Dictionary parts, string baseDir)
+	{
+		extras.Clear();
+		if (!root.ContainsKey("extras")) return;
+
+		foreach (Godot.Collections.Dictionary entry in (Godot.Collections.Array)root["extras"])
+		{
+			if (!RigBones.TryParse((string)entry["bone"], out RigBone bone) || !present[(int)bone]) continue;
+
+			string partName = (string)entry["part"];
+			if (!parts.ContainsKey(partName)) continue;
+			var part = (Godot.Collections.Dictionary)parts[partName];
+			var texture = GD.Load<Texture2D>(baseDir.PathJoin((string)part["texture"]));
+			if (texture == null) continue;
+
+			var pivot = (Godot.Collections.Array)part["pivot"];
+			var offset = (Godot.Collections.Array)entry["offset"];
+			var sprite = new Sprite2D
+			{
+				Texture = texture,
+				Centered = false,
+				Offset = new Vector2(-(float)pivot[0], -(float)pivot[1]),
+				Position = new Vector2((float)offset[0], (float)offset[1]),
+				Visible = false,
+			};
+			bones[(int)bone].AddChild(sprite);
+			extras[(string)entry["name"]] = sprite;
+		}
+	}
+
+	/// <summary>Shows or hides an extra drawing by name. Unknown names are ignored.</summary>
+	public void SetExtraVisible(string name, bool visible)
+	{
+		if (extras.TryGetValue(name, out Sprite2D sprite)) sprite.Visible = visible;
+	}
+
+	/// <summary>
+	/// Mirrors an extra about its pivot. A turning frame shown for the far half of a turn is the
+	/// near half's frame the other way round, so half the frames do the whole circle.
+	/// </summary>
+	public void SetExtraMirrored(string name, bool mirrored)
+	{
+		if (extras.TryGetValue(name, out Sprite2D sprite)) sprite.Scale = new Vector2(mirrored ? -1.0f : 1.0f, 1.0f);
+	}
+
+	public bool HasExtra(string name) => extras.ContainsKey(name);
+
+	/// <summary>
+	/// Hides one bone's own drawing and nothing else - the bone still moves, and whatever hangs
+	/// from it still shows. How a spin swaps the body for a turning frame, and how a stretched
+	/// arm replaces the drawn one while it is out.
+	/// </summary>
+	public void SetPartVisible(RigBone bone, bool visible)
+	{
+		Sprite2D sprite = sprites[(int)bone];
+		if (sprite != null) sprite.Visible = visible;
+	}
+
+	/// <summary>Where a part's joint is in its texture, so it can be drawn stretched outside the rig.</summary>
+	public Vector2 PartPivot(RigBone bone)
+	{
+		Sprite2D sprite = sprites[(int)bone];
+		return sprite != null ? -sprite.Offset : Vector2.Zero;
 	}
 
 	void LoadPoses(Godot.Collections.Dictionary root, string baseDir)
@@ -211,7 +295,7 @@ public partial class FighterRig : Node2D
 		float scale = targetHeight / total * visualScale;
 		puppetScale = scale;
 		this.bodyHalfHeight = bodyHalfHeight;
-		Scale = new Vector2(scale, scale);
+		ApplyScale();
 		PlaceHip();
 	}
 
@@ -252,7 +336,27 @@ public partial class FighterRig : Node2D
 
 	void PlaceHip()
 	{
-		Position = new Vector2(0.0f, bodyHalfHeight - LegLength * legStretch * puppetScale);
+		Position = new Vector2(0.0f, bodyHalfHeight - LegLength * legStretch * puppetScale * squash);
+	}
+
+	void ApplyScale()
+	{
+		// Squash keeps the area: taller is thinner, shorter is wider.
+		float width = puppetScale / Mathf.Sqrt(Mathf.Max(0.2f, squash));
+		Scale = new Vector2(width * facingSign, puppetScale * squash);
+	}
+
+	/// <summary>
+	/// Squash and stretch the whole puppet: above 1 is taller and thinner (a jump, a strike),
+	/// below 1 shorter and wider (a landing, a windup). The feet stay on the floor. This is the
+	/// oldest trick in animation for making a stiff drawing feel alive.
+	/// </summary>
+	public void SetSquash(float amount)
+	{
+		if (Mathf.IsEqualApprox(amount, squash)) return;
+		squash = amount;
+		ApplyScale();
+		PlaceHip();
 	}
 
 	/// <summary>
@@ -301,7 +405,8 @@ public partial class FighterRig : Node2D
 	{
 		// Blending toward the target rather than snapping to it smooths the joins between
 		// states, so a fighter landing out of a launch does not pop from tumbling to standing.
-		Pose.Blend(current, pose, blend, current);
+		Pose.Exaggerate(pose, Drama, HipDrama, exaggerated);
+		Pose.Blend(current, exaggerated, blend, current);
 
 		for (int i = 0; i < (int)RigBone.Count; i++)
 		{
@@ -314,14 +419,22 @@ public partial class FighterRig : Node2D
 				continue;
 			}
 
-			bones[i].Rotation = Mathf.DegToRad(current[bone]);
+			// The torso and head point UP from their joints, not down, so the same rotation that
+			// swings a hanging limb backward tips them FORWARD. Every pose in the library is
+			// written with one convention for every bone - negative leans toward the facing -
+			// so for these two the sign is flipped here, once, rather than in every pose.
+			float degrees = current[bone];
+			if (bone == RigBone.Torso || bone == RigBone.Head) degrees = -degrees;
+			bones[i].Rotation = Mathf.DegToRad(degrees);
 		}
 	}
 
 	/// <summary>Flips the whole puppet. A profile drawing turning around is just a mirror.</summary>
 	public void SetFacing(int facing)
 	{
-		Vector2 s = Scale;
-		Scale = new Vector2(Mathf.Abs(s.X) * (facing >= 0 ? 1.0f : -1.0f), s.Y);
+		int sign = facing >= 0 ? 1 : -1;
+		if (sign == facingSign) return;
+		facingSign = sign;
+		ApplyScale();
 	}
 }

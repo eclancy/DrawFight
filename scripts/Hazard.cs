@@ -21,7 +21,23 @@ public partial class Hazard : Node2D
 	int ageFrames;
 	bool expiring;
 
-	readonly HashSet<Fighter> alreadyHit = new HashSet<Fighter>();
+	HashSet<Fighter> alreadyHit = new HashSet<Fighter>();
+
+	/// <summary>
+	/// Shares the move's own hit list, so a hazard and the move that made it count as one hit:
+	/// someone caught by Lug's slam is not caught again by its quake.
+	/// </summary>
+	public void ShareHits(HashSet<Fighter> moveHits) => alreadyHit = moveHits;
+
+	/// <summary>Multiplies the move's damage for this hazard - a charged smash's shockwave.</summary>
+	public float DamageScale = 1.0f;
+
+	// An earthquake sits where it started and spreads: how far it has reached each way, and
+	// whether each side has run out of ground. Its position is the floor at the impact point.
+	float quakeLeft;
+	float quakeRight;
+	bool quakeLeftDone;
+	bool quakeRightDone;
 
 	// A beam does not fly. It stays attached to the hands that fired it and grows outward, so
 	// it follows its owner through the air and the far end is the part that hits first.
@@ -60,7 +76,21 @@ public partial class Hazard : Node2D
 		float dt = (float)delta;
 		ageFrames++;
 
-		if (move.Beam)
+		if (move.Special == SpecialKind.Shockwave)
+		{
+			float grow = Mathf.Abs(velocity.X) * dt;
+			if (!quakeLeftDone)
+			{
+				quakeLeft += grow;
+				quakeLeftDone = !GroundAt(GlobalPosition.X - quakeLeft);
+			}
+			if (!quakeRightDone)
+			{
+				quakeRight += grow;
+				quakeRightDone = !GroundAt(GlobalPosition.X + quakeRight);
+			}
+		}
+		else if (move.Beam)
 		{
 			if (owner == null || !IsInstanceValid(owner) || !owner.IsInPlay)
 			{
@@ -79,11 +109,74 @@ public partial class Hazard : Node2D
 		QueryHits();
 		QueueRedraw();
 
+		// Something dropped - a steel beam, an anvil - stops on solid ground instead of falling
+		// through the stage. Soft platforms do not stop it; it lands on what you cannot drop through.
+		if (move.Special == SpecialKind.Drop && velocity.Y > 0.0f && HitsSolidGround())
+		{
+			Expire();
+			return;
+		}
+
+		// A thrown drawing that arcs - a lobbed greatsword - is spent when it comes down into the
+		// stage, rather than sinking through it out of sight.
+		if (move.Special == SpecialKind.Projectile && move.FxTexture != null && gravity > 0.0f
+			&& velocity.Y > 0.0f && HitsSolidGround())
+		{
+			Expire();
+			return;
+		}
+
+		// A trap with weight - a planted blade put down in the air - falls until it lands on
+		// anything that can be stood on, and stays there.
+		if (move.Special == SpecialKind.Trap && gravity > 0.0f && velocity.Y > 0.0f && LandsOnGround())
+		{
+			velocity = Vector2.Zero;
+			gravity = 0.0f;
+		}
+
 		// Hazards die of old age or by leaving the stage. Without the second check a fireball
 		// fired off the side would live out its full lifetime somewhere nobody can see.
 		bool offStage = match?.StageBounds.Grow(400.0f).HasPoint(GlobalPosition) == false;
 		if (ageFrames >= lifeFrames || offStage) Expire();
 	}
+
+	/// <summary>Whether there is floor just under this hazard's height at <paramref name="x"/>.</summary>
+	bool GroundAt(float x)
+	{
+		var query = new PhysicsPointQueryParameters2D
+		{
+			Position = new Vector2(x, GlobalPosition.Y + 8.0f),
+			CollisionMask = 0b11,
+		};
+		return GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count > 0;
+	}
+
+	bool HitsSolidGround()
+	{
+		var query = new PhysicsPointQueryParameters2D
+		{
+			Position = GlobalPosition + new Vector2(0.0f, move.FxRadius * 0.4f),
+			CollisionMask = 0b01,
+		};
+		return GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count > 0;
+	}
+
+	/// <summary>Whether the bottom of this hazard's drawing rests on solid ground or a soft platform.</summary>
+	bool LandsOnGround()
+	{
+		float half = move.FxArtSize > 0.0f ? move.FxArtSize * 0.5f : move.FxRadius;
+		var query = new PhysicsPointQueryParameters2D
+		{
+			Position = GlobalPosition + new Vector2(0.0f, half + 3.0f),
+			CollisionMask = 0b11,
+		};
+		return GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count > 0;
+	}
+
+	public bool IsExpiring => expiring;
+
+	/// <summary>Takes this hazard away early - the oldest planted blade, when a new one goes in.</summary>
+	public void Remove() => Expire();
 
 	void QueryHits()
 	{
@@ -99,7 +192,7 @@ public partial class Hazard : Node2D
 			if (!Touches(other.BodyRect(), out Vector2 nearest)) continue;
 
 			alreadyHit.Add(other);
-			other.ReceiveHit(owner, move, nearest);
+			other.ReceiveHit(owner, move, nearest, DamageScale);
 
 			if (move.Beam)
 			{
@@ -122,6 +215,15 @@ public partial class Hazard : Node2D
 	/// </summary>
 	bool Touches(Rect2 body, out Vector2 nearest)
 	{
+		if (move.Special == SpecialKind.Shockwave)
+		{
+			// A flat band along the floor: anyone standing on the shaking stretch is caught.
+			var band = new Rect2(GlobalPosition.X - quakeLeft, GlobalPosition.Y - move.FxRadius * 1.6f,
+				quakeLeft + quakeRight, move.FxRadius * 1.8f);
+			nearest = new Vector2(Mathf.Clamp(body.GetCenter().X, band.Position.X, band.End.X), band.GetCenter().Y);
+			return band.Intersects(body);
+		}
+
 		float radius = move.FxRadius;
 		float length = move.Beam ? beamLength : 0.0f;
 		int steps = Mathf.Max(1, Mathf.CeilToInt(length / Mathf.Max(4.0f, radius)));
@@ -140,7 +242,8 @@ public partial class Hazard : Node2D
 	}
 
 	/// <summary>A trap burns and an explosion blasts; both keep hitting until they fade.</summary>
-	bool Lingers => move.Special == SpecialKind.Trap || move.Special == SpecialKind.Bomb;
+	bool Lingers => move.Special == SpecialKind.Trap || move.Special == SpecialKind.Bomb
+		|| move.Special == SpecialKind.Shockwave;
 
 	void Expire()
 	{
@@ -164,8 +267,16 @@ public partial class Hazard : Node2D
 		}
 		else
 		{
-			float s = move.FxRadius * 2.3f / Mathf.Max(size.X, size.Y);
-			DrawSetTransform(Vector2.Zero, 0.0f, new Vector2(s, s));
+			float fit = move.FxArtSize > 0.0f ? move.FxArtSize : move.FxRadius * 2.3f;
+			float s = fit / Mathf.Max(size.X, size.Y);
+
+			// Blades are drawn tip-up: one pointing along its flight is turned a quarter past the
+			// flight angle; one tumbling turns a little every frame, the way it is thrown.
+			float angle = 0.0f;
+			if (move.FxAlongFlight && velocity.LengthSquared() > 1.0f) angle = velocity.Angle() + Mathf.Pi * 0.5f;
+			else if (move.FxSpin != 0.0f) angle = Mathf.DegToRad(move.FxSpin * ageFrames) * (velocity.X < 0.0f ? -1.0f : 1.0f);
+
+			DrawSetTransformMatrix(new Transform2D(angle, new Vector2(s, s), 0.0f, Vector2.Zero));
 			DrawTexture(art, -size * 0.5f, tint);
 		}
 
@@ -205,6 +316,44 @@ public partial class Hazard : Node2D
 		}
 	}
 
+	/// <summary>
+	/// One flat earthquake along the floor: a band of dust hugging the ground, and a jagged crack
+	/// through it that jumps about every frame. It is meant to shake, so unlike stage art the
+	/// jitter is allowed to change from frame to frame - it is still hashed, never random.
+	/// </summary>
+	void DrawQuake(float alpha)
+	{
+		float left = -quakeLeft;
+		float right = quakeRight;
+		if (right - left < 2.0f) return;
+
+		float fade = alpha;
+		float height = move.FxRadius * 0.9f * Mathf.Lerp(1.0f, 0.4f, ageFrames / (float)Mathf.Max(1, lifeFrames));
+		var dust = new Color(move.FxColor.R, move.FxColor.G, move.FxColor.B, 0.55f * fade);
+		var crack = new Color(0.30f, 0.22f, 0.16f, 0.9f * fade);
+
+		// The dust: a low, lumpy band sitting on the floor.
+		const float Step = 22.0f;
+		var outline = new System.Collections.Generic.List<Vector2> { new Vector2(left, 0.0f) };
+		for (float x = left; x <= right; x += Step)
+		{
+			float bump = 0.55f + 0.45f * Mathf.Abs(CrayonBrush.Noise(ageFrames * 7 + Mathf.RoundToInt(x), 5));
+			outline.Add(new Vector2(x, -height * bump));
+		}
+		outline.Add(new Vector2(right, 0.0f));
+		DrawColoredPolygon(outline.ToArray(), dust);
+
+		// The crack: a zigzag just above the floor line, shaking.
+		var points = new System.Collections.Generic.List<Vector2>();
+		int i = 0;
+		for (float x = left; x <= right; x += 16.0f, i++)
+		{
+			float jolt = CrayonBrush.Noise(ageFrames * 13 + i, 9) * height * 0.45f;
+			points.Add(new Vector2(x, -height * 0.25f + jolt));
+		}
+		if (points.Count > 1) DrawPolyline(points.ToArray(), crack, 4.0f);
+	}
+
 	public override void _Draw()
 	{
 		if (move == null) return;
@@ -221,6 +370,21 @@ public partial class Hazard : Node2D
 		if (move.FxTexture != null)
 		{
 			DrawDrawnEffect(move.FxTexture, body.A);
+			return;
+		}
+
+		if (move.Special == SpecialKind.Shockwave)
+		{
+			DrawQuake(body.A);
+			return;
+		}
+
+		if (move.Streak && velocity.LengthSquared() > 1.0f)
+		{
+			// A nail: a short dark streak with a head, pointing the way it flies.
+			Vector2 back = -velocity.Normalized() * radius * 3.2f;
+			DrawLine(back, Vector2.Zero, new Color(0.30f, 0.32f, 0.38f), radius * 0.7f);
+			DrawCircle(back, radius * 0.55f, new Color(0.30f, 0.32f, 0.38f));
 			return;
 		}
 

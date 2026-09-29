@@ -107,8 +107,8 @@ So he can play alone. A state-machine AI at "fun for a kid" quality, with a diff
 with a handicap.
 
 **Status: a basic CPU is built** — `CpuInputSource`, an `IInputSource` like a pad, so it plays
-by exactly the same frame windows as a person. It decides every ~10 frames, idles 15% of the
-time, approaches, attacks by where the target is, blocks some attacks, and recovers with its
+by exactly the same frame windows as a person. It decides every ~20 frames, idles 35% of the
+time, swings at only 60% of openings, approaches, attacks by where the target is, blocks some attacks, and recovers with its
 air jump then its up special. Added from the CPU button on fighter select, or `--cpu`. Still
 owed: the difficulty setting (the constants at the top of the class are the knobs).
 

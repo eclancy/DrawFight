@@ -31,14 +31,24 @@ public sealed class CpuInputSource : IInputSource
 	Vector2 heldStick;
 	bool pressJump, pressAttack, pressSpecial;
 
-	/// <summary>Frames between decisions: the CPU's reaction time. About a sixth of a second.</summary>
-	const int ReactionFrames = 10;
-	const int ReactionJitter = 5;
+	// These are the difficulty. Tuned down after the first version was too hard to beat - it
+	// reacted in a sixth of a second and swung at every chance it got.
+
+	/// <summary>Frames between decisions: the CPU's reaction time. About a third of a second.</summary>
+	const int ReactionFrames = 20;
+	const int ReactionJitter = 6;
 
 	/// <summary>How often a decision is simply "do nothing" - the main thing keeping it beatable.</summary>
-	const float IdleChance = 0.15f;
+	const float IdleChance = 0.35f;
 
-	const float BlockChance = 0.3f;
+	const float BlockChance = 0.15f;
+
+	/// <summary>In reach, how often it actually swings rather than hesitating.</summary>
+	const float AttackChance = 0.6f;
+
+	/// <summary>A long way off, how often it reaches for a side special to close the gap.</summary>
+	const float SideSpecialChance = 0.12f;
+
 	const float CloseRange = 115.0f;
 
 	public CpuInputSource(MatchManager match, int seed)
@@ -139,7 +149,7 @@ public sealed class CpuInputSource : IInputSource
 		// Close enough to hit.
 		if (distance < CloseRange && Mathf.Abs(dy) < 110.0f)
 		{
-			Attack(toward, dy);
+			if (rng.Randf() < AttackChance) Attack(toward, dy);
 			return;
 		}
 
@@ -153,7 +163,7 @@ public sealed class CpuInputSource : IInputSource
 		}
 
 		// A long way off: sometimes use a side special - a projectile or a dash closes the gap.
-		if (distance > 380.0f && rng.Randf() < 0.22f)
+		if (distance > 380.0f && rng.Randf() < SideSpecialChance)
 		{
 			heldStick = new Vector2(toward, 0.0f);
 			pressSpecial = true;

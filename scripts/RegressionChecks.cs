@@ -190,6 +190,9 @@ public static class RegressionChecks
 			{
 				MoveData move = attacker.Move(slot);
 				if (move != null) Report(move.MoveName, move, victim);
+
+				// A choice of moves is only as strong as what is on offer, so list each one.
+				if (move != null) foreach (MoveData choice in move.Choices) Report("  " + choice.MoveName, choice, victim);
 			}
 		}
 

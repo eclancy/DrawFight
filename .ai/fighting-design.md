@@ -116,6 +116,13 @@ polish, they are the feature:
 - **Launch trails** on high-knockback hits, and a star-flash when someone crosses a blast zone.
 - **Camera** that smoothly frames all living fighters, with a minimum zoom so two players
   standing together do not fill the screen, and a maximum so a far-flung player stays visible.
+- **Telegraphs** for anything fast and strong. A move that crosses the stage in a few frames
+  must spend its startup showing that it is coming, or it is unfair: EdgeLord's Blur Slash
+  glints and flashes for 22 frames, then goes in 5.
+
+**Sound is not built yet**, and some moves are waiting on it. When it lands, the telegraphs
+need it most - a rising ring through Blur Slash's glint that peaks on the frame he goes, then a
+sharp cut. A warning you can hear works even when you are not looking at the right fighter.
 
 ## Movement
 
@@ -131,6 +138,10 @@ that takes half a second to reach it never gets there in a fight.
   has a jump to get back with once hitstun ends, even if they had spent it before the hit. A
   buffered jump press fires on the first actionable frame, so mashing jump during a launch works.
   The air jump goes about 10% higher than the ground jump.
+- **A built platform** (Lug's girder, `SpecialKind.BuildPlatform`) is a soft platform you can
+  stand on and jump off, but it is not the ground: standing on it gives back no air jump, no up
+  special and no second build. Only real ground or a ledge does - otherwise build, jump, build
+  would be a recovery that never ends.
 - **Up special once per trip into the air.** Landing or grabbing a ledge gives it back; being
   hit does not. A second press in the air does nothing — it is discarded, not buffered, so it
   cannot come out as a neutral special when the stick leaves up.
@@ -250,6 +261,13 @@ after its endlag — that is what turns taps into a fast string. The first two h
 knockback and very low growth (about 20 and 0.25), so the target stays in reach and in hitstun
 for the next; only the finisher pushes them away. It is a real combo: the target cannot act
 between the hits. Stopping after one jab is still a quick poke.
+
+## Crouching
+
+Holding down on the ground crouches: no walking (the stick still turns you round), and the
+hurtbox shrinks to the lower ~60% of the body, so high attacks pass over. Attacking from a
+crouch is the down tilt, and **every fighter's down tilt is a sweep** - low, along the floor.
+Down plus jump on a soft platform is still a drop-through, checked before crouching.
 
 ## Tilts and smashes
 

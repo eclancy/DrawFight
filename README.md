@@ -35,7 +35,7 @@ played it.
 |---|---|
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
-| **Fighters** | 3 — **Circy**, the first fighter designed by a kid (Elim), plus two generated stick figures |
+| **Fighters** | 4 — **Circy**, the first fighter designed by a kid (Elim); **EdgeLord**, a hand-drawn sword fighter with placeholder colouring; and two generated stick figures |
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
 | **Input** | Xbox pads (hot-pluggable) and keyboard |
@@ -45,7 +45,8 @@ played it.
 Swift and Lug are **scaffolding, not content** — see [`fighters/README.md`](fighters/README.md).
 They exist so the engine could be built and played before any real drawing existed, and they get
 deleted when real ones land. Circy is the real thing: designed and drawn by Elim, and cut
-straight from Elim's drawings without a line redrawn.
+straight from Elim's drawings without a line redrawn. EdgeLord is a hand drawing playing with
+stand-in colours and move art until the finished drawings arrive.
 
 ---
 
@@ -77,6 +78,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | B | special (+ a direction for all four) |
 | Y or RT | block — reduces damage and knockback, never negates it |
 | Y + stick | roll, spot dodge, air dodge |
+| hold ↓ | crouch (ducks high attacks); attack from it for a low sweep |
 | hold ↓ + A | drop through a soft platform |
 
 Keyboard: P1 arrow keys to move, `A` jump, `Q` attack, `W` special, `S` block. With no second
@@ -177,5 +179,6 @@ the character, the name, the moves, and every drawing under `fighters/circy/` �
 here so people can see the game, not for reuse. Please don't copy the drawings into anything
 else.
 
-Swift and Lug are script-generated and carry no such claim. No licence has been chosen for the
+The same goes for EdgeLord's drawing under `fighters/edgelord/source/`. Swift and Lug are
+script-generated and carry no such claim. No licence has been chosen for the
 code yet; until one is, the default applies and it is all rights reserved.

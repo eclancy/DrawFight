@@ -111,6 +111,17 @@
     }
   ], 
   "canonicalHeight": 372, 
+  "extras": [
+    {
+      "bone": "Head", 
+      "name": "hardhat", 
+      "offset": [
+        3.8, 
+        -143.6
+      ], 
+      "part": "HardHat"
+    }
+  ], 
   "legLength": 216, 
   "name": "Lug", 
   "parts": {
@@ -141,6 +152,13 @@
         19.5
       ], 
       "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "HardHat": {
+      "pivot": [
+        105.0, 
+        85.6
+      ], 
+      "texture": "parts/HardHat.png"
     }, 
     "Head": {
       "pivot": [
@@ -179,7 +197,7 @@
     }, 
     "PropFront": {
       "pivot": [
-        56.0, 
+        60.0, 
         10.0
       ], 
       "texture": "parts/PropFront.png"
@@ -190,6 +208,29 @@
         209.5
       ], 
       "texture": "parts/Torso.png"
+    }
+  }, 
+  "poses": {
+    "girder": {
+      "anchor": [
+        180.0, 
+        55.0
+      ], 
+      "texture": "poses/girder.png"
+    }, 
+    "wheelbarrow": {
+      "anchor": [
+        150.0, 
+        85.0
+      ], 
+      "texture": "poses/wheelbarrow.png"
+    }, 
+    "wreckingball": {
+      "anchor": [
+        85.0, 
+        85.0
+      ], 
+      "texture": "poses/wreckingball.png"
     }
   }
 }

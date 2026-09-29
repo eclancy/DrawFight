@@ -70,7 +70,13 @@ LUG = {
     'upper_leg': 112,
     'lower_leg': 104,
     'hip_split': 20,
-    'prop': {'name': 'PropFront', 'length': 150, 'head': 46},
+    # A sledgehammer: a long handle with a heavy block across its end. Lug is a construction
+    # worker, and a hard hat goes on when he blocks.
+    'prop': {'name': 'PropFront', 'style': 'sledgehammer', 'length': 168, 'head': 50},
+    'hard_hat': True,
+    # Drawings for his construction-site specials, emitted as poses (whole pictures, not rig
+    # parts) the way Circy's effect drawings are.
+    'tools': ['wheelbarrow', 'wreckingball', 'girder'],
 }
 
 FIGURES = [SWIFT, LUG]
@@ -220,13 +226,83 @@ def prop_part(cfg):
 
     cx = w / 2.0
     grip_y = h - PAD
-    thick_line(draw, (cx, grip_y), (cx, PAD + head), stroke, ink)
-    draw.ellipse([cx - head / 2.0, PAD, cx + head / 2.0, PAD + head * 1.3],
-                 outline=ink, width=int(stroke))
+    if spec.get('style') == 'sledgehammer':
+        # A long handle, and a solid steel block set across its end.
+        thick_line(draw, (cx, grip_y), (cx, PAD + head * 0.5), stroke * 0.8, ink)
+        block_w = head * 1.9
+        block = [cx - block_w / 2.0, PAD, cx + block_w / 2.0, PAD + head]
+        draw.rectangle(block, fill=(118, 124, 138, 255), outline=ink, width=int(stroke * 0.8))
+    else:
+        thick_line(draw, (cx, grip_y), (cx, PAD + head), stroke, ink)
+        draw.ellipse([cx - head / 2.0, PAD, cx + head / 2.0, PAD + head * 1.3],
+                     outline=ink, width=int(stroke))
 
     # Drawn head-up for convenience, then flipped so the grip is at the top.
     img = img.transpose(Image.FLIP_TOP_BOTTOM)
     return img, (cx, h - grip_y)
+
+
+def hard_hat_part(cfg):
+    """
+    A yellow hard hat, drawn to sit on top of the head. Pivot at the middle of the brim, which is
+    where it rests on the skull.
+    """
+    r = cfg['head_radius']
+    ink = cfg['ink']
+    stroke = cfg['stroke']
+    w = int(r * 2.5 + PAD * 2)
+    h = int(r * 1.15 + PAD * 2)
+    img = new_part(w, h)
+    draw = ImageDraw.Draw(img)
+
+    cx = w / 2.0
+    brim_y = h - PAD - stroke * 0.6
+    yellow = (246, 196, 52, 255)
+    # The dome, then the brim across its base, then a ridge down the middle.
+    draw.pieslice([cx - r * 1.02, brim_y - r * 1.02, cx + r * 1.02, brim_y + r * 1.02], 180, 360,
+                  fill=yellow, outline=ink, width=int(stroke * 0.7))
+    thick_line(draw, (cx - r * 1.22, brim_y), (cx + r * 1.22, brim_y), stroke * 0.9, ink)
+    thick_line(draw, (cx, brim_y - r * 0.98), (cx, brim_y - r * 0.2), stroke * 0.5, ink)
+    return img, (cx, brim_y)
+
+
+TOOL_GREY = (118, 124, 138, 255)
+TOOL_ORANGE = (236, 124, 56, 255)
+TOOL_RED = (206, 70, 58, 255)
+
+
+def tool_art(name, ink, stroke):
+    """One of Lug's construction-site tools, as a whole picture facing right."""
+    if name == 'wheelbarrow':
+        img = new_part(300, 170)
+        d = ImageDraw.Draw(img)
+        # Tray, wheel at the front, handles trailing back toward the fighter.
+        d.polygon([(40, 30), (250, 30), (220, 110), (90, 110)], fill=TOOL_ORANGE, outline=ink)
+        thick_line(d, (40, 30), (250, 30), stroke * 0.6, ink)
+        thick_line(d, (250, 30), (220, 110), stroke * 0.6, ink)
+        thick_line(d, (220, 110), (90, 110), stroke * 0.6, ink)
+        thick_line(d, (90, 110), (40, 30), stroke * 0.6, ink)
+        thick_line(d, (60, 50), (10, 70), stroke * 0.6, ink)
+        d.ellipse([196, 104, 256, 164], fill=TOOL_GREY, outline=ink, width=int(stroke * 0.6))
+        thick_line(d, (150, 110), (140, 160), stroke * 0.5, ink)
+        return img
+    if name == 'wreckingball':
+        img = new_part(170, 170)
+        d = ImageDraw.Draw(img)
+        d.ellipse([12, 12, 158, 158], fill=(70, 72, 82, 255), outline=ink, width=int(stroke * 0.7))
+        d.ellipse([40, 34, 74, 62], fill=(150, 154, 166, 255))
+        return img
+    if name == 'girder':
+        # A steel I-beam seen side on: two flanges and a web with rivet holes.
+        img = new_part(360, 110)
+        d = ImageDraw.Draw(img)
+        d.rectangle([10, 10, 350, 30], fill=TOOL_RED, outline=ink, width=int(stroke * 0.5))
+        d.rectangle([10, 80, 350, 100], fill=TOOL_RED, outline=ink, width=int(stroke * 0.5))
+        d.rectangle([24, 30, 336, 80], fill=(176, 64, 52, 255), outline=ink, width=int(stroke * 0.5))
+        for x in range(50, 340, 50):
+            d.ellipse([x - 8, 47, x + 8, 63], fill=(250, 240, 230, 255), outline=ink)
+        return img
+    raise ValueError(name)
 
 
 # --------------------------------------------------------------------------- composite
@@ -399,12 +475,37 @@ def build(cfg):
     else:
         canonical_height = torso_len
 
+    # Extras: drawings that hang off an existing bone and are only shown in certain states. They
+    # add no bones - the shared skeleton stays exactly the same.
+    extras = []
+    if cfg.get('hard_hat'):
+        emit('HardHat', hard_hat_part(cfg))
+        r = cfg['head_radius']
+        neck = 30
+        # From the head bone (base of the neck) up to where the brim sits on the skull.
+        brim_above_pivot = r + neck - stroke / 2.0 + r * 0.62
+        extras.append({'name': 'hardhat', 'bone': 'Head', 'part': 'HardHat',
+                       'offset': [round(r * 0.05, 1), round(-brim_above_pivot, 1)]})
+
+    poses = {}
+    if cfg.get('tools'):
+        poses_dir = os.path.join(root, 'poses')
+        if not os.path.isdir(poses_dir):
+            os.makedirs(poses_dir)
+        for tool in cfg['tools']:
+            img = tool_art(tool, ink, stroke)
+            img.save(os.path.join(poses_dir, tool + '.png'))
+            poses[tool] = {'texture': 'poses/%s.png' % tool,
+                           'anchor': [img.size[0] / 2.0, img.size[1] / 2.0]}
+
     rig = {
         'name': name,
         'canonicalHeight': canonical_height,
         'legLength': cfg['upper_leg'] + cfg['lower_leg'],
         'backLimbDarken': 0.70,
         'bones': bones,
+        'extras': extras,
+        'poses': poses,
         'parts': parts,
     }
 

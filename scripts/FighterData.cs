@@ -125,8 +125,36 @@ public partial class FighterData : Resource
 			RigPath = "res://fighters/lug/rig.json",
 			VisualScale = 1.12f,
 		};
-		data.Moves = DefaultMoveset.Build(data.Weight, Specials.HeavyWeapons(),
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Construction(),
 			CharacterNormals.Lug, CharacterNormals.LugJab());
+		return data;
+	}
+
+	/// <summary>
+	/// EdgeLord: "stretchy arms, super speed, infinite swords." Light and the fastest runner in the
+	/// game, which is also his weakness - light is easy to launch, and his normals are ordinary
+	/// sword swings, so his range comes from his specials. The art is a placeholder until his
+	/// own coloured drawing arrives (see tools/art/cut_edgelord.py).
+	/// </summary>
+	public static FighterData EdgeLord()
+	{
+		var data = new FighterData
+		{
+			DisplayName = "EdgeLord",
+			PlaceholderColor = new Color(0.81f, 0.15f, 0.15f),
+			Weight = WeightClass.Light,
+			RunSpeed = 1060.0f,
+			AirSpeed = 800.0f,
+			AirAcceleration = 4500.0f,
+			JumpForce = 1557.0f,
+			AirJumpForce = 1633.0f,
+			Gravity = 4100.0f,
+			BodySize = new Vector2(80.0f, 136.0f),
+			RigPath = "res://fighters/edgelord/rig.json",
+			VisualScale = 1.08f,
+		};
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.EdgeLord(),
+			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());
 		return data;
 	}
 

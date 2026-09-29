@@ -9,8 +9,9 @@ The game was called `DuskFight` after the kid's own online handle, `Dusk`, and w
 Godot 4.5.1 Mono (.NET 9), C#, 2D. **M0, M1 and M2 are built** — the fight runs, Xbox pads work,
 and rigged cutout puppets play the shared animation library. M2's last piece, a rig built from
 a **real drawing**, is **Circy**: designed and drawn by Elim, cut from Elim's drawings by
-`tools/art/cut_circy.py`. `fighters/` also holds two generated stick figures (Swift, Lug);
-`fighters/README.md` says when they go. M3 is the import tool.
+`tools/art/cut_circy.py`. **EdgeLord** is a hand drawing playing with our placeholder colouring
+and sword art until the finished drawings arrive. `fighters/` also holds two generated stick
+figures (Swift, Lug); `fighters/README.md` says when they go. M3 is the import tool.
 
 Every rule about "his" linework below applies to every kid who sends a fighter, Elim included.
 
@@ -75,6 +76,9 @@ they read drifts from the version we maintain.
   A name builds just that one.
 - **`python tools/art/cut_circy.py`** — re-cut Circy's parts and poses from Elim's drawings in
   `fighters/circy/source/`. Takes about 20 seconds; Python 2.7 without numpy is slow per pixel.
+- **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's placeholder rig: colours his
+  drawing, cuts it, and draws the swords and turning frames. About a minute. Replaced
+  wholesale when his own coloured art arrives - see `fighters/README.md`.
 - **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real title-screen
   frame (Lug's face). The icon is never drawn separately; when a real drawing replaces the
   stick figures, re-shoot and re-crop per the script's docstring.
@@ -168,7 +172,8 @@ something is unstated here, default to however that project does it.
 - Let anything outside a character go darker than about 30% value. **Characters own black**;
   that band is reserved, and it is the whole art direction. See `.ai/art-direction.md`.
 - Assume the HUD can borrow the stage background. Stage palettes are free to be grass or
-  brickwork, so the HUD carries its own paper bands. White-on-cream shipped invisible twice.
+  brickwork, so every HUD label carries a thick paper-coloured outline (no boxes behind it).
+  White-on-cream shipped invisible twice.
 - Draw a soft platform with a solid outline. **Solid outline means solid ground, dashed means
   you can drop through** — that grammar is how the mechanic stays visible.
 - Write per-stage drawing code. There is one renderer; a stage is a palette and a list of

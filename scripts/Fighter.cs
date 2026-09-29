@@ -56,6 +56,18 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	bool upSpecialUsed;
 
+	/// <summary>A platform-building down special, like the up special, is once per trip into the air.</summary>
+	bool buildUsed;
+
+	/// <summary>The platform this fighter last built, so building another replaces it.</summary>
+	BuiltPlatform builtPlatform;
+
+	/// <summary>
+	/// Standing on a platform you built is standing, but it is not the ground: it gives back no
+	/// jumps and no specials. Only real ground or a ledge does.
+	/// </summary>
+	bool standingOnBuilt;
+
 	// --- Active move ---------------------------------------------------------
 
 	MoveData currentMove;
@@ -64,6 +76,7 @@ public partial class Fighter : CharacterBody2D
 	int specialBufferFrames;
 	int dodgeStartFrames;
 	bool hazardSpawned;
+	int burstFired;
 	readonly HashSet<Fighter> alreadyHitThisMove = new HashSet<Fighter>();
 
 	// --- Misc ----------------------------------------------------------------
@@ -78,6 +91,32 @@ public partial class Fighter : CharacterBody2D
 	FighterRig rig;
 	readonly Pose attackPose = new Pose();
 	int landFrames;
+
+	/// <summary>
+	/// Holding down on the ground. Stops walking, shrinks the hurtbox so high attacks pass over,
+	/// and attacking from it is the down tilt - a sweep.
+	/// </summary>
+	public bool IsCrouching { get; private set; }
+
+	/// <summary>How much of the standing height is left to hit while crouched.</summary>
+	const float CrouchHeight = 0.62f;
+
+	const int JumpStretchFrames = 10;
+	int jumpStretchFrames;
+	float squashAmount = 1.0f;
+
+	float TargetSquash()
+	{
+		if (State == FighterState.Attacking && currentMove != null)
+		{
+			return FighterAnimations.AttackSquash(currentMove, moveFrame);
+		}
+		if (jumpStretchFrames > 0) return 1.0f + 0.16f * jumpStretchFrames / JumpStretchFrames;
+		if (State == FighterState.Grounded && landFrames > 0) return 1.0f - 0.2f * landFrames / 9.0f;
+		if (IsBlocking) return 0.94f;
+		if (State == FighterState.Grounded && IsCrouching) return 0.94f;
+		return 1.0f;
+	}
 
 	/// <summary>
 	/// Frames left ignoring soft platforms after a deliberate drop-through. Long enough to
@@ -181,6 +220,45 @@ public partial class Fighter : CharacterBody2D
 	bool hookFired;
 	bool bombDetonated;
 
+	// --- EdgeLord: blink, grab, spin ----------------------------------------------
+
+	/// <summary>Specials marked OncePerAirtime that have been used since the last landing.</summary>
+	readonly HashSet<MoveData> usedThisAirtime = new HashSet<MoveData>();
+
+	/// <summary>Where a Blink started, for the trail it leaves across the gap.</summary>
+	Vector2 blinkFrom;
+	bool blinkStarted;
+
+	/// <summary>Who this fighter's tether has caught, and where they were caught.</summary>
+	Fighter grabbed;
+	Vector2 grabPoint;
+	int grabFrame;
+
+	/// <summary>Who is holding this fighter, if anyone. Held, they go where they are put.</summary>
+	Fighter heldBy;
+	int heldFrames;
+
+	/// <summary>A held fighter is let go after this long whatever happens, so a bug can never pin someone.</summary>
+	const int MaxHeldFrames = 40;
+
+	/// <summary>How far round a Spin has gone, in degrees, and whether it has come back to the front.</summary>
+	float spinAngle;
+	bool spinDone;
+
+	/// <summary>The angles the turning frames were drawn at. Beyond 180 a frame is shown mirrored.</summary>
+	static readonly float[] TurnAngles = { 0.0f, 45.0f, 78.0f, 120.0f, 180.0f };
+	static readonly string[] TurnNames = { "turn0", "turn1", "turn2", "turn3", "turn4" };
+
+	/// <summary>Hazards still out for a move with a MaxOut, oldest first.</summary>
+	readonly Dictionary<MoveData, List<Hazard>> outHazards = new Dictionary<MoveData, List<Hazard>>();
+
+	/// <summary>
+	/// A layer drawn over the puppet. _Draw paints under it, which is right for trails and for a
+	/// blade passing behind him - but a blade coming round in front, a menu and a glint must sit
+	/// on top.
+	/// </summary>
+	Node2D overlay;
+
 	/// <summary>Solid ground (layer 1) plus soft platforms (layer 2).</summary>
 	const uint GroundMask = 0b11;
 
@@ -204,21 +282,33 @@ public partial class Fighter : CharacterBody2D
 		bodyShape = new RectangleShape2D { Size = bodySize };
 		AddChild(new CollisionShape2D { Shape = bodyShape });
 
-		if (string.IsNullOrEmpty(data.RigPath)) return;
+		if (!string.IsNullOrEmpty(data.RigPath))
+		{
+			rig = new FighterRig();
+			AddChild(rig);
+			if (rig.Load(data.RigPath))
+			{
+				// The puppet is drawn a little taller than the hurtbox so the art reads at full
+				// size while the box a player has to hit stays honest.
+				rig.Normalise(data.BodySize.Y * 1.18f, data.BodySize.Y * 0.5f, data.VisualScale);
+			}
+			else
+			{
+				rig.QueueFree();
+				rig = null;
+			}
+		}
 
-		rig = new FighterRig();
-		AddChild(rig);
-		if (rig.Load(data.RigPath))
-		{
-			// The puppet is drawn a little taller than the hurtbox so the art reads at full
-			// size while the box a player has to hit stays honest.
-			rig.Normalise(data.BodySize.Y * 1.18f, data.BodySize.Y * 0.5f, data.VisualScale);
-		}
-		else
-		{
-			rig.QueueFree();
-			rig = null;
-		}
+		// Added after the rig, so it draws over it.
+		overlay = new Node2D();
+		AddChild(overlay);
+		overlay.Draw += DrawOverlay;
+	}
+
+	void Redraw()
+	{
+		QueueRedraw();
+		overlay?.QueueRedraw();
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -232,7 +322,7 @@ public partial class Fighter : CharacterBody2D
 		{
 			hitlagFrames--;
 			UpdateRigTint();
-			QueueRedraw();
+			Redraw();
 			return;
 		}
 
@@ -241,7 +331,22 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
+		// Caught on someone's tether: no control and no physics - the holder puts them where
+		// they go, until the throw.
+		if (heldBy != null)
+		{
+			TickHeld();
+			UpdateRig();
+			UpdateRigTint();
+			Redraw();
+			return;
+		}
+
 		InputState input = Controller?.Poll() ?? InputState.None;
+
+		// During the 3-2-1 the controller is still read, so button edges stay honest, but
+		// nothing it says is acted on.
+		if (Match != null && Match.InputLocked) input = InputState.None;
 		lastStick = input.Move;
 
 		TickTimers(input);
@@ -265,6 +370,7 @@ public partial class Fighter : CharacterBody2D
 		}
 
 		if (landFrames > 0) landFrames--;
+		if (jumpStretchFrames > 0) jumpStretchFrames--;
 
 		if (dropThroughFrames > 0 && --dropThroughFrames == 0)
 		{
@@ -274,7 +380,7 @@ public partial class Fighter : CharacterBody2D
 		UpdateGroundInfo();
 		UpdateRig();
 		UpdateRigTint();
-		QueueRedraw();
+		Redraw();
 	}
 
 	// --- Ground ---------------------------------------------------------------
@@ -287,6 +393,7 @@ public partial class Fighter : CharacterBody2D
 	void UpdateGroundInfo()
 	{
 		standingOnOneWay = false;
+		standingOnBuilt = false;
 
 		for (int i = 0; i < GetSlideCollisionCount(); i++)
 		{
@@ -294,6 +401,8 @@ public partial class Fighter : CharacterBody2D
 
 			// Floor normals point up, which is negative Y on screen.
 			if (collision.GetNormal().Y > -0.7f) continue;
+
+			if (collision.GetCollider() is BuiltPlatform) standingOnBuilt = true;
 
 			if (collision.GetCollider() is CollisionObject2D body && (body.CollisionLayer & 2) != 0)
 			{
@@ -336,13 +445,39 @@ public partial class Fighter : CharacterBody2D
 
 		rig.SetFacing(Facing);
 
+		// Squash and stretch, eased so it never pops: long and thin leaving the ground, short
+		// and wide landing, coiled before a hit and stretched through it.
+		squashAmount = Mathf.Lerp(squashAmount, TargetSquash(), 0.45f);
+		rig.SetSquash(squashAmount);
+
+		// A fighter with a hard hat puts it on to block, and takes it off after.
+		rig.SetExtraVisible("hardhat", IsBlocking);
+
 		// Knocked over, or curled into a bomb: the limbs are gone and he is drawn as one piece in
 		// _Draw. Elim asked for exactly that - "get rid of his arms and legs until he gets back up".
 		rig.Visible = HeldPoseName() == null && !IsDrawnAsBall && !IsBombArmed;
 		if (!rig.Visible) return;
 
+		// Spinning, the body and arms give way to a turning frame; with the arm stretched out
+		// on a tether, the drawn arm gives way to the stretched one.
+		bool spinning = IsSpinning;
+		bool armOut = IsArmStretched;
+		rig.SetPartVisible(RigBone.Torso, !spinning);
+		rig.SetPartVisible(RigBone.ArmBackUpper, !spinning);
+		rig.SetPartVisible(RigBone.ArmBackLower, !spinning);
+		rig.SetPartVisible(RigBone.ArmFrontUpper, !spinning && !armOut);
+		rig.SetPartVisible(RigBone.ArmFrontLower, !spinning && !armOut);
+		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut);
+		ShowTurnFrame(spinning);
+
 		switch (State)
 		{
+			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Choice:
+				// Holding the swords out to choose from: standing, not swinging.
+				rig.Play(FighterAnimations.Idle);
+				rig.Advance();
+				break;
+
 			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Resize:
 			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Bomb:
 				// Standing still: stretching, or about to curl up. Neither is a swing.
@@ -364,6 +499,11 @@ public partial class Fighter : CharacterBody2D
 
 			case FighterState.Grounded when IsBlocking:
 				rig.Play(FighterAnimations.Block);
+				rig.Advance();
+				break;
+
+			case FighterState.Grounded when IsCrouching:
+				rig.Play(FighterAnimations.Crouch);
 				rig.Advance();
 				break;
 
@@ -405,6 +545,13 @@ public partial class Fighter : CharacterBody2D
 		if (hitlagFrames > 0) tint = new Color(2.2f, 2.2f, 2.2f);
 		else if (State == FighterState.Hitstun) tint = new Color(1.0f, 0.62f, 0.62f);
 		else if (IsBlocking) tint = new Color(0.62f, 0.86f, 1.0f);
+		else if (IsBlinkWindup)
+		{
+			// Brightening to a flash as the blink gets close, so it is seen coming.
+			float t = moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames);
+			float flicker = 0.7f + 0.3f * Mathf.Sin(moveFrame * 1.7f);
+			tint = Colors.White.Lerp(new Color(1.7f, 1.6f, 1.25f), t * t * flicker);
+		}
 		else if (IsCharging)
 		{
 			// A charging smash glows warmer and pulses faster the longer it is held, so the other
@@ -461,13 +608,20 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (!IsOnFloor())
 		{
+			IsCrouching = false;
 			coyoteFrames = Tuning.CoyoteFrames;
 			State = FighterState.Airborne;
 			return;
 		}
 
-		airJumpsUsed = 0;
-		upSpecialUsed = false;
+		if (!standingOnBuilt)
+		{
+			airJumpsUsed = 0;
+			upSpecialUsed = false;
+			buildUsed = false;
+			usedThisAirtime.Clear();
+		}
+		IsCrouching = false;
 
 		if (IsBlocking)
 		{
@@ -488,7 +642,17 @@ public partial class Fighter : CharacterBody2D
 		{
 			jumpBufferFrames = 0;
 			Velocity = new Vector2(Velocity.X, -Data.JumpForce);
+			jumpStretchFrames = JumpStretchFrames;
 			State = FighterState.Airborne;
+			return;
+		}
+
+		// Holding down crouches: no walking, but the stick still turns you round.
+		if (input.Move.Y > 0.5f)
+		{
+			IsCrouching = true;
+			if (Mathf.Abs(input.Move.X) > 0.4f) Facing = input.Move.X > 0.0f ? 1 : -1;
+			ApplyFriction(dt, Data.GroundFriction);
 			return;
 		}
 
@@ -543,12 +707,14 @@ public partial class Fighter : CharacterBody2D
 				jumpBufferFrames = 0;
 				coyoteFrames = 0;
 				Velocity = new Vector2(Velocity.X, -Data.JumpForce);
+			jumpStretchFrames = JumpStretchFrames;
 			}
 			else if (airJumpsUsed < Data.AirJumps)
 			{
 				jumpBufferFrames = 0;
 				airJumpsUsed++;
 				Velocity = new Vector2(Velocity.X, -Data.AirJumpForce);
+				jumpStretchFrames = JumpStretchFrames;
 			}
 		}
 
@@ -580,11 +746,13 @@ public partial class Fighter : CharacterBody2D
 		if (IsCharging && input.AttackHeld && chargeFrames < MaxChargeFrames)
 		{
 			chargeFrames++;
+			if (currentMove.Spin) AdvanceSpin();
 			ApplyFriction(dt, Data.GroundFriction);
 			return;
 		}
 
 		moveFrame++;
+		if (currentMove.Spin) AdvanceSpin();
 
 		// A ball-form move spins the whole time, fastest while the hitbox is out.
 		if (currentMove.BallForm)
@@ -606,8 +774,25 @@ public partial class Fighter : CharacterBody2D
 
 		bool active = moveFrame > activeStart && moveFrame <= activeEnd;
 
+		// A multi-hit lets the same fighter be hit again every few frames.
+		if (active && currentMove.RehitFrames > 0 && moveFrame > activeStart + 1
+			&& (moveFrame - activeStart - 1) % currentMove.RehitFrames == 0)
+		{
+			alreadyHitThisMove.Clear();
+		}
+
 		switch (currentMove.Special)
 		{
+			case SpecialKind.Choice:
+				// Picking a sword swaps this move for the one picked, which starts from its frame 0.
+				if (TickChoice(input, activeStart, activeEnd)) return;
+				break;
+
+			case SpecialKind.Dash when currentMove.Blink:
+				TickBlink(activeStart, activeEnd);
+				if (active) QueryHits();
+				break;
+
 			case SpecialKind.Resize:
 				if (active) TickResize(input, activeEnd);
 				break;
@@ -650,6 +835,7 @@ public partial class Fighter : CharacterBody2D
 
 		if (moveFrame >= currentMove.TotalFrames)
 		{
+			ReleaseGrabbed();
 			currentMove = null;
 			alreadyHitThisMove.Clear();
 			State = IsOnFloor() ? FighterState.Grounded : FighterState.Airborne;
@@ -754,7 +940,19 @@ public partial class Fighter : CharacterBody2D
 			specialBufferFrames = 0;
 			return false;
 		}
+		if (chosen.Special == SpecialKind.BuildPlatform && buildUsed)
+		{
+			specialBufferFrames = 0;
+			return false;
+		}
+		if (chosen.OncePerAirtime && usedThisAirtime.Contains(chosen))
+		{
+			specialBufferFrames = 0;
+			return false;
+		}
+		if (chosen.Special == SpecialKind.BuildPlatform) buildUsed = true;
 		if (slot == MoveSlot.UpSpecial) upSpecialUsed = true;
+		if (chosen.OncePerAirtime) usedThisAirtime.Add(chosen);
 
 		attackBufferFrames = 0;
 		specialBufferFrames = 0;
@@ -763,17 +961,28 @@ public partial class Fighter : CharacterBody2D
 		// at the stage goes toward the stage even if he was facing away from it.
 		if (wantsSpecial && Mathf.Abs(input.Move.X) > 0.4f) Facing = input.Move.X > 0.0f ? 1 : -1;
 
-		currentMove = chosen;
+		BeginMove(chosen, slot);
+		return true;
+	}
+
+	/// <summary>Starts a move from its first frame, with nothing carried over from the last one.</summary>
+	void BeginMove(MoveData move, MoveSlot slot)
+	{
+		ReleaseGrabbed();
+		currentMove = move;
 		currentSlot = slot;
 		moveFrame = 0;
 		chargeFrames = 0;
 		comboQueued = false;
 		alreadyHitThisMove.Clear();
 		hazardSpawned = false;
+		burstFired = 0;
+		blinkStarted = false;
+		spinAngle = 0.0f;
+		spinDone = false;
 		State = FighterState.Attacking;
 
-		StartSpecialMotion(chosen);
-		return true;
+		StartSpecialMotion(move);
 	}
 
 	MoveSlot ChooseAttackSlot(InputState input)
@@ -831,6 +1040,11 @@ public partial class Fighter : CharacterBody2D
 	{
 		switch (move.Special)
 		{
+			case SpecialKind.Dash when move.Blink:
+				// A blink stands still to glint first; the distance is crossed later, all at once.
+				Velocity = new Vector2(Velocity.X * 0.3f, Velocity.Y * 0.3f);
+				break;
+
 			case SpecialKind.Dash:
 				Velocity = new Vector2(Facing * move.SpecialSpeed, Velocity.Y * 0.2f);
 				break;
@@ -868,14 +1082,55 @@ public partial class Fighter : CharacterBody2D
 
 		switch (move.Special)
 		{
+			case SpecialKind.Projectile when move.BurstCount > 1:
+				// A burst fires a shot every few frames until it has fired them all, each
+				// starting a little higher or lower so they do not overlap.
+				if (burstFired >= move.BurstCount) break;
+				if ((moveFrame - move.StartupFrames - 1) % Mathf.Max(1, move.BurstInterval) != 0) break;
+				float spread = (burstFired % 2 == 0 ? -1.0f : 1.0f) * 6.0f * (burstFired / 2 + 1) * 0.5f;
+				Match.SpawnHazard(this, SizedFor(move), origin + new Vector2(0.0f, spread),
+					new Vector2(Facing * move.SpecialSpeed, 0.0f));
+				burstFired++;
+				break;
+
 			case SpecialKind.Projectile:
 				hazardSpawned = true;
-				// Only an arcing projectile gets the little upward toss; a beam starts at the hands
-				// and grows straight out.
-				float toss = move.SpecialGravity > 0.0f ? -120.0f : 0.0f;
+				// Only an arcing projectile gets the little upward toss - or a big one, for a
+				// throw that lobs high; a beam starts at the hands and grows straight out.
+				float toss = move.LaunchLift > 0.0f ? -move.LaunchLift : move.SpecialGravity > 0.0f ? -120.0f : 0.0f;
 				Vector2 start = move.Beam ? BeamOrigin() : origin;
 				Match.SpawnHazard(this, SizedFor(move), start, new Vector2(Facing * move.SpecialSpeed, toss));
 				break;
+
+			case SpecialKind.Shockwave:
+				{
+					// One quake, from where the hammer hits the floor. It carries the charge, a
+					// little weaker than the slam itself, and the camera shakes with it.
+					hazardSpawned = true;
+					var impact = new Vector2(GlobalPosition.X + move.HitboxOffset.X * Facing,
+						GlobalPosition.Y + bodySize.Y * 0.5f);
+					float power = ChargeScale * move.ShockwavePower;
+					Hazard quake = Match.SpawnHazard(this, move, impact, new Vector2(move.SpecialSpeed, 0.0f), power);
+					quake.ShareHits(alreadyHitThisMove);
+					Match.Shake(35.0f * ChargeScale);
+					break;
+				}
+
+			case SpecialKind.BuildPlatform:
+				{
+					// The girder goes in under his feet, and he is put standing on it. On the
+					// ground that lifts him up onto it; in the air it catches him where he is.
+					hazardSpawned = true;
+					const float Thickness = 28.0f;
+					float feet = GlobalPosition.Y + bodySize.Y * 0.5f;
+					float top = IsOnFloor() ? feet - Thickness : feet;
+					if (builtPlatform != null && IsInstanceValid(builtPlatform)) builtPlatform.QueueFree();
+					builtPlatform = Match.SpawnPlatform(this, move,
+						new Rect2(GlobalPosition.X - move.PlatformWidth * 0.5f, top, move.PlatformWidth, Thickness));
+					GlobalPosition = new Vector2(GlobalPosition.X, top - bodySize.Y * 0.5f - 1.0f);
+					Velocity = new Vector2(Velocity.X * 0.3f, 0.0f);
+					break;
+				}
 
 			case SpecialKind.Drop:
 				hazardSpawned = true;
@@ -884,9 +1139,30 @@ public partial class Fighter : CharacterBody2D
 
 			case SpecialKind.Trap:
 				hazardSpawned = true;
-				Match.SpawnHazard(this, move, origin, Vector2.Zero);
+				Track(move, Match.SpawnHazard(this, move, origin, Vector2.Zero));
 				break;
 		}
+	}
+
+	/// <summary>
+	/// Keeps a move with a MaxOut to that many hazards: the oldest goes when a new one arrives.
+	/// Planted blades would otherwise carpet the stage.
+	/// </summary>
+	void Track(MoveData move, Hazard hazard)
+	{
+		if (move.MaxOut <= 0 || hazard == null) return;
+		if (!outHazards.TryGetValue(move, out List<Hazard> list))
+		{
+			list = new List<Hazard>();
+			outHazards[move] = list;
+		}
+		list.RemoveAll(h => !IsInstanceValid(h) || h.IsExpiring);
+		while (list.Count >= move.MaxOut)
+		{
+			list[0].Remove();
+			list.RemoveAt(0);
+		}
+		list.Add(hazard);
 	}
 
 	// --- Dodging ---------------------------------------------------------------
@@ -971,6 +1247,8 @@ public partial class Fighter : CharacterBody2D
 			Velocity = Vector2.Zero;
 			airJumpsUsed = 0;
 			upSpecialUsed = false;
+			buildUsed = false;
+			usedThisAirtime.Clear();
 			invulnFrames = Mathf.Max(invulnFrames, LedgeGrabInvulnFrames);
 			State = FighterState.LedgeHang;
 			return true;
@@ -999,6 +1277,7 @@ public partial class Fighter : CharacterBody2D
 			ReleaseLedge();
 			GlobalPosition = heldLedge + new Vector2(Facing * 30.0f, -bodySize.Y * 0.55f);
 			Velocity = new Vector2(Facing * 180.0f, -Data.JumpForce * 0.72f);
+			jumpStretchFrames = JumpStretchFrames;
 		}
 	}
 
@@ -1033,20 +1312,30 @@ public partial class Fighter : CharacterBody2D
 				continue;
 			}
 
+			// A multi-hit's early hits are its weak link hit; only the last window launches.
+			int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
+			MoveData hit = currentMove.LinkHit != null && moveFrame <= activeEnd - currentMove.RehitFrames
+				? currentMove.LinkHit
+				: currentMove;
+
 			alreadyHitThisMove.Add(other);
-			other.ReceiveHit(this, currentMove, nearest, ChargeScale);
+			other.ReceiveHit(this, hit, nearest, ChargeScale);
 
 			// "He will also take some damage." Percent only - never knockback.
 			Percent += currentMove.SelfDamage;
 
 			// The attacker shares the victim's hitlag, so both sides feel the impact.
-			hitlagFrames = Knockback.HitlagFrames(currentMove.Damage * ChargeScale);
+			hitlagFrames = Knockback.HitlagFrames(hit.Damage * ChargeScale);
 		}
 	}
 
 	public Vector2 CurrentHitboxCentre()
 	{
 		if (currentMove == null) return GlobalPosition;
+		if (!string.IsNullOrEmpty(currentMove.SwingArt))
+		{
+			return HookOrigin() + SwingDirection() * currentMove.SwingLength;
+		}
 		return GlobalPosition + new Vector2(
 			currentMove.HitboxOffset.X * Facing,
 			currentMove.HitboxOffset.Y);
@@ -1078,6 +1367,11 @@ public partial class Fighter : CharacterBody2D
 			DetonateBomb();
 			return;
 		}
+
+		// Hit while holding someone: let go. Hit while held: the hold is over either way - the
+		// throw itself arrives as a hit.
+		ReleaseGrabbed();
+		heldBy = null;
 
 		bool blocked = IsBlocking && !move.Unblockable;
 
@@ -1136,6 +1430,10 @@ public partial class Fighter : CharacterBody2D
 		tumbleFrames = 0;
 		pendingTumbleFrames = 0;
 		upSpecialUsed = false;
+		buildUsed = false;
+		usedThisAirtime.Clear();
+		ReleaseGrabbed();
+		heldBy = null;
 		drawnAsBall = false;
 		SetSizeLevel(SizeLevels.Normal);
 		CollisionMask = GroundMask;
@@ -1180,6 +1478,14 @@ public partial class Fighter : CharacterBody2D
 			float side = BallRadius() * 2.0f * (IsBombArmed ? 0.62f : 1.0f);
 			Vector2 feet = GlobalPosition + new Vector2(0.0f, bodySize.Y * 0.5f);
 			return new Rect2(feet - new Vector2(side * 0.5f, side), new Vector2(side, side));
+		}
+
+		// Crouched, only the lower part of the body can be hit: high attacks pass over.
+		if (State == FighterState.Grounded && IsCrouching)
+		{
+			float height = bodySize.Y * CrouchHeight;
+			return new Rect2(GlobalPosition.X - bodySize.X * 0.5f, GlobalPosition.Y + bodySize.Y * 0.5f - height,
+				bodySize.X, height);
 		}
 
 		return new Rect2(GlobalPosition - bodySize * 0.5f, bodySize);
@@ -1301,11 +1607,15 @@ public partial class Fighter : CharacterBody2D
 		if (moveFrame <= activeStart)
 		{
 			Velocity = new Vector2(Velocity.X * 0.8f, Mathf.Min(Velocity.Y * 0.8f, 120.0f));
+			if (currentMove.GrabThrow != null) TickGrab(activeStart);
 			return;
 		}
 
 		if (hookFired) return;
 		hookFired = true;
+
+		// The throw goes on the same frame as the launch: one yank flings them down and him up.
+		if (grabbed != null) ThrowGrabbed();
 
 		Vector2 pull = new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise);
 		hookPoint = HookOrigin() + pull.Normalized() * currentMove.TetherLength;
@@ -1314,17 +1624,202 @@ public partial class Fighter : CharacterBody2D
 
 	Vector2 HookOrigin() => GlobalPosition + new Vector2(Facing * bodySize.X * 0.3f, -bodySize.Y * 0.15f);
 
+	Vector2 TetherDirection() =>
+		new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise).Normalized();
+
+	/// <summary>How far out the tether is through the startup, 0 to 1.</summary>
+	float TetherReach() => Mathf.Clamp(moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames), 0.0f, 1.0f);
+
+	/// <summary>
+	/// The tether's tip catches the first fighter it touches, and reels them in to his hand over
+	/// the rest of the startup. This is the roster's one command grab (see
+	/// .ai/character-design.md): it goes through blocking, and there is only ever one.
+	/// </summary>
+	void TickGrab(int activeStart)
+	{
+		if (grabbed == null)
+		{
+			Vector2 tip = HookOrigin() + TetherDirection() * currentMove.TetherLength * TetherReach();
+			const float Reach = 36.0f;
+			foreach (Fighter other in Match.Fighters)
+			{
+				if (other == this || !other.CanBeHit || other.heldBy != null) continue;
+				// A bomb is not something you pick up.
+				if (other.CurrentMove != null && other.CurrentMove.Special == SpecialKind.Bomb) continue;
+
+				Rect2 body = other.BodyRect();
+				Vector2 nearest = new Vector2(
+					Mathf.Clamp(tip.X, body.Position.X, body.End.X),
+					Mathf.Clamp(tip.Y, body.Position.Y, body.End.Y));
+				if (nearest.DistanceSquaredTo(tip) > Reach * Reach) continue;
+
+				grabbed = other;
+				grabPoint = other.GlobalPosition;
+				grabFrame = moveFrame;
+				other.BeginHeld(this);
+				break;
+			}
+			return;
+		}
+
+		float t = (moveFrame - grabFrame) / (float)Mathf.Max(1, activeStart - grabFrame);
+		Vector2 hand = HookOrigin() + new Vector2(Facing * bodySize.X * 0.7f, 0.0f);
+		grabbed.GlobalPosition = grabPoint.Lerp(hand, t * t);
+	}
+
+	void ThrowGrabbed()
+	{
+		Fighter victim = grabbed;
+		grabbed = null;
+		victim.heldBy = null;
+
+		// The launch that follows must not hit them a second time.
+		alreadyHitThisMove.Add(victim);
+		victim.ReceiveHit(this, currentMove.GrabThrow, victim.GlobalPosition);
+		hitlagFrames = Knockback.HitlagFrames(currentMove.GrabThrow.Damage);
+	}
+
+	/// <summary>Lets go of whoever this fighter is holding, without throwing them.</summary>
+	void ReleaseGrabbed()
+	{
+		if (grabbed == null) return;
+		Fighter victim = grabbed;
+		grabbed = null;
+		if (IsInstanceValid(victim) && victim.heldBy == this) victim.EndHeld();
+	}
+
+	/// <summary>Caught on a tether. Whatever they were doing stops.</summary>
+	void BeginHeld(Fighter by)
+	{
+		ReleaseGrabbed();
+		heldBy = by;
+		heldFrames = MaxHeldFrames;
+		currentMove = null;
+		alreadyHitThisMove.Clear();
+		IsBlocking = false;
+		IsCrouching = false;
+		Velocity = Vector2.Zero;
+		hitstunFrames = 1;
+		State = FighterState.Hitstun;
+	}
+
+	/// <summary>Let go without a throw: a moment of hitstun, then control back.</summary>
+	void EndHeld()
+	{
+		heldBy = null;
+		hitstunFrames = Mathf.Max(hitstunFrames, 10);
+		State = FighterState.Hitstun;
+	}
+
+	void TickHeld()
+	{
+		Velocity = Vector2.Zero;
+		if (--heldFrames <= 0 || !IsInstanceValid(heldBy) || heldBy.grabbed != this
+			|| heldBy.State != FighterState.Attacking)
+		{
+			EndHeld();
+		}
+	}
+
+	/// <summary>
+	/// A crayon arc through where a normal attack hits, for its active frames and a few after,
+	/// fading. It is what makes an up tilt read as "up" and a back air as "behind" at a glance:
+	/// the pose says what the body did, the trail says where the hit went.
+	/// </summary>
+	void DrawSwingTrail()
+	{
+		if (State != FighterState.Attacking || currentMove == null) return;
+		if (currentMove.Special != SpecialKind.None || currentMove.HitboxRadius <= 0.0f || currentMove.Spin) return;
+
+		int activeStart = currentMove.StartupFrames;
+		int activeEnd = activeStart + currentMove.ActiveFrames;
+		const int Linger = 5;
+		if (moveFrame <= activeStart || moveFrame > activeEnd + Linger) return;
+
+		float fade = moveFrame <= activeEnd ? 1.0f : 1.0f - (moveFrame - activeEnd) / (float)(Linger + 1);
+		var pivot = new Vector2(0.0f, -bodySize.Y * 0.12f);
+		Vector2 hit = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y);
+		Vector2 toHit = hit - pivot;
+		float reach = Mathf.Max(toHit.Length(), currentMove.HitboxRadius);
+		float angle = toHit.LengthSquared() > 1.0f ? toHit.Angle() : -Mathf.Pi * 0.5f;
+
+		// A little over a quarter turn of arc, centred on the hit, drawn in the fighter's own
+		// colour with an ink edge so it reads on any stage.
+		const float Sweep = 0.9f;
+		Color colour = Data.PlaceholderColor;
+		colour.A = 0.5f * fade;
+		DrawArc(pivot, reach, angle - Sweep, angle + Sweep, 20, colour, currentMove.HitboxRadius * 0.55f);
+		DrawArc(pivot, reach + currentMove.HitboxRadius * 0.3f, angle - Sweep, angle + Sweep, 20,
+			new Color(0.16f, 0.16f, 0.20f, 0.55f * fade), 3.0f);
+	}
+
+	/// <summary>
+	/// A drawing held out in front for the whole move - the wheelbarrow.
+	/// </summary>
+	void DrawHeldArt()
+	{
+		if (State != FighterState.Attacking || currentMove == null || string.IsNullOrEmpty(currentMove.HeldArt)) return;
+		// A spin holds its blades out and turns them itself - see DrawSpinBlades.
+		if (currentMove.Spin) return;
+		RigArt art = rig?.PoseArtFor(currentMove.HeldArt);
+		if (art == null) return;
+
+		Vector2 size = art.Texture.GetSize();
+		float s = currentMove.HeldArtSize / Mathf.Max(size.X, size.Y);
+		Vector2 at = new Vector2(currentMove.HeldArtOffset.X * Facing, currentMove.HeldArtOffset.Y);
+		DrawArtTransform(at, 0.0f, new Vector2(s * Facing, s));
+		DrawTexture(art.Texture, -art.Anchor, rig.Modulate);
+		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+	}
+
+	/// <summary>
+	/// A ball on a chain from the hand. Through the startup it swings from low behind him, up and
+	/// over; once the move is live it leads the way, up and forward, which is the direction the
+	/// launch then pulls him. The hitbox rides on the ball.
+	/// </summary>
+	void DrawSwing()
+	{
+		if (State != FighterState.Attacking || currentMove == null || string.IsNullOrEmpty(currentMove.SwingArt)) return;
+		RigArt art = rig?.PoseArtFor(currentMove.SwingArt);
+		if (art == null) return;
+
+		Vector2 hand = HookOrigin() - GlobalPosition;
+		Vector2 ball = hand + SwingDirection() * currentMove.SwingLength;
+		CrayonBrush.InkLine(this, hand, ball, new Color(0.30f, 0.30f, 0.34f), 5.0f, 61, 1.0f);
+
+		Vector2 size = art.Texture.GetSize();
+		float s = currentMove.SwingArtSize / Mathf.Max(size.X, size.Y);
+		DrawArtTransform(ball, 0.0f, new Vector2(s * Facing, s));
+		DrawTexture(art.Texture, -art.Anchor, rig.Modulate);
+		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+	}
+
+	/// <summary>Where the swung ball is, as a direction from the hand.</summary>
+	Vector2 SwingDirection()
+	{
+		// Angles in degrees, measured so 0 points forward and -90 points straight up.
+		const float Start = 150.0f;  // low and behind
+		const float Lead = -70.0f;   // up and forward
+		float t = Mathf.Clamp(moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames), 0.0f, 1.0f);
+		float angle = Mathf.DegToRad(Mathf.Lerp(Start, Lead, t * t));
+		return new Vector2(Mathf.Cos(angle) * Facing, Mathf.Sin(angle));
+	}
+
 	void DrawTether()
 	{
 		if (State != FighterState.Attacking || currentMove == null || !currentMove.DelayedLaunch) return;
+		if (!string.IsNullOrEmpty(currentMove.SwingArt)) return;
 		if (moveFrame > currentMove.StartupFrames + currentMove.ActiveFrames) return;
 
 		Vector2 dir = new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise).Normalized();
 		float reach = Mathf.Clamp(moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames), 0.0f, 1.0f);
 		Vector2 tip = hookFired ? hookPoint : HookOrigin() + dir * currentMove.TetherLength * reach;
+		if (grabbed != null) tip = grabbed.GlobalPosition;
 
 		Vector2 from = HookOrigin() - GlobalPosition;
 		Vector2 to = tip - GlobalPosition;
+
+		if (currentMove.StretchArm && DrawStretchedArm(from, to)) return;
 
 		// Elim drew the rope, the gun and the hook. When they are there, those are what fly.
 		RigArt ropeArt = rig?.PoseArtFor("rope");
@@ -1372,6 +1867,287 @@ public partial class Fighter : CharacterBody2D
 	void DrawArtTransform(Vector2 at, float angle, Vector2 scale)
 	{
 		DrawSetTransformMatrix(new Transform2D(angle, scale, 0.0f, at));
+	}
+
+	// --- EdgeLord: choosing a sword, blinking, spinning ----------------------------
+
+	/// <summary>
+	/// Four swords laid out round him; the first push of the stick picks one. Back turns him
+	/// round, so the sword he picked behind him flies the way he now faces. A tap with no push
+	/// throws the forward one when the window closes. Returns true once it has swapped moves.
+	/// </summary>
+	bool TickChoice(InputState input, int activeStart, int activeEnd)
+	{
+		if (moveFrame <= activeStart || currentMove.Choices.Length < 4) return false;
+
+		int pick = -1;
+		Vector2 stick = input.Move;
+		if (stick.Length() > 0.6f)
+		{
+			if (Mathf.Abs(stick.Y) >= Mathf.Abs(stick.X)) pick = stick.Y < 0.0f ? 0 : 3;
+			else pick = Mathf.Sign(stick.X) == Facing ? 1 : 2;
+		}
+		else if (moveFrame >= activeEnd)
+		{
+			pick = 1;
+		}
+		if (pick < 0) return false;
+
+		if (pick == 2) Facing = -Facing;
+		BeginMove(currentMove.Choices[pick], currentSlot);
+		return true;
+	}
+
+	/// <summary>
+	/// Glint through the startup, standing still (hanging, in the air). Then cross the whole
+	/// distance in the active frames and stop dead - a teleport you can see coming.
+	/// </summary>
+	void TickBlink(int activeStart, int activeEnd)
+	{
+		if (moveFrame <= activeStart)
+		{
+			Velocity = new Vector2(Velocity.X * 0.7f, Mathf.Min(Velocity.Y * 0.8f, 120.0f));
+			return;
+		}
+
+		if (moveFrame <= activeEnd)
+		{
+			if (!blinkStarted)
+			{
+				blinkStarted = true;
+				blinkFrom = GlobalPosition;
+			}
+			Velocity = new Vector2(Facing * currentMove.SpecialSpeed, 0.0f);
+			return;
+		}
+
+		if (moveFrame == activeEnd + 1) Velocity = new Vector2(Facing * 240.0f, 0.0f);
+	}
+
+	bool IsBlinkWindup =>
+		State == FighterState.Attacking && currentMove != null && currentMove.Blink
+		&& moveFrame <= currentMove.StartupFrames;
+
+	/// <summary>
+	/// Slow through the windup and the charge, a blur while the blades are live, then round to
+	/// the front again and stop - so the body never snaps from his back to his face.
+	/// </summary>
+	void AdvanceSpin()
+	{
+		if (spinDone) return;
+		int activeStart = currentMove.StartupFrames;
+		int activeEnd = activeStart + currentMove.ActiveFrames;
+		float speed = moveFrame <= activeStart ? 16.0f : moveFrame <= activeEnd ? 45.0f : 24.0f;
+
+		float before = spinAngle;
+		spinAngle += speed;
+		if (moveFrame > activeEnd && Mathf.Floor(spinAngle / 360.0f) > Mathf.Floor(before / 360.0f))
+		{
+			spinAngle = Mathf.Floor(spinAngle / 360.0f) * 360.0f;
+			spinDone = true;
+		}
+	}
+
+	bool IsSpinning =>
+		State == FighterState.Attacking && currentMove != null && currentMove.Spin && !spinDone
+		&& rig != null && rig.HasExtra(TurnNames[0]);
+
+	bool IsArmStretched =>
+		State == FighterState.Attacking && currentMove != null && currentMove.StretchArm
+		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
+
+	/// <summary>Shows the turning frame nearest the spin's angle, mirrored for the far half of the turn.</summary>
+	void ShowTurnFrame(bool spinning)
+	{
+		int shown = -1;
+		bool mirrored = false;
+		if (spinning)
+		{
+			float a = Mathf.PosMod(spinAngle, 360.0f);
+			if (a > 180.0f)
+			{
+				a = 360.0f - a;
+				mirrored = true;
+			}
+			float best = float.MaxValue;
+			for (int i = 0; i < TurnAngles.Length; i++)
+			{
+				float d = Mathf.Abs(TurnAngles[i] - a);
+				if (d < best)
+				{
+					best = d;
+					shown = i;
+				}
+			}
+		}
+
+		for (int i = 0; i < TurnNames.Length; i++)
+		{
+			rig.SetExtraVisible(TurnNames[i], i == shown);
+			if (i == shown) rig.SetExtraMirrored(TurnNames[i], mirrored);
+		}
+	}
+
+	/// <summary>His own forearm, hand and all, stretched from the shoulder out to the tether's tip.</summary>
+	bool DrawStretchedArm(Vector2 from, Vector2 to)
+	{
+		Texture2D arm = rig?.PartTexture(RigBone.ArmFrontLower);
+		if (arm == null) return false;
+
+		Vector2 span = to - from;
+		float length = span.Length();
+		if (length < 1.0f) return true;
+
+		Vector2 pivot = rig.PartPivot(RigBone.ArmFrontLower);
+		float drawn = Mathf.Max(1.0f, arm.GetSize().Y - pivot.Y);
+		// A touch thicker than the arm at rest, so a long thin stretch still reads.
+		float across = rig.PuppetScale * 1.3f * Facing;
+		DrawArtOn(this, arm, pivot, from, span.Angle() - Mathf.Pi * 0.5f, new Vector2(across, length / drawn), rig.Modulate);
+		return true;
+	}
+
+	void DrawOverlay()
+	{
+		if (State == FighterState.Eliminated || rig == null || !rig.Loaded) return;
+		DrawChoiceMenu(overlay);
+		DrawSpinBlades(overlay, true);
+		DrawBlinkGlint(overlay);
+	}
+
+	/// <summary>The four swords on offer, each pointing the way it sits, popping open around him.</summary>
+	void DrawChoiceMenu(CanvasItem canvas)
+	{
+		if (State != FighterState.Attacking || currentMove == null || currentMove.Special != SpecialKind.Choice) return;
+		if (currentMove.Choices.Length < 4) return;
+
+		float open = Mathf.Min(1.0f, moveFrame / 6.0f);
+		// Clear of the drawing, which stands taller than the hurtbox.
+		Vector2 centre = new Vector2(0.0f, -bodySize.Y * 0.15f);
+		float radius = bodySize.Y * 0.95f * open;
+		Vector2[] dirs = { Vector2.Up, new Vector2(Facing, 0.0f), new Vector2(-Facing, 0.0f), Vector2.Down };
+
+		for (int i = 0; i < 4; i++)
+		{
+			Vector2 at = centre + dirs[i] * radius;
+			float disc = 46.0f * open;
+			// Paper discs with a mid-grey rim: the swords themselves carry the dark ink.
+			canvas.DrawCircle(at, disc, new Color(0.97f, 0.95f, 0.89f, 0.85f));
+			canvas.DrawArc(at, disc, 0.0f, Mathf.Tau, 32, new Color(0.42f, 0.40f, 0.46f, 0.9f), 3.0f);
+
+			Texture2D art = currentMove.Choices[i].FxTexture;
+			if (art == null) continue;
+			Vector2 size = art.GetSize();
+			float s = 78.0f * open / Mathf.Max(size.X, size.Y);
+			DrawArtOn(canvas, art, size * 0.5f, at, dirs[i].Angle() + Mathf.Pi * 0.5f, new Vector2(s, s), Colors.White);
+		}
+	}
+
+	/// <summary>
+	/// Two blades held out either side, going round with him. The one swinging past in front is
+	/// drawn over him and the one behind under him; each is foreshortened as it turns toward the
+	/// viewer, and while the hit is live it smears.
+	/// </summary>
+	void DrawSpinBlades(CanvasItem canvas, bool front)
+	{
+		if (!IsSpinning) return;
+		RigArt art = rig.PoseArtFor(currentMove.HeldArt);
+		if (art == null) return;
+
+		Vector2 texSize = art.Texture.GetSize();
+		float s = currentMove.HeldArtSize / texSize.Y;
+		bool live = moveFrame > currentMove.StartupFrames
+			&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
+		int smears = live ? 3 : 1;
+
+		for (int blade = 0; blade < 2; blade++)
+		{
+			for (int g = smears - 1; g >= 0; g--)
+			{
+				float b = Mathf.DegToRad(spinAngle - g * 16.0f + 90.0f + 180.0f * blade);
+				float x = Mathf.Sin(b);
+				if ((Mathf.Cos(b) >= 0.0f) != front) continue;
+
+				Vector2 grip = new Vector2(currentMove.HeldArtOffset.X * x, currentMove.HeldArtOffset.Y);
+				float pointing = x >= 0.0f ? 0.0f : Mathf.Pi;
+				var scale = new Vector2(s, s * Mathf.Max(0.12f, Mathf.Abs(x)));
+				Color tint = rig.Modulate;
+				tint.A *= g == 0 ? 1.0f : 0.35f / g;
+				DrawArtOn(canvas, art.Texture, art.Anchor, grip, pointing + Mathf.Pi * 0.5f, scale, tint);
+			}
+		}
+	}
+
+	/// <summary>
+	/// The warning before a blink: a star of light on his blade that grows and turns, and flares
+	/// just before he goes. (There is no sound yet. When there is, this wants a rising ring that
+	/// peaks on the same frame - see .ai/fighting-design.md.)
+	/// </summary>
+	void DrawBlinkGlint(CanvasItem canvas)
+	{
+		if (!IsBlinkWindup) return;
+
+		float t = moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames);
+		Vector2 at = new Vector2(Facing * bodySize.X * 0.75f, -bodySize.Y * 0.18f);
+		float size = 16.0f + 60.0f * t * t;
+		float turn = moveFrame * 0.09f;
+		var light = new Color(1.0f, 0.97f, 0.78f, 0.55f + 0.45f * t);
+
+		if (currentMove.StartupFrames - moveFrame < 4) canvas.DrawCircle(at, size * 0.6f, new Color(1.0f, 0.95f, 0.7f, 0.45f));
+		for (int i = 0; i < 4; i++)
+		{
+			float a = turn + i * Mathf.Pi * 0.5f;
+			float len = i % 2 == 0 ? size : size * 0.55f;
+			Vector2 tip = at + Vector2.Right.Rotated(a) * len;
+			Vector2 side = Vector2.Right.Rotated(a + Mathf.Pi * 0.5f) * size * 0.09f;
+			canvas.DrawColoredPolygon(new[] { at + side, tip, at - side }, light);
+		}
+		canvas.DrawCircle(at, size * 0.16f, Colors.White);
+	}
+
+	/// <summary>
+	/// What a blink leaves behind: streaks across the gap and fading copies of him along it, so
+	/// the eye can follow where he went.
+	/// </summary>
+	void DrawBlinkTrail()
+	{
+		if (State != FighterState.Attacking || currentMove == null || !currentMove.Blink || !blinkStarted) return;
+		int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
+		const int Linger = 8;
+		if (moveFrame > activeEnd + Linger) return;
+
+		float fade = moveFrame <= activeEnd ? 1.0f : 1.0f - (moveFrame - activeEnd) / (float)(Linger + 1);
+		Vector2 from = blinkFrom - GlobalPosition;
+
+		Texture2D body = rig.PartTexture(RigBone.Torso);
+		if (body != null)
+		{
+			var scale = new Vector2(rig.PuppetScale * Facing, rig.PuppetScale);
+			for (int i = 0; i < 3; i++)
+			{
+				float k = i / 3.0f;
+				var ghost = new Color(1.0f, 1.0f, 1.0f, (0.12f + 0.12f * i) * fade);
+				DrawArtOn(this, body, rig.PartPivot(RigBone.Torso), from * (1.0f - k) + rig.Position, 0.0f, scale, ghost);
+			}
+		}
+
+		Color streak = Data.PlaceholderColor;
+		for (int i = 0; i < 5; i++)
+		{
+			float y = -bodySize.Y * 0.4f + i * bodySize.Y * 0.2f;
+			streak.A = (0.5f - 0.07f * Mathf.Abs(i - 2)) * fade;
+			DrawLine(new Vector2(from.X, y), new Vector2(0.0f, y), streak, 5.0f - Mathf.Abs(i - 2));
+		}
+	}
+
+	/// <summary>
+	/// A drawing on any canvas, with its anchor put at <paramref name="at"/>: scaled in its own
+	/// axes, then turned (see <see cref="DrawArtTransform"/> for why that order).
+	/// </summary>
+	static void DrawArtOn(CanvasItem canvas, Texture2D art, Vector2 anchor, Vector2 at, float angle, Vector2 scale, Color tint)
+	{
+		canvas.DrawSetTransformMatrix(new Transform2D(angle, scale, 0.0f, at));
+		canvas.DrawTexture(art, -anchor, tint);
+		canvas.DrawSetTransformMatrix(Transform2D.Identity);
 	}
 
 	// --- Bomb --------------------------------------------------------------------
@@ -1539,7 +2315,12 @@ public partial class Fighter : CharacterBody2D
 			if (IsDrawnAsBall) DrawBall(1.0f, rollAngle);
 			else if (pose != null) DrawHeldPose(pose);
 			else if (IsBombArmed) DrawBomb();
+			DrawBlinkTrail();
+			DrawSpinBlades(this, false);
+			DrawSwingTrail();
 			DrawTether();
+			DrawSwing();
+			DrawHeldArt();
 			DrawBeamCharge();
 			return;
 		}

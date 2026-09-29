@@ -89,6 +89,24 @@ public sealed class Pose
 		into.HipOffset = a.HipOffset.Lerp(b.HipOffset, t);
 	}
 
+	/// <summary>
+	/// Pushes every joint further from rest by <paramref name="amount"/>, and the hip further by
+	/// <paramref name="hipAmount"/>. Joints are clamped just past straight up, so an arm already
+	/// raised overhead does not swing on round behind the back.
+	/// </summary>
+	public static void Exaggerate(Pose source, float amount, float hipAmount, Pose into)
+	{
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			// The spine and neck get a fraction of it: a limb swung further reads as energy, a
+			// whole body tipped further reads as falling over.
+			bool core = i == (int)RigBone.Torso || i == (int)RigBone.Head;
+			float k = core ? 1.0f + (amount - 1.0f) * 0.4f : amount;
+			into.rotations[i] = Mathf.Clamp(source.rotations[i] * k, -185.0f, 185.0f);
+		}
+		into.HipOffset = source.HipOffset * hipAmount;
+	}
+
 	public void CopyFrom(Pose other)
 	{
 		System.Array.Copy(other.rotations, rotations, rotations.Length);

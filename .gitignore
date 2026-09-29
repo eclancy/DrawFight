@@ -20,3 +20,4 @@ obj/
 # Claude Code - everything else under .claude/ is committed on purpose.
 .claude/settings.local.json
 .shots/
+*.pyc

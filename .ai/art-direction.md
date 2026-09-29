@@ -26,9 +26,11 @@ whole art direction; everything below is consequences of it.
 ### The corollary that keeps biting
 
 Because the palette is light, **light-coloured UI disappears**. White-on-cream has shipped
-invisible twice: stock icons, then status text. The HUD now carries its own translucent paper
-bands rather than borrowing whatever the stage happens to be, because a stage palette is free
-to be grass or brickwork and the HUD is not free to become unreadable.
+invisible twice: stock icons, then status text. Every HUD label now carries a thick
+paper-coloured outline, so it reads on any stage without borrowing whatever the stage happens to
+be — a stage palette is free to be grass or brickwork and the HUD is not free to become
+unreadable. (It first used translucent paper bands behind the readouts; those covered too much
+of the stage and were replaced by the outlines.)
 
 ## Outlines are grammar, not decoration
 

@@ -32,7 +32,19 @@ public partial class MatchManager : Node2D
 	DebugDraw debugDraw;
 
 	string status = "";
+	string winner = "";
 	bool matchOver;
+
+	// --- Countdown -----------------------------------------------------------
+	// 3, 2, 1, FIGHT! Nobody can act until FIGHT! appears, so a match never starts with one
+	// player already moving while the other is still finding their controller.
+
+	const int CountdownStepFrames = 50;
+	const int FightBannerFrames = 45;
+	int countdownFrames;
+
+	/// <summary>True while the numbers are up. Fighters ignore their controllers until it ends.</summary>
+	public bool InputLocked => countdownFrames > FightBannerFrames;
 	float lastKnockback;
 
 	// Screenshot capture. Animation and game feel cannot be verified by a build - they have to
@@ -69,8 +81,8 @@ public partial class MatchManager : Node2D
 		hud = new MatchHud();
 		AddChild(hud);
 		hud.Build(Fighters);
-		hud.SetControllerLabels(DescribeControllers(), ControllerAssignment.Layout.Describe());
-		hud.SetStageName(StageCatalog.NameOf(StageIndex));
+
+		countdownFrames = CountdownStepFrames * 3 + FightBannerFrames;
 	}
 
 	void SpawnFighter(FighterData data, int index)
@@ -111,19 +123,11 @@ public partial class MatchManager : Node2D
 				Fighters[i].Controller = sources[next++];
 			}
 		}
-		hud?.SetControllerLabels(DescribeControllers(), ControllerAssignment.Layout.Describe());
 	}
 
 	void AssignControllers() => ReassignControllers();
 
 	bool IsCpu(int player) => player < CpuPlayers.Length && CpuPlayers[player];
-
-	List<string> DescribeControllers()
-	{
-		var labels = new List<string>();
-		foreach (Fighter fighter in Fighters) labels.Add(ControllerAssignment.Describe(fighter.Controller));
-		return labels;
-	}
 
 	public bool AnyPadConnected => Input.GetConnectedJoypads().Count > 0;
 
@@ -135,17 +139,34 @@ public partial class MatchManager : Node2D
 	public System.Collections.Generic.List<Vector2> Ledges => stage.Ledges;
 
 	/// <summary>Spawns a fireball, a thrown hammer, a falling anvil or a patch of fire.</summary>
-	public void SpawnHazard(Fighter owner, MoveData move, Vector2 position, Vector2 velocity)
+	/// <param name="damageScale">For a hazard that hits harder or softer than its move - a charged
+	/// smash's shockwave. Knockback follows damage.</param>
+	public Hazard SpawnHazard(Fighter owner, MoveData move, Vector2 position, Vector2 velocity,
+		float damageScale = 1.0f)
 	{
 		var hazard = new Hazard();
 		AddChild(hazard);
 		hazard.Launch(owner, move, this, position, velocity, move.SpecialGravity, move.SpecialLifetime);
+		hazard.DamageScale = damageScale;
+		return hazard;
 	}
 
 	/// <summary>
 	/// A fighter blew up - Circy's bomb. The flash and the shake happen whether or not anyone
 	/// is caught in it, so a bomb that goes off in empty air still reads as a bomb.
 	/// </summary>
+	/// <summary>A platform built by a fighter - Lug's girder.</summary>
+	public BuiltPlatform SpawnPlatform(Fighter owner, MoveData move, Rect2 rect)
+	{
+		var platform = new BuiltPlatform();
+		AddChild(platform);
+		platform.Build(owner, move, this, rect);
+		return platform;
+	}
+
+	/// <summary>Shakes the camera - a slam into the ground, say. Bigger numbers shake harder.</summary>
+	public void Shake(float amount) => camera?.AddShake(amount);
+
 	public void OnExplosion(Vector2 position)
 	{
 		fx.SpawnBlastFlash(position);
@@ -154,6 +175,7 @@ public partial class MatchManager : Node2D
 
 	public override void _PhysicsProcess(double delta)
 	{
+		if (countdownFrames > 0) countdownFrames--;
 		if (matchOver) return;
 
 		foreach (Fighter fighter in Fighters)
@@ -198,9 +220,7 @@ public partial class MatchManager : Node2D
 		if (alive <= 1)
 		{
 			matchOver = true;
-			status = last != null
-				? $"{last.Data.DisplayName} wins!   Press Start to pick fighters"
-				: "Draw!   Press Start to pick fighters";
+			winner = last != null ? $"{last.Data.DisplayName} wins!" : "Draw!";
 		}
 	}
 
@@ -226,13 +246,57 @@ public partial class MatchManager : Node2D
 			CallDeferred(nameof(CaptureAndQuit));
 		}
 
-		if (!matchOver)
+		status = ShowHitboxes ? $"last KB {lastKnockback:0}" : "";
+		hud.Refresh(Fighters, status);
+		UpdateBanner();
+	}
+
+	void UpdateBanner()
+	{
+		if (matchOver)
 		{
-			status = ShowHitboxes ? $"last KB {lastKnockback:0}" : "";
+			hud.SetCountdown("", Colors.White, 0.0f, 0.0f);
+			hud.SetBanner(winner, "Press Start to pick fighters");
+			return;
 		}
 
-		hud.Refresh(Fighters, status);
+		hud.SetBanner("");
+
+		if (countdownFrames <= 0)
+		{
+			hud.SetCountdown("", Colors.White, 0.0f, 0.0f);
+			return;
+		}
+
+		if (countdownFrames <= FightBannerFrames)
+		{
+			float left = countdownFrames / (float)FightBannerFrames;
+			// Holds solid, then fades over its last third as the players take over.
+			hud.SetCountdown("FIGHT!", CountdownColours[0], left, 0.0f, Mathf.Min(1.0f, left * 3.0f));
+			return;
+		}
+
+		// Which number is showing, and how far through its time on screen.
+		int intoNumbers = countdownFrames - FightBannerFrames;
+		int number = Mathf.CeilToInt(intoNumbers / (float)CountdownStepFrames);
+		float punch = (intoNumbers - (number - 1) * CountdownStepFrames) / (float)CountdownStepFrames;
+		hud.SetCountdown(number.ToString(), CountdownColours[number], punch, CountdownTilts[number]);
 	}
+
+	/// <summary>
+	/// FIGHT!, 1, 2, 3 - a traffic light run backwards: red, orange, yellow, then green for go.
+	/// Crayon-bright, like every accent in the game (see .ai/art-direction.md).
+	/// </summary>
+	static readonly Color[] CountdownColours =
+	{
+		new Color(0.38f, 0.80f, 0.42f),
+		new Color(0.99f, 0.83f, 0.24f),
+		new Color(0.98f, 0.58f, 0.22f),
+		new Color(0.94f, 0.32f, 0.32f),
+	};
+
+	/// <summary>Each number lands at a slight, different tilt, as if slapped down by hand.</summary>
+	static readonly float[] CountdownTilts = { 0.0f, -0.06f, 0.07f, -0.08f };
 
 	/// <summary>
 	/// Called by the attacker the moment a hitbox resolves. Everything that makes a hit feel
@@ -350,8 +414,12 @@ public partial class MatchManager : Node2D
 		}
 
 		Fighters.Clear();
+
+		// The CPUs drove the fighters that were just freed; new fighters need new CPUs.
+		cpus = null;
 		matchOver = false;
 		status = "";
+		winner = "";
 		lastKnockback = 0.0f;
 		Engine.TimeScale = 1.0f;
 

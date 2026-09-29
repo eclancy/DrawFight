@@ -42,6 +42,29 @@ public enum SpecialKind
 	/// it off does nothing, which is what makes it a counter rather than just a trap.
 	/// </summary>
 	Bomb,
+
+	/// <summary>
+	/// Slams the ground, and one earthquake spreads out BOTH ways along the floor from where the
+	/// blow lands, as well as the move's own hitbox. Each side stops where the ground ends, so it
+	/// never chases anyone off an edge. Works on a normal attack too - Lug's down smash.
+	/// </summary>
+	Shockwave,
+
+	/// <summary>
+	/// Builds a temporary platform under the user's own feet (see <see cref="BuiltPlatform"/>).
+	/// They stand on it and can jump off it; after a while it falls and hits whatever it lands
+	/// on. Usable once per trip into the air, and standing on it gives nothing back - otherwise
+	/// build, jump, build is a recovery that never ends.
+	/// </summary>
+	BuildPlatform,
+
+	/// <summary>
+	/// A stance that lays out four moves around the fighter - up, forward, back and down - and
+	/// the first way the stick is pushed picks which comes out (see <see cref="MoveData.Choices"/>).
+	/// Back turns the fighter round first. Nothing picked by the end of the window throws the
+	/// forward one, so a tap still does something. EdgeLord's Infinite Swords.
+	/// </summary>
+	Choice,
 }
 
 [GlobalClass]
@@ -166,6 +189,103 @@ public partial class MoveData : Resource
 	/// <summary>How far a <see cref="Beam"/> reaches, in pixels.</summary>
 	[Export] public float Reach { get; set; } = 0.0f;
 
+	/// <summary>
+	/// A projectile fired as a burst: this many shots, <see cref="BurstInterval"/> frames apart,
+	/// starting on the first active frame. Each shot hits on its own - a nail gun.
+	/// </summary>
+	[Export] public int BurstCount { get; set; } = 1;
+	[Export] public int BurstInterval { get; set; } = 4;
+
+	/// <summary>Draw a projectile as a short streak along its path, like a nail, not a ball.</summary>
+	[Export] public bool Streak { get; set; } = false;
+
+	/// <summary>
+	/// A drawing from the fighter's own art held in front of them for the whole move - Lug's
+	/// wheelbarrow. Named like a pose in rig.json; offset is from the body centre, facing right.
+	/// </summary>
+	[Export] public string HeldArt { get; set; } = "";
+	[Export] public Vector2 HeldArtOffset { get; set; } = Vector2.Zero;
+	[Export] public float HeldArtSize { get; set; } = 100.0f;
+
+	/// <summary>
+	/// A drawing swung on a chain from the hand - Lug's wrecking ball. It sweeps from behind him
+	/// up and over through the startup, then leads the way for the rest of the move.
+	/// </summary>
+	[Export] public string SwingArt { get; set; } = "";
+
+	/// <summary>How long a built platform holds still before it falls, in frames.</summary>
+	[Export] public int PlatformHoldFrames { get; set; } = 70;
+
+	/// <summary>How wide a built platform is, in pixels.</summary>
+	[Export] public float PlatformWidth { get; set; } = 190.0f;
+
+	/// <summary>How hard a <see cref="SpecialKind.Shockwave"/>'s quake hits, as a share of the slam.</summary>
+	[Export] public float ShockwavePower { get; set; } = 0.7f;
+	[Export] public float SwingLength { get; set; } = 110.0f;
+	[Export] public float SwingArtSize { get; set; } = 70.0f;
+
+	/// <summary>
+	/// For a <see cref="SpecialKind.Choice"/>: the four moves on offer, in the order up, forward,
+	/// back, down. Each is an ordinary move that plays in full once picked. Not exported, like
+	/// <see cref="FighterData.Moves"/>: it is built in code.
+	/// </summary>
+	public MoveData[] Choices = System.Array.Empty<MoveData>();
+
+	/// <summary>
+	/// A Dash so fast it reads as a teleport. The startup is spent standing still, glinting - the
+	/// warning - and the whole distance is crossed in the active frames, after which he stops.
+	/// </summary>
+	[Export] public bool Blink { get; set; } = false;
+
+	/// <summary>
+	/// Usable once per trip into the air, like the up special. For any special that moves the
+	/// fighter far enough that chaining it would be a second recovery.
+	/// </summary>
+	[Export] public bool OncePerAirtime { get; set; } = false;
+
+	/// <summary>
+	/// A <see cref="DelayedLaunch"/> recovery whose tether GRABS the first fighter it touches:
+	/// they are reeled in through the startup, then thrown with this move as the launch fires.
+	/// The recovery still happens either way - grabbing never costs the way home.
+	/// </summary>
+	public MoveData GrabThrow;
+
+	/// <summary>The tether is the fighter's own front arm, stretched, instead of a rope.</summary>
+	[Export] public bool StretchArm { get; set; } = false;
+
+	/// <summary>
+	/// How many of this move's hazards can be out at once. Making another removes the oldest.
+	/// Zero means no limit.
+	/// </summary>
+	[Export] public int MaxOut { get; set; } = 0;
+
+	/// <summary>
+	/// The fighter spins on the spot for the move: drawn with its turning frames (the extras named
+	/// turn0 to turn4 in rig.json) in place of the body and arms, and with <see cref="HeldArt"/>
+	/// as two blades held out either side, going round with it. EdgeLord's Blade Blender.
+	/// </summary>
+	[Export] public bool Spin { get; set; } = false;
+
+	/// <summary>
+	/// A multi-hit: the hitbox can hit the same fighter again every this many active frames.
+	/// Every hit but those in the last window is <see cref="LinkHit"/> - weak, and holding them
+	/// in place - and the last is this move, the launcher.
+	/// </summary>
+	[Export] public int RehitFrames { get; set; } = 0;
+	public MoveData LinkHit;
+
+	/// <summary>Upward speed a thrown projectile starts with, px/s. Zero means a small toss.</summary>
+	[Export] public float LaunchLift { get; set; } = 0.0f;
+
+	/// <summary>How big <see cref="FxTexture"/> is drawn, in pixels along its longest side. Zero fits it to the hitbox.</summary>
+	[Export] public float FxArtSize { get; set; } = 0.0f;
+
+	/// <summary>Degrees per frame the effect art turns as it flies - a sword tumbling end over end.</summary>
+	[Export] public float FxSpin { get; set; } = 0.0f;
+
+	/// <summary>The effect art points the way it is flying, as a thrown blade does. Art is drawn tip-up.</summary>
+	[Export] public bool FxAlongFlight { get; set; } = false;
+
 	/// <summary>Colour of the hand-drawn effect. Crayon-bright; see .ai/art-direction.md.</summary>
 	[Export] public Color FxColor { get; set; } = new Color(0.97f, 0.62f, 0.25f);
 
@@ -215,6 +335,31 @@ public partial class MoveData : Resource
 			TetherLength = TetherLength,
 			Beam = Beam,
 			Reach = Reach,
+			BurstCount = BurstCount,
+			BurstInterval = BurstInterval,
+			Streak = Streak,
+			HeldArt = HeldArt,
+			HeldArtOffset = HeldArtOffset,
+			HeldArtSize = HeldArtSize,
+			SwingArt = SwingArt,
+			ShockwavePower = ShockwavePower,
+			PlatformHoldFrames = PlatformHoldFrames,
+			PlatformWidth = PlatformWidth,
+			SwingLength = SwingLength,
+			SwingArtSize = SwingArtSize,
+			Choices = Choices,
+			Blink = Blink,
+			OncePerAirtime = OncePerAirtime,
+			GrabThrow = GrabThrow,
+			StretchArm = StretchArm,
+			MaxOut = MaxOut,
+			Spin = Spin,
+			RehitFrames = RehitFrames,
+			LinkHit = LinkHit?.Scaled(scale),
+			LaunchLift = LaunchLift,
+			FxArtSize = FxArtSize,
+			FxSpin = FxSpin,
+			FxAlongFlight = FxAlongFlight,
 			FxColor = FxColor,
 			FxRadius = FxRadius,
 			FxTexture = FxTexture,

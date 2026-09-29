@@ -12,6 +12,9 @@ using Godot;
 /// Each fighter gets a short description of how it plays, never a list of its moves. Finding
 /// out what a fighter's specials do is part of playing it.
 ///
+/// Nothing starts on its own. Once every seat is picked, the screen says so and waits for a
+/// player to press Start - so someone still reading a description is not rushed into a fight.
+///
 /// A seat nobody has joined offers a CPU button, so one person can play alone. Any joined player
 /// can add the CPU, change its fighter or remove it; and whoever owns that seat's controller
 /// takes it back just by pressing A.
@@ -52,9 +55,9 @@ public partial class CharacterSelectScreen : Node2D
 	const float PanelWidth = 640.0f;
 	const float PanelHeight = 330.0f;
 
-	/// <summary>A beat on READY before moving on, so both players see that they both locked in.</summary>
-	const int ReadyHoldFrames = 36;
-	int readyFrames;
+	/// <summary>"Press Start to fight", shown once everyone has picked.</summary>
+	Label startPrompt;
+	int promptFrames;
 
 	bool mouseOverQuit;
 	Node2D cursorLayer;
@@ -97,6 +100,15 @@ public partial class CharacterSelectScreen : Node2D
 
 			cards[i] = new Card { Box = box, Rig = rig };
 		}
+
+		startPrompt = MenuTheme.MakeLabel("Press Start to fight!", new Vector2(0.0f, 948.0f), 64, MenuTheme.Accent);
+		startPrompt.Size = new Vector2(viewport.X, 90.0f);
+		startPrompt.HorizontalAlignment = HorizontalAlignment.Center;
+		startPrompt.AddThemeColorOverride("font_outline_color", MenuTheme.Text);
+		startPrompt.AddThemeConstantOverride("outline_size", 14);
+		startPrompt.PivotOffset = new Vector2(viewport.X * 0.5f, 45.0f);
+		startPrompt.Visible = false;
+		root.AddChild(startPrompt);
 
 		for (int i = 0; i < slots.Length; i++)
 		{
@@ -243,14 +255,37 @@ public partial class CharacterSelectScreen : Node2D
 		return -1;
 	}
 
+	/// <summary>Every seat is filled and picked, and at least one of them is a person.</summary>
+	bool EveryoneReady()
+	{
+		bool ready = true;
+		bool anyHuman = false;
+		foreach (Slot slot in slots)
+		{
+			ready &= slot.Joined && slot.Locked;
+			anyHuman |= slot.Human;
+		}
+		return ready && anyHuman;
+	}
+
 	public override void _PhysicsProcess(double delta)
 	{
 		Vector2 viewport = GetViewportRect().Size;
+		bool readyBefore = EveryoneReady();
+		bool startFight = false;
 
 		foreach (Slot slot in slots)
 		{
 			MenuCursor cursor = slot.Cursor;
 			cursor.Update(viewport);
+
+			// With everyone picked, Start fights. Checked first, because Start also counts as A
+			// and would otherwise re-pick whatever card the cursor happens to be resting on.
+			if (readyBefore && slot.Human && cursor.Nav.Start)
+			{
+				startFight = true;
+				continue;
+			}
 
 			if (!slot.Joined || slot.IsCpu)
 			{
@@ -305,17 +340,14 @@ public partial class CharacterSelectScreen : Node2D
 		QueueRedraw();
 		cursorLayer.QueueRedraw();
 
-		bool everyoneReady = true;
-		bool anyHuman = false;
-		foreach (Slot slot in slots)
-		{
-			everyoneReady &= slot.Joined && slot.Locked;
-			anyHuman |= slot.Human;
-		}
-		everyoneReady &= anyHuman;
+		bool everyoneReady = EveryoneReady();
 
-		readyFrames = everyoneReady ? readyFrames + 1 : 0;
-		if (readyFrames < ReadyHoldFrames) return;
+		// The prompt pulses gently so it catches the eye without shouting.
+		promptFrames = everyoneReady ? promptFrames + 1 : 0;
+		startPrompt.Visible = everyoneReady;
+		startPrompt.Scale = Vector2.One * (1.0f + 0.05f * Mathf.Sin(promptFrames * 0.12f));
+
+		if (!startFight || !everyoneReady) return;
 
 		for (int i = 0; i < slots.Length; i++)
 		{
