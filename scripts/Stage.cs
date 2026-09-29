@@ -128,6 +128,7 @@ public partial class Stage : Node2D
 			case PlatformLook.HouseRoof: DrawHouse(platform, seed); break;
 			case PlatformLook.Building: DrawBuilding(platform, seed, tower: false); break;
 			case PlatformLook.Tower: DrawBuilding(platform, seed, tower: true); break;
+			case PlatformLook.TreeTop: DrawTreeTop(platform, seed); break;
 			default: DrawLedge(platform, seed); break;
 		}
 	}
@@ -193,6 +194,42 @@ public partial class Stage : Node2D
 		DrawRect(roof, Data.GroundFill);
 		CrayonBrush.CrayonFill(this, roof, Data.PlatformCrayon, seed, 9.0f, 6.0f, 8.0f);
 		OutlinePlatform(roof, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// A tree drawn down from the top of its leaves. The flat top of the canopy is the part you
+	/// stand on, and it still gets the dashed outline, so "you can drop through this" reads the
+	/// same as on every other stage.
+	/// </summary>
+	void DrawTreeTop(StagePlatform platform, int seed)
+	{
+		Rect2 top = platform.Rect;
+		float centreX = top.Position.X + top.Size.X * 0.5f;
+		var canopy = new Rect2(top.Position.X - 18.0f, top.Position.Y, top.Size.X + 36.0f, 150.0f);
+
+		// The trunk first, so the leaves sit over it.
+		float trunkTop = canopy.Position.Y + canopy.Size.Y * 0.7f;
+		float trunkBottom = Mathf.Max(trunkTop + 40.0f, Data.GroundLine);
+		var trunk = new Rect2(centreX - 20.0f, trunkTop, 40.0f, trunkBottom - trunkTop);
+		DrawRect(trunk, Data.PropFill);
+		CrayonBrush.CrayonFill(this, trunk, Data.PropCrayon, seed + 1, 9.0f, 5.0f, 6.0f);
+		CrayonBrush.InkRect(this, trunk, Data.Ink, 3.0f, seed + 1, 1.6f);
+
+		// The leaves: overlapping blobs whose tops meet the standing line, so the canopy is a
+		// solid shape you could believe you are standing on, not a loop of scribble.
+		float w = top.Size.X;
+		float big = w * 0.26f;
+		float small = w * 0.22f;
+		var leaves = new Color(Data.GroundCrayon.R * 0.92f, Data.GroundCrayon.G * 0.95f, Data.GroundCrayon.B * 0.9f);
+		DrawCircle(new Vector2(centreX - w * 0.30f, top.Position.Y + big), small, leaves);
+		DrawCircle(new Vector2(centreX + w * 0.30f, top.Position.Y + big), small, leaves);
+		DrawCircle(new Vector2(centreX, top.Position.Y + big), big, leaves);
+		DrawCircle(new Vector2(centreX, top.Position.Y + big * 1.5f), big * 0.9f, leaves);
+		DrawRect(new Rect2(top.Position.X, top.Position.Y, w, big * 0.8f), leaves);
+		CrayonBrush.CrayonFill(this, new Rect2(top.Position.X + 10.0f, top.Position.Y + 8.0f, w - 20.0f, big * 1.6f),
+			new Color(Data.GroundCrayon.R * 0.8f, Data.GroundCrayon.G * 0.88f, Data.GroundCrayon.B * 0.75f, 0.6f),
+			seed + 2, 11.0f, 6.0f, 8.0f);
+		OutlinePlatform(top, platform.OneWay, seed);
 	}
 
 	void DrawBuilding(StagePlatform platform, int seed, bool tower)
@@ -294,6 +331,32 @@ public partial class Stage : Node2D
 
 			case PropKind.Bush:
 				CrayonBrush.Scribble(this, centre, r.Size, Data.GroundCrayon, prop.Seed, 10.0f, 8);
+				break;
+
+			case PropKind.Tree:
+				// A background tree: no outline, washed out, because distance reads as "has no
+				// lines" - only the trees you can stand on are drawn with ink.
+				var wash = new Color(Data.GroundCrayon.R, Data.GroundCrayon.G, Data.GroundCrayon.B, 0.5f);
+				var bark = new Color(Data.PropCrayon.R, Data.PropCrayon.G, Data.PropCrayon.B, 0.5f);
+				DrawRect(new Rect2(centre.X - r.Size.X * 0.08f, r.Position.Y + r.Size.Y * 0.45f,
+					r.Size.X * 0.16f, r.Size.Y * 0.55f), bark);
+				CrayonBrush.Scribble(this, new Vector2(centre.X, r.Position.Y + r.Size.Y * 0.32f),
+					new Vector2(r.Size.X, r.Size.Y * 0.64f), wash, prop.Seed, 14.0f, 8);
+				break;
+
+			case PropKind.Grass:
+				// Tufts along the ground: three short strokes each, leaning a little.
+				for (float x = r.Position.X; x < r.End.X; x += 46.0f)
+				{
+					float jitter = CrayonBrush.Noise(prop.Seed, Mathf.RoundToInt(x)) * 14.0f;
+					var root = new Vector2(x + jitter, r.End.Y);
+					for (int blade = -1; blade <= 1; blade++)
+					{
+						CrayonBrush.InkLine(this, root,
+							root + new Vector2(blade * 9.0f + 3.0f, -r.Size.Y * (blade == 0 ? 1.0f : 0.7f)),
+							Data.GroundCrayon, 4.0f, prop.Seed + Mathf.RoundToInt(x) + blade, 0.8f);
+					}
+				}
 				break;
 
 			case PropKind.Fence:

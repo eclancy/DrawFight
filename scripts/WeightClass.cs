@@ -116,6 +116,11 @@ public enum MoveSlot
 	UpAir,
 	DownAir,
 
+	// Flick the stick and press attack together. Slow, strong, and chargeable by holding attack.
+	ForwardSmash,
+	UpSmash,
+	DownSmash,
+
 	NeutralSpecial,
 	SideSpecial,
 	UpSpecial,

@@ -50,6 +50,12 @@ public partial class Fighter : CharacterBody2D
 
 	int airJumpsUsed;
 
+	/// <summary>
+	/// The up special can be used once per trip into the air. Landing, or catching a ledge,
+	/// gives it back. Without this a recovery move chained into itself flies anywhere forever.
+	/// </summary>
+	bool upSpecialUsed;
+
 	// --- Active move ---------------------------------------------------------
 
 	MoveData currentMove;
@@ -113,6 +119,34 @@ public partial class Fighter : CharacterBody2D
 	const int LedgeRegrabCooldown = 26;
 
 	const int LedgeGrabInvulnFrames = 24;
+
+	// --- Smash attacks and combos -----------------------------------------------
+
+	/// <summary>
+	/// A smash is the stick FLICKED and attack pressed together, as in Smash Bros. Pushing the
+	/// stick first and pressing attack a moment later is a tilt. The difference is only how long
+	/// ago the stick went from centre to full - this many frames or fewer is a flick.
+	/// </summary>
+	const int SmashFlickFrames = 4;
+
+	/// <summary>How far the windup is from the hit when a smash holds to charge.</summary>
+	const int ChargeHoldBeforeHit = 3;
+
+	/// <summary>A full second of charge, for up to 40% more damage.</summary>
+	const int MaxChargeFrames = 60;
+	const float MaxChargeBonus = 0.4f;
+
+	int flickFramesX = 99;
+	int flickFramesY = 99;
+	Vector2 previousStick;
+	int chargeFrames;
+	bool comboQueued;
+
+	float ChargeScale => 1.0f + MaxChargeBonus * chargeFrames / MaxChargeFrames;
+
+	bool IsCharging =>
+		State == FighterState.Attacking && currentMove != null && currentMove.Chargeable
+		&& moveFrame == Mathf.Max(1, currentMove.StartupFrames - ChargeHoldBeforeHit);
 
 	// --- Size, for a fighter with a Resize special -------------------------------
 
@@ -319,7 +353,7 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Attacking when currentMove != null:
 				// Sampled against the move's own frame counts, so the strike pose arrives on
 				// the exact frame the hitbox does.
-				FighterAnimations.SampleAttack(currentMove, moveFrame, attackPose, currentMove.CarriesMomentum);
+				FighterAnimations.SampleAttack(currentMove, moveFrame, attackPose);
 				rig.ApplyDirect(attackPose, FighterAnimations.AttackBlend(currentMove, moveFrame));
 				break;
 
@@ -371,6 +405,14 @@ public partial class Fighter : CharacterBody2D
 		if (hitlagFrames > 0) tint = new Color(2.2f, 2.2f, 2.2f);
 		else if (State == FighterState.Hitstun) tint = new Color(1.0f, 0.62f, 0.62f);
 		else if (IsBlocking) tint = new Color(0.62f, 0.86f, 1.0f);
+		else if (IsCharging)
+		{
+			// A charging smash glows warmer and pulses faster the longer it is held, so the other
+			// player can see a big hit coming and how big.
+			float t = chargeFrames / (float)MaxChargeFrames;
+			float pulse = 0.5f + 0.5f * Mathf.Sin(chargeFrames * (0.3f + 0.5f * t));
+			tint = Colors.White.Lerp(new Color(1.3f, 1.1f, 0.55f), (0.3f + 0.7f * t) * pulse);
+		}
 
 		if (invulnFrames > 0 && (invulnFrames / 4) % 2 == 0) tint.A = 0.4f;
 
@@ -391,6 +433,11 @@ public partial class Fighter : CharacterBody2D
 
 		// Buffering is what makes the controls feel forgiving rather than strict. An input
 		// pressed slightly too early still comes out when it legally can.
+		// Frames since each stick axis snapped from the centre to the edge.
+		flickFramesX = Mathf.Abs(input.Move.X) > 0.8f && Mathf.Abs(previousStick.X) < 0.3f ? 0 : flickFramesX + 1;
+		flickFramesY = Mathf.Abs(input.Move.Y) > 0.8f && Mathf.Abs(previousStick.Y) < 0.3f ? 0 : flickFramesY + 1;
+		previousStick = input.Move;
+
 		if (input.JumpPressed) jumpBufferFrames = Tuning.JumpBufferFrames;
 		if (input.AttackPressed) attackBufferFrames = Tuning.AttackBufferFrames;
 		if (input.SpecialPressed) specialBufferFrames = Tuning.AttackBufferFrames;
@@ -420,6 +467,7 @@ public partial class Fighter : CharacterBody2D
 		}
 
 		airJumpsUsed = 0;
+		upSpecialUsed = false;
 
 		if (IsBlocking)
 		{
@@ -528,7 +576,30 @@ public partial class Fighter : CharacterBody2D
 
 	void TickAttacking(InputState input, float dt)
 	{
+		// Holding attack freezes a smash at the top of its windup, building charge.
+		if (IsCharging && input.AttackHeld && chargeFrames < MaxChargeFrames)
+		{
+			chargeFrames++;
+			ApplyFriction(dt, Data.GroundFriction);
+			return;
+		}
+
 		moveFrame++;
+
+		// A ball-form move spins the whole time, fastest while the hitbox is out.
+		if (currentMove.BallForm)
+		{
+			bool hot = moveFrame > currentMove.StartupFrames
+				&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
+			rollAngle += Facing * (hot ? 0.45f : 0.2f);
+		}
+
+		// Pressing attack again during a combo move queues the next hit.
+		if (input.AttackPressed && currentMove.ComboNext != null)
+		{
+			comboQueued = true;
+			attackBufferFrames = 0;
+		}
 
 		int activeStart = currentMove.StartupFrames;
 		int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
@@ -564,6 +635,18 @@ public partial class Fighter : CharacterBody2D
 		// startup would make it a slow jab rather than a dash attack.
 		float shed = currentMove.CarriesMomentum ? 0.12f : 0.5f;
 		ApplyFriction(dt, IsOnFloor() ? Data.GroundFriction * shed : Data.AirAcceleration * 0.15f);
+
+		// The next combo hit comes out as soon as this one's hitbox is done - not after its
+		// endlag, which is what makes tapping attack a fast string rather than separate jabs.
+		if (comboQueued && moveFrame > activeEnd && currentMove.ComboNext != null)
+		{
+			currentMove = currentMove.ComboNext;
+			moveFrame = 0;
+			chargeFrames = 0;
+			comboQueued = false;
+			alreadyHitThisMove.Clear();
+			return;
+		}
 
 		if (moveFrame >= currentMove.TotalFrames)
 		{
@@ -648,7 +731,7 @@ public partial class Fighter : CharacterBody2D
 	// --- Attacking -----------------------------------------------------------
 
 	/// <summary>
-	/// Picks which of the fourteen moves this press means, from the state the fighter is in
+	/// Picks which of the seventeen moves this press means, from the state the fighter is in
 	/// and the direction being held. This is the whole directional-attack system: one button
 	/// and a stick, resolved here.
 	/// </summary>
@@ -662,6 +745,17 @@ public partial class Fighter : CharacterBody2D
 		MoveData chosen = Data.Move(slot);
 		if (chosen == null) return false;
 
+		// Already used this trip into the air: the press does nothing until the ground (or a
+		// ledge) gives it back.
+		// The press is thrown away rather than left buffered, or it comes out a frame later as a
+		// neutral special once the stick leaves up.
+		if (slot == MoveSlot.UpSpecial && upSpecialUsed)
+		{
+			specialBufferFrames = 0;
+			return false;
+		}
+		if (slot == MoveSlot.UpSpecial) upSpecialUsed = true;
+
 		attackBufferFrames = 0;
 		specialBufferFrames = 0;
 
@@ -672,6 +766,8 @@ public partial class Fighter : CharacterBody2D
 		currentMove = chosen;
 		currentSlot = slot;
 		moveFrame = 0;
+		chargeFrames = 0;
+		comboQueued = false;
 		alreadyHitThisMove.Clear();
 		hazardSpawned = false;
 		State = FighterState.Attacking;
@@ -703,6 +799,15 @@ public partial class Fighter : CharacterBody2D
 		// Attacking out of a run gives the dash attack, decided by actual speed rather than by
 		// a held direction, so a fighter still sliding from a turnaround does not get one.
 		if (Mathf.Abs(Velocity.X) > RunSpeed * DashThreshold) return MoveSlot.DashAttack;
+
+		// A flick is a smash; a direction already being held is a tilt.
+		if (y < -0.5f && flickFramesY <= SmashFlickFrames) return MoveSlot.UpSmash;
+		if (y > 0.5f && flickFramesY <= SmashFlickFrames) return MoveSlot.DownSmash;
+		if (Mathf.Abs(x) > 0.4f && flickFramesX <= SmashFlickFrames)
+		{
+			Facing = x > 0.0f ? 1 : -1;
+			return MoveSlot.ForwardSmash;
+		}
 
 		if (y < -0.5f) return MoveSlot.UpTilt;
 		if (y > 0.5f) return MoveSlot.DownTilt;
@@ -865,6 +970,7 @@ public partial class Fighter : CharacterBody2D
 			GlobalPosition = ledge + new Vector2(-Facing * bodySize.X * 0.45f, bodySize.Y * 0.42f);
 			Velocity = Vector2.Zero;
 			airJumpsUsed = 0;
+			upSpecialUsed = false;
 			invulnFrames = Mathf.Max(invulnFrames, LedgeGrabInvulnFrames);
 			State = FighterState.LedgeHang;
 			return true;
@@ -928,13 +1034,13 @@ public partial class Fighter : CharacterBody2D
 			}
 
 			alreadyHitThisMove.Add(other);
-			other.ReceiveHit(this, currentMove, nearest);
+			other.ReceiveHit(this, currentMove, nearest, ChargeScale);
 
 			// "He will also take some damage." Percent only - never knockback.
 			Percent += currentMove.SelfDamage;
 
 			// The attacker shares the victim's hitlag, so both sides feel the impact.
-			hitlagFrames = Knockback.HitlagFrames(currentMove.Damage);
+			hitlagFrames = Knockback.HitlagFrames(currentMove.Damage * ChargeScale);
 		}
 	}
 
@@ -963,7 +1069,8 @@ public partial class Fighter : CharacterBody2D
 
 	// --- Taking a hit --------------------------------------------------------
 
-	public void ReceiveHit(Fighter attacker, MoveData move, Vector2 contactPoint)
+	/// <param name="damageScale">More than 1 for a charged smash. Knockback follows damage.</param>
+	public void ReceiveHit(Fighter attacker, MoveData move, Vector2 contactPoint, float damageScale = 1.0f)
 	{
 		// Hitting a bomb sets it off. The hit itself does nothing; the explosion is the answer.
 		if (IsBombArmed)
@@ -976,7 +1083,7 @@ public partial class Fighter : CharacterBody2D
 
 		// Blocking reduces; it never negates. Chip damage still raises percent, which is the
 		// entire cost of blocking - there is no shield health here by design.
-		float damage = blocked ? move.Damage * Tuning.BlockDamageMultiplier : move.Damage;
+		float damage = move.Damage * damageScale * (blocked ? Tuning.BlockDamageMultiplier : 1.0f);
 		Percent += damage;
 
 		float knockback = Knockback.Compute(
@@ -1028,6 +1135,7 @@ public partial class Fighter : CharacterBody2D
 		ledgeCooldownFrames = 0;
 		tumbleFrames = 0;
 		pendingTumbleFrames = 0;
+		upSpecialUsed = false;
 		drawnAsBall = false;
 		SetSizeLevel(SizeLevels.Normal);
 		CollisionMask = GroundMask;
@@ -1308,7 +1416,9 @@ public partial class Fighter : CharacterBody2D
 
 	// --- Drawing the fighter as one piece ------------------------------------------
 
-	bool IsDrawnAsBall => drawnAsBall && (State == FighterState.Hitstun || State == FighterState.Tumbling);
+	bool IsDrawnAsBall =>
+		(drawnAsBall && (State == FighterState.Hitstun || State == FighterState.Tumbling))
+		|| (State == FighterState.Attacking && currentMove != null && currentMove.BallForm);
 
 	/// <summary>World radius of the drawn body as a ball. Decides how fast he appears to roll.</summary>
 	float BallRadius()

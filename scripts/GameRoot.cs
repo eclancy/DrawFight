@@ -59,7 +59,7 @@ public partial class GameRoot : Node2D
 
 		switch (startAt)
 		{
-			case "parade": Show(new RigParade()); break;
+			case "parade": Show(new RigParade { Attacks = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--attacks") >= 0 }); break;
 			case "match": GoMatch(); break;
 			case "select": GoCharacterSelect(); break;
 			case "stages": GoStageSelect(); break;

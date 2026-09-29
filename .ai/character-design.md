@@ -32,7 +32,22 @@ it retunes the whole moveset:
 | Medium | the baseline everything is authored at | average |
 | Heavy  | slow, hard-hitting, long reach | dies late |
 
-This is why the ten normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
+Scaling numbers is not enough on its own — it made every fighter feel like the same fighter at
+different speeds. So **every character has its own normals** (`CharacterNormals.cs`), each one
+an edit of the shared baseline: its own name, animation, and a reshaped hitbox, angle or timing
+that fits who the character is. Weight still scales them afterwards, and the jab combo's length
+follows weight — light fighters get quick multi-hit strings, heavies get two slow hard hits.
+
+| | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, club) |
+|---|---|---|---|
+| theme | quick martial artist | ball on long stretchy legs | everything is the club |
+| jab | punch, punch, kick | kick, low kick, ball bonk | two slow heavy punches |
+| tilts | roundhouse, flip kick, pop-up sweep | long-reach kicks all round | club poke, club arc, ground pound |
+| dash | flying knee | rolls into them as a ball | shoulder barge |
+| smashes | blaze palm, rising flame, split | ball headbutt, spring up, splits | club slam, club twirl, club sweep |
+| aerials | flame spin, axe kick, back kick, bicycle, drill kick (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | belly spin, club chop, back smack, club swipe, butt stomp |
+
+This is why the normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
 scaled per weight by `WeightProfiles`. A balance change to a tilt then lands on all three
 weights at once instead of being fixed in three places.
 
@@ -156,7 +171,8 @@ he made for fun finds its way into the game without needing a whole fighter buil
 
 ## The normal attacks
 
-The ten non-special moves — five grounded, five aerial — do
+The thirteen non-special moves — a jab combo, three tilts, three smashes, a dash attack and five
+aerials — do
 **not** need bespoke design per character. Start every fighter from a **shared default moveset**
 that is retuned rather than re-authored:
 

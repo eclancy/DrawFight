@@ -179,19 +179,23 @@ public sealed class CpuInputSource : IInputSource
 			return;
 		}
 
+		// The stick decides tilt or smash. At 0.7 it is a tilt; snapped to full on the same frame as
+		// the button it reads as a flick, which is a smash - exactly as it would for a person.
+		float push = rng.Randf() < 0.2f ? 1.0f : 0.7f;
+
 		if (dy < -70.0f)
 		{
-			heldStick = new Vector2(0.0f, -1.0f);
+			heldStick = new Vector2(0.0f, -push);
 		}
 		else if (dy > 40.0f)
 		{
-			// Lower than us - hanging off a ledge, or crouched: the down tilt is the low hit.
-			heldStick = new Vector2(0.0f, 1.0f);
+			// Lower than us - hanging off a ledge, or crouched: the down attacks are the low hits.
+			heldStick = new Vector2(0.0f, push);
 		}
 		else
 		{
-			// Mostly forward tilts facing them, sometimes a jab - both come out facing the target.
-			heldStick = rng.Randf() < 0.6f ? new Vector2(toward * 0.6f, 0.0f) : Vector2.Zero;
+			// Mostly forward attacks facing them, sometimes a jab combo.
+			heldStick = rng.Randf() < 0.6f ? new Vector2(toward * push, 0.0f) : Vector2.Zero;
 		}
 
 		// A down special now and then, close in - Circy's bomb, Swift's fire trap, Lug's anvil.

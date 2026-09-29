@@ -201,7 +201,12 @@ def torso_part(cfg):
 
 
 def prop_part(cfg):
-    """A club, canonical orientation pointing UP from a pivot at the grip."""
+    """
+    A club, canonical orientation pointing DOWN from a pivot at the grip - the same way the
+    limbs are stored. The club hangs off the forearm, so pointing down means rotation zero
+    continues the arm OUTWARD. It was first stored pointing up, which laid the club back along
+    the forearm, pointing at the fighter's own elbow.
+    """
     spec = cfg['prop']
     ink = cfg['ink']
     stroke = cfg['stroke']
@@ -219,7 +224,9 @@ def prop_part(cfg):
     draw.ellipse([cx - head / 2.0, PAD, cx + head / 2.0, PAD + head * 1.3],
                  outline=ink, width=int(stroke))
 
-    return img, (cx, grip_y)
+    # Drawn head-up for convenience, then flipped so the grip is at the top.
+    img = img.transpose(Image.FLIP_TOP_BOTTOM)
+    return img, (cx, h - grip_y)
 
 
 # --------------------------------------------------------------------------- composite
@@ -303,6 +310,8 @@ def composite_drawing(cfg):
 
     if cfg['prop']:
         club, grip = prop_part(cfg)
+        # Held up in the photo, so turn the stored (grip-up) club back head-up first.
+        club = club.transpose(Image.FLIP_TOP_BOTTOM)
         club = club.rotate(-28, expand=True, resample=Image.BICUBIC)
         paper.paste(club, (int(f_hand[0] - club.size[0] / 2), int(f_hand[1] - club.size[1] + 20)),
                     club)

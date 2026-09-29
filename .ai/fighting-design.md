@@ -130,6 +130,10 @@ that takes half a second to reach it never gets there in a fight.
   landing, on grabbing a ledge, and **on being hit** - a fighter knocked off the stage always
   has a jump to get back with once hitstun ends, even if they had spent it before the hit. A
   buffered jump press fires on the first actionable frame, so mashing jump during a launch works.
+  The air jump goes about 10% higher than the ground jump.
+- **Up special once per trip into the air.** Landing or grabbing a ledge gives it back; being
+  hit does not. A second press in the air does nothing — it is discarded, not buffered, so it
+  cannot come out as a neutral special when the stick leaves up.
 - **Fast-fall**: tapping down while falling increases fall speed. Free expressiveness.
 - **Air control** is strong — you can meaningfully steer your own trajectory mid-launch.
 - **Directional influence (DI)**: holding a direction while in hitstun slightly angles your
@@ -236,7 +240,33 @@ move, so the attack slides the whole way through instead of stopping dead on sta
 selects the lunging attack pose so the move looks like a committed charge rather than a jab that
 happens to be moving. A dash attack that stops on contact is just a slow jab.
 
-That is roughly **16 moves per fighter**: 5 grounded attacks, 5 aerials, 4 specials, plus
+## Jab combos
+
+Tapping attack strings the jab combo, whose length depends on weight: three quick hits for a
+light, three ending in a pop-up for a medium, two slow heavy punches for a heavy (see
+`.ai/character-design.md`). Pressing attack during a move with a
+`ComboNext` queues the next hit, and it comes out **the moment the current hitbox ends**, not
+after its endlag — that is what turns taps into a fast string. The first two hits have low base
+knockback and very low growth (about 20 and 0.25), so the target stays in reach and in hitstun
+for the next; only the finisher pushes them away. It is a real combo: the target cannot act
+between the hits. Stopping after one jab is still a quick poke.
+
+## Tilts and smashes
+
+One attack button, told apart by the stick, as in Smash:
+
+- **Tilt**: a direction already held, then attack.
+- **Smash**: the stick **flicked** from centre to full within 4 frames of pressing attack. On a
+  keyboard, pressing the arrow and attack together is a flick.
+
+Smashes are the grounded finishers — slow to start, long to recover, so a miss is punished.
+**Holding attack charges** one: it freezes 3 frames before the hit for up to 60 frames, for up to
+40% more damage (knockback follows damage), and the fighter glows warmer the longer it is held
+so the other player can see it coming. Uncharged, a medium's forward smash KOs a light fighter
+from about 90%; read the calibration table before changing any smash number.
+
+That is roughly **19 moves per fighter**: a 3-hit jab combo, 3 tilts, 3 smashes, a dash attack,
+5 aerials, 4 specials, plus
 block and dodge. It sounds like a lot, but most of them are shared behaviour driven by data —
 see `.ai/character-design.md`.
 

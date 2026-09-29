@@ -11,7 +11,7 @@ public static class FighterCatalog
 {
 	public const int Count = 3;
 
-	// Built once and kept. Each FighterData now carries fourteen MoveData Resources, so
+	// Built once and kept. Each FighterData now carries seventeen MoveData Resources, so
 	// rebuilding the roster on every lookup allocated hundreds of Godot Resources that were
 	// never freed - which is what started printing "Leaked unsafe reference" on shutdown.
 	// FighterData is read-only once built, so sharing an instance between players is safe.

@@ -12,6 +12,9 @@ public struct InputState
 
 	public bool JumpPressed;
 	public bool AttackPressed;
+
+	/// <summary>The attack button's level, not its edge. Holding it charges a smash attack.</summary>
+	public bool AttackHeld;
 	public bool SpecialPressed;
 	public bool BlockHeld;
 
@@ -87,6 +90,7 @@ public class KeyboardInputSource : IInputSource
 				(Input.IsPhysicalKeyPressed(down) ? 1.0f : 0.0f) - (Input.IsPhysicalKeyPressed(up) ? 1.0f : 0.0f)),
 			JumpPressed = jumpDown && !jumpWasDown,
 			AttackPressed = attackDown && !attackWasDown,
+			AttackHeld = attackDown,
 			SpecialPressed = specialDown && !specialWasDown,
 			BlockHeld = Input.IsPhysicalKeyPressed(block),
 			SpecialHeld = specialDown,

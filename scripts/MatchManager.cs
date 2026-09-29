@@ -11,7 +11,7 @@ using Godot;
 public partial class MatchManager : Node2D
 {
 	public readonly List<Fighter> Fighters = new List<Fighter>();
-	public bool ShowHitboxes { get; private set; } = true;
+	public bool ShowHitboxes { get; private set; } = false;
 
 	/// <summary>
 	/// Which pad layout every gamepad uses. One knob for now; M5 makes it per-player on the
@@ -199,8 +199,8 @@ public partial class MatchManager : Node2D
 		{
 			matchOver = true;
 			status = last != null
-				? $"{last.Data.DisplayName} wins!   Start for the title screen, R to rematch"
-				: "Draw!   Start for the title screen, R to rematch";
+				? $"{last.Data.DisplayName} wins!   Press Start to pick fighters"
+				: "Draw!   Press Start to pick fighters";
 		}
 	}
 
@@ -276,9 +276,10 @@ public partial class MatchManager : Node2D
 	{
 		if (@event is InputEventJoypadButton pad && pad.Pressed)
 		{
-			// Start restarts a live match, and returns to the title once it is over.
+			// Start restarts a live match, and goes back to fighter select once it is over -
+			// the next thing anyone wants after a match is to pick again, not the title screen.
 			if (pad.ButtonIndex != JoyButton.Start) return;
-			if (matchOver) GameRoot.Instance.GoTitle();
+			if (matchOver) GameRoot.Instance.GoCharacterSelect();
 			else Restart();
 			return;
 		}
@@ -314,7 +315,7 @@ public partial class MatchManager : Node2D
 				break;
 
 			case Key.Enter:
-				if (matchOver) GameRoot.Instance.GoTitle();
+				if (matchOver) GameRoot.Instance.GoCharacterSelect();
 				break;
 
 			case Key.R:

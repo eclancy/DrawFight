@@ -69,7 +69,8 @@ they read drifts from the version we maintain.
 - **`"$GODOT_BIN" --path . -- --parade --shot=70`** — lay out every fighter in every animation,
   side by side and large, and write a screenshot to `.shots/`. **This is how rig and animation
   changes get verified.** A wrong pivot or a flipped rotation sign is obvious here and invisible
-  in a match. `--shot=N` works on the match too; `F12` grabs a frame while playing.
+  in a match. Add **`--attacks`** to see every fighter's own attacks at the frame they hit.
+  `--shot=N` works on the match too; `F12` grabs a frame while playing.
 - **`python tools/art/stickfigures.py [name]`** — regenerate the two generated test fighters.
   A name builds just that one.
 - **`python tools/art/cut_circy.py`** — re-cut Circy's parts and poses from Elim's drawings in
@@ -137,13 +138,18 @@ something is unstated here, default to however that project does it.
   way, and keep the README in step when milestones or controls change.
 - Give a fighter an up-special that does not provide real vertical recovery. `RegressionChecks`
   now fails the build loudly if one does not beat a standing jump.
-- Author the ten normal attacks per character. They live once, at medium weight, in
-  `DefaultMoveset.cs` and are scaled by weight class. Only the **four specials** are per
-  character, because those come from the kid's own description.
+- Author a character's normal attacks from scratch. Every character has its **own** normals in
+  `CharacterNormals.cs`, but each is an **edit of the shared medium baseline** in
+  `DefaultMoveset.cs` (a name, an `AttackAnim`, a reshaped hitbox/angle/timing), scaled by
+  weight class afterwards. That keeps every fighter unique without each one being a separate
+  balance problem. The jab combo is the exception: authored per character at final numbers.
+- Give a move a pose by hand-tweaking `SampleAttack`. Every attack names an `AttackAnim`, and
+  each one's windup/strike pair lives in `FighterAnimations`. Check new ones with
+  `--parade --attacks`.
 - Scale a heavy fighter's knockback growth **up**. Damage already raises knockback, so the two
   compound - see `.ai/character-design.md`.
 - Build a new roster entry by calling a catalog in a loop. `FighterCatalog` and `StageCatalog`
-  cache their entries because each one now owns fourteen `MoveData` Resources.
+  cache their entries because each one now owns seventeen `MoveData` Resources.
 - Ship a move with both high base knockback and high knockback growth.
 - Add universal grabs or throws, or leave hooks for them. **Settled and out**, not deferred —
   see `.ai/fighting-design.md`.

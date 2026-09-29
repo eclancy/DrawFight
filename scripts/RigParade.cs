@@ -6,6 +6,7 @@ using Godot;
 /// contains, side by side and large. Run it with:
 ///
 ///     "$GODOT_BIN" --path . -- --parade --shot=90
+///     "$GODOT_BIN" --path . -- --parade --attacks --shot=90   (every fighter's own attacks)
 ///
 /// This exists because a build cannot tell you whether a puppet is assembled correctly, and
 /// squinting at two 120-pixel fighters in a match cannot either. When a pivot is wrong or a
@@ -23,24 +24,66 @@ public partial class RigParade : Node2D
 	readonly List<Slot> slots = new List<Slot>();
 	readonly Pose scratch = new Pose();
 
+	/// <summary>
+	/// Show each fighter's own normal attacks at the moment they hit, instead of the locomotion
+	/// clips. Because the jab combo and some animations differ by weight class, this is the view
+	/// that shows the three fighters are not all doing the same thing.
+	/// </summary>
+	public bool Attacks;
+
+	/// <summary>A move's strike pose - what is on screen the frame its hitbox goes live.</summary>
+	static Pose StrikeOf(MoveData move)
+	{
+		if (move == null) return null;
+		var pose = new Pose();
+		FighterAnimations.SampleAttack(move, move.StartupFrames + 1, pose);
+		return pose;
+	}
+
+	static MoveData ComboHit(FighterData data, int hit)
+	{
+		MoveData move = data.Move(MoveSlot.Jab);
+		for (int i = 0; i < hit && move != null; i++) move = move.ComboNext;
+		return move;
+	}
+
 	public override void _Ready()
 	{
 		var fighters = new FighterData[FighterCatalog.Count];
 		for (int i = 0; i < fighters.Length; i++) fighters[i] = FighterCatalog.Get(i);
 
-		var columns = new (string label, AnimationClip clip, Pose direct)[]
-		{
-			("idle", FighterAnimations.Idle, null),
-			("run", FighterAnimations.Run, null),
-			("jump", FighterAnimations.Jump, null),
-			("fall", FighterAnimations.Fall, null),
-			("land", FighterAnimations.Land, null),
-			("block", FighterAnimations.Block, null),
-			("hurt", FighterAnimations.Hurt, null),
-			("windup", null, FighterAnimations.AttackWindup),
-			("strike", null, FighterAnimations.AttackStrike),
-			("dash", null, FighterAnimations.LungeStrike),
-		};
+		var columns = Attacks
+			? new (string label, AnimationClip clip, System.Func<FighterData, Pose> direct)[]
+			{
+				("jab 1", null, d => StrikeOf(ComboHit(d, 0))),
+				("jab 2", null, d => StrikeOf(ComboHit(d, 1))),
+				("jab 3", null, d => StrikeOf(ComboHit(d, 2))),
+				("f tilt", null, d => StrikeOf(d.Move(MoveSlot.ForwardTilt))),
+				("u tilt", null, d => StrikeOf(d.Move(MoveSlot.UpTilt))),
+				("d tilt", null, d => StrikeOf(d.Move(MoveSlot.DownTilt))),
+				("dash", null, d => StrikeOf(d.Move(MoveSlot.DashAttack))),
+				("f smash", null, d => StrikeOf(d.Move(MoveSlot.ForwardSmash))),
+				("u smash", null, d => StrikeOf(d.Move(MoveSlot.UpSmash))),
+				("d smash", null, d => StrikeOf(d.Move(MoveSlot.DownSmash))),
+				("n air", null, d => StrikeOf(d.Move(MoveSlot.NeutralAir))),
+				("f air", null, d => StrikeOf(d.Move(MoveSlot.ForwardAir))),
+				("b air", null, d => StrikeOf(d.Move(MoveSlot.BackAir))),
+				("u air", null, d => StrikeOf(d.Move(MoveSlot.UpAir))),
+				("d air", null, d => StrikeOf(d.Move(MoveSlot.DownAir))),
+			}
+			: new (string label, AnimationClip clip, System.Func<FighterData, Pose> direct)[]
+			{
+				("idle", FighterAnimations.Idle, null),
+				("run", FighterAnimations.Run, null),
+				("jump", FighterAnimations.Jump, null),
+				("fall", FighterAnimations.Fall, null),
+				("land", FighterAnimations.Land, null),
+				("block", FighterAnimations.Block, null),
+				("hurt", FighterAnimations.Hurt, null),
+				("windup", null, d => FighterAnimations.AttackWindup),
+				("strike", null, d => FighterAnimations.AttackStrike),
+				("dash", null, d => FighterAnimations.LungeStrike),
+			};
 
 		const float ColumnWidth = 238.0f;
 		const float RowHeight = 420.0f;
@@ -51,6 +94,11 @@ public partial class RigParade : Node2D
 
 			for (int col = 0; col < columns.Length; col++)
 			{
+				Pose direct = columns[col].direct?.Invoke(data);
+
+				// A heavy's jab combo is two hits, so its third column is empty.
+				if (columns[col].clip == null && direct == null) continue;
+
 				// The rig positions ITSELF inside its parent (Normalise places the hip so the
 				// feet land on the body box), so layout has to live on a holder above it
 				// rather than on the rig's own transform.
@@ -76,7 +124,7 @@ public partial class RigParade : Node2D
 				{
 					Rig = rig,
 					Clip = columns[col].clip,
-					Direct = columns[col].direct,
+					Direct = direct,
 				});
 
 				if (row != 0) continue;
@@ -97,7 +145,9 @@ public partial class RigParade : Node2D
 			Position = new Vector2(ColumnWidth * (columns.Length - 1) * 0.5f,
 				RowHeight * (fighters.Length - 1) * 0.5f - 60.0f),
 			// Zoomed out as the roster grows, so every fighter stays on one screen.
-			Zoom = Vector2.One * Mathf.Min(0.78f, 1000.0f / (fighters.Length * RowHeight + 120.0f)),
+			Zoom = Vector2.One * Mathf.Min(0.78f, Mathf.Min(
+				1000.0f / (fighters.Length * RowHeight + 120.0f),
+				1880.0f / (columns.Length * ColumnWidth + 60.0f))),
 		};
 		AddChild(camera);
 		camera.MakeCurrent();

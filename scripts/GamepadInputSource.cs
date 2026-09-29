@@ -137,6 +137,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			Move = ReadDirection(),
 			JumpPressed = jumpDown && !jumpWasDown,
 			AttackPressed = attackDown && !attackWasDown,
+			AttackHeld = attackDown,
 			SpecialPressed = specialDown && !specialWasDown,
 			BlockHeld = blockDown,
 			SpecialHeld = specialDown,

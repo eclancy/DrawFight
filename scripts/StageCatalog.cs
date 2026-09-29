@@ -109,7 +109,8 @@ public static class StageCatalog
 	/// most demoralising way for a younger player to lose, so this is the right default for a
 	/// first match with someone who has not played before.
 	///
-	/// Nature stage, so it uses the colouring-book treatment rather than the exercise book.
+	/// Nature stage, so it uses the colouring-book treatment rather than the exercise book - and
+	/// nothing built on it: only trees and grass, and the treetops are the platforms.
 	/// </summary>
 	public static StageData OpenPlains()
 	{
@@ -142,9 +143,10 @@ public static class StageCatalog
 			// Runs past both blast zones, so there is no edge and no ledge.
 			new StagePlatform(new Rect2(-2000.0f, 0.0f, 4000.0f, 460.0f), false, PlatformLook.Ledge),
 
-			new StagePlatform(new Rect2(-680.0f, -200.0f, 310.0f, 26.0f), true, PlatformLook.HouseRoof),
-			new StagePlatform(new Rect2(370.0f, -200.0f, 310.0f, 26.0f), true, PlatformLook.HouseRoof),
-			new StagePlatform(new Rect2(-165.0f, -410.0f, 330.0f, 26.0f), true, PlatformLook.HouseRoof),
+			// Treetops - the leaves are the soft platforms. No buildings on the plains.
+			new StagePlatform(new Rect2(-680.0f, -200.0f, 310.0f, 26.0f), true, PlatformLook.TreeTop),
+			new StagePlatform(new Rect2(370.0f, -200.0f, 310.0f, 26.0f), true, PlatformLook.TreeTop),
+			new StagePlatform(new Rect2(-165.0f, -410.0f, 330.0f, 26.0f), true, PlatformLook.TreeTop),
 		};
 
 		data.Props = new[]
@@ -157,7 +159,10 @@ public static class StageCatalog
 			new StageProp(PropKind.Cloud, new Rect2(-300.0f, -640.0f, 200.0f, 80.0f), 33),
 			new StageProp(PropKind.Bush, new Rect2(-1050.0f, -90.0f, 160.0f, 90.0f), 41),
 			new StageProp(PropKind.Bush, new Rect2(860.0f, -80.0f, 140.0f, 80.0f), 47),
-			new StageProp(PropKind.Fence, new Rect2(-400.0f, -70.0f, 800.0f, 70.0f), 52),
+			new StageProp(PropKind.Tree, new Rect2(-1320.0f, -420.0f, 260.0f, 420.0f), 55),
+			new StageProp(PropKind.Tree, new Rect2(1060.0f, -380.0f, 230.0f, 380.0f), 58),
+			new StageProp(PropKind.Tree, new Rect2(-980.0f, -300.0f, 180.0f, 300.0f), 61),
+			new StageProp(PropKind.Grass, new Rect2(-1500.0f, -34.0f, 3000.0f, 34.0f), 64),
 		};
 
 		data.SpawnPoints = new[]

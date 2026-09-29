@@ -140,7 +140,7 @@ public partial class MatchHud : CanvasLayer
 		// toggles are not on screen - they still work, and README.md lists them.
 		helpLabel.Text =
 			"L-stick move, harder = faster   " + padLayoutHelp + "   Start restart\n"
-			+ "attack while running = dash attack";
+			+ "tap attack = combo    flick + attack = smash (hold to charge)    attack while running = dash attack";
 	}
 
 	public void Refresh(List<Fighter> fighters, string status)

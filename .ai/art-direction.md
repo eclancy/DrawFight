@@ -86,7 +86,7 @@ shimmers — which reads as a rendering bug rather than as hand-drawn.
 | stage | style | shape of it |
 |-------|-------|-------------|
 | **Fridge Door** *(default)* | ExerciseBook | Where kids' drawings actually end up. Magnets are the platforms; taped-up pages are the scenery, which makes this the stage his non-fighter drawings move into. |
-| **Open Plains** | OutsideTheLines | Flat, daytime, oak houses whose roofs are the platforms. Ground runs past both blast zones, so **there is no bottom blast zone at all**. |
+| **Open Plains** | OutsideTheLines | Flat, daytime, only trees and grass: the treetops are the platforms, and nothing on it is built. Ground runs past both blast zones, so **there is no bottom blast zone at all**. |
 | **City Rooftops** | ExerciseBook, night | Separate rooftops with real gaps, one tall tower. Buildings extend past the bottom blast zone so the gaps are shafts, not pits. |
 
 Open Plains and City Rooftops are deliberate opposites. On one, a missed jump costs nothing —

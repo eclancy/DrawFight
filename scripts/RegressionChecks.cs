@@ -183,7 +183,8 @@ public static class RegressionChecks
 			foreach (MoveSlot slot in new[]
 			{
 				MoveSlot.Jab, MoveSlot.ForwardTilt, MoveSlot.BackAir, MoveSlot.DownAir,
-				MoveSlot.DashAttack, MoveSlot.NeutralSpecial, MoveSlot.SideSpecial,
+				MoveSlot.DashAttack, MoveSlot.ForwardSmash, MoveSlot.UpSmash, MoveSlot.DownSmash,
+				MoveSlot.NeutralSpecial, MoveSlot.SideSpecial,
 				MoveSlot.UpSpecial, MoveSlot.DownSpecial,
 			})
 			{

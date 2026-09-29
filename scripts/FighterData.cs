@@ -28,12 +28,12 @@ public partial class FighterData : Resource
 
 	[Export] public float AirSpeed { get; set; } = 720.0f;
 	[Export] public float AirAcceleration { get; set; } = 4300.0f;
-	[Export] public float JumpForce { get; set; } = 1640.0f;
-	[Export] public float AirJumpForce { get; set; } = 1500.0f;
+	[Export] public float JumpForce { get; set; } = 1486.0f;
+	[Export] public float AirJumpForce { get; set; } = 1560.0f;
 	[Export] public int AirJumps { get; set; } = 1;
 
-	[Export] public float Gravity { get; set; } = 5200.0f;
-	[Export] public float MaxFallSpeed { get; set; } = 1850.0f;
+	[Export] public float Gravity { get; set; } = 4260.0f;
+	[Export] public float MaxFallSpeed { get; set; } = 1630.0f;
 	[Export] public float FastFallSpeed { get; set; } = 2900.0f;
 
 	// --- Presentation --------------------------------------------------------
@@ -69,8 +69,8 @@ public partial class FighterData : Resource
 	[Export] public WeightClass Weight { get; set; } = WeightClass.Medium;
 
 	/// <summary>
-	/// All fourteen moves, indexed by <see cref="MoveSlot"/>. Built by
-	/// <see cref="DefaultMoveset.Build"/>: ten shared normals retuned by weight, plus four
+	/// All seventeen moves, indexed by <see cref="MoveSlot"/>. Built by
+	/// <see cref="DefaultMoveset.Build"/>: the character's own normals (see CharacterNormals), plus four
 	/// specials authored per character.
 	/// </summary>
 	public MoveData[] Moves = System.Array.Empty<MoveData>();
@@ -97,14 +97,15 @@ public partial class FighterData : Resource
 			Weight = WeightClass.Light,
 			RunSpeed = 980.0f,
 			AirSpeed = 790.0f,
-			JumpForce = 1720.0f,
-			AirJumpForce = 1570.0f,
-			Gravity = 5000.0f,
+			JumpForce = 1557.0f,
+			AirJumpForce = 1633.0f,
+			Gravity = 4100.0f,
 			BodySize = new Vector2(64.0f, 118.0f),
 			RigPath = "res://fighters/swift/rig.json",
 			VisualScale = 1.06f,
 		};
-		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire());
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire(),
+			CharacterNormals.Swift, CharacterNormals.SwiftJab());
 		return data;
 	}
 
@@ -117,14 +118,15 @@ public partial class FighterData : Resource
 			Weight = WeightClass.Heavy,
 			RunSpeed = 740.0f,
 			AirSpeed = 620.0f,
-			JumpForce = 1650.0f,
-			AirJumpForce = 1480.0f,
-			Gravity = 5900.0f,
+			JumpForce = 1494.0f,
+			AirJumpForce = 1554.0f,
+			Gravity = 4840.0f,
 			BodySize = new Vector2(84.0f, 142.0f),
 			RigPath = "res://fighters/lug/rig.json",
 			VisualScale = 1.12f,
 		};
-		data.Moves = DefaultMoveset.Build(data.Weight, Specials.HeavyWeapons());
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.HeavyWeapons(),
+			CharacterNormals.Lug, CharacterNormals.LugJab());
 		return data;
 	}
 
@@ -149,11 +151,11 @@ public partial class FighterData : Resource
 			AirSpeed = 700.0f,
 			AirAcceleration = 4000.0f,
 			// Jump height is v^2 / 2g, so the low gravity would hand back most of the height a
-			// low jump force takes away. These are solved for roughly 180px and 150px.
-			JumpForce = 1140.0f,
-			AirJumpForce = 1040.0f,
-			Gravity = 3600.0f,
-			MaxFallSpeed = 1250.0f,
+			// low jump force takes away. Solved for roughly 180px, and 200px for the air jump.
+			JumpForce = 1032.0f,
+			AirJumpForce = 1083.0f,
+			Gravity = 2950.0f,
+			MaxFallSpeed = 1100.0f,
 			FastFallSpeed = 2200.0f,
 			// Elim drew him with a wide ball on long legs, so the box is taller than the stand-in's.
 			BodySize = new Vector2(84.0f, 150.0f),
@@ -161,7 +163,8 @@ public partial class FighterData : Resource
 			VisualScale = 1.0f,
 			TumblesWhenHit = true,
 		};
-		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy());
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy(),
+			CharacterNormals.Circy, CharacterNormals.CircyJab());
 		return data;
 	}
 }

@@ -31,6 +31,12 @@ public enum PlatformLook
 
 	/// <summary>A building, but narrow and very tall, with an aerial on top.</summary>
 	Tower,
+
+	/// <summary>
+	/// The top of a tree's leaves, which is the part you stand on, with the trunk drawn down to
+	/// the ground. Leaves you can drop through are the nature stage's soft platform.
+	/// </summary>
+	TreeTop,
 }
 
 /// <summary>One collidable surface, plus how to draw it.</summary>
@@ -52,7 +58,7 @@ public sealed class StagePlatform
 }
 
 /// <summary>Scenery. Never collidable - if a fighter can stand on it, it is a platform.</summary>
-public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence }
+public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass }
 
 public sealed class StageProp
 {

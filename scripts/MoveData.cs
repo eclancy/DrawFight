@@ -100,6 +100,28 @@ public partial class MoveData : Resource
 	/// </summary>
 	[Export] public bool CarriesMomentum { get; set; } = false;
 
+	/// <summary>Which body animation the move plays - see <see cref="FighterAnimations.PosesFor"/>.</summary>
+	[Export] public AttackAnim Anim { get; set; } = AttackAnim.Punch;
+
+	// --- Combos and charging ---------------------------------------------------
+
+	/// <summary>
+	/// The next hit in a combo. Pressing attack again during this move queues it, and it comes
+	/// out the moment this move's hitbox is done - how tapping attack becomes a jab-jab-finisher.
+	/// Early hits in a chain need low knockback, so the target is still in reach for the next.
+	/// </summary>
+	[Export] public MoveData ComboNext { get; set; }
+
+	/// <summary>Holding attack during the windup charges this move for more damage. Smash attacks.</summary>
+	[Export] public bool Chargeable { get; set; } = false;
+
+	/// <summary>
+	/// The fighter tucks into a ball and spins for the whole move, drawn as its body part alone
+	/// with the limbs hidden - Circy rolling into someone. Only for a fighter whose body part
+	/// reads as the whole fighter.
+	/// </summary>
+	[Export] public bool BallForm { get; set; } = false;
+
 	// --- Special behaviour ---------------------------------------------------
 	// A special is an archetype plus numbers plus the kid's own effect art. New archetypes
 	// should be rare and reusable; see the library in .ai/character-design.md.
@@ -177,6 +199,10 @@ public partial class MoveData : Resource
 			HitboxOffset = HitboxOffset * scale.Range,
 			HitboxRadius = HitboxRadius * scale.Range,
 			Unblockable = Unblockable,
+			Anim = Anim,
+			ComboNext = ComboNext?.Scaled(scale),
+			Chargeable = Chargeable,
+			BallForm = BallForm,
 			Spikes = Spikes,
 			CarriesMomentum = CarriesMomentum,
 			Special = Special,

@@ -26,6 +26,7 @@ public static class Specials
 	static MoveData Fireball() => new MoveData
 	{
 		MoveName = "Fireball",
+		Anim = AttackAnim.Punch,
 		StartupFrames = 12, ActiveFrames = 2, EndlagFrames = 22,
 		Damage = 9.0f, BaseKnockback = 26.0f, KnockbackGrowth = 0.9f,
 		LaunchAngleDegrees = 44.0f,
@@ -39,6 +40,7 @@ public static class Specials
 	static MoveData FlameDash() => new MoveData
 	{
 		MoveName = "Flame Dash",
+		Anim = AttackAnim.Lunge,
 		StartupFrames = 10, ActiveFrames = 8, EndlagFrames = 24,
 		Damage = 10.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.95f,
 		LaunchAngleDegrees = 48.0f,
@@ -56,6 +58,7 @@ public static class Specials
 	static MoveData FlareJump() => new MoveData
 	{
 		MoveName = "Flare Jump",
+		Anim = AttackAnim.UpSmash,
 		StartupFrames = 7, ActiveFrames = 10, EndlagFrames = 20,
 		Damage = 8.0f, BaseKnockback = 28.0f, KnockbackGrowth = 0.9f,
 		LaunchAngleDegrees = 76.0f,
@@ -69,6 +72,7 @@ public static class Specials
 	static MoveData EmberTrap() => new MoveData
 	{
 		MoveName = "Ember Trap",
+		Anim = AttackAnim.LowKick,
 		StartupFrames = 14, ActiveFrames = 2, EndlagFrames = 26,
 		Damage = 6.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.6f,
 		LaunchAngleDegrees = 70.0f,
@@ -131,6 +135,7 @@ public static class Specials
 	static MoveData LaserBeam() => new MoveData
 	{
 		MoveName = "Laser Beam",
+		Anim = AttackAnim.Punch,
 		StartupFrames = 20, ActiveFrames = 2, EndlagFrames = 24,
 		Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.8f,
 		LaunchAngleDegrees = 30.0f,
@@ -154,6 +159,7 @@ public static class Specials
 	static MoveData GrapplingHook() => new MoveData
 	{
 		MoveName = "Grappling Hook",
+		Anim = AttackAnim.Uppercut,
 		StartupFrames = 12, ActiveFrames = 14, EndlagFrames = 18,
 		Damage = 9.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.9f,
 		LaunchAngleDegrees = 60.0f,
@@ -201,6 +207,7 @@ public static class Specials
 	static MoveData HammerThrow() => new MoveData
 	{
 		MoveName = "Hammer Throw",
+		Anim = AttackAnim.SmashSwing,
 		StartupFrames = 19, ActiveFrames = 2, EndlagFrames = 30,
 		Damage = 15.0f, BaseKnockback = 36.0f, KnockbackGrowth = 1.05f,
 		LaunchAngleDegrees = 44.0f,
@@ -214,6 +221,7 @@ public static class Specials
 	static MoveData AnvilCharge() => new MoveData
 	{
 		MoveName = "Anvil Charge",
+		Anim = AttackAnim.Lunge,
 		StartupFrames = 16, ActiveFrames = 10, EndlagFrames = 32,
 		Damage = 16.0f, BaseKnockback = 44.0f, KnockbackGrowth = 1.0f,
 		LaunchAngleDegrees = 42.0f,
@@ -232,6 +240,7 @@ public static class Specials
 	static MoveData HammerJump() => new MoveData
 	{
 		MoveName = "Hammer Jump",
+		Anim = AttackAnim.UpSmash,
 		StartupFrames = 10, ActiveFrames = 8, EndlagFrames = 26,
 		Damage = 13.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.95f,
 		LaunchAngleDegrees = 80.0f,
@@ -245,6 +254,7 @@ public static class Specials
 	static MoveData AnvilDrop() => new MoveData
 	{
 		MoveName = "Anvil Drop",
+		Anim = AttackAnim.Dair,
 		StartupFrames = 15, ActiveFrames = 3, EndlagFrames = 30,
 		Damage = 17.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.85f,
 		LaunchAngleDegrees = -80.0f,

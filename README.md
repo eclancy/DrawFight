@@ -34,7 +34,7 @@ played it.
 | | |
 |---|---|
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
-| **Moves** | 14 per fighter — jab, 3 tilts, dash attack, 5 aerials, 4 specials |
+| **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
 | **Fighters** | 3 — **Circy**, the first fighter designed by a kid (Elim), plus two generated stick figures |
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
@@ -63,6 +63,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 ```sh
 "$GODOT_BIN" --path . -- --match --stage=1   # skip the menus
 "$GODOT_BIN" --path . -- --parade --shot=70  # every fighter in every animation
+"$GODOT_BIN" --path . -- --parade --attacks --shot=70  # every fighter's attacks at the moment they hit
 "$GODOT_BIN" --path . -- --shot=120          # screenshot after 120 frames, then quit
 ```
 
@@ -72,7 +73,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 |---|---|
 | left stick | move — **the harder you push, the faster you run** |
 | A | jump, double jump |
-| X | attack (+ a direction for tilts and aerials, or while running for a dash attack) |
+| X | attack — tap repeatedly for a jab combo; hold a direction for tilts and aerials; **flick** the stick with it for a smash (hold X to charge); while running, a dash attack |
 | B | special (+ a direction for all four) |
 | Y or RT | block — reduces damage and knockback, never negates it |
 | Y + stick | roll, spot dodge, air dodge |
@@ -108,7 +109,7 @@ mean rewriting every move.
 a palette, a list of rectangles and a list of props in `StageCatalog.cs`. If adding one seems to
 need new drawing code, the data model is wrong.
 
-![The Open Plains stage: stick figures fighting on green fields with crayon-drawn oak houses under a blue sky](docs/images/stage-plains.png)
+![The Open Plains stage: stick figures on green grass with crayon-drawn trees whose tops are the platforms, under a blue sky](docs/images/stage-plains.png)
 
 ---
 
