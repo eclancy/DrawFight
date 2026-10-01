@@ -262,7 +262,7 @@ public partial class MoveData : Resource
 	/// <summary>
 	/// The fighter spins on the spot for the move: drawn with its turning frames (the extras named
 	/// turn0 to turn4 in rig.json) in place of the body and arms, and with <see cref="HeldArt"/>
-	/// as two blades held out either side, going round with it. EdgeLord's Blade Blender.
+	/// as two blades held out either side, going round with it. Not used by anyone at present.
 	/// </summary>
 	[Export] public bool Spin { get; set; } = false;
 
@@ -285,6 +285,72 @@ public partial class MoveData : Resource
 
 	/// <summary>The effect art points the way it is flying, as a thrown blade does. Art is drawn tip-up.</summary>
 	[Export] public bool FxAlongFlight { get; set; } = false;
+
+	/// <summary>
+	/// A drawing from the fighter's rig (a pose name) put in their hand for this move, in place
+	/// of the prop they normally hold - EdgeLord drawing a different sword for each attack. "-"
+	/// means empty-handed. Empty keeps the usual prop.
+	/// </summary>
+	[Export] public string PropArt { get; set; } = "";
+
+	/// <summary>
+	/// A projectile that fires several at once, one per angle in degrees (0 is forward, 90 is
+	/// straight up, measured toward the facing). EdgeLord's ring of daggers. Empty fires one,
+	/// forward.
+	/// </summary>
+	public float[] ShotAngles = System.Array.Empty<float>();
+
+	/// <summary>Also fires a mirror image of every shot on the other side of the fighter.</summary>
+	[Export] public bool Mirrored { get; set; } = false;
+
+	/// <summary>
+	/// The projectile comes up out of the floor under the fighter instead of from the hands: it
+	/// starts buried, rises at <see cref="SpecialSpeed"/>, and sinks back as gravity takes it.
+	/// Only the part above the floor is drawn. Summoned axes.
+	/// </summary>
+	[Export] public bool FromGround { get; set; } = false;
+
+	/// <summary>A lingering hazard that is used up by its first hit - a planted blade.</summary>
+	[Export] public bool SpentOnHit { get; set; } = false;
+
+	/// <summary>
+	/// A chargeable move that charges while SPECIAL is held rather than attack - Swift's fireball.
+	/// Needs <see cref="Chargeable"/>. Works in the air. A projectile grows with the charge (see
+	/// <see cref="ChargeSize"/>).
+	/// </summary>
+	[Export] public bool ChargeWithSpecial { get; set; } = false;
+
+	/// <summary>Damage (and so knockback) multiplier at a full charge. Smashes use 1.4.</summary>
+	[Export] public float ChargeDamage { get; set; } = 1.4f;
+
+	/// <summary>How much bigger a charged projectile is at a full charge.</summary>
+	[Export] public float ChargeSize { get; set; } = 1.0f;
+
+	/// <summary>
+	/// A Recovery that flies instead of launching: through the active frames the fighter rises
+	/// steadily at <see cref="SpecialRise"/> px/s and can steer left and right. Swift's fire
+	/// wings. <see cref="HeldArt"/>, if set, is drawn behind the fighter and flaps.
+	/// </summary>
+	[Export] public bool Flight { get; set; } = false;
+
+	/// <summary>Draw a projectile with no art as a ball of fire with a flickering tail.</summary>
+	[Export] public bool FxFlame { get; set; } = false;
+
+	/// <summary>An extra drawing from the rig shown for this move - Lug's hard hat on a barge.</summary>
+	[Export] public string ShowExtra { get; set; } = "";
+
+	/// <summary>
+	/// For a <see cref="SwingArt"/> recovery: the drawing swings up to hang directly ABOVE him,
+	/// and he dangles from its rope with both hands while it hauls him up - rather than it
+	/// leading forward from one hand.
+	/// </summary>
+	[Export] public bool HangFromArt { get; set; } = false;
+
+	/// <summary>
+	/// Let go of at the end of the active frames: the swung drawing drops away as this move - a
+	/// <see cref="SpecialKind.Drop"/>, falling from where it was and hitting whatever is under it.
+	/// </summary>
+	public MoveData ReleaseDrop;
 
 	/// <summary>Colour of the hand-drawn effect. Crayon-bright; see .ai/art-direction.md.</summary>
 	[Export] public Color FxColor { get; set; } = new Color(0.97f, 0.62f, 0.25f);
@@ -360,6 +426,19 @@ public partial class MoveData : Resource
 			FxArtSize = FxArtSize,
 			FxSpin = FxSpin,
 			FxAlongFlight = FxAlongFlight,
+			PropArt = PropArt,
+			ShotAngles = ShotAngles,
+			Mirrored = Mirrored,
+			FromGround = FromGround,
+			SpentOnHit = SpentOnHit,
+			ShowExtra = ShowExtra,
+			ChargeWithSpecial = ChargeWithSpecial,
+			ChargeDamage = ChargeDamage,
+			ChargeSize = ChargeSize,
+			Flight = Flight,
+			FxFlame = FxFlame,
+			HangFromArt = HangFromArt,
+			ReleaseDrop = ReleaseDrop,
 			FxColor = FxColor,
 			FxRadius = FxRadius,
 			FxTexture = FxTexture,

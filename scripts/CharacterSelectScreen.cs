@@ -47,7 +47,8 @@ public partial class CharacterSelectScreen : Node2D
 	static readonly Rect2 QuitBox = new Rect2(1640.0f, 64.0f, 200.0f, 76.0f);
 
 	const float CardTop = 196.0f;
-	const float CardWidth = 300.0f;
+	/// <summary>Cards shrink as the roster grows, so the row always fits between the margins.</summary>
+	static readonly float CardWidth = Mathf.Min(300.0f, (1540.0f - (FighterCatalog.Count - 1) * 44.0f) / FighterCatalog.Count);
 	const float CardHeight = 350.0f;
 	const float CardGap = 44.0f;
 

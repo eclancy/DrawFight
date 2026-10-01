@@ -18,6 +18,45 @@ public partial class HitFx : Node2D
 
 	readonly List<Spark> sparks = new List<Spark>();
 
+	/// <summary>
+	/// A KO: a huge burst at the edge of the screen where the fighter went out, in their own
+	/// colour, with rays blasting back in across the stage. It has to be unmistakable - the
+	/// most important thing that happens in a match should be the biggest thing on screen.
+	/// </summary>
+	struct KoBlast
+	{
+		/// <summary>
+		/// Where on the SCREEN it sits, as a fraction of the half-view from the centre. Stored
+		/// that way because the camera swings back to the fighters still playing the moment
+		/// someone is KO'd, and a blast pinned to the world would be left behind off screen.
+		/// </summary>
+		public Vector2 ScreenSpot;
+		public Vector2 Inward;
+		public float Age;
+		public Color Tint;
+		public int Seed;
+	}
+
+	readonly List<KoBlast> blasts = new List<KoBlast>();
+	const float KoLife = 1.1f;
+	int koCount;
+
+	/// <summary>The match camera, which KO blasts ride along with.</summary>
+	public GameCamera Camera;
+
+	public void SpawnKoBlast(Vector2 position, Vector2 inward, Color tint)
+	{
+		Vector2 centre = Camera?.GlobalPosition ?? Vector2.Zero;
+		Vector2 half = Camera != null ? Camera.VisibleRect().Size * 0.5f : Vector2.One;
+		blasts.Add(new KoBlast
+		{
+			ScreenSpot = (position - centre) / half,
+			Inward = inward.Normalized(),
+			Tint = tint,
+			Seed = 97 + koCount++ * 31,
+		});
+	}
+
 	public void SpawnHitSpark(Vector2 position, float damage, bool blocked)
 	{
 		sparks.Add(new Spark
@@ -44,9 +83,17 @@ public partial class HitFx : Node2D
 
 	public override void _Process(double delta)
 	{
-		if (sparks.Count == 0) return;
+		if (sparks.Count == 0 && blasts.Count == 0) return;
 
 		float dt = (float)delta;
+		for (int i = blasts.Count - 1; i >= 0; i--)
+		{
+			KoBlast b = blasts[i];
+			b.Age += dt;
+			if (b.Age >= KoLife) blasts.RemoveAt(i);
+			else blasts[i] = b;
+		}
+
 		for (int i = sparks.Count - 1; i >= 0; i--)
 		{
 			Spark s = sparks[i];
@@ -60,6 +107,8 @@ public partial class HitFx : Node2D
 
 	public override void _Draw()
 	{
+		foreach (KoBlast b in blasts) DrawKoBlast(b);
+
 		foreach (Spark s in sparks)
 		{
 			float t = s.Age / s.Life;
@@ -67,5 +116,48 @@ public partial class HitFx : Node2D
 			c.A = 1.0f - t;
 			DrawCircle(s.Position, s.Radius * (0.45f + t * 1.15f), c);
 		}
+	}
+
+	void DrawKoBlast(KoBlast b)
+	{
+		// Rebuilt from the camera every frame, and sized against the zoom, so it stays put on the
+		// screen at the same size however the camera moves.
+		Rect2 view = Camera != null ? Camera.VisibleRect() : new Rect2(-960.0f, -540.0f, 1920.0f, 1080.0f);
+		Vector2 at = view.GetCenter() + b.ScreenSpot * view.Size * 0.5f;
+		float k = view.Size.X / 1920.0f;
+		DrawKoBlastAt(b, at, k);
+	}
+
+	void DrawKoBlastAt(KoBlast b, Vector2 position, float k)
+	{
+		float t = b.Age / KoLife;
+		float grow = 1.0f - (1.0f - Mathf.Min(1.0f, t * 3.0f)) * (1.0f - Mathf.Min(1.0f, t * 3.0f));
+		float fade = t < 0.55f ? 1.0f : 1.0f - (t - 0.55f) / 0.45f;
+
+		// A fan of long rays blasting back in across the stage from where they went out.
+		float baseAngle = b.Inward.Angle();
+		const int Rays = 11;
+		for (int i = 0; i < Rays; i++)
+		{
+			float spread = (i / (float)(Rays - 1) - 0.5f) * 1.9f;
+			float length = (520.0f + 420.0f * Mathf.Abs(CrayonBrush.Noise(b.Seed, i))) * grow * k;
+			float width = (34.0f + 26.0f * Mathf.Abs(CrayonBrush.Noise(b.Seed + 1, i))) * k;
+			Vector2 dir = Vector2.Right.Rotated(baseAngle + spread);
+			Vector2 side = dir.Orthogonal() * width * 0.5f;
+			Color ray = i % 2 == 0 ? b.Tint : new Color(1.0f, 0.92f, 0.52f);
+			ray.A = 0.85f * fade;
+			DrawColoredPolygon(new[] { position + side, position + dir * length, position - side }, ray);
+		}
+
+		// A shock ring racing outward, then the burst itself: fighter colour round a white-hot core.
+		var ring = new Color(1.0f, 1.0f, 1.0f, 0.7f * fade);
+		DrawArc(position, (60.0f + 700.0f * t) * k, 0.0f, Mathf.Tau, 48, ring, (14.0f * (1.0f - t) + 2.0f) * k);
+
+		float burst = 260.0f * grow * (1.0f - 0.3f * t) * k;
+		Color outer = b.Tint;
+		outer.A = 0.9f * fade;
+		DrawCircle(position, burst, outer);
+		DrawCircle(position, burst * 0.68f, new Color(1.0f, 0.86f, 0.40f, 0.95f * fade));
+		DrawCircle(position, burst * 0.38f, new Color(1.0f, 1.0f, 0.96f, fade));
 	}
 }

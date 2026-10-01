@@ -12,6 +12,13 @@ public enum StageStyle
 
 	/// <summary>Plain paper, indigo outlines, crayon fill that runs past the lines.</summary>
 	OutsideTheLines,
+
+	/// <summary>
+	/// A sheet of ruled paper taped to something (<see cref="StageData.PageRect"/>), with the
+	/// stage drawn on the sheet and the thing behind it drawn round it - all in coloured pencil.
+	/// The sky colours are the surface behind: Fridge Door's brushed metal.
+	/// </summary>
+	TapedPage,
 }
 
 /// <summary>How a platform is drawn. The collision rectangle is the same either way.</summary>
@@ -37,6 +44,27 @@ public enum PlatformLook
 	/// the ground. Leaves you can drop through are the nature stage's soft platform.
 	/// </summary>
 	TreeTop,
+
+	/// <summary>A slab drawn on the page in coloured pencil, for the taped-page stages.</summary>
+	PencilLedge,
+
+	/// <summary>
+	/// The jib of a tower crane - the long arm you stand on. The mast is drawn from under its
+	/// middle down to the ground, with the cab, a counterweight and a hook.
+	/// </summary>
+	CraneJib,
+
+	/// <summary>A steel beam hanging from a crane on two cables, which run up <see cref="StageData.CraneDrop"/> to the jib.</summary>
+	HangingBeam,
+
+	/// <summary>A scaffolding plank, with its poles and cross-braces drawn down to the ground.</summary>
+	Scaffold,
+
+	/// <summary>
+	/// A street: a pavement along the top and a road with a dashed centre line. When the stage
+	/// has <see cref="StageData.Traffic"/>, cars drive along the top of it.
+	/// </summary>
+	Road,
 }
 
 /// <summary>One collidable surface, plus how to draw it.</summary>
@@ -58,7 +86,7 @@ public sealed class StagePlatform
 }
 
 /// <summary>Scenery. Never collidable - if a fighter can stand on it, it is a platform.</summary>
-public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass }
+public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline }
 
 public sealed class StageProp
 {
@@ -134,6 +162,18 @@ public partial class StageData : Resource
 	public StageProp[] Props = System.Array.Empty<StageProp>();
 	public Vector2[] SpawnPoints = { Vector2.Zero };
 	public Vector2 RespawnPoint = new Vector2(0.0f, -620.0f);
+
+	/// <summary>
+	/// Cars drive along the stage's <see cref="PlatformLook.Road"/> at random and knock away
+	/// anyone standing in the street (see <see cref="StreetTraffic"/>).
+	/// </summary>
+	public bool Traffic;
+
+	/// <summary>How far a <see cref="PlatformLook.HangingBeam"/> hangs below the crane jib it hangs from.</summary>
+	public const float CraneDrop = 220.0f;
+
+	/// <summary>The sheet of paper the stage is drawn on, for a <see cref="StageStyle.TapedPage"/> stage.</summary>
+	public Rect2 PageRect;
 
 	/// <summary>Where the drawn ground sits, for props that need to stand on it.</summary>
 	public float GroundLine = 0.0f;

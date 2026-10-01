@@ -55,5 +55,21 @@ public static class Tuning
 
 	public const int DefaultStocks = 3;
 	public const int RespawnFreezeFrames = 30;
+
+	/// <summary>
+	/// Falling is gentler than rising: every fighter's top fall speed is scaled by this, and
+	/// gravity starts at FallStartGravity of full strength when a fall begins and builds to full
+	/// over FallRampFrames. The top of a jump hangs, then speeds up - so falling off something
+	/// never feels like being yanked down.
+	/// </summary>
+	public const float FallSpeedScale = 0.8f;
+	public const float FallStartGravity = 0.45f;
+	public const int FallRampFrames = 26;
+
+	/// <summary>
+	/// After a KO the fighter is gone for this long before they reappear, so the blast has the
+	/// screen to itself and everyone has a beat to take in what happened.
+	/// </summary>
+	public const int RespawnDelayFrames = 80;
 	public const int RespawnInvulnFrames = 120;
 }

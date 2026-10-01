@@ -15,10 +15,11 @@ Emits:
     fighters/edgelord/poses/*.png   the thrown and planted swords, and the turning frames
     fighters/edgelord/rig.json      bone tree, offsets, pivots, extras and poses
 
+HE IS DRAWN FACING LEFT, so the whole drawing is mirrored before it is cut.
+
 HOW HE IS CUT. The same way as Circy (tools/art/cut_circy.py): the V is the Torso, face and all,
 with no separate head; each limb is rotated about its joint until it hangs straight down and
-split in half. He is drawn facing the viewer, so the limbs on the right of the page are the
-front ones. The turning frames hang on the Torso as extras, shown one at a time when he spins.
+split in half. Once mirrored, the limbs on the right are the front ones. The turning frames hang on the Torso as extras, shown one at a time when he spins.
 """
 
 from __future__ import division, print_function
@@ -39,8 +40,11 @@ JOINT_OVERLAP = 10
 BODY_CENTRE = (575 - ce.CROP[0], 640 - ce.CROP[1])
 HIP = (ce.HIP[0] - ce.CROP[0], ce.HIP[1] - ce.CROP[1])
 
-# The sword he holds for his normal attacks, and the ones he throws.
+# The sword he holds when a move names no other.
 HELD_SWORD = 'longsword'
+
+# Weapons are drawn bigger than the sword sheet, so they read at match size.
+WEAPON_SCALE = 1.4
 
 
 def masked(image, mask):
@@ -90,6 +94,17 @@ def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, pa
     return joint, length
 
 
+def mirrored(point, width):
+    return (width - 1 - point[0], point[1])
+
+
+def weapon(image, grip):
+    """A weapon drawing at game size - bigger than drawn, so it reads at match scale."""
+    w, h = image.size
+    big = image.resize((int(w * WEAPON_SCALE), int(h * WEAPON_SCALE)), Image.LANCZOS)
+    return big, (grip[0] * WEAPON_SCALE, grip[1] * WEAPON_SCALE)
+
+
 def main():
     parts_dir = os.path.join(ROOT, 'parts')
     poses_dir = os.path.join(ROOT, 'poses')
@@ -100,6 +115,14 @@ def main():
     m = {}
     full = ce.render(masks=m)
     size = full.size
+
+    # He is drawn facing LEFT, and every fighter faces right in its own space, so the whole
+    # drawing is mirrored before it is cut. Mirroring the rig instead would mirror every pose
+    # with it, and he would run backwards.
+    full = full.transpose(Image.FLIP_LEFT_RIGHT)
+    m = dict((k, v.transpose(Image.FLIP_LEFT_RIGHT)) for k, v in m.items())
+    hip = mirrored(HIP, size[0])
+    centre = mirrored(BODY_CENTRE, size[0])
 
     # The limbs. A leg is its coloured shape and the outline round it, minus the body it tucks
     # up behind - so the body's own outline stays on the body.
@@ -114,46 +137,50 @@ def main():
     for mask in limb_masks.values():
         everything = ImageChops.lighter(everything, mask)
 
+    # Mirrored, the limbs drawn on the left of his page are now on the right: the front ones.
     parts = {}
     lengths = {}
     joints = {}
     for key, upper, lower, ref in (
-        ('leg_left', 'LegBack_Upper', 'LegBack_Lower', HIP),
-        ('leg_right', 'LegFront_Upper', 'LegFront_Lower', HIP),
-        ('arm_left', 'ArmBack_Upper', 'ArmBack_Lower', BODY_CENTRE),
-        ('arm_right', 'ArmFront_Upper', 'ArmFront_Lower', BODY_CENTRE),
+        ('leg_right', 'LegBack_Upper', 'LegBack_Lower', hip),
+        ('leg_left', 'LegFront_Upper', 'LegFront_Lower', hip),
+        ('arm_right', 'ArmBack_Upper', 'ArmBack_Lower', centre),
+        ('arm_left', 'ArmFront_Upper', 'ArmFront_Lower', centre),
     ):
         piece = masked(full, limb_masks[key])
-        joints[key], lengths[key] = canonical_limb(piece, limb_masks[key], ref, upper, lower, parts_dir, parts)
+        joints[upper], lengths[upper] = canonical_limb(piece, limb_masks[key], ref, upper, lower, parts_dir, parts)
 
     # The body: everything that is not a limb - but only on or above the V, so a stray bit of
     # leg outline left over from the cut does not ride along with the body.
     above = Image.new('L', size, 0)
-    above.paste(255, (0, 0, size[0], HIP[1] - 30))
+    above.paste(255, (0, 0, size[0], hip[1] - 30))
     torso_keep = ImageChops.lighter(m['body'].filter(ImageFilter.MaxFilter(31)), above)
     torso = masked(full, ImageChops.multiply(ImageChops.invert(everything), torso_keep))
     # Near-invisible specks would otherwise stretch the part's box down to his feet.
     torso.putalpha(torso.split()[3].point(lambda v: v if v > 12 else 0))
     tbox = torso.getbbox()
     torso.crop(tbox).save(os.path.join(parts_dir, 'Torso.png'))
-    parts['Torso'] = {'texture': 'parts/Torso.png', 'pivot': [HIP[0] - tbox[0], HIP[1] - tbox[1]]}
+    parts['Torso'] = {'texture': 'parts/Torso.png', 'pivot': [hip[0] - tbox[0], hip[1] - tbox[1]]}
 
-    # The sword in his hand, stored hanging down from the grip like every other part.
-    spec = [s for s in ex.SWORDS if s[0] == HELD_SWORD][0]
-    sword, grip = ex.draw_sword(spec, with_grip=True)
-    held = sword.transpose(Image.FLIP_TOP_BOTTOM)
-    held.save(os.path.join(parts_dir, 'PropFront.png'))
-    parts['PropFront'] = {'texture': 'parts/PropFront.png',
-                          'pivot': [round(grip[0], 1), round(held.size[1] - 1 - grip[1], 1)]}
-
-    # Every sword as move art, anchored at its grip.
+    # Every weapon as move art, tip up and anchored at its grip. The game swaps whichever one a
+    # move names into his hand, and throws or summons the rest.
     poses = {}
-    for spec in ex.SWORDS:
-        image, grip = ex.draw_sword(spec, with_grip=True)
-        name = 'sword_' + spec[0]
+    drawn = [(spec[0], ex.draw_sword(spec, with_grip=True)) for spec in ex.SWORDS]
+    drawn.append(('axe', ex.draw_axe(with_grip=True)))
+    for kind, (image, grip) in drawn:
+        image, grip = weapon(image, grip)
+        name = 'sword_' + kind
         image.save(os.path.join(poses_dir, name + '.png'))
         poses[name] = {'texture': 'poses/%s.png' % name, 'anchor': [round(grip[0], 1), round(grip[1], 1)]}
-        if spec[0] == HELD_SWORD:
+
+        if kind == HELD_SWORD:
+            # The sword he holds when a move names none, stored hanging down from the grip like
+            # every other part.
+            held = image.transpose(Image.FLIP_TOP_BOTTOM)
+            held.save(os.path.join(parts_dir, 'PropFront.png'))
+            parts['PropFront'] = {'texture': 'parts/PropFront.png',
+                                  'pivot': [round(grip[0], 1), round(held.size[1] - 1 - grip[1], 1)]}
+
             # Planted: tip down, the last of the blade sunk out of sight in the ground.
             planted = image.transpose(Image.FLIP_TOP_BOTTOM)
             planted = planted.crop((0, 0, planted.size[0], int(planted.size[1] * 0.8)))
@@ -163,38 +190,41 @@ def main():
 
     # The turning frames, hung on the Torso and pinned at the hip, so they sit exactly where
     # the body does. The game mirrors them for the second half of a turn.
-    frames = [ex.turn_frame(deg) for deg in ex.TURN_ANGLES]
     extras = []
-    for i, (deg, frame) in enumerate(zip(ex.TURN_ANGLES, frames)):
+    for i, deg in enumerate(ex.TURN_ANGLES):
+        frame = ex.turn_frame(deg).transpose(Image.FLIP_LEFT_RIGHT)
         box = frame.getbbox()
         name = 'turn_%03d' % deg
         frame.crop(box).save(os.path.join(poses_dir, name + '.png'))
-        parts['Turn%d' % i] = {'texture': 'poses/%s.png' % name, 'pivot': [HIP[0] - box[0], HIP[1] - box[1]]}
+        parts['Turn%d' % i] = {'texture': 'poses/%s.png' % name, 'pivot': [hip[0] - box[0], hip[1] - box[1]]}
         extras.append({'name': 'turn%d' % i, 'bone': 'Torso', 'part': 'Turn%d' % i, 'offset': [0, 0]})
         print('turn', deg)
 
     def rel(point):
-        return [round(point[0] - HIP[0], 1), round(point[1] - HIP[1], 1)]
+        return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
+
+    def half(bone):
+        return [0, round(lengths[bone] / 2, 1)]
 
     bones = [
         {'name': 'Hip', 'parent': None, 'offset': [0, 0], 'part': None},
-        {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': rel(joints['leg_left']), 'part': 'LegBack_Upper'},
-        {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': [0, round(lengths['leg_left'] / 2, 1)], 'part': 'LegBack_Lower'},
-        {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': rel(joints['leg_right']), 'part': 'LegFront_Upper'},
-        {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': [0, round(lengths['leg_right'] / 2, 1)], 'part': 'LegFront_Lower'},
+        {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': rel(joints['LegBack_Upper']), 'part': 'LegBack_Upper'},
+        {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': half('LegBack_Upper'), 'part': 'LegBack_Lower'},
+        {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': rel(joints['LegFront_Upper']), 'part': 'LegFront_Upper'},
+        {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': half('LegFront_Upper'), 'part': 'LegFront_Lower'},
         {'name': 'Torso', 'parent': 'Hip', 'offset': [0, 0], 'part': 'Torso'},
-        {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': rel(joints['arm_left']), 'part': 'ArmBack_Upper'},
-        {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': [0, round(lengths['arm_left'] / 2, 1)], 'part': 'ArmBack_Lower'},
-        {'name': 'Head', 'parent': 'Torso', 'offset': [0, -(HIP[1] - tbox[1])], 'part': None},
-        {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': rel(joints['arm_right']), 'part': 'ArmFront_Upper'},
-        {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': [0, round(lengths['arm_right'] / 2, 1)], 'part': 'ArmFront_Lower'},
-        {'name': 'PropFront', 'parent': 'ArmFront_Lower', 'offset': [0, round(lengths['arm_right'] / 2, 1)], 'part': 'PropFront'},
+        {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': rel(joints['ArmBack_Upper']), 'part': 'ArmBack_Upper'},
+        {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': half('ArmBack_Upper'), 'part': 'ArmBack_Lower'},
+        {'name': 'Head', 'parent': 'Torso', 'offset': [0, -(hip[1] - tbox[1])], 'part': None},
+        {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': rel(joints['ArmFront_Upper']), 'part': 'ArmFront_Upper'},
+        {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': half('ArmFront_Upper'), 'part': 'ArmFront_Lower'},
+        {'name': 'PropFront', 'parent': 'ArmFront_Lower', 'offset': half('ArmFront_Upper'), 'part': 'PropFront'},
     ]
 
     rig = {
         'name': 'EdgeLord',
-        'canonicalHeight': HIP[1] - tbox[1],
-        'legLength': round((lengths['leg_left'] + lengths['leg_right']) / 2.0, 1),
+        'canonicalHeight': hip[1] - tbox[1],
+        'legLength': round((lengths['LegBack_Upper'] + lengths['LegFront_Upper']) / 2.0, 1),
         'backLimbDarken': 0.8,
         'bones': bones,
         'parts': parts,
@@ -204,8 +234,8 @@ def main():
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
     print('legs %d/%d  arms %d/%d  body %dx%d' % (
-        lengths['leg_left'], lengths['leg_right'], lengths['arm_left'], lengths['arm_right'],
-        tbox[2] - tbox[0], tbox[3] - tbox[1]))
+        lengths['LegBack_Upper'], lengths['LegFront_Upper'], lengths['ArmBack_Upper'],
+        lengths['ArmFront_Upper'], tbox[2] - tbox[0], tbox[3] - tbox[1]))
 
 
 if __name__ == '__main__':

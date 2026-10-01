@@ -84,59 +84,68 @@ public static class CharacterNormals
 	}
 
 	// =========================================================================
-	// LUG - heavy, construction site. Every hit is his sledgehammer or his own bulk, and his
-	// specials are site tools (see Specials.Construction).
+	// LUG - heavy, construction site. He swaps a different heavy tool into his hand for most
+	// attacks - a pipe wrench, a shovel, a pickaxe, a crowbar, a steel beam, a stop sign, a
+	// jackhammer - and every one is about as long as his sledgehammer, which is what his reach is
+	// built on. His specials are site tools too (see Specials.Construction).
 	// =========================================================================
 
 	public static MoveData LugJab()
 	{
 		MoveData jab = DefaultMoveset.HeavyJab();
-		jab.MoveName = "Hammer Tap";
-		jab.ComboNext.MoveName = "Hammer Bash";
+		jab.MoveName = "Wrench Tap";
+		jab.PropArt = "tool_pipewrench";
+		jab.HitboxOffset = new Vector2(132.0f, -72.0f);
+		jab.ComboNext.MoveName = "Wrench Bash";
+		jab.ComboNext.PropArt = "tool_pipewrench";
+		jab.ComboNext.HitboxOffset = new Vector2(132.0f, -80.0f);
+		jab.ComboNext.Anim = AttackAnim.Lunge;
 		return jab;
 	}
 
 	public static void Lug(MoveData[] moves)
 	{
-		// The sledgehammer held straight out: the longest poke in the game.
+		// A shovel jabbed straight out, blade first: the longest poke in the game.
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
-		m.MoveName = "Sledge Poke"; m.Anim = AttackAnim.HeavyPunch;
-		m.HitboxOffset = new Vector2(108.0f, -24.0f); m.HitboxRadius = 50.0f;
+		m.MoveName = "Shovel Jab"; m.Anim = AttackAnim.HeavyPunch; m.PropArt = "tool_shovel";
+		m.HitboxOffset = new Vector2(136.0f, -72.0f); m.HitboxRadius = 50.0f;
 		m.LaunchAngleDegrees = 30.0f;
 
 		m = M(moves, MoveSlot.UpTilt);
-		m.MoveName = "Sledge Arc"; m.Anim = AttackAnim.Uppercut;
-		m.HitboxOffset = new Vector2(40.0f, -100.0f); m.HitboxRadius = 64.0f;
+		m.MoveName = "Pickaxe Arc"; m.Anim = AttackAnim.Uppercut; m.PropArt = "tool_pickaxe";
+		m.HitboxOffset = new Vector2(10.0f, -140.0f); m.HitboxRadius = 62.0f;
 		m.LaunchAngleDegrees = 80.0f;
 
-		// From a crouch, a low sweep of the sledgehammer along the floor: slow, long, and it
-		// knocks them off their feet low along the ground.
+		// From a crouch, a crowbar swept low along the floor: slow, long, and it knocks them off
+		// their feet.
 		m = M(moves, MoveSlot.DownTilt);
-		m.MoveName = "Sledge Sweep"; m.Anim = AttackAnim.LowSweep;
-		m.HitboxOffset = new Vector2(96.0f, 34.0f); m.HitboxRadius = 54.0f;
+		m.MoveName = "Crowbar Sweep"; m.Anim = AttackAnim.LowSweep; m.PropArt = "tool_crowbar";
+		m.HitboxOffset = new Vector2(122.0f, 50.0f); m.HitboxRadius = 52.0f;
 		m.StartupFrames = 8; m.LaunchAngleDegrees = 22.0f; m.Damage = 9.0f;
 
+		// Head down, hard hat on, straight through them.
 		m = M(moves, MoveSlot.DashAttack);
-		m.MoveName = "Hard Hat Barge"; m.Anim = AttackAnim.Lunge;
+		m.MoveName = "Hard Hat Barge"; m.Anim = AttackAnim.Lunge; m.PropArt = "-"; m.ShowExtra = "hardhat";
 		m.HitboxRadius = 58.0f;
 
+		// The sledgehammer itself, brought all the way over and down.
 		m = M(moves, MoveSlot.ForwardSmash);
-		m.MoveName = "Sledge Slam"; m.Anim = AttackAnim.OverheadSlam;
-		m.HitboxOffset = new Vector2(100.0f, -4.0f); m.HitboxRadius = 64.0f;
+		m.MoveName = "Sledge Slam"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_sledgehammer";
+		m.HitboxOffset = new Vector2(128.0f, 34.0f); m.HitboxRadius = 66.0f;
 
-		// A huge, slow swing from low behind him up and over his head. Everyone can see it coming;
-		// anyone above him who does not move takes the whole thing.
+		// A steel I-beam heaved from low behind him up and over his head. Huge and slow;
+		// everyone can see it coming, and anyone above him who does not move takes all of it.
 		m = M(moves, MoveSlot.UpSmash);
-		m.MoveName = "Overhead Swing"; m.Anim = AttackAnim.OverheadArc;
+		m.MoveName = "Beam Heave"; m.Anim = AttackAnim.OverheadArc; m.PropArt = "tool_beam";
 		m.StartupFrames = 20; m.ActiveFrames = 8;
 		m.Damage = 16.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 1.0f;
-		m.HitboxOffset = new Vector2(10.0f, -118.0f); m.HitboxRadius = 84.0f;
+		m.HitboxOffset = new Vector2(-10.0f, -150.0f); m.HitboxRadius = 86.0f;
 
 		// Sledgehammer Quake: slams the ground in front, and a shockwave runs out both ways along
 		// the floor. Charging it powers up the waves too. They pop people up rather than away,
 		// and stop where the ground does.
 		m = M(moves, MoveSlot.DownSmash);
-		m.MoveName = "Sledgehammer Quake"; m.Anim = AttackAnim.OverheadSlam;
+		m.MoveName = "Sledgehammer Quake"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_sledgehammer";
 		// A long, obvious swing up over his head first - the whole point of a move this big is
 		// that everyone can see it coming and has time to jump.
 		m.StartupFrames = 17;
@@ -144,122 +153,158 @@ public static class CharacterNormals
 		// normal down smash, and the quake carries most of it. The price is reach - the quake
 		// only runs a short way each side, so it punishes people standing close, not the stage.
 		m.Damage = 16.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 1.0f;
-		m.HitboxOffset = new Vector2(72.0f, 34.0f); m.HitboxRadius = 58.0f;
+		m.HitboxOffset = new Vector2(124.0f, 40.0f); m.HitboxRadius = 58.0f;
 		m.LaunchAngleDegrees = 74.0f;
 		m.Special = SpecialKind.Shockwave;
 		m.ShockwavePower = 0.85f;
 		m.SpecialSpeed = 950.0f; m.SpecialLifetime = 14;
-		m.FxRadius = 34.0f; m.FxColor = new Color(0.80f, 0.66f, 0.46f);
+		m.FxRadius = 34.0f; m.FxColor = new Color(0.98f, 0.70f, 0.22f);
 
+		// A stop sign swung all the way round him.
 		m = M(moves, MoveSlot.NeutralAir);
-		m.MoveName = "Toolbelt Spin"; m.Anim = AttackAnim.Nair;
+		m.MoveName = "Stop Sign Spin"; m.Anim = AttackAnim.Nair; m.PropArt = "tool_sign";
+		m.HitboxOffset = new Vector2(20.0f, -60.0f); m.HitboxRadius = 84.0f;
 
 		m = M(moves, MoveSlot.ForwardAir);
-		m.MoveName = "Sledge Chop"; m.Anim = AttackAnim.Fair;
-		m.HitboxOffset = new Vector2(92.0f, -10.0f);
+		m.MoveName = "Sledge Chop"; m.Anim = AttackAnim.Fair; m.PropArt = "tool_sledgehammer";
+		m.HitboxOffset = new Vector2(70.0f, 50.0f); m.HitboxRadius = 56.0f;
 
 		m = M(moves, MoveSlot.BackAir);
-		m.MoveName = "Back Swing"; m.Anim = AttackAnim.Bair;
+		m.MoveName = "Shovel Back Swing"; m.Anim = AttackAnim.BackSlash; m.PropArt = "tool_shovel";
+		m.HitboxOffset = new Vector2(-120.0f, -70.0f);
 
 		m = M(moves, MoveSlot.UpAir);
-		m.MoveName = "Sledge Swipe"; m.Anim = AttackAnim.Uppercut;
-		m.HitboxOffset = new Vector2(30.0f, -96.0f);
+		m.MoveName = "Pick Swipe"; m.Anim = AttackAnim.OverheadArc; m.PropArt = "tool_pickaxe";
+		m.HitboxOffset = new Vector2(-20.0f, -140.0f);
 
-		// The heavy keeps the spike: slow to come out, deadly off-stage.
+		// A jackhammer driven straight down under him. The heavy keeps the spike: slow to come
+		// out, deadly off-stage.
 		m = M(moves, MoveSlot.DownAir);
-		m.MoveName = "Pile Driver"; m.Anim = AttackAnim.Dair;
+		m.MoveName = "Jackhammer"; m.Anim = AttackAnim.DownSwing; m.PropArt = "tool_jackhammer";
+		m.HitboxOffset = new Vector2(24.0f, 90.0f);
 	}
 
 	// =========================================================================
-	// EDGELORD - light, swords. Every normal is the longsword in his hand; the down smash is
-	// the one that spins.
+	// EDGELORD - light, "infinite swords". Every normal draws a different weapon: a katana, a
+	// claymore, a rapier... and some do not hold one at all, but summon them - daggers in a ring,
+	// a shortsword flung from behind him, axes up out of the floor.
 	// =========================================================================
 
-	/// <summary>Cut, cut, thrust.</summary>
+	/// <summary>Cut, cut, thrust - with a shortsword.</summary>
 	public static MoveData EdgeLordJab()
 	{
 		MoveData jab = DefaultMoveset.LightJab();
 		jab.MoveName = "Cut";
-		jab.HitboxOffset = new Vector2(64.0f, -18.0f);
+		jab.HitboxOffset = new Vector2(70.0f, -18.0f);
+		jab.PropArt = "sword_shortsword";
 		jab.ComboNext.MoveName = "Back Cut";
-		jab.ComboNext.HitboxOffset = new Vector2(66.0f, -18.0f);
+		jab.ComboNext.HitboxOffset = new Vector2(72.0f, -18.0f);
+		jab.ComboNext.PropArt = "sword_shortsword";
 		jab.ComboNext.ComboNext.MoveName = "Thrust";
 		jab.ComboNext.ComboNext.Anim = AttackAnim.PalmThrust;
-		jab.ComboNext.ComboNext.HitboxOffset = new Vector2(84.0f, -16.0f);
+		jab.ComboNext.ComboNext.HitboxOffset = new Vector2(92.0f, -16.0f);
+		jab.ComboNext.ComboNext.PropArt = "sword_shortsword";
 		return jab;
 	}
 
 	public static void EdgeLord(MoveData[] moves)
 	{
-		// A sword has reach: his tilts poke further than a fist would, and hit a little flatter.
+		// A katana cut: long, quick and flat.
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
-		m.MoveName = "Side Cut"; m.Anim = AttackAnim.HeavyPunch;
-		m.HitboxOffset = new Vector2(104.0f, -20.0f); m.HitboxRadius = 46.0f;
+		m.MoveName = "Katana Cut"; m.Anim = AttackAnim.HeavyPunch; m.PropArt = "sword_katana";
+		m.HitboxOffset = new Vector2(112.0f, -20.0f); m.HitboxRadius = 48.0f;
 		m.LaunchAngleDegrees = 34.0f;
 
+		// He points up and forward, and a shortsword summoned from behind him flies the way he
+		// points - he is directing it. Anti-air at an angle, and his hand is empty.
 		m = M(moves, MoveSlot.UpTilt);
-		m.MoveName = "Rising Cut"; m.Anim = AttackAnim.Uppercut;
-		m.HitboxOffset = new Vector2(34.0f, -104.0f); m.HitboxRadius = 56.0f;
-		m.LaunchAngleDegrees = 84.0f;
+		m.MoveName = "Called Blade"; m.Anim = AttackAnim.PointUp; m.PropArt = "-";
+		m.HitboxRadius = 0.0f;
+		m.Special = SpecialKind.Projectile;
+		m.HitboxOffset = new Vector2(-40.0f, -70.0f);
+		m.ShotAngles = new[] { 60.0f };
+		m.SpecialSpeed = 1500.0f; m.SpecialLifetime = 26;
+		m.LaunchAngleDegrees = 75.0f;
+		m.FxRadius = 26.0f; m.FxColor = new Color(0.80f, 0.82f, 0.86f);
+		m.FxTexture = EdgeFx("sword_shortsword"); m.FxArtSize = 150.0f; m.FxAlongFlight = true;
 
+		// From a crouch, a longsword jabbed straight out along the floor.
 		m = M(moves, MoveSlot.DownTilt);
-		m.MoveName = "Ankle Cut"; m.Anim = AttackAnim.LowSweep;
-		m.HitboxOffset = new Vector2(98.0f, 34.0f); m.HitboxRadius = 46.0f;
-		m.LaunchAngleDegrees = 24.0f;
+		m.MoveName = "Ground Thrust"; m.Anim = AttackAnim.LowThrust; m.PropArt = "sword_longsword";
+		m.HitboxOffset = new Vector2(130.0f, 40.0f); m.HitboxRadius = 42.0f;
+		m.LaunchAngleDegrees = 20.0f;
 
-		// Super speed: a dash attack that comes out fast and carries.
+		// Super speed: a rapier lunge that comes out fast and carries.
 		m = M(moves, MoveSlot.DashAttack);
-		m.MoveName = "Flash Step"; m.Anim = AttackAnim.Lunge;
-		m.StartupFrames = 6; m.HitboxOffset = new Vector2(80.0f, -14.0f);
+		m.MoveName = "Flash Lunge"; m.Anim = AttackAnim.PalmThrust; m.PropArt = "sword_rapier";
+		m.CarriesMomentum = true;
+		m.StartupFrames = 6; m.HitboxOffset = new Vector2(104.0f, -14.0f);
 
+		// He draws a claymore and brings it over his head and down in front of him. The biggest
+		// sword he has, so it is the slowest to come round, and it reaches furthest.
 		m = M(moves, MoveSlot.ForwardSmash);
-		m.MoveName = "Cleave"; m.Anim = AttackAnim.OverheadSlam;
-		m.HitboxOffset = new Vector2(104.0f, -8.0f); m.HitboxRadius = 58.0f;
+		m.MoveName = "Claymore"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "sword_claymore";
+		m.StartupFrames = 18;
+		m.HitboxOffset = new Vector2(126.0f, -10.0f); m.HitboxRadius = 64.0f;
 
 		m = M(moves, MoveSlot.UpSmash);
-		m.MoveName = "Sky Pierce"; m.Anim = AttackAnim.UpSmash;
-		m.HitboxOffset = new Vector2(16.0f, -116.0f); m.HitboxRadius = 52.0f;
+		m.MoveName = "Sky Pierce"; m.Anim = AttackAnim.UpSmash; m.PropArt = "sword_greatsword";
+		m.HitboxOffset = new Vector2(16.0f, -136.0f); m.HitboxRadius = 58.0f;
 
-		// Blade Blender: he spins on the spot with a sword held out either side. A slow wind-up
-		// spin says it is coming; then the blades blur round, catching anyone near for a string of
-		// small hits that hold them there, and the last turn throws them out. It covers both sides
-		// at once, like every down smash, and reaches as far as the blades do.
+		// He throws his arms down and two axes burst up out of the floor, one either side of him,
+		// then sink back. It covers both sides like every down smash, and hits upward. Charging
+		// it makes the axes hit harder.
 		m = M(moves, MoveSlot.DownSmash);
-		m.MoveName = "Blade Blender"; m.Anim = AttackAnim.Spin;
-		m.Spin = true;
-		m.StartupFrames = 14; m.ActiveFrames = 20; m.EndlagFrames = 24;
-		m.Damage = 9.0f; m.BaseKnockback = 34.0f; m.KnockbackGrowth = 1.0f;
-		m.LaunchAngleDegrees = 40.0f;
-		m.HitboxOffset = new Vector2(0.0f, -6.0f); m.HitboxRadius = 104.0f;
-		m.RehitFrames = 4;
-		m.LinkHit = new MoveData
-		{
-			MoveName = "Blade Blender (link)",
-			Damage = 1.5f, BaseKnockback = 20.0f, KnockbackGrowth = 0.0f,
-			LaunchAngleDegrees = 90.0f,
-		};
-		m.HeldArt = "sword_longsword"; m.HeldArtOffset = new Vector2(46.0f, -18.0f); m.HeldArtSize = 150.0f;
+		m.MoveName = "Axe Rise"; m.Anim = AttackAnim.SummonLow; m.PropArt = "-";
+		m.StartupFrames = 14; m.ActiveFrames = 2; m.EndlagFrames = 28;
+		m.Damage = 14.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 1.0f;
+		m.LaunchAngleDegrees = 80.0f;
+		m.HitboxRadius = 0.0f;
+		m.Special = SpecialKind.Projectile;
+		m.HitboxOffset = new Vector2(96.0f, 0.0f);
+		m.Mirrored = true; m.FromGround = true;
+		m.SpecialSpeed = 2100.0f; m.SpecialGravity = 6200.0f; m.SpecialLifetime = 46;
+		m.FxRadius = 44.0f; m.FxColor = new Color(0.80f, 0.82f, 0.86f);
+		m.FxTexture = EdgeFx("sword_axe"); m.FxArtSize = 190.0f;
 
+		// He throws his arms and legs wide and eight daggers fly out from him in a ring. Covers
+		// every direction at once, weakly - the get-off-me move.
 		m = M(moves, MoveSlot.NeutralAir);
-		m.MoveName = "Whirl"; m.Anim = AttackAnim.Nair;
-		m.HitboxRadius = 60.0f;
+		m.MoveName = "Dagger Ring"; m.Anim = AttackAnim.Spread; m.PropArt = "-";
+		m.HitboxRadius = 0.0f;
+		m.Special = SpecialKind.Projectile;
+		m.HitboxOffset = new Vector2(0.0f, -10.0f);
+		m.ShotAngles = new[] { 0.0f, 45.0f, 90.0f, 135.0f, 180.0f, 225.0f, 270.0f, 315.0f };
+		m.SpecialSpeed = 1300.0f; m.SpecialLifetime = 16;
+		m.Damage = 8.0f; m.LaunchAngleDegrees = 50.0f;
+		m.FxRadius = 18.0f; m.FxColor = new Color(0.80f, 0.82f, 0.86f);
+		m.FxTexture = EdgeFx("sword_dagger"); m.FxArtSize = 80.0f; m.FxAlongFlight = true;
 
 		m = M(moves, MoveSlot.ForwardAir);
-		m.MoveName = "Air Slash"; m.Anim = AttackAnim.Fair;
-		m.HitboxOffset = new Vector2(96.0f, -10.0f);
+		m.MoveName = "Scimitar Slash"; m.Anim = AttackAnim.Fair; m.PropArt = "sword_scimitar";
+		m.HitboxOffset = new Vector2(104.0f, -10.0f);
 
 		m = M(moves, MoveSlot.BackAir);
-		m.MoveName = "Reverse Cut"; m.Anim = AttackAnim.Bair;
+		m.MoveName = "Reverse Katana"; m.Anim = AttackAnim.BackSlash; m.PropArt = "sword_katana";
+		m.HitboxOffset = new Vector2(-96.0f, -14.0f);
 
 		m = M(moves, MoveSlot.UpAir);
-		m.MoveName = "Overhead Arc"; m.Anim = AttackAnim.Uair;
-		m.HitboxOffset = new Vector2(20.0f, -100.0f);
+		m.MoveName = "Saw Arc"; m.Anim = AttackAnim.OverheadArc; m.PropArt = "sword_edgeblade";
+		m.HitboxOffset = new Vector2(20.0f, -112.0f);
 
-		// A downward stab that sends them down and away. Not a spike: his grapple throw is
-		// already his way of sending someone straight down.
+		// A broadsword swung down to hang straight under him: anyone below is driven straight
+		// down. His spike - slow to come out, deadly off the edge.
 		m = M(moves, MoveSlot.DownAir);
-		m.MoveName = "Plunge"; m.Anim = AttackAnim.Dair;
-		m.Spikes = false; m.LaunchAngleDegrees = -40.0f;
+		m.MoveName = "Broadsword Drop"; m.Anim = AttackAnim.DownSwing; m.PropArt = "sword_broadsword";
+		m.StartupFrames = 12;
+		m.Spikes = true; m.LaunchAngleDegrees = -90.0f;
+		m.HitboxOffset = new Vector2(8.0f, 110.0f); m.HitboxRadius = 50.0f;
+	}
+
+	static Texture2D EdgeFx(string name)
+	{
+		string path = $"res://fighters/edgelord/poses/{name}.png";
+		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
 	}
 
 	// =========================================================================

@@ -21,3 +21,6 @@ obj/
 .claude/settings.local.json
 .shots/
 *.pyc
+
+# Fighter submissions pulled from the ecec.dev/draw form - kids' drawings, private until made into a fighter.
+fighters/incoming/

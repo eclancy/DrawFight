@@ -9,8 +9,9 @@ The game was called `DuskFight` after the kid's own online handle, `Dusk`, and w
 Godot 4.5.1 Mono (.NET 9), C#, 2D. **M0, M1 and M2 are built** — the fight runs, Xbox pads work,
 and rigged cutout puppets play the shared animation library. M2's last piece, a rig built from
 a **real drawing**, is **Circy**: designed and drawn by Elim, cut from Elim's drawings by
-`tools/art/cut_circy.py`. **EdgeLord** is a hand drawing playing with our placeholder colouring
-and sword art until the finished drawings arrive. `fighters/` also holds two generated stick
+`tools/art/cut_circy.py`. **EdgeLord** and **DoomBot** are drawn by Eric (the kids' uncle and
+the project owner); EdgeLord plays with our placeholder colouring and sword art until the
+finished drawings arrive, and DoomBot's moves are placeholders until his sheet arrives. `fighters/` also holds two generated stick
 figures (Swift, Lug); `fighters/README.md` says when they go. M3 is the import tool.
 
 Every rule about "his" linework below applies to every kid who sends a fighter, Elim included.
@@ -47,9 +48,11 @@ content decision. Do not restate its contents here.
 talk down. Those two documents are on the critical path: nothing past M2 can be built until a
 drawing exists.
 
-The drawing guide also exists as a published Artifact — <https://claude.ai/artifact/DmdTZS491FFJs28Cj8g5qL>
-— which is the copy actually sent to kids. **Change one and change the other**, or the version
-they read drifts from the version we maintain.
+The drawing guide is hosted at **<https://ecec.dev/draw/guide>** — the copy actually sent to
+kids — from `public/draw/guide/` in the EricClancyEngineeringAndCrafts repo. It is also a
+published Artifact (<https://claude.ai/artifact/DmdTZS491FFJs28Cj8g5qL>) and
+`for-nephew/how-to-draw-a-fighter.md`. **Change one and change all three**, or the version they
+read drifts from the version we maintain. Kid-facing pages stay short, picture-led and paper only.
 
 ## The three rules that are not negotiable
 
@@ -70,7 +73,10 @@ they read drifts from the version we maintain.
 - **`"$GODOT_BIN" --path . -- --parade --shot=70`** — lay out every fighter in every animation,
   side by side and large, and write a screenshot to `.shots/`. **This is how rig and animation
   changes get verified.** A wrong pivot or a flipped rotation sign is obvious here and invisible
-  in a match. Add **`--attacks`** to see every fighter's own attacks at the frame they hit.
+  in a match. Add **`--attacks`** to see every fighter's own attacks at the frame they hit,
+  holding the weapon each one draws, and **`--only=N`** to show one fighter by catalog index.
+  The attack parade rings each hitbox and prints where the weapon head is against it - put a
+  hitbox where the weapon actually is, not where it seems like it should be.
   `--shot=N` works on the match too; `F12` grabs a frame while playing.
 - **`python tools/art/stickfigures.py [name]`** — regenerate the two generated test fighters.
   A name builds just that one.
@@ -79,6 +85,13 @@ they read drifts from the version we maintain.
 - **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's placeholder rig: colours his
   drawing, cuts it, and draws the swords and turning frames. About a minute. Replaced
   wholesale when his own coloured art arrives - see `fighters/README.md`.
+- **`python tools/art/cut_doombot.py`** — re-cut DoomBot from the photo of his drawing,
+  including the patch of body filled in behind his arm. About 10 seconds.
+- **`bash tools/intake/pull_submissions.sh`** — "check for new fighters". Copies new
+  submissions from the ecec.dev/draw form into `fighters/incoming/<id>/` (photos, `answers.json`,
+  `sheet.md`). That folder is gitignored: a kid's drawing only enters the public repo when it is
+  deliberately made into a fighter. The form and server live in the EricClancyEngineeringAndCrafts
+  repo (`public/draw/`, `intake/`, `docs/DEPLOYMENT.md`).
 - **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real title-screen
   frame (Lug's face). The icon is never drawn separately; when a real drawing replaces the
   stick figures, re-shoot and re-crop per the script's docstring.

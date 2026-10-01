@@ -35,18 +35,18 @@ played it.
 |---|---|
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
-| **Fighters** | 4 — **Circy**, the first fighter designed by a kid (Elim); **EdgeLord**, a hand-drawn sword fighter with placeholder colouring; and two generated stick figures |
+| **Fighters** | 5 — **Circy**, the first fighter designed by a kid (Elim); **EdgeLord**, a sword fighter drawn by Eric, with placeholder colouring; **DoomBot**, a robot drawn by Eric, waiting on his moves; and two generated stick figures (Flambé and Lugnut) |
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
 | **Input** | Xbox pads (hot-pluggable) and keyboard |
 | **CPU** | one basic computer opponent, for playing alone |
 | **Not yet** | CPU difficulty levels, 3–4 players, the art import tool, results screen, sound |
 
-Swift and Lug are **scaffolding, not content** — see [`fighters/README.md`](fighters/README.md).
+Flambé (Swift) and Lugnut are **scaffolding, not content** — see [`fighters/README.md`](fighters/README.md).
 They exist so the engine could be built and played before any real drawing existed, and they get
 deleted when real ones land. Circy is the real thing: designed and drawn by Elim, and cut
-straight from Elim's drawings without a line redrawn. EdgeLord is a hand drawing playing with
-stand-in colours and move art until the finished drawings arrive.
+straight from Elim's drawings without a line redrawn. EdgeLord and DoomBot are drawn by Eric;
+EdgeLord plays with stand-in colours and move art until the finished drawings arrive.
 
 ---
 
@@ -73,11 +73,13 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | Xbox pad | |
 |---|---|
 | left stick | move — **the harder you push, the faster you run** |
-| A | jump, double jump |
+| A or Y | jump, double jump |
 | X | attack — tap repeatedly for a jab combo; hold a direction for tilts and aerials; **flick** the stick with it for a smash (hold X to charge); while running, a dash attack |
+| d-pad + X | a smash attack in that direction, every time — hold X to charge it |
 | B | special (+ a direction for all four) |
-| Y or RT | block — reduces damage and knockback, never negates it |
-| Y + stick | roll, spot dodge, air dodge |
+| LT or RT | block — reduces damage and knockback, never negates it |
+| LT/RT + stick | roll, spot dodge, air dodge |
+| LB or RB | taunt — a pose and a line; does nothing but show off, and leaves you open |
 | hold ↓ | crouch (ducks high attacks); attack from it for a low sweep |
 | hold ↓ + A | drop through a soft platform |
 
@@ -91,7 +93,8 @@ In menus, each player presses **A** to join, then drags a cursor with the left s
 fighter and **REMOVE** takes it out; a second player pressing A on their own controller takes
 the seat back.
 
-In a match: `F1` hitboxes, `F2` slow motion, `F3` swap pad layout, `F4` cycle stage, `R` restart.
+In a match, **Start** pauses, with a choice to resume or go back and pick fighters.
+Keyboard extras: `F1` hitboxes, `F2` slow motion, `F3` swap pad layout, `F4` cycle stage, `R` restart.
 
 ---
 
@@ -179,6 +182,7 @@ the character, the name, the moves, and every drawing under `fighters/circy/` �
 here so people can see the game, not for reuse. Please don't copy the drawings into anything
 else.
 
-The same goes for EdgeLord's drawing under `fighters/edgelord/source/`. Swift and Lug are
+The same goes for **EdgeLord and DoomBot, which are Eric's** - the drawings under
+`fighters/edgelord/` and `fighters/doombot/`. Flambé (Swift) and Lugnut are
 script-generated and carry no such claim. No licence has been chosen for the
 code yet; until one is, the default applies and it is all rights reserved.

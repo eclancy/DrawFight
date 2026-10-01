@@ -45,6 +45,8 @@ SWORDS = [
     ('scimitar',   220, 26, 'widen', 0.22, 0.20, (84, 14, 'cross'), (16, 50), ('ball', 8)),
     ('rapier',     290, 10, 'taper', 0.05, 0.0, (72, 10, 'swept'), (14, 56), ('ball', 9)),
     ('edgeblade',  260, 40, 'serrated', 0.16, 0.0, (110, 22, 'spiked'), (18, 64), ('ring', 13)),
+    ('claymore',   300, 44, 'taper', 0.12, 0.0, (160, 18, 'claymore'), (20, 110), ('ring', 15)),
+    ('broadsword', 230, 52, 'straight', 0.14, 0.0, (112, 18, 'cross'), (18, 60), ('ball', 11)),
 ]
 
 
@@ -84,6 +86,11 @@ def guard_outline(cx, top, w, h, look):
         return [(cx - hw - 14, top - 16), (cx - hw + 10, top - 4), (cx - 18, top - 8), (cx, top - 2),
                 (cx + 18, top - 8), (cx + hw - 10, top - 4), (cx + hw + 14, top - 16),
                 (cx + hw - 4, top + h), (cx - hw + 4, top + h)], None
+    if look == 'claymore':
+        # A claymore's quillons sweep up toward the blade at both ends.
+        hw = w / 2.0
+        return [(cx - hw, top - h * 1.7), (cx, top), (cx + hw, top - h * 1.7),
+                (cx + hw, top - h * 0.5), (cx, top + h), (cx - hw, top - h * 0.5)], None
     hw, sag = w / 2.0, h * 0.35
     return [(cx - hw, top - sag), (cx, top), (cx + hw, top - sag),
             (cx + hw, top + h - sag), (cx, top + h), (cx - hw, top + h - sag)], None
@@ -189,6 +196,62 @@ def draw_sword(spec, with_grip=False):
     return image
 
 
+def draw_axe(with_grip=False):
+    """
+    A battle axe, head up: a long wooden haft, a broad crescent blade on the front and a small
+    spike behind. Drawn in the same pencil as the swords.
+    """
+    haft_len, haft_w = 300, 18
+    pad = 24
+    W, H = 190 + pad * 2, haft_len + pad * 2
+    cx = pad + 70
+    top = pad
+    size = (W, H)
+    canvas = Image.new('RGBA', size, (0, 0, 0, 0))
+    texture = ce.pencil_texture(size, 58.0, 707, 0.013)
+    cross = ce.pencil_texture(size, -32.0, 708, 0.010)
+
+    def poly(points):
+        m = Image.new('L', size, 0)
+        ImageDraw.Draw(m).polygon(points, fill=255)
+        return m
+
+    def fill(mask, fn):
+        ce.pencil_fill(canvas, mask, texture, cross, lambda x, y: fn(x - ce.CROP[0], y - ce.CROP[1]))
+        edge = ImageChops.subtract(mask.filter(ImageFilter.MaxFilter(7)), mask)
+        canvas.paste(Image.new('RGBA', size, ce.INK + (255,)), (0, 0), edge.filter(ImageFilter.GaussianBlur(0.8)))
+
+    wood = (150, 98, 52)
+    fill(poly([(cx - haft_w / 2.0, top + 10), (cx + haft_w / 2.0, top + 10),
+               (cx + haft_w / 2.0, top + haft_len), (cx - haft_w / 2.0, top + haft_len)]),
+         lambda x, y: (wood, 0.3))
+
+    # The blade: a crescent swelling out in front of the haft, its edge an arc.
+    head = [(cx + 6, top + 30)]
+    for i in range(0, 21):
+        a = math.radians(-70 + 140 * i / 20.0)
+        head.append((cx + 34 + 86 * math.cos(a), top + 78 + 70 * math.sin(a)))
+    head.append((cx + 6, top + 126))
+
+    def steel(x, y):
+        edge = x - (cx + 34)
+        return ce.mix(ce.STEEL_LIGHT, ce.STEEL_SHADOW, max(0.0, min(1.0, 1.0 - edge / 86.0))), 0.25
+    fill(poly(head), steel)
+    fill(poly([(cx - 6, top + 60), (cx - 58, top + 78), (cx - 6, top + 96)]), steel)
+
+    # Leather wrap near the bottom, where it is held.
+    grip_top = top + haft_len - 90
+    for i in range(8):
+        y = grip_top + 6 + i * 10
+        ce.sketch_line(canvas, [(cx - haft_w / 2.0 + 1, y), (cx + haft_w / 2.0 - 1, y + 5)], ce.LEATHER_SHADOW, 3, 720 + i)
+
+    box = canvas.getbbox()
+    image = canvas.crop(box)
+    if with_grip:
+        return image, (cx - box[0], grip_top + 45 - box[1])
+    return image
+
+
 # --- Turning ---------------------------------------------------------------------------
 
 TURN_ANGLES = [0, 45, 78, 120, 180]
@@ -268,6 +331,9 @@ def main():
         im.save(os.path.join(OUT, 'swords', spec[0] + '.png'))
         swords.append(im)
         print('sword', spec[0], im.size)
+    axe = draw_axe()
+    axe.save(os.path.join(OUT, 'swords', 'axe.png'))
+    swords.append(axe)
     sheet(swords, os.path.join(OUT, 'swords_sheet.png'))
 
     frames = []

@@ -62,6 +62,7 @@ public partial class MatchManager : Node2D
 		stage = new Stage();
 		AddChild(stage);
 		stage.Build(StageCatalog.Get(StageIndex));
+		if (stage.Traffic != null) stage.Traffic.Match = this;
 
 		for (int i = 0; i < FighterIndices.Length; i++)
 		{
@@ -77,6 +78,7 @@ public partial class MatchManager : Node2D
 
 		camera = new GameCamera();
 		AddChild(camera);
+		fx.Camera = camera;
 
 		hud = new MatchHud();
 		AddChild(hud);
@@ -194,8 +196,15 @@ public partial class MatchManager : Node2D
 
 	void KillOffStage(Fighter fighter)
 	{
-		fx.SpawnBlastFlash(fighter.GlobalPosition);
-		camera.AddShake(90.0f);
+		// The blast goes off at the edge of what is on screen, nearest where they went out, and
+		// fires back in across the stage - so it is seen even though the fighter is long gone.
+		Vector2 at = fighter.GlobalPosition;
+		Rect2 view = camera.VisibleRect().Grow(-camera.VisibleRect().Size.X * 0.04f);
+		Vector2 edge = new Vector2(Mathf.Clamp(at.X, view.Position.X, view.End.X), Mathf.Clamp(at.Y, view.Position.Y, view.End.Y));
+		Vector2 inward = view.GetCenter() - edge;
+		if (inward.LengthSquared() < 1.0f) inward = Vector2.Up;
+		fx.SpawnKoBlast(edge, inward, fighter.Data.PlaceholderColor);
+		camera.AddShake(140.0f);
 
 		// A KO is the biggest moment in a match; it gets the biggest rumble.
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
@@ -328,7 +337,7 @@ public partial class MatchManager : Node2D
 
 		// The attacker gets a lighter tap - enough to confirm the hit connected without
 		// competing with the victim's.
-		if (attacker.Controller is IHapticInputSource attackerPad)
+		if (attacker?.Controller is IHapticInputSource attackerPad)
 		{
 			attackerPad.Rumble(intensity * 0.35f, duration * 0.7f);
 		}
@@ -338,16 +347,7 @@ public partial class MatchManager : Node2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is InputEventJoypadButton pad && pad.Pressed)
-		{
-			// Start restarts a live match, and goes back to fighter select once it is over -
-			// the next thing anyone wants after a match is to pick again, not the title screen.
-			if (pad.ButtonIndex != JoyButton.Start) return;
-			if (matchOver) GameRoot.Instance.GoCharacterSelect();
-			else Restart();
-			return;
-		}
-
+		// Start is read from each fighter's own controller (see OnStartPressed), not from here.
 		if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
 
 		switch (key.PhysicalKeycode)
@@ -378,14 +378,50 @@ public partial class MatchManager : Node2D
 				Restart();
 				break;
 
-			case Key.Enter:
-				if (matchOver) GameRoot.Instance.GoCharacterSelect();
-				break;
-
 			case Key.R:
 				Restart();
 				break;
 		}
+	}
+
+	// --- Pause ---------------------------------------------------------------
+
+	PauseMenu pauseMenu;
+
+	/// <summary>
+	/// A player pressed Start. Mid-match that pauses; once the match is over it goes back to
+	/// fighter select - the next thing anyone wants after a match is to pick again.
+	/// </summary>
+	public void OnStartPressed()
+	{
+		if (matchOver)
+		{
+			GameRoot.Instance.GoCharacterSelect();
+			return;
+		}
+		if (pauseMenu != null) return;
+
+		var humans = new List<IInputSource>();
+		for (int i = 0; i < Fighters.Count; i++)
+		{
+			if (!IsCpu(i) && Fighters[i].Controller != null) humans.Add(Fighters[i].Controller);
+		}
+
+		pauseMenu = new PauseMenu();
+		pauseMenu.Open(humans, Resume, () =>
+		{
+			GetTree().Paused = false;
+			GameRoot.Instance.GoCharacterSelect();
+		});
+		AddChild(pauseMenu);
+		GetTree().Paused = true;
+	}
+
+	void Resume()
+	{
+		GetTree().Paused = false;
+		pauseMenu?.QueueFree();
+		pauseMenu = null;
 	}
 
 	void CaptureAndQuit()
@@ -417,6 +453,8 @@ public partial class MatchManager : Node2D
 
 		// The CPUs drove the fighters that were just freed; new fighters need new CPUs.
 		cpus = null;
+		pauseMenu = null;
+		GetTree().Paused = false;
 		matchOver = false;
 		status = "";
 		winner = "";

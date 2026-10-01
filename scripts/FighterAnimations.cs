@@ -28,6 +28,14 @@ public enum AttackAnim
 	OverheadArc,
 	BuildDown,
 	Spin,
+	LowThrust,
+	PointUp,
+	Spread,
+	SummonLow,
+	DownSwing,
+	BackSlash,
+	HangUp,
+	Soar,
 }
 
 /// <summary>
@@ -434,6 +442,109 @@ public static class FighterAnimations
 		(AFU, -90), (AFL, 0), (ABU, 90), (ABL, 0),
 		(LFU, -16), (LFL, 6), (LBU, 16), (LBL, 6));
 
+	// Crouched, drawing the weapon back at hip height, then driving it straight out along the
+	// floor - a thrust, not a sweep.
+	static readonly Pose LowThrustWindup = new Pose(new Vector2(-6, 28),
+		(Torso, -24), (Head, 12),
+		(AFU, 30), (AFL, -70), (ABU, 30), (ABL, -20),
+		(LFU, -60), (LFL, 90), (LBU, 40), (LBL, 80));
+
+	// The arm is pushed well past horizontal because the body is leaning hard into the thrust;
+	// together they point the blade straight along the floor.
+	static readonly Pose LowThrustStrike = new Pose(new Vector2(14, 32),
+		(Torso, -18), (Head, 10),
+		(AFU, -104), (AFL, -2), (ABU, 50), (ABL, 10),
+		(LFU, -70), (LFL, 70), (LBU, 50), (LBL, 60));
+
+	// An arm flung up and forward, pointing where the summoned sword is to go - directing it.
+	static readonly Pose PointUpWindup = new Pose(new Vector2(0, 12),
+		(Torso, 14), (Head, -6),
+		(AFU, 40), (AFL, -60), (ABU, 30), (ABL, -30),
+		(LFU, -24), (LFL, 36), (LBU, 20), (LBL, 36));
+
+	// Written short of where it ends up: the library's drama pushes it on to about 60 degrees
+	// up, the angle the sword flies at.
+	static readonly Pose PointUpStrike = new Pose(new Vector2(0, -8),
+		(Torso, 16), (Head, -18),
+		(AFU, -124), (AFL, -2), (ABU, 40), (ABL, -20),
+		(LFU, -12), (LFL, 6), (LBU, 14), (LBL, 6));
+
+	// Curled up tight, then thrown wide open - arms and legs out like a star - as the ring of
+	// daggers flies out from him.
+	static readonly Pose SpreadWindup = new Pose(new Vector2(0, 10),
+		(Torso, -8), (Head, 8),
+		(AFU, -60), (AFL, -100), (ABU, -40), (ABL, -100),
+		(LFU, -80), (LFL, 110), (LBU, -50), (LBL, 110));
+
+	static readonly Pose SpreadStrike = new Pose(new Vector2(0, -6),
+		(Torso, 6), (Head, -8),
+		(AFU, -135), (AFL, 0), (ABU, 135), (ABL, 0),
+		(LFU, -55), (LFL, 0), (LBU, 55), (LBL, 0));
+
+	// Both arms raised high, then slammed down and out to the sides, calling something up out of
+	// the floor either side of him. Feet planted wide.
+	static readonly Pose SummonLowWindup = new Pose(new Vector2(0, -8),
+		(Torso, 10), (Head, -12),
+		(AFU, -170), (AFL, -10), (ABU, -160), (ABL, -10),
+		(LFU, -20), (LFL, 20), (LBU, 20), (LBL, 20));
+
+	static readonly Pose SummonLowStrike = new Pose(new Vector2(0, 26),
+		(Torso, -18), (Head, 10),
+		(AFU, -45), (AFL, -4), (ABU, 50), (ABL, -4),
+		(LFU, -40), (LFL, 40), (LBU, 40), (LBL, 40));
+
+	// In the air: the weapon raised up behind, then swung down to hang straight under him.
+	static readonly Pose DownSwingWindup = new Pose(new Vector2(0, -6),
+		(Torso, 12), (Head, -10),
+		(AFU, 150), (AFL, -30), (ABU, 60), (ABL, -30),
+		(LFU, -60), (LFL, 90), (LBU, -30), (LBL, 90));
+
+	static readonly Pose DownSwingStrike = new Pose(new Vector2(0, 6),
+		(Torso, -22), (Head, 14),
+		(AFU, -8), (AFL, -2), (ABU, 40), (ABL, -10),
+		(LFU, -40), (LFL, 60), (LBU, -10), (LBL, 70));
+
+	// A weapon swung from in front round to behind him, leaning back into it - a back air that is
+	// a cut rather than a kick.
+	static readonly Pose BackSlashWindup = new Pose(new Vector2(2, 0),
+		(Torso, -16), (Head, 8),
+		(AFU, -70), (AFL, -30), (ABU, 20), (ABL, 20),
+		(LFU, -50), (LFL, 90), (LBU, -30), (LBL, 100));
+
+	static readonly Pose BackSlashStrike = new Pose(new Vector2(-8, 0),
+		(Torso, 22), (Head, -12),
+		(AFU, 100), (AFL, -4), (ABU, 40), (ABL, 10),
+		(LFU, -40), (LFL, 60), (LBU, 30), (LBL, 60));
+
+	// Reaching up and back for a rope overhead, then hanging from it with both hands, legs
+	// dangling and knees drawn up a little.
+	static readonly Pose HangUpWindup = new Pose(new Vector2(0, 10),
+		(Torso, 12), (Head, -10),
+		(AFU, 150), (AFL, -20), (ABU, 130), (ABL, -20),
+		(LFU, -30), (LFL, 40), (LBU, 20), (LBL, 40));
+
+	static readonly Pose HangUpStrike = new Pose(new Vector2(0, -4),
+		(Torso, 0), (Head, -14),
+		(AFU, -176), (AFL, 0), (ABU, -172), (ABL, 0),
+		(LFU, -24), (LFL, 34), (LBU, 10), (LBL, 44));
+
+	// Flying: crouched to spring up, then arms swept back like the wings and legs trailing.
+	static readonly Pose SoarWindup = new Pose(new Vector2(0, 16),
+		(Torso, -12), (Head, 8),
+		(AFU, 40), (AFL, -30), (ABU, 30), (ABL, -30),
+		(LFU, -50), (LFL, 80), (LBU, 20), (LBL, 70));
+
+	static readonly Pose SoarStrike = new Pose(new Vector2(0, -6),
+		(Torso, -8), (Head, -10),
+		(AFU, 120), (AFL, 10), (ABU, 110), (ABL, 10),
+		(LFU, 6), (LFL, 24), (LBU, 26), (LBL, 36));
+
+	/// <summary>Curled up in a ball - knees to the chest, arms wrapped in - for a dodge roll.</summary>
+	public static readonly Pose Tuck = new Pose(new Vector2(0, 30),
+		(Torso, -36), (Head, 24),
+		(AFU, -70), (AFL, -110), (ABU, -50), (ABL, -110),
+		(LFU, -110), (LFL, 140), (LBU, -90), (LBL, 140));
+
 	/// <summary>The windup and strike for an animation. The recover pose is shared by all.</summary>
 	public static (Pose windup, Pose strike) PosesFor(AttackAnim anim)
 	{
@@ -460,6 +571,14 @@ public static class FighterAnimations
 			case AttackAnim.OverheadArc: return (OverheadArcWindup, OverheadArcStrike);
 			case AttackAnim.BuildDown: return (BuildDownWindup, BuildDownStrike);
 			case AttackAnim.Spin: return (SpinWindup, SpinStrike);
+			case AttackAnim.LowThrust: return (LowThrustWindup, LowThrustStrike);
+			case AttackAnim.PointUp: return (PointUpWindup, PointUpStrike);
+			case AttackAnim.Spread: return (SpreadWindup, SpreadStrike);
+			case AttackAnim.SummonLow: return (SummonLowWindup, SummonLowStrike);
+			case AttackAnim.DownSwing: return (DownSwingWindup, DownSwingStrike);
+			case AttackAnim.BackSlash: return (BackSlashWindup, BackSlashStrike);
+			case AttackAnim.HangUp: return (HangUpWindup, HangUpStrike);
+			case AttackAnim.Soar: return (SoarWindup, SoarStrike);
 			default: return (AttackWindup, AttackStrike);
 		}
 	}
@@ -484,8 +603,14 @@ public static class FighterAnimations
 	///   - follow-through: held past the strike for a beat, then an ease back to neutral
 	/// A hit that goes straight from windup to strike to rest looks like a diagram of a hit.
 	/// </summary>
-	public static void SampleAttack(MoveData move, float moveFrame, Pose into, bool lunging = false)
+	/// <param name="drama">
+	/// A fighter's AnimationDrama: a wilder fighter coils further before it lets go and swings
+	/// further through - the timing beats of the hit, rather than the angles of the pose.
+	/// </param>
+	public static void SampleAttack(MoveData move, float moveFrame, Pose into, bool lunging = false, float drama = 1.0f)
 	{
+		float anticipation = Anticipation * drama * drama;
+		float followThrough = FollowThrough * drama * drama;
 		(Pose windup, Pose strike) = PosesFor(lunging ? AttackAnim.Lunge : move.Anim);
 
 		float startup = Mathf.Max(1, move.StartupFrames);
@@ -504,7 +629,7 @@ public static class FighterAnimations
 				// Past the windup and still going: blending beyond 1 extrapolates, which is the
 				// coil - the arm drawn back further than the windup pose itself.
 				float a = (t - WindupReached) / (1.0f - WindupReached);
-				Pose.Blend(AttackRecover, windup, 1.0f + Anticipation * a, into);
+				Pose.Blend(AttackRecover, windup, 1.0f + anticipation * a, into);
 			}
 			return;
 		}
@@ -513,7 +638,7 @@ public static class FighterAnimations
 		{
 			// Most hits connect on the first active frame, and hitlag then freezes the puppet on
 			// whatever pose it has - so the strike must already be fully out, not on its way.
-			Pose.Blend(windup, strike, 1.0f + FollowThrough, into);
+			Pose.Blend(windup, strike, 1.0f + followThrough, into);
 			return;
 		}
 
@@ -521,7 +646,7 @@ public static class FighterAnimations
 		float e = Mathf.Clamp((moveFrame - activeEnd) / endlag, 0.0f, 1.0f);
 		if (e < FollowThroughHold)
 		{
-			Pose.Blend(windup, strike, 1.0f + FollowThrough, into);
+			Pose.Blend(windup, strike, 1.0f + followThrough, into);
 			return;
 		}
 

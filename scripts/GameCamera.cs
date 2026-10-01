@@ -28,6 +28,13 @@ public partial class GameCamera : Camera2D
 		shake = Mathf.Min(Tuning.ScreenShakeMax, shake + knockback * Tuning.ScreenShakePerKnockback);
 	}
 
+	/// <summary>The part of the world on screen right now, shake and all.</summary>
+	public Rect2 VisibleRect()
+	{
+		Vector2 half = GetViewportRect().Size / (2.0f * Zoom.X);
+		return new Rect2(GlobalPosition - half, half * 2.0f);
+	}
+
 	public void FrameFighters(List<Fighter> fighters, float dt)
 	{
 		Vector2 min = Vector2.Zero;
@@ -37,6 +44,8 @@ public partial class GameCamera : Camera2D
 		foreach (Fighter fighter in fighters)
 		{
 			if (fighter.State == FighterState.Eliminated) continue;
+			// Gone and waiting to come back: nothing to look at yet.
+			if (fighter.IsWaitingToRespawn) continue;
 
 			Vector2 p = fighter.GlobalPosition;
 			if (!any)

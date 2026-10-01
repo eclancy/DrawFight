@@ -55,6 +55,9 @@ public partial class FighterRig : Node2D
 	/// </summary>
 	public const float Drama = 1.25f;
 	public const float HipDrama = 1.4f;
+
+	/// <summary>A fighter's own multiplier on top of <see cref="Drama"/> - see FighterData.AnimationDrama.</summary>
+	public float DramaScale = 1.0f;
 	float bodyHalfHeight;
 	float legStretch = 1.0f;
 
@@ -132,6 +135,17 @@ public partial class FighterRig : Node2D
 			}
 
 			parent.AddChild(node);
+			// A far arm hangs from the torso bone, and children draw after their parent's own
+			// sprite - which put it in FRONT of the body. Moving it ahead of that sprite puts
+			// it behind, so it comes from the far side of the body the way a far arm should.
+			// A drawing can say a far limb stays in front ("inFront" in the manifest) - DoomBot's
+			// arm comes out of a hole in the FRONT of his chest.
+			bool inFront = entry.ContainsKey("inFront") && (bool)entry["inFront"];
+			if (RigBones.IsBackLimb(bone) && !inFront && parent != this && parent.GetChildCount() > 1
+				&& parent.GetChild(0) is Sprite2D)
+			{
+				parent.MoveChild(node, 0);
+			}
 			bones[(int)bone] = node;
 			present[(int)bone] = true;
 			restOffsets[(int)bone] = node.Position;
@@ -162,7 +176,7 @@ public partial class FighterRig : Node2D
 
 			// Darkening the far limbs is how flat cutout animation has always faked depth. It
 			// costs nothing and it is why a drawing with only one arm still reads correctly.
-			if (RigBones.IsBackLimb(bone))
+			if (RigBones.IsBackLimb(bone) && !inFront)
 			{
 				sprite.Modulate = new Color(darken, darken, darken);
 			}
@@ -201,7 +215,9 @@ public partial class FighterRig : Node2D
 				Centered = false,
 				Offset = new Vector2(-(float)pivot[0], -(float)pivot[1]),
 				Position = new Vector2((float)offset[0], (float)offset[1]),
-				Visible = false,
+				// Most extras only appear for a moment (a hard hat); "always" ones are part of the
+				// drawing that has to sit over another part, like the socket DoomBot's arm comes out of.
+				Visible = entry.ContainsKey("always") && (bool)entry["always"],
 			};
 			bones[(int)bone].AddChild(sprite);
 			extras[(string)entry["name"]] = sprite;
@@ -234,6 +250,63 @@ public partial class FighterRig : Node2D
 	{
 		Sprite2D sprite = sprites[(int)bone];
 		if (sprite != null) sprite.Visible = visible;
+	}
+
+	Texture2D defaultProp;
+	Vector2 defaultPropOffset;
+	string shownProp = "";
+
+	/// <summary>
+	/// Puts one of the fighter's pose drawings in its hand instead of its usual prop - a weapon
+	/// for one move. Pose art is stored tip-up and anchored at the grip, so it is turned half a
+	/// circle to hang from the hand the way a prop part does. Empty or unknown puts the usual prop
+	/// back. (An empty hand is the caller hiding the part - see SetPartVisible.)
+	/// </summary>
+	public void ShowProp(string poseName)
+	{
+		poseName ??= "";
+		if (poseName == shownProp) return;
+		Sprite2D sprite = sprites[(int)RigBone.PropFront];
+		if (sprite == null) return;
+
+		if (defaultProp == null)
+		{
+			defaultProp = sprite.Texture;
+			defaultPropOffset = sprite.Offset;
+		}
+		shownProp = poseName;
+
+		PoseArt art = PoseArtFor(poseName);
+		if (art != null)
+		{
+			sprite.Texture = art.Texture;
+			sprite.Offset = -art.Anchor;
+			sprite.Rotation = Mathf.Pi;
+		}
+		else
+		{
+			sprite.Texture = defaultProp;
+			sprite.Offset = defaultPropOffset;
+			sprite.Rotation = 0.0f;
+		}
+	}
+
+	/// <summary>
+	/// Where the business end of whatever is in the hand is right now, in global coordinates:
+	/// the head of the hammer, the point of the sword. The parade reports it so hitboxes can be
+	/// put where the weapon actually is. Null if there is nothing in the hand.
+	/// </summary>
+	public Vector2? PropHeadGlobal()
+	{
+		Sprite2D sprite = sprites[(int)RigBone.PropFront];
+		if (sprite == null || !sprite.Visible || sprite.Texture == null) return null;
+		Vector2 size = sprite.Texture.GetSize();
+		Vector2 grip = -sprite.Offset;
+		// Held weapons are stored tip-up and turned; the default prop is stored tip-down.
+		Vector2 head = Mathf.IsZeroApprox(sprite.Rotation)
+			? new Vector2(grip.X, size.Y * 0.88f)
+			: new Vector2(grip.X, size.Y * 0.14f);
+		return sprite.GlobalTransform * (head - grip);
 	}
 
 	/// <summary>Where a part's joint is in its texture, so it can be drawn stretched outside the rig.</summary>
@@ -334,9 +407,24 @@ public partial class FighterRig : Node2D
 		PlaceHip();
 	}
 
+	float roll;
+
+	/// <summary>
+	/// Turns the whole puppet about the middle of the fighter's body, for a roll or a flip. Zero
+	/// is upright. Turning about the hip instead would swing the body round the feet.
+	/// </summary>
+	public void SetRoll(float radians)
+	{
+		if (Mathf.IsEqualApprox(radians, roll)) return;
+		roll = radians;
+		PlaceHip();
+	}
+
 	void PlaceHip()
 	{
-		Position = new Vector2(0.0f, bodyHalfHeight - LegLength * legStretch * puppetScale * squash);
+		var hip = new Vector2(0.0f, bodyHalfHeight - LegLength * legStretch * puppetScale * squash);
+		Position = hip.Rotated(roll);
+		Rotation = roll;
 	}
 
 	void ApplyScale()
@@ -405,7 +493,7 @@ public partial class FighterRig : Node2D
 	{
 		// Blending toward the target rather than snapping to it smooths the joins between
 		// states, so a fighter landing out of a launch does not pop from tumbling to standing.
-		Pose.Exaggerate(pose, Drama, HipDrama, exaggerated);
+		Pose.Exaggerate(pose, Drama, HipDrama * DramaScale, exaggerated, DramaScale);
 		Pose.Blend(current, exaggerated, blend, current);
 
 		for (int i = 0; i < (int)RigBone.Count; i++)

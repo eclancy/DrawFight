@@ -26,6 +26,16 @@ python tools/art/stickfigures.py
 not balanced against each other, and leaving them in the roster once there is real art would be
 the one thing this project is not for.
 
+Swift is now a fire punk: a flame-coloured mohawk, a black leather jacket with silver shoulder
+spikes and flames up the hem, dark red jeans, and a pair of fire wings (`swift/poses/wings.png`)
+for his flying up special.
+
+Lug has grown past a plain stick figure while he waits: he is coloured (a hi-vis vest, a blue
+shirt, jeans and boots, a face) and he has a set of heavy tools in `lug/poses/tool_*.png` - a
+pipe wrench, shovel, pickaxe, crowbar, steel beam, stop sign, jackhammer and nail gun - that his
+attacks swap into his hand. His reach is built on how long those tools are, so if a tool is
+redrawn longer or shorter, re-check the hitboxes with `--parade --attacks --only=1`.
+
 Note that `tools/art/stickfigures.py` is **not a model for the real pipeline**. It draws each
 part directly in its canonical orientation, because it is generating the art in the first place.
 The real pipeline cuts parts out of a photograph, which is the whole job of the M3 import tool.
@@ -58,7 +68,7 @@ Two things about Elim's art that the code works around rather than changes:
   his linework and it stays; if it reads too faint, the fix is to ask Elim for thicker legs
   and arms, never to thicken them here.
 
-## `edgelord/` - a hand drawing, with stand-in colour and move art
+## `edgelord/` - drawn by Eric, with stand-in colour and move art
 
 EdgeLord ("stretchy arms, super speed, infinite swords") plays in the game now, but most of
 what you see is a **placeholder** until the finished drawings arrive:
@@ -75,7 +85,33 @@ When his own coloured drawing and move drawings arrive, they replace all of this
 follows shapes traced from **this** drawing, so the new art needs its own cut - ideally sent
 as layered PNGs, one part per layer.
 
-He is drawn facing the viewer, like Circy; the limbs on the right of the page are the front.
+**He is drawn facing left.** Fighters face right in their own space, so the cut mirrors the
+whole drawing first (mirroring the rig instead would mirror every pose too, and he would run
+backwards). After mirroring, the limbs on the right are the front ones.
+
+His normals each put a different weapon in his hand (`MoveData.PropArt`, naming a sword in
+`poses/`), or empty it to summon one. Every weapon is drawn 1.4 times the size of the review
+sheet, so it reads at match scale.
+
+## `doombot/` - a robot drawn by Eric, cut from a photo of the drawing
+
+`source/doombot.jpg` is the photo, the master copy. `python tools/art/cut_doombot.py` cuts it
+into `parts/` and `rig.json`: each part is a traced shape with the paper removed by flooding in
+from outside the shape, so the cut stops at his outline. He faces the viewer; the limbs on the
+right of the page are the front ones.
+
+**One thing is filled in.** His right arm (left of the page) is drawn across his body, coming
+out of the socket on his chest. Cut free, it leaves a hole in the body where nothing was drawn,
+so that patch is filled with grey cloned from the body just below it and the body's outline is
+carried on through it - filling in what is missing, not replacing what is there.
+
+**That arm comes out of the socket.** It is a far limb that stays in front of the body
+(`"inFront": true` on its bones in `rig.json`), it pivots at the middle of the socket, and the
+socket is cut out as an extra (`"always": true`) drawn over the arm's root, so wherever the arm
+swings it looks like it comes out of the hole.
+
+He is a heavy. His other stats and four specials are placeholders until his character sheet
+arrives.
 
 ## The canonical orientation contract
 
@@ -88,6 +124,10 @@ He is drawn facing the viewer, like Circy; the limbs on the right of the page ar
 
 That last line is the one that matters. Because rest is the same pose for every fighter, one
 animation library drives all of them regardless of what pose each drawing was made in.
+
+A far arm hangs from the Torso bone, and a child would normally draw over its parent's own
+sprite - in front of the body. `FighterRig` moves every back-limb bone ahead of its parent's
+sprite, so far arms always come from behind the body.
 
 `bones` is listed in **back-to-front draw order**. Godot renders a node and then its children in
 order, so the manifest's ordering is what puts the far limbs behind the torso and the near limbs

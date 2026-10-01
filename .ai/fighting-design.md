@@ -113,7 +113,14 @@ polish, they are the feature:
 - **Screen shake** proportional to knockback, capped so that a big hit is dramatic and a jab
   is not nauseating.
 - **Hit sparks** drawn at the exact contact point, scaled by damage.
-- **Launch trails** on high-knockback hits, and a star-flash when someone crosses a blast zone.
+- **Launch trails** on high-knockback hits, and a **KO blast** when someone crosses a blast
+  zone: a huge burst in their colour at the edge of the screen where they went out, with rays
+  firing back in across the stage. It is pinned to the screen, not the world, because the
+  camera swings back to whoever is left the moment someone is KO'd. The KO'd fighter then
+  stays gone for 80 frames (`Tuning.RespawnDelayFrames`) before reappearing, so the blast has
+  the screen to itself and everyone takes in what happened.
+- **Dodges roll.** A roll or a directional air dodge curls the fighter up and turns a full
+  somersault the way it travels; a spot dodge curls up in place.
 - **Camera** that smoothly frames all living fighters, with a minimum zoom so two players
   standing together do not fill the screen, and a maximum so a far-flung player stays visible.
 - **Telegraphs** for anything fast and strong. A move that crosses the stage in a few frames
@@ -132,6 +139,10 @@ acceleration was gentle enough that top speed barely mattered. Gravity, jump for
 and acceleration all went up together. Raising top speed alone does nothing, because a fighter
 that takes half a second to reach it never gets there in a fight.
 
+- **Falling is gentler than rising.** Going up is full gravity, so jumps keep their height.
+  Coming down, gravity starts at 45% and builds to full over 26 frames, and the top fall speed
+  is 80% of each fighter's `MaxFallSpeed` (`Tuning.FallSpeedScale` and friends). The top of a
+  jump hangs a moment, then speeds up, so falling never feels like being yanked down.
 - Ground: accelerate to a run speed, with a distinct initial-dash speed.
 - **Two jumps** for everyone: the ground jump and one air jump. The air jump is refreshed on
   landing, on grabbing a ledge, and **on being hit** - a fighter knocked off the stage always
@@ -169,15 +180,17 @@ match both work, not as the intended way to play.
 | Xbox pad           | result                                     |
 |--------------------|--------------------------------------------|
 | left stick / d-pad | move, fast-fall, DI                        |
-| **A**              | jump, double jump                          |
+| **A** or **Y**     | jump, double jump                          |
 | **X**              | attack — neutral, or `←` `→` `↑` `↓` tilts |
 | **X** in air       | aerials — neutral, forward, back, up, down |
 | **X** while running| dash attack                                |
+| **d-pad** + **X**  | smash attack (hold X to charge)            |
 | **B**              | special — neutral, or `←` `→` `↑` `↓`      |
-| **Y**              | block — reduces damage and knockback       |
-| **Y** + stick      | dodge roll / spot dodge / air dodge        |
+| **LT** or **RT**   | block — reduces damage and knockback       |
+| **LT/RT** + stick  | dodge roll / spot dodge / air dodge        |
+| **LB** or **RB**   | taunt (on the ground)                      |
 | hold `↓` + **A**    | drop through a soft platform               |
-| Start              | restart the match                          |
+| Start              | pause: resume, or back to fighter select   |
 
 **This layout was specified, and it wins.** Earlier drafts argued first for platformer
 convention and then for Smash Ultimate’s layout; both are now overruled. `GamepadLayout.Smash()`
@@ -250,6 +263,11 @@ A dash attack sets `CarriesMomentum`, which does two things: it sheds far less s
 move, so the attack slides the whole way through instead of stopping dead on startup, and it
 selects the lunging attack pose so the move looks like a committed charge rather than a jab that
 happens to be moving. A dash attack that stops on contact is just a slow jab.
+
+**Nothing started on the ground slides you off it.** Any move begun on the ground - a dash
+attack, a charge, a wheelbarrow - stops dead at the edge rather than carrying the fighter off
+(`Fighter.StopAtLedge`). Sliding off the stage mid-attack is the game killing you, not the other
+player. The one exception is a blink (EdgeLord's Blur Slash), whose whole point is crossing a gap.
 
 ## Jab combos
 

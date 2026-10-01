@@ -40,12 +40,12 @@ follows weight — light fighters get quick multi-hit strings, heavies get two s
 
 | | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, construction) |
 |---|---|---|---|
-| theme | quick martial artist | ball on long stretchy legs | a construction worker: sledgehammer normals, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); hard hat when blocking |
-| jab | punch, punch, kick | kick, low kick, ball bonk | two slow heavy punches |
-| tilts | roundhouse, flip kick, pop-up sweep | long-reach kicks all round | sledge poke, sledge arc, sledge sweep (low, from a crouch) |
+| theme | a fire punk: mohawk, spiked leather jacket, flames everywhere; charged fireball, fire-wing flight | ball on long stretchy legs | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); hard hat when blocking |
+| jab | punch, punch, kick | kick, low kick, ball bonk | two slow pipe-wrench bashes |
+| tilts | roundhouse, flip kick, pop-up sweep | long-reach kicks all round | shovel jab, pickaxe arc, crowbar sweep (low, from a crouch) |
 | dash | flying knee | rolls into them as a ball | hard-hat barge |
-| smashes | blaze palm, rising flame, split | ball headbutt, spring up, splits | sledge slam, overhead swing (big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
-| aerials | flame spin, axe kick, back kick, bicycle, drill kick (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | toolbelt spin, sledge chop, back swing, sledge swipe, pile driver |
+| smashes | blaze palm, rising flame, split | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
+| aerials | flame spin, axe kick, back kick, bicycle, drill kick (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | stop sign spin, sledge chop, shovel back swing, pick swipe, jackhammer (spike) |
 
 This is why the normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
 scaled per weight by `WeightProfiles`. A balance change to a tilt then lands on all three
@@ -148,7 +148,28 @@ any of them:
   either way. **This is the roster's one command grab** (EdgeLord's Grapple Arm).
 - `MaxOut` - how many of a move's hazards can exist at once; another removes the oldest.
 - `Spin` + `RehitFrames` + `LinkHit` - a spin on the spot drawn with the fighter's turning
-  frames, hitting repeatedly with a weak link hit and launching on the last window.
+  frames, hitting repeatedly with a weak link hit and launching on the last window. Built for
+  EdgeLord's first down smash; nothing uses it now, but his turning frames are still cut.
+- `SpentOnHit` - a lingering trap that is used up by the first hit it lands.
+- `ShowExtra` - shows one of the rig's extras for the move (Lug's hard hat on a barge).
+- `ChargeWithSpecial` + `ChargeDamage` + `ChargeSize` - a chargeable special: hold the special
+  button and it charges (in the air too), then fires bigger and harder. Swift's fireball.
+- `Flight` - a recovery that flies: a steady slow rise through a long active window, steered
+  left and right, with `HeldArt` drawn behind as flapping wings. Checked by the height it gains
+  rather than by launch speed. Swift's fire wings.
+- `FxFlame` - a projectile with no art drawn as a ball of fire with a tail.
+- `HangFromArt` + `ReleaseDrop` - a swung-art recovery that ends up directly above the
+  fighter, who hangs from its rope while it hauls him up, then lets go of it: it drops away as
+  a `Drop` hazard onto whoever is below. Lug's wrecking ball.
+- `PropArt` - a pose drawing put in the fighter's hand for one move, or `"-"` for an empty
+  hand. How one fighter swings a katana, a claymore and a rapier without three rigs - and how
+  Lug gets a shovel, a pickaxe and a jackhammer. **A move's reach should match its weapon**:
+  check the hitbox against the weapon head in the attack parade.
+- `ShotAngles` + `Mirrored` + `FromGround` - a projectile that fires several at once: one per
+  angle, optionally mirrored to the other side, optionally rising up out of the floor under
+  the fighter (only the part above the floor is drawn or hits). These work on **normals** too:
+  EdgeLord's ring of daggers, the sword he sends up from behind him, and the axes of his down
+  smash are all projectiles in normal-attack slots.
 
 And one is a **trait on `FighterData`**: `TumblesWhenHit`. A real hit knocks the fighter over into
 a ball with no arms or legs, which rolls until it gets back up and can roll off the edge. Control

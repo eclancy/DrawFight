@@ -10,6 +10,13 @@ public struct InputState
 	/// <summary>Raw stick/d-pad direction. Not normalised; magnitude is meaningful for DI.</summary>
 	public Vector2 Move;
 
+	/// <summary>
+	/// The direction came from the d-pad rather than the stick. A d-pad direction with attack is
+	/// always a smash: a d-pad cannot be tilted gently, and flicking it on the same frame as the
+	/// button is too fiddly - so the stick does tilts and the d-pad does smashes.
+	/// </summary>
+	public bool MoveFromDpad;
+
 	public bool JumpPressed;
 	public bool AttackPressed;
 
@@ -26,6 +33,9 @@ public struct InputState
 
 	/// <summary>Start / Enter. Menus only; the fight itself never reads it.</summary>
 	public bool StartPressed;
+
+	/// <summary>The taunt button's edge. A taunt does nothing but show off.</summary>
+	public bool TauntPressed;
 
 	public static InputState None => new InputState { Move = Vector2.Zero };
 }
@@ -45,14 +55,15 @@ public interface IInputSource
 /// </summary>
 public class KeyboardInputSource : IInputSource
 {
-	readonly Key left, right, up, down, jump, attack, special, block;
+	readonly Key left, right, up, down, jump, attack, special, block, taunt;
 
-	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown;
+	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown;
 
 	public KeyboardInputSource(
 		Key left, Key right, Key up, Key down,
-		Key jump, Key attack, Key special, Key block)
+		Key jump, Key attack, Key special, Key block, Key taunt)
 	{
+		this.taunt = taunt;
 		this.left = left;
 		this.right = right;
 		this.up = up;
@@ -63,18 +74,18 @@ public class KeyboardInputSource : IInputSource
 		this.block = block;
 	}
 
-	/// <summary>Player 1: arrow keys to move; A jump, Q attack, W special, S block.</summary>
+	/// <summary>Player 1: arrow keys to move; A jump, Q attack, W special, S block, E taunt.</summary>
 	public static KeyboardInputSource Player1() => new KeyboardInputSource(
 		Key.Left, Key.Right, Key.Up, Key.Down,
-		Key.A, Key.Q, Key.W, Key.S);
+		Key.A, Key.Q, Key.W, Key.S, Key.E);
 
 	/// <summary>
 	/// Player 2, only when there is no second pad: all on the number pad, since player 1 has the
-	/// arrows. 8/4/5/6 move; 1 jump, 2 attack, 3 special, 0 block.
+	/// arrows. 8/4/5/6 move; 1 jump, 2 attack, 3 special, 0 block, 7 taunt.
 	/// </summary>
 	public static KeyboardInputSource Player2() => new KeyboardInputSource(
 		Key.Kp4, Key.Kp6, Key.Kp8, Key.Kp5,
-		Key.Kp1, Key.Kp2, Key.Kp3, Key.Kp0);
+		Key.Kp1, Key.Kp2, Key.Kp3, Key.Kp0, Key.Kp7);
 
 	public InputState Poll()
 	{
@@ -82,6 +93,7 @@ public class KeyboardInputSource : IInputSource
 		bool attackDown = Input.IsPhysicalKeyPressed(attack);
 		bool specialDown = Input.IsPhysicalKeyPressed(special);
 		bool startDown = Input.IsPhysicalKeyPressed(Key.Enter) || Input.IsPhysicalKeyPressed(Key.Space);
+		bool tauntDown = Input.IsPhysicalKeyPressed(taunt);
 
 		var state = new InputState
 		{
@@ -95,12 +107,14 @@ public class KeyboardInputSource : IInputSource
 			BlockHeld = Input.IsPhysicalKeyPressed(block),
 			SpecialHeld = specialDown,
 			StartPressed = startDown && !startWasDown,
+			TauntPressed = tauntDown && !tauntWasDown,
 		};
 
 		jumpWasDown = jumpDown;
 		attackWasDown = attackDown;
 		specialWasDown = specialDown;
 		startWasDown = startDown;
+		tauntWasDown = tauntDown;
 		return state;
 	}
 }

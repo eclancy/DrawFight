@@ -14,7 +14,7 @@ using Godot;
 public static class Specials
 {
 	// =========================================================================
-	// SWIFT - fire
+	// SWIFT - a fire punk. Mohawk, spiked leather jacket, flames everywhere.
 	// =========================================================================
 
 	public static MoveData[] Fire()
@@ -22,18 +22,24 @@ public static class Specials
 		return new[] { Fireball(), FlameDash(), FlareJump(), EmberTrap() };
 	}
 
-	/// <summary>Neutral: the signature. A fireball, built as literally as it can be built.</summary>
+	/// <summary>
+	/// Neutral: the signature. Hold special and a fireball grows in his hands; let go and it
+	/// flies straight ahead. A tap throws a small quick one; a full second of charge throws one
+	/// more than twice the size that hits more than twice as hard. It charges in the air too -
+	/// he keeps falling while he holds it, so a big one costs height.
+	/// </summary>
 	static MoveData Fireball() => new MoveData
 	{
 		MoveName = "Fireball",
-		Anim = AttackAnim.Punch,
-		StartupFrames = 12, ActiveFrames = 2, EndlagFrames = 22,
-		Damage = 9.0f, BaseKnockback = 26.0f, KnockbackGrowth = 0.9f,
-		LaunchAngleDegrees = 44.0f,
-		HitboxOffset = new Vector2(60.0f, -20.0f), HitboxRadius = 36.0f,
+		Anim = AttackAnim.PalmThrust,
+		StartupFrames = 14, ActiveFrames = 2, EndlagFrames = 20,
+		Chargeable = true, ChargeWithSpecial = true, ChargeDamage = 2.4f, ChargeSize = 2.1f,
+		Damage = 6.0f, BaseKnockback = 24.0f, KnockbackGrowth = 0.85f,
+		LaunchAngleDegrees = 40.0f,
+		HitboxOffset = new Vector2(64.0f, -24.0f), HitboxRadius = 0.0f,
 		Special = SpecialKind.Projectile,
-		SpecialSpeed = 1050.0f, SpecialGravity = 240.0f, SpecialLifetime = 78,
-		FxColor = new Color(0.97f, 0.52f, 0.20f), FxRadius = 34.0f,
+		SpecialSpeed = 1150.0f, SpecialGravity = 0.0f, SpecialLifetime = 70,
+		FxColor = new Color(0.97f, 0.52f, 0.20f), FxRadius = 26.0f, FxFlame = true,
 	};
 
 	/// <summary>Side: closes distance wrapped in flame. Approach tool.</summary>
@@ -52,20 +58,22 @@ public static class Specials
 	};
 
 	/// <summary>
-	/// Up: the recovery. Rides a jet of fire upward. Non-negotiable that this gets you back
-	/// to the stage - a fighter who cannot recover from below is unplayable whatever else it has.
+	/// Up: the recovery. Wings of fire burst out of his back and he flies, rising slowly and
+	/// steadily for over a second while he steers left and right - slower than a jump, but it
+	/// goes much higher and can be aimed back at the stage. Anyone he flies into is singed.
 	/// </summary>
 	static MoveData FlareJump() => new MoveData
 	{
-		MoveName = "Flare Jump",
-		Anim = AttackAnim.UpSmash,
-		StartupFrames = 7, ActiveFrames = 10, EndlagFrames = 20,
-		Damage = 8.0f, BaseKnockback = 28.0f, KnockbackGrowth = 0.9f,
-		LaunchAngleDegrees = 76.0f,
-		HitboxOffset = new Vector2(10.0f, -30.0f), HitboxRadius = 52.0f,
+		MoveName = "Fire Wings",
+		Anim = AttackAnim.Soar,
+		StartupFrames = 8, ActiveFrames = 70, EndlagFrames = 16,
+		Damage = 6.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.6f,
+		LaunchAngleDegrees = 80.0f,
+		HitboxOffset = new Vector2(0.0f, -30.0f), HitboxRadius = 54.0f,
 		Special = SpecialKind.Recovery,
-		SpecialRise = 1750.0f, SpecialSpeed = 340.0f,
-		FxColor = new Color(0.99f, 0.78f, 0.30f), FxRadius = 42.0f,
+		Flight = true, SpecialRise = 560.0f,
+		HeldArt = "wings", HeldArtOffset = new Vector2(-10.0f, -72.0f), HeldArtSize = 340.0f,
+		FxColor = new Color(0.99f, 0.62f, 0.24f), FxRadius = 42.0f,
 	};
 
 	/// <summary>Down: leaves a patch of fire burning on the ground. Zoning and ledge control.</summary>
@@ -195,6 +203,51 @@ public static class Specials
 	};
 
 	// =========================================================================
+	// DOOMBOT - PLACEHOLDERS. His character sheet has not arrived yet; these four stand-ins
+	// exist so he can be played, and every one is replaced when it does.
+	// =========================================================================
+
+	public static MoveData[] DoomBotPlaceholder() => new[]
+	{
+		new MoveData
+		{
+			MoveName = "Placeholder Blaster", Anim = AttackAnim.Punch,
+			StartupFrames = 12, ActiveFrames = 2, EndlagFrames = 22,
+			Damage = 8.0f, BaseKnockback = 26.0f, KnockbackGrowth = 0.85f, LaunchAngleDegrees = 40.0f,
+			HitboxOffset = new Vector2(64.0f, -24.0f), HitboxRadius = 0.0f,
+			Special = SpecialKind.Projectile, SpecialSpeed = 1100.0f, SpecialLifetime = 60,
+			FxColor = new Color(0.95f, 0.30f, 0.28f), FxRadius = 22.0f,
+		},
+		new MoveData
+		{
+			MoveName = "Placeholder Charge", Anim = AttackAnim.Lunge,
+			StartupFrames = 12, ActiveFrames = 8, EndlagFrames = 24,
+			Damage = 10.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.9f, LaunchAngleDegrees = 45.0f,
+			HitboxOffset = new Vector2(44.0f, -16.0f), HitboxRadius = 56.0f, CarriesMomentum = true,
+			Special = SpecialKind.Dash, SpecialSpeed = 1300.0f,
+			FxColor = new Color(0.95f, 0.30f, 0.28f), FxRadius = 40.0f,
+		},
+		new MoveData
+		{
+			MoveName = "Placeholder Rocket", Anim = AttackAnim.UpSmash,
+			StartupFrames = 8, ActiveFrames = 10, EndlagFrames = 20,
+			Damage = 7.0f, BaseKnockback = 28.0f, KnockbackGrowth = 0.85f, LaunchAngleDegrees = 80.0f,
+			HitboxOffset = new Vector2(0.0f, -30.0f), HitboxRadius = 50.0f,
+			Special = SpecialKind.Recovery, SpecialRise = 1700.0f, SpecialSpeed = 300.0f,
+			FxColor = new Color(0.98f, 0.70f, 0.25f), FxRadius = 40.0f,
+		},
+		new MoveData
+		{
+			MoveName = "Placeholder Mine", Anim = AttackAnim.LowKick,
+			StartupFrames = 14, ActiveFrames = 2, EndlagFrames = 24,
+			Damage = 7.0f, BaseKnockback = 38.0f, KnockbackGrowth = 0.6f, LaunchAngleDegrees = 70.0f,
+			HitboxOffset = new Vector2(48.0f, 30.0f), HitboxRadius = 36.0f,
+			Special = SpecialKind.Trap, SpecialLifetime = 240, MaxOut = 2,
+			FxColor = new Color(0.95f, 0.30f, 0.28f), FxRadius = 30.0f,
+		},
+	};
+
+	// =========================================================================
 	// EDGELORD - light, swords. "Stretchy arms, super speed, infinite swords."
 	//
 	// His art here is a placeholder: every sword and effect is ours, standing in until his own
@@ -215,8 +268,9 @@ public static class Specials
 	/// <summary>
 	/// Neutral: the signature. Press special and four swords appear around him - up, forward,
 	/// back and down - and pushing the stick throws that one. Each is a different tool, so the
-	/// choice is the skill: the greatsword for someone above, the rapier for someone far away, the
-	/// daggers for someone behind, the saw-blade for someone on the ground or below.
+	/// choice is the skill: the greatsword for someone above, the rapier for a quick poke, the
+	/// daggers for someone far away, the saw-blade for someone on the ground. Every one of them
+	/// flies the way he is facing - picking "back" chooses the daggers, it does not turn him.
 	/// </summary>
 	static MoveData InfiniteSwords() => new MoveData
 	{
@@ -243,7 +297,7 @@ public static class Specials
 		Special = SpecialKind.Projectile,
 		SpecialSpeed = 520.0f, LaunchLift = 1250.0f, SpecialGravity = 2300.0f, SpecialLifetime = 100,
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 34.0f,
-		FxTexture = EdgeFx("sword_greatsword"), FxArtSize = 150.0f, FxSpin = 17.0f,
+		FxTexture = EdgeFx("sword_greatsword"), FxArtSize = 200.0f, FxSpin = 17.0f,
 	};
 
 	/// <summary>Forward: a rapier, point first, faster and further than anything. Weak - it is for reach.</summary>
@@ -258,10 +312,13 @@ public static class Specials
 		Special = SpecialKind.Projectile,
 		SpecialSpeed = 1900.0f, SpecialGravity = 0.0f, SpecialLifetime = 34,
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 16.0f,
-		FxTexture = EdgeFx("sword_rapier"), FxArtSize = 116.0f, FxAlongFlight = true,
+		FxTexture = EdgeFx("sword_rapier"), FxArtSize = 156.0f, FxAlongFlight = true,
 	};
 
-	/// <summary>Back: he turns round and fans three daggers. Quick and short - a get-off-my-back.</summary>
+	/// <summary>
+	/// Back: three daggers fanned forward - the fastest and furthest-flying of the four. Weak
+	/// each, but they cross the whole stage before anyone can close in.
+	/// </summary>
 	static MoveData ThrownDaggers() => new MoveData
 	{
 		MoveName = "Daggers",
@@ -271,10 +328,10 @@ public static class Specials
 		LaunchAngleDegrees = 30.0f,
 		HitboxOffset = new Vector2(56.0f, -22.0f), HitboxRadius = 12.0f,
 		Special = SpecialKind.Projectile,
-		SpecialSpeed = 1450.0f, SpecialGravity = 0.0f, SpecialLifetime = 22,
+		SpecialSpeed = 2400.0f, SpecialGravity = 0.0f, SpecialLifetime = 30,
 		BurstCount = 3, BurstInterval = 5,
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 12.0f,
-		FxTexture = EdgeFx("sword_dagger"), FxArtSize = 58.0f, FxAlongFlight = true,
+		FxTexture = EdgeFx("sword_dagger"), FxArtSize = 80.0f, FxAlongFlight = true,
 	};
 
 	/// <summary>
@@ -292,7 +349,7 @@ public static class Specials
 		Special = SpecialKind.Projectile,
 		SpecialSpeed = 640.0f, SpecialGravity = 0.0f, SpecialLifetime = 70,
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 26.0f,
-		FxTexture = EdgeFx("sword_edgeblade"), FxArtSize = 96.0f, FxSpin = 26.0f,
+		FxTexture = EdgeFx("sword_edgeblade"), FxArtSize = 130.0f, FxSpin = 26.0f,
 	};
 
 	/// <summary>
@@ -334,8 +391,9 @@ public static class Specials
 		LaunchAngleDegrees = 70.0f,
 		HitboxOffset = new Vector2(18.0f, -20.0f), HitboxRadius = 54.0f,
 		Special = SpecialKind.Recovery,
-		DelayedLaunch = true, TetherLength = 400.0f, StretchArm = true,
-		SpecialRise = 1520.0f, SpecialSpeed = 640.0f,
+		// Launches him a long way: his arm reaches further than a jump does.
+		DelayedLaunch = true, TetherLength = 480.0f, StretchArm = true,
+		SpecialRise = 1920.0f, SpecialSpeed = 780.0f,
 		GrabThrow = new MoveData
 		{
 			MoveName = "Grapple Throw",
@@ -347,9 +405,10 @@ public static class Specials
 	};
 
 	/// <summary>
-	/// Down: he stabs a sword into the ground in front of him and leaves it. Anyone who runs into
-	/// it is cut and popped up. Two can be out; a third pulls up the oldest. Put down in the air,
-	/// it falls point-first until it sticks in whatever is below.
+	/// Down: he stabs a sword into the ground in front of him and leaves it. The first person to
+	/// run into it is cut and popped up, and the sword is gone; left alone, it is gone after four
+	/// seconds. Two can be out; a third pulls up the oldest. Put down in the air, it falls
+	/// point-first until it sticks in whatever is below.
 	/// </summary>
 	static MoveData PlantedBlade() => new MoveData
 	{
@@ -359,11 +418,11 @@ public static class Specials
 		Damage = 9.0f, BaseKnockback = 38.0f, KnockbackGrowth = 0.7f,
 		LaunchAngleDegrees = 72.0f,
 		// Low enough that, on the ground, the point is in the floor.
-		HitboxOffset = new Vector2(62.0f, 13.0f), HitboxRadius = 30.0f,
+		HitboxOffset = new Vector2(66.0f, -7.0f), HitboxRadius = 34.0f,
 		Special = SpecialKind.Trap,
-		SpecialLifetime = 420, SpecialGravity = 3000.0f, MaxOut = 2,
+		SpecialLifetime = 240, SpecialGravity = 3000.0f, MaxOut = 2, SpentOnHit = true,
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 30.0f,
-		FxTexture = EdgeFx("planted"), FxArtSize = 110.0f,
+		FxTexture = EdgeFx("planted"), FxArtSize = 150.0f,
 	};
 
 	// =========================================================================
@@ -384,23 +443,26 @@ public static class Specials
 	}
 
 	/// <summary>
-	/// Neutral: the signature. A burst of four nails, straight ahead and fast. Each one is weak
-	/// and barely pushes, so it is a way to chip at someone who stays out of reach of his
-	/// sledgehammer - the one thing a heavy is otherwise bad at.
+	/// Neutral: the signature. He pulls out an orange nail gun and fires a burst of four nails,
+	/// straight ahead and fast. Each one is weak and barely pushes, so it is a way to chip at
+	/// someone who stays out of reach of his tools - the one thing a heavy is otherwise bad at.
 	/// </summary>
 	static MoveData NailGun() => new MoveData
 	{
 		MoveName = "Nail Gun",
 		Anim = AttackAnim.Punch,
+		PropArt = "tool_nailgun",
 		StartupFrames = 12, ActiveFrames = 14, EndlagFrames = 20,
 		Damage = 2.5f, BaseKnockback = 12.0f, KnockbackGrowth = 0.35f,
 		LaunchAngleDegrees = 20.0f,
-		HitboxOffset = new Vector2(70.0f, -26.0f), HitboxRadius = 10.0f,
+		// From the muzzle of the gun, held out at arm's length.
+		HitboxOffset = new Vector2(112.0f, -54.0f), HitboxRadius = 0.0f,
 		Special = SpecialKind.Projectile,
 		SpecialSpeed = 1700.0f, SpecialGravity = 0.0f, SpecialLifetime = 32,
 		BurstCount = 4, BurstInterval = 4,
 		Streak = true,
-		FxColor = new Color(0.30f, 0.32f, 0.38f), FxRadius = 10.0f,
+		// Bright brass nails, not grey ones: they have to be seen against any stage.
+		FxColor = new Color(0.96f, 0.72f, 0.20f), FxRadius = 10.0f,
 	};
 
 	/// <summary>
@@ -423,14 +485,17 @@ public static class Specials
 	};
 
 	/// <summary>
-	/// Up: the recovery. He swings the wrecking ball up and over his head, and it hauls him up
-	/// after it. The ball hits anyone above him on the way. A heavy fighter still needs a real
-	/// way home; this is a slower one, since he waits for the swing before he rises.
+	/// Up: the recovery. He swings the wrecking ball up over his head, grabs its cable with both
+	/// hands, and it hauls him up hanging underneath it. The ball hits anyone above him on the way.
+	/// At the top he lets go of it and it drops away - on top of anyone below. A heavy fighter
+	/// still needs a real way home; this is a slower one, since he waits for the swing before he
+	/// rises.
 	/// </summary>
 	static MoveData WreckingBallSwing() => new MoveData
 	{
 		MoveName = "Wrecking Ball",
-		Anim = AttackAnim.UpSmash,
+		Anim = AttackAnim.HangUp,
+		PropArt = "-",
 		StartupFrames = 10, ActiveFrames = 12, EndlagFrames = 26,
 		Damage = 13.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.95f,
 		LaunchAngleDegrees = 78.0f,
@@ -438,8 +503,19 @@ public static class Specials
 		Special = SpecialKind.Recovery,
 		DelayedLaunch = true,
 		SpecialRise = 1560.0f, SpecialSpeed = 360.0f,
-		SwingArt = "wreckingball", SwingLength = 120.0f, SwingArtSize = 78.0f,
-		FxColor = new Color(0.30f, 0.30f, 0.34f), FxRadius = 40.0f,
+		SwingArt = "wreckingball", SwingLength = 110.0f, SwingArtSize = 96.0f,
+		HangFromArt = true,
+		ReleaseDrop = new MoveData
+		{
+			MoveName = "Falling Wrecking Ball",
+			Damage = 10.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.7f,
+			LaunchAngleDegrees = -60.0f,
+			Special = SpecialKind.Drop,
+			SpecialSpeed = 300.0f, SpecialGravity = 3600.0f, SpecialLifetime = 110,
+			FxColor = new Color(0.38f, 0.40f, 0.47f), FxRadius = 42.0f,
+			FxTexture = LugFx("wreckingball"),
+		},
+		FxColor = new Color(0.98f, 0.78f, 0.20f), FxRadius = 40.0f,
 	};
 
 	/// <summary>

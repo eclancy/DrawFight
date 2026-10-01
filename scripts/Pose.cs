@@ -94,14 +94,23 @@ public sealed class Pose
 	/// <paramref name="hipAmount"/>. Joints are clamped just past straight up, so an arm already
 	/// raised overhead does not swing on round behind the back.
 	/// </summary>
-	public static void Exaggerate(Pose source, float amount, float hipAmount, Pose into)
+	/// <param name="fighterDrama">
+	/// A fighter's own extra drama (FighterData.AnimationDrama). It goes almost all into the legs:
+	/// a wider stance and a higher knee read as energy, while an arm pushed further than it was
+	/// posed stops pointing where the attack goes - a forward thrust tipped up into the air.
+	/// </param>
+	public static void Exaggerate(Pose source, float amount, float hipAmount, Pose into, float fighterDrama = 1.0f)
 	{
 		for (int i = 0; i < (int)RigBone.Count; i++)
 		{
 			// The spine and neck get a fraction of it: a limb swung further reads as energy, a
 			// whole body tipped further reads as falling over.
-			bool core = i == (int)RigBone.Torso || i == (int)RigBone.Head;
-			float k = core ? 1.0f + (amount - 1.0f) * 0.4f : amount;
+			var bone = (RigBone)i;
+			bool core = bone == RigBone.Torso || bone == RigBone.Head;
+			bool leg = bone == RigBone.LegFrontUpper || bone == RigBone.LegFrontLower
+				|| bone == RigBone.LegBackUpper || bone == RigBone.LegBackLower;
+			float extra = leg ? fighterDrama : 1.0f + (fighterDrama - 1.0f) * 0.15f;
+			float k = core ? 1.0f + (amount - 1.0f) * 0.4f : amount * extra;
 			into.rotations[i] = Mathf.Clamp(source.rotations[i] * k, -185.0f, 185.0f);
 		}
 		into.HipOffset = source.HipOffset * hipAmount;

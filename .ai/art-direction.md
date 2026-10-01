@@ -43,12 +43,19 @@ Because backgrounds carry no outlines at all, an outline means something:
 That last one turns a mechanic into something visible instead of something discovered by dying.
 Keep it. A soft platform drawn with a solid outline is a bug, not a style choice.
 
-## Two styles
+## Three styles
 
-Both are crayon and marker. They differ in what the world is drawn *on*.
+They differ in what the world is drawn *on*.
 
-**`ExerciseBook`** is the house style and the default. Ruled school paper with a pink margin
-rule, drawn over in blue biro and filled with crayon. Used by Fridge Door and City Rooftops.
+**`ExerciseBook`** is the house style. Ruled school paper with a pink margin rule, drawn over in
+blue biro and filled with crayon. Used by City Rooftops.
+
+**`TapedPage`** puts that page *on something*. The stage is drawn on a sheet of ruled paper
+(`StageData.PageRect`) taped to a surface, and the surface is drawn round it - all in
+**coloured pencil**: fine close strokes that stay inside the lines, gone over twice for an
+outline (`CrayonBrush.PencilFill` / `PencilRect`). The sky colours become the surface. Used by
+Fridge Door, where the surface is a brushed-steel fridge door. Keep the sheet only a little
+bigger than the stage, so the thing it is taped to actually shows.
 
 **`OutsideTheLines`** is for nature stages. Plain paper, no rules, indigo outlines, and crayon
 fill that deliberately **overshoots the line**. Used by Open Plains. The overshoot is the single
@@ -58,8 +65,9 @@ Switching a stage between the two should be a one-line change, and it is: `Stage
 
 ## Night is pale
 
-City Rooftops is a night stage and its sky is **lavender, not black**. Two reasons, and the
-first is not negotiable:
+City Rooftops is an evening stage - a clear blue sky, a moon coming up, the first windows lit,
+and pale cement buildings - and any night stage's sky is **lavender, not black**. Two reasons,
+and the first is not negotiable:
 
 1. A dark sky erases the fighters. They are black ink; that is the whole point of them.
 2. **It is how children actually draw night** — pale purple sky, a big moon, yellow windows.
@@ -87,11 +95,12 @@ shimmers — which reads as a rendering bug rather than as hand-drawn.
 
 | stage | style | shape of it |
 |-------|-------|-------------|
-| **Fridge Door** *(default)* | ExerciseBook | Where kids' drawings actually end up. Magnets are the platforms; taped-up pages are the scenery, which makes this the stage his non-fighter drawings move into. |
+| **Fridge Door** *(default)* | TapedPage | Where kids' drawings actually end up. The stage is a pencil drawing on a sheet taped to a steel fridge door; other drawings held up by magnets are the scenery, which makes this the stage his non-fighter drawings move into. |
 | **Open Plains** | OutsideTheLines | Flat, daytime, only trees and grass: the treetops are the platforms, and nothing on it is built. Ground runs past both blast zones, so **there is no bottom blast zone at all**. |
-| **City Rooftops** | ExerciseBook, night | Separate rooftops with real gaps, one tall tower. Buildings extend past the bottom blast zone so the gaps are shafts, not pits. |
+| **City Rooftops** | ExerciseBook, evening | Six separate rooftops with real gaps, one tall tower, a hazy skyline behind. Every building has windows in a centred grid and a pair of doors at the foot. A building site fills two of the gaps: a tower crane whose jib you can stand on, a steel beam hanging from its hook, and two levels of scaffolding to climb out of the street (`CraneJib`, `HangingBeam`, `Scaffold`, all soft). The cement buildings stand on a street that runs the whole width, with the pavement drawn behind the road surface you stand on. Cars drive along it every few seconds at random (`StageData.Traffic`, `StreetTraffic`): fall into a gap and you are in the road, where a car smashes you up and away - a KO from about 60% - unless you jump it or get out. Headlights reach well ahead of each car, so it is seen coming. No bottom blast zone. |
 
 Open Plains and City Rooftops are deliberate opposites. On one, a missed jump costs nothing —
 which is the right first stage for a younger or newer player, because losing a stock to a failed
-recovery is the most demoralising way to lose. On the other, the floor itself is the hazard.
+recovery is the most demoralising way to lose. On the other, the floor itself is the hazard -
+not a bottomless pit any more, but a street with traffic in it.
 Keep one of each in the roster as it grows.

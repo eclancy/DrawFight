@@ -54,6 +54,34 @@ public partial class Hazard : Node2D
 	/// </summary>
 	const float BeamBurstFraction = 0.25f;
 
+	// Something summoned up out of the floor: the floor's height, which is where its drawing is
+	// cut off, and whether it is one of those at all.
+	float riseGround;
+	bool rising;
+
+	/// <summary>
+	/// Starts this hazard buried in the floor at <paramref name="groundY"/>, to rise out of it.
+	/// Only the part above the floor is drawn or can hit.
+	/// </summary>
+	/// <summary>Draws the art mirrored - the far one of a mirrored pair, so both face outward.</summary>
+	public bool FlipArt;
+
+	public void RiseFrom(float groundY)
+	{
+		rising = true;
+		riseGround = groundY;
+		GlobalPosition = new Vector2(GlobalPosition.X, groundY + ArtHalfHeight());
+	}
+
+	/// <summary>Half the height the effect art is drawn at, or the hitbox radius if there is no art.</summary>
+	float ArtHalfHeight()
+	{
+		if (move.FxTexture == null) return move.FxRadius;
+		Vector2 size = move.FxTexture.GetSize();
+		float fit = move.FxArtSize > 0.0f ? move.FxArtSize : move.FxRadius * 2.3f;
+		return fit * size.Y / Mathf.Max(size.X, size.Y) * 0.5f;
+	}
+
 	/// <summary>Hazards do not hit the fighter who made them for this many frames.</summary>
 	const int OwnerGraceFrames = 8;
 
@@ -104,6 +132,13 @@ public partial class Hazard : Node2D
 		{
 			velocity = new Vector2(velocity.X, velocity.Y + gravity * dt);
 			GlobalPosition += velocity * dt;
+		}
+
+		// Risen and fallen back into the floor: gone.
+		if (rising && velocity.Y > 0.0f && GlobalPosition.Y > riseGround + ArtHalfHeight())
+		{
+			Expire();
+			return;
 		}
 
 		QueryHits();
@@ -203,8 +238,9 @@ public partial class Hazard : Node2D
 			}
 
 			// A travelling hazard is spent on contact; a lingering one keeps burning, which is
-			// what makes a trap a zoning tool rather than a slow projectile.
-			if (!Lingers) Expire();
+			// what makes a trap a zoning tool rather than a slow projectile - unless it is the
+			// kind that is used up by the hit it lands.
+			if (!Lingers || move.SpentOnHit) Expire();
 			return;
 		}
 	}
@@ -226,6 +262,17 @@ public partial class Hazard : Node2D
 
 		float radius = move.FxRadius;
 		float length = move.Beam ? beamLength : 0.0f;
+
+		if (rising)
+		{
+			// What hits is the top of the drawing - the axe head - and only once it is up out
+			// of the floor.
+			Vector2 top = GlobalPosition + new Vector2(0.0f, -ArtHalfHeight() + radius);
+			nearest = new Vector2(
+				Mathf.Clamp(top.X, body.Position.X, body.End.X),
+				Mathf.Clamp(top.Y, body.Position.Y, body.End.Y));
+			return top.Y < riseGround && nearest.DistanceSquaredTo(top) <= radius * radius;
+		}
 		int steps = Mathf.Max(1, Mathf.CeilToInt(length / Mathf.Max(4.0f, radius)));
 
 		for (int i = 0; i <= steps; i++)
@@ -243,7 +290,7 @@ public partial class Hazard : Node2D
 
 	/// <summary>A trap burns and an explosion blasts; both keep hitting until they fade.</summary>
 	bool Lingers => move.Special == SpecialKind.Trap || move.Special == SpecialKind.Bomb
-		|| move.Special == SpecialKind.Shockwave;
+		|| move.Special == SpecialKind.Shockwave || move.FromGround;
 
 	void Expire()
 	{
@@ -276,8 +323,21 @@ public partial class Hazard : Node2D
 			if (move.FxAlongFlight && velocity.LengthSquared() > 1.0f) angle = velocity.Angle() + Mathf.Pi * 0.5f;
 			else if (move.FxSpin != 0.0f) angle = Mathf.DegToRad(move.FxSpin * ageFrames) * (velocity.X < 0.0f ? -1.0f : 1.0f);
 
-			DrawSetTransformMatrix(new Transform2D(angle, new Vector2(s, s), 0.0f, Vector2.Zero));
-			DrawTexture(art, -size * 0.5f, tint);
+			DrawSetTransformMatrix(new Transform2D(angle, new Vector2(FlipArt ? -s : s, s), 0.0f, Vector2.Zero));
+			if (rising)
+			{
+				// Only what has come up through the floor is drawn; the rest is still underground.
+				float rows = Mathf.Clamp((riseGround - GlobalPosition.Y) / s + size.Y * 0.5f, 0.0f, size.Y);
+				if (rows > 0.5f)
+				{
+					DrawTextureRectRegion(art, new Rect2(-size.X * 0.5f, -size.Y * 0.5f, size.X, rows),
+						new Rect2(0.0f, 0.0f, size.X, rows), tint);
+				}
+			}
+			else
+			{
+				DrawTexture(art, -size * 0.5f, tint);
+			}
 		}
 
 		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
@@ -354,6 +414,28 @@ public partial class Hazard : Node2D
 		if (points.Count > 1) DrawPolyline(points.ToArray(), crack, 4.0f);
 	}
 
+	/// <summary>
+	/// A fireball: a tail of shrinking, reddening puffs streaming back the way it came, then the
+	/// ball - orange round a yellow-white core - flickering as it flies.
+	/// </summary>
+	void DrawFlame(float radius)
+	{
+		Vector2 back = velocity.LengthSquared() > 1.0f ? -velocity.Normalized() : Vector2.Left;
+		const int Puffs = 5;
+		for (int i = Puffs; i >= 1; i--)
+		{
+			float k = i / (float)Puffs;
+			float jitter = CrayonBrush.Noise(ageFrames + i * 7, 11) * radius * 0.25f;
+			Vector2 at = back * radius * 0.55f * i + back.Orthogonal() * jitter;
+			var puff = new Color(0.95f, 0.30f + 0.25f * (1.0f - k), 0.16f, 0.75f * (1.0f - k * 0.8f));
+			DrawCircle(at, radius * (1.0f - k * 0.6f), puff);
+		}
+		float flicker = 1.0f + CrayonBrush.Noise(ageFrames, 3) * 0.08f;
+		DrawCircle(Vector2.Zero, radius * 1.1f * flicker, new Color(0.96f, 0.36f, 0.16f));
+		DrawCircle(Vector2.Zero, radius * 0.78f * flicker, new Color(0.99f, 0.62f, 0.20f));
+		DrawCircle(Vector2.Zero, radius * 0.45f, new Color(1.0f, 0.93f, 0.62f));
+	}
+
 	public override void _Draw()
 	{
 		if (move == null) return;
@@ -381,10 +463,14 @@ public partial class Hazard : Node2D
 
 		if (move.Streak && velocity.LengthSquared() > 1.0f)
 		{
-			// A nail: a short dark streak with a head, pointing the way it flies.
+			// A nail: a short streak with a head, pointing the way it flies - in the move's own
+			// colour, edged in grey so a bright nail still reads on a pale stage.
 			Vector2 back = -velocity.Normalized() * radius * 3.2f;
-			DrawLine(back, Vector2.Zero, new Color(0.30f, 0.32f, 0.38f), radius * 0.7f);
-			DrawCircle(back, radius * 0.55f, new Color(0.30f, 0.32f, 0.38f));
+			var edge = new Color(0.36f, 0.34f, 0.38f);
+			DrawLine(back, Vector2.Zero, edge, radius * 1.0f);
+			DrawCircle(back, radius * 0.75f, edge);
+			DrawLine(back, Vector2.Zero, move.FxColor, radius * 0.55f);
+			DrawCircle(back, radius * 0.5f, move.FxColor);
 			return;
 		}
 
@@ -395,6 +481,12 @@ public partial class Hazard : Node2D
 			DrawLine(Vector2.Zero, tip, body, radius * 2.0f);
 			DrawCircle(tip, radius, body);
 			DrawLine(Vector2.Zero, tip, new Color(1.0f, 0.95f, 0.85f, 0.9f), radius * 0.7f);
+			return;
+		}
+
+		if (move.FxFlame)
+		{
+			DrawFlame(radius);
 			return;
 		}
 

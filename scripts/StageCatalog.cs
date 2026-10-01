@@ -35,22 +35,22 @@ public static class StageCatalog
 	// =========================================================================
 
 	/// <summary>
-	/// Where kids drawings actually end up. The play surface is the door, the platforms are
-	/// magnets, and the scenery is other drawings taped up behind the fight - which makes this
-	/// the stage where his non-fighter art has somewhere to live.
-	///
-	/// Drawn in the exercise-book style: the whole world is a page, and this page has a fridge
-	/// on it.
+	/// Where kids' drawings actually end up. The stage is a drawing on a sheet of paper taped to
+	/// a steel fridge door, and the door round it - brushed metal, the handle, magnets holding up
+	/// other drawings - is the backdrop. All of it in coloured pencil. The other pages are where
+	/// his non-fighter art has somewhere to live.
 	/// </summary>
 	public static StageData FridgeDoor()
 	{
 		var data = new StageData
 		{
 			DisplayName = "Fridge Door",
-			Style = StageStyle.ExerciseBook,
+			Style = StageStyle.TapedPage,
 
-			SkyTop = new Color(0.965f, 0.960f, 0.940f),
-			SkyBottom = new Color(0.925f, 0.930f, 0.920f),
+			// The door: pale brushed steel, a little cooler at the bottom. Light, like every
+			// backdrop - the fighters own the dark end of the value ladder.
+			SkyTop = new Color(0.86f, 0.88f, 0.90f),
+			SkyBottom = new Color(0.76f, 0.79f, 0.83f),
 			RuleLine = new Color(0.78f, 0.855f, 0.90f),
 			MarginLine = new Color(0.91f, 0.66f, 0.72f),
 			Ink = new Color(0.19f, 0.31f, 0.61f),
@@ -67,24 +67,30 @@ public static class StageCatalog
 
 		data.Platforms = new[]
 		{
-			// The long magnetic strip along the bottom of the door.
-			new StagePlatform(new Rect2(-620.0f, 0.0f, 1240.0f, 48.0f), false, PlatformLook.Ledge),
+			// The main ground, drawn along the page.
+			new StagePlatform(new Rect2(-620.0f, 0.0f, 1240.0f, 48.0f), false, PlatformLook.PencilLedge),
 
-			new StagePlatform(new Rect2(-430.0f, -250.0f, 300.0f, 28.0f), true, PlatformLook.Magnet),
-			new StagePlatform(new Rect2(130.0f, -250.0f, 300.0f, 28.0f), true, PlatformLook.Magnet),
-			new StagePlatform(new Rect2(-150.0f, -480.0f, 300.0f, 28.0f), true, PlatformLook.Magnet),
+			new StagePlatform(new Rect2(-430.0f, -250.0f, 300.0f, 28.0f), true, PlatformLook.PencilLedge),
+			new StagePlatform(new Rect2(130.0f, -250.0f, 300.0f, 28.0f), true, PlatformLook.PencilLedge),
+			new StagePlatform(new Rect2(-150.0f, -480.0f, 300.0f, 28.0f), true, PlatformLook.PencilLedge),
 
-			// Two small magnets past the strip, so the ledges are worth fighting over.
-			new StagePlatform(new Rect2(-870.0f, -170.0f, 170.0f, 26.0f), true, PlatformLook.Magnet),
-			new StagePlatform(new Rect2(700.0f, -170.0f, 170.0f, 26.0f), true, PlatformLook.Magnet),
+			// Two small ones out past the ground, so the ledges are worth fighting over.
+			new StagePlatform(new Rect2(-870.0f, -170.0f, 170.0f, 26.0f), true, PlatformLook.PencilLedge),
+			new StagePlatform(new Rect2(700.0f, -170.0f, 170.0f, 26.0f), true, PlatformLook.PencilLedge),
 		};
+
+		// Only just bigger than the stage, so the door shows round it.
+		data.PageRect = new Rect2(-960.0f, -640.0f, 1920.0f, 840.0f);
 
 		data.Props = new[]
 		{
-			new StageProp(PropKind.TapedDrawing, new Rect2(-760.0f, -700.0f, 300.0f, 250.0f), 11),
-			new StageProp(PropKind.TapedDrawing, new Rect2(330.0f, -760.0f, 330.0f, 270.0f), 23),
-			new StageProp(PropKind.TapedDrawing, new Rect2(-180.0f, -880.0f, 280.0f, 210.0f), 37),
-			new StageProp(PropKind.FridgeHandle, new Rect2(1000.0f, -900.0f, 46.0f, 1500.0f), 5),
+			// Other drawings on the door, held up by magnets, above and beside the sheet.
+			new StageProp(PropKind.TapedDrawing, new Rect2(-900.0f, -1180.0f, 320.0f, 260.0f), 11),
+			new StageProp(PropKind.FridgeMagnet, new Rect2(-765.0f, -1205.0f, 50.0f, 50.0f), 12),
+			new StageProp(PropKind.TapedDrawing, new Rect2(420.0f, -1220.0f, 340.0f, 280.0f), 23),
+			new StageProp(PropKind.FridgeMagnet, new Rect2(565.0f, -1245.0f, 50.0f, 50.0f), 24),
+			new StageProp(PropKind.FridgeMagnet, new Rect2(-140.0f, -1010.0f, 60.0f, 60.0f), 31),
+			new StageProp(PropKind.FridgeHandle, new Rect2(1180.0f, -1100.0f, 56.0f, 1700.0f), 5),
 		};
 
 		data.SpawnPoints = new[]
@@ -179,14 +185,18 @@ public static class StageCatalog
 	// =========================================================================
 
 	/// <summary>
-	/// Separate rooftops with real gaps between them, so the ground itself is a hazard: miss a
-	/// jump and you go down a shaft. The opposite of Open Plains on purpose - this is the stage
-	/// that punishes bad movement, and it exists so the roster has one of each.
+	/// Separate rooftops with real gaps between them, and a street at the bottom with traffic.
+	/// Miss a jump and you land in the road, where cars come by at random and knock you flying -
+	/// jump over them or get out of the street. The opposite of Open Plains on purpose: this is
+	/// the stage where the ground itself is the hazard, and it exists so the roster has one of each.
 	///
-	/// Night, but a KID night: pale twilight, not black. A dark sky would swallow the fighters,
-	/// who are drawn in black marker, and it is also just how children draw night - lavender
-	/// sky, big moon, warm yellow windows.
+	/// Evening: a clear blue sky paling toward the horizon, a moon coming up and the first
+	/// windows lit. Light, like every sky here - a dark one would swallow the fighters, who are
+	/// drawn in black marker. The buildings are pale cement, not coloured paper.
 	/// </summary>
+	/// <summary>Where City Rooftops' street is: the bottom of every building, and the top of the road.</summary>
+	const float Street = 350.0f;
+
 	public static StageData CityRooftops()
 	{
 		var data = new StageData
@@ -194,32 +204,51 @@ public static class StageCatalog
 			DisplayName = "City Rooftops",
 			Style = StageStyle.ExerciseBook,
 
-			SkyTop = new Color(0.66f, 0.66f, 0.84f),
-			SkyBottom = new Color(0.90f, 0.84f, 0.86f),
-			RuleLine = new Color(0.76f, 0.78f, 0.88f),
-			MarginLine = new Color(0.86f, 0.64f, 0.74f),
+			SkyTop = new Color(0.42f, 0.64f, 0.94f),
+			SkyBottom = new Color(0.84f, 0.91f, 0.98f),
+			RuleLine = new Color(0.72f, 0.80f, 0.92f),
+			MarginLine = new Color(0.90f, 0.62f, 0.66f),
 			Ink = new Color(0.20f, 0.24f, 0.46f),
-			GroundFill = new Color(0.88f, 0.87f, 0.92f),
-			GroundCrayon = new Color(0.70f, 0.70f, 0.85f),
-			PlatformCrayon = new Color(0.74f, 0.73f, 0.86f),
-			PropFill = new Color(0.93f, 0.92f, 0.95f),
-			PropCrayon = new Color(0.72f, 0.71f, 0.84f),
+			// Unlit windows: pale glass reflecting the sky.
+			GroundFill = new Color(0.84f, 0.89f, 0.96f),
+			GroundCrayon = new Color(0.70f, 0.74f, 0.82f),
+			PlatformCrayon = new Color(0.76f, 0.76f, 0.80f),
+			// Cement: warm off-white, shaded in pale grey.
+			PropFill = new Color(0.95f, 0.94f, 0.91f),
+			PropCrayon = new Color(0.80f, 0.79f, 0.76f),
 			Accent = new Color(0.99f, 0.85f, 0.45f),
 			Celestial = new Color(0.99f, 0.96f, 0.82f),
 			Night = true,
-			GroundLine = 900.0f,
+			GroundLine = Street,
+			// The street runs the whole width, so there is nothing to fall out of the bottom of.
+			HasBottomBlastZone = false,
+			Traffic = true,
 		};
 
 		data.Platforms = new[]
 		{
-			// Each rectangle is the whole building. They run well past the bottom blast zone,
-			// so the gaps between them are shafts rather than pits with a floor.
-			new StagePlatform(new Rect2(-1080.0f, -40.0f, 470.0f, 1500.0f), false, PlatformLook.Building),
-			new StagePlatform(new Rect2(-340.0f, -210.0f, 430.0f, 1670.0f), false, PlatformLook.Building),
-			new StagePlatform(new Rect2(320.0f, -70.0f, 420.0f, 1530.0f), false, PlatformLook.Building),
+			// Each rectangle is the whole building, standing on the street.
+			new StagePlatform(new Rect2(-1500.0f, 40.0f, 300.0f, Street - 40.0f), false, PlatformLook.Building),
+			new StagePlatform(new Rect2(-1080.0f, -40.0f, 470.0f, Street + 40.0f), false, PlatformLook.Building),
+			new StagePlatform(new Rect2(-340.0f, -210.0f, 430.0f, Street + 210.0f), false, PlatformLook.Building),
+			new StagePlatform(new Rect2(320.0f, -70.0f, 420.0f, Street + 70.0f), false, PlatformLook.Building),
+			new StagePlatform(new Rect2(1180.0f, -160.0f, 300.0f, Street + 160.0f), false, PlatformLook.Building),
 
 			// The tall one.
-			new StagePlatform(new Rect2(830.0f, -760.0f, 210.0f, 2220.0f), false, PlatformLook.Tower),
+			new StagePlatform(new Rect2(830.0f, -760.0f, 210.0f, Street + 760.0f), false, PlatformLook.Tower),
+
+			// The street: past both side blast zones, so it has no corners to grab and no end.
+			new StagePlatform(new Rect2(-2600.0f, Street, 5200.0f, 420.0f), false, PlatformLook.Road),
+
+			// A building site in the first gap: a tower crane whose jib you can stand on, with a
+			// steel beam hanging off its hook - both soft, so you can jump up through them.
+			new StagePlatform(new Rect2(-760.0f, -380.0f, 470.0f, 22.0f), true, PlatformLook.CraneJib),
+			new StagePlatform(new Rect2(-425.0f, -380.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam),
+
+			// Scaffolding up the side of the second gap: two levels, a way to climb back out of
+			// the street before the next car comes.
+			new StagePlatform(new Rect2(100.0f, 40.0f, 210.0f, 18.0f), true, PlatformLook.Scaffold),
+			new StagePlatform(new Rect2(100.0f, 190.0f, 210.0f, 18.0f), true, PlatformLook.Scaffold),
 
 			// A billboard gantry, so the middle of the map is contestable in the air.
 			new StagePlatform(new Rect2(-80.0f, -560.0f, 300.0f, 24.0f), true, PlatformLook.Ledge),
@@ -228,6 +257,8 @@ public static class StageCatalog
 		data.Props = new[]
 		{
 			new StageProp(PropKind.Moon, new Rect2(-900.0f, -1000.0f, 170.0f, 170.0f), 2),
+			// The rest of the city, far off behind the rooftops.
+			new StageProp(PropKind.Skyline, new Rect2(-2600.0f, -640.0f, 5200.0f, 640.0f + Street), 71),
 			new StageProp(PropKind.Star, new Rect2(-400.0f, -1080.0f, 26.0f, 26.0f), 6),
 			new StageProp(PropKind.Star, new Rect2(120.0f, -960.0f, 20.0f, 20.0f), 8),
 			new StageProp(PropKind.Star, new Rect2(560.0f, -1120.0f, 24.0f, 24.0f), 12),

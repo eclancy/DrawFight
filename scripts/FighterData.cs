@@ -52,6 +52,19 @@ public partial class FighterData : Resource
 	[Export] public float VisualScale { get; set; } = 1.0f;
 
 	/// <summary>
+	/// How much bigger than the shared library this fighter plays its animations. The library is
+	/// authored once for everyone; a fighter whose drawing is stiff or whose character is wild
+	/// can push every pose further from rest.
+	/// </summary>
+	[Export] public float AnimationDrama { get; set; } = 1.0f;
+
+	/// <summary>
+	/// The colour of this fighter's swing trails. Transparent means use PlaceholderColor, the
+	/// fighter's own colour.
+	/// </summary>
+	[Export] public Color TrailColor { get; set; } = new Color(0.0f, 0.0f, 0.0f, 0.0f);
+
+	/// <summary>
 	/// Knocked over by a real hit: rolls along the ground as a ball with no arms or legs until
 	/// he gets back up, and can roll right off the stage. Circy's declared weakness, and a
 	/// reusable trait for any round or top-heavy fighter.
@@ -75,6 +88,15 @@ public partial class FighterData : Resource
 	/// </summary>
 	public MoveData[] Moves = System.Array.Empty<MoveData>();
 
+	/// <summary>
+	/// What this fighter does when it taunts: a pose held for a moment, open to attack. Built by
+	/// <see cref="Taunts"/>. Null means no taunt.
+	/// </summary>
+	public MoveData Taunt;
+
+	/// <summary>What the fighter says in a speech bubble while taunting. Empty says nothing.</summary>
+	public string TauntLine = "";
+
 	public MoveData Move(MoveSlot slot)
 	{
 		int i = (int)slot;
@@ -92,7 +114,8 @@ public partial class FighterData : Resource
 	{
 		var data = new FighterData
 		{
-			DisplayName = "Swift",
+			// Flambe: a fire punk who is also, somehow, a French chef.
+			DisplayName = "Flambé",
 			PlaceholderColor = new Color(0.36f, 0.72f, 0.98f),
 			Weight = WeightClass.Light,
 			RunSpeed = 980.0f,
@@ -103,9 +126,13 @@ public partial class FighterData : Resource
 			BodySize = new Vector2(64.0f, 118.0f),
 			RigPath = "res://fighters/swift/rig.json",
 			VisualScale = 1.06f,
+			// Fire: every swing leaves a streak of flame.
+			TrailColor = new Color(1.0f, 0.44f, 0.16f),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire(),
 			CharacterNormals.Swift, CharacterNormals.SwiftJab());
+		data.Taunt = Taunts.Make(AttackAnim.HangUp, propArt: "");
+		data.TauntLine = "Too hot for you!";
 		return data;
 	}
 
@@ -113,7 +140,7 @@ public partial class FighterData : Resource
 	{
 		var data = new FighterData
 		{
-			DisplayName = "Lug",
+			DisplayName = "Lugnut",
 			PlaceholderColor = new Color(0.97f, 0.55f, 0.29f),
 			Weight = WeightClass.Heavy,
 			RunSpeed = 740.0f,
@@ -124,14 +151,18 @@ public partial class FighterData : Resource
 			BodySize = new Vector2(84.0f, 142.0f),
 			RigPath = "res://fighters/lug/rig.json",
 			VisualScale = 1.12f,
+			// Hi-vis yellow, like his tools and vest: every swing leaves a bright streak.
+			TrailColor = new Color(1.0f, 0.74f, 0.12f),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Construction(),
 			CharacterNormals.Lug, CharacterNormals.LugJab());
+		data.Taunt = Taunts.Make(AttackAnim.OverheadArc, propArt: "tool_sledgehammer", extra: "hardhat");
+		data.TauntLine = "Break's over!";
 		return data;
 	}
 
 	/// <summary>
-	/// EdgeLord: "stretchy arms, super speed, infinite swords." Light and the fastest runner in the
+	/// EdgeLord, drawn by Eric: "stretchy arms, super speed, infinite swords." Light and the fastest runner in the
 	/// game, which is also his weakness - light is easy to launch, and his normals are ordinary
 	/// sword swings, so his range comes from his specials. The art is a placeholder until his
 	/// own coloured drawing arrives (see tools/art/cut_edgelord.py).
@@ -152,9 +183,43 @@ public partial class FighterData : Resource
 			BodySize = new Vector2(80.0f, 136.0f),
 			RigPath = "res://fighters/edgelord/rig.json",
 			VisualScale = 1.08f,
+			// Wild and fast: every pose played further than the library's default.
+			AnimationDrama = 1.35f,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.EdgeLord(),
 			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());
+		data.Taunt = Taunts.Make(AttackAnim.PointUp, propArt: "sword_claymore");
+		data.TauntLine = "Try to keep up.";
+		return data;
+	}
+
+	/// <summary>
+	/// DoomBot, drawn by Eric: a boxy robot with claw hands, cut from the drawing by
+	/// tools/art/cut_doombot.py. A heavy. The rest is placeholder until his character sheet
+	/// arrives - the shared default normals, heavy movement numbers, and four stand-in specials -
+	/// so he can be played and his rig checked in the meantime.
+	/// </summary>
+	public static FighterData DoomBot()
+	{
+		var data = new FighterData
+		{
+			DisplayName = "DoomBot",
+			PlaceholderColor = new Color(0.86f, 0.28f, 0.26f),
+			Weight = WeightClass.Heavy,
+			// Heavy movement, like Lugnut's: slower on the ground and in the air, falls harder.
+			RunSpeed = 750.0f,
+			AirSpeed = 630.0f,
+			JumpForce = 1494.0f,
+			AirJumpForce = 1554.0f,
+			Gravity = 4840.0f,
+			BodySize = new Vector2(84.0f, 146.0f),
+			RigPath = "res://fighters/doombot/rig.json",
+			// Long legs and a narrow body read small at the standard height; a little bigger.
+			VisualScale = 1.1f,
+			TrailColor = new Color(0.95f, 0.30f, 0.28f),
+		};
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBotPlaceholder());
+		data.Taunt = Taunts.Make(AttackAnim.Spread);
 		return data;
 	}
 
@@ -193,6 +258,8 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy(),
 			CharacterNormals.Circy, CharacterNormals.CircyJab());
+		// Circy is Elim's: he does a star jump, and says nothing Elim did not give him to say.
+		data.Taunt = Taunts.Make(AttackAnim.Spread, propArt: "");
 		return data;
 	}
 }

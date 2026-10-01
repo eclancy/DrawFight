@@ -34,6 +34,7 @@ public partial class GameRoot : Node2D
 
 		int shotAfter = -1;
 		string startAt = "title";
+		int paradeOnly = -1;
 
 		foreach (string arg in OS.GetCmdlineUserArgs())
 		{
@@ -50,6 +51,7 @@ public partial class GameRoot : Node2D
 			}
 			if (arg == "--cpu") CpuPlayers[1] = true;
 			if (arg == "--parade") startAt = "parade";
+			if (arg.StartsWith("--only=")) paradeOnly = arg.Substring(7).ToInt();
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
 			if (arg == "--stages") startAt = "stages";
@@ -59,7 +61,13 @@ public partial class GameRoot : Node2D
 
 		switch (startAt)
 		{
-			case "parade": Show(new RigParade { Attacks = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--attacks") >= 0 }); break;
+			case "parade":
+				Show(new RigParade
+				{
+					Attacks = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--attacks") >= 0,
+					Only = paradeOnly,
+				});
+				break;
 			case "match": GoMatch(); break;
 			case "select": GoCharacterSelect(); break;
 			case "stages": GoStageSelect(); break;

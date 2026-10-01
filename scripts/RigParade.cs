@@ -19,6 +19,10 @@ public partial class RigParade : Node2D
 		public FighterRig Rig;
 		public AnimationClip Clip;
 		public Pose Direct;
+		public FighterData Data;
+		public MoveData Move;
+		public string Label;
+		public Node2D Holder;
 	}
 
 	readonly List<Slot> slots = new List<Slot>();
@@ -30,6 +34,9 @@ public partial class RigParade : Node2D
 	/// that shows the three fighters are not all doing the same thing.
 	/// </summary>
 	public bool Attacks;
+
+	/// <summary>One fighter by catalog index (--only=N), shown big, instead of the whole roster.</summary>
+	public int Only = -1;
 
 	/// <summary>A move's strike pose - what is on screen the frame its hitbox goes live.</summary>
 	static Pose StrikeOf(MoveData move)
@@ -47,10 +54,56 @@ public partial class RigParade : Node2D
 		return move;
 	}
 
+	/// <summary>
+	/// A ring where a move's hitbox is, mapped from match space into this view. The two differ in
+	/// scale and in where the body box sits against the drawing, so the point is carried across
+	/// relative to the feet, which stand in the same place in both.
+	/// </summary>
+	static Node2D HitboxMarker(FighterData data, MoveData move)
+	{
+		float matchHeight = data.BodySize.Y * 1.18f * data.VisualScale;
+		float k = 300.0f / matchHeight;
+		float halfBody = data.BodySize.Y * 0.5f;
+		var centre = new Vector2(move.HitboxOffset.X * k, (move.HitboxOffset.Y - halfBody) * k + 150.0f);
+		float radius = move.HitboxRadius * k;
+
+		var marker = new Node2D { ZIndex = 5 };
+		marker.Draw += () =>
+		{
+			marker.DrawCircle(centre, radius, new Color(0.95f, 0.30f, 0.30f, 0.18f));
+			marker.DrawArc(centre, radius, 0.0f, Mathf.Tau, 32, new Color(0.85f, 0.20f, 0.22f, 0.8f), 3.0f);
+		};
+		return marker;
+	}
+
+	/// <summary>The move an attack column shows, so its weapon can be put in the fighter's hand.</summary>
+	static MoveData MoveFor(FighterData d, string label)
+	{
+		switch (label)
+		{
+			case "jab 1": return ComboHit(d, 0);
+			case "jab 2": return ComboHit(d, 1);
+			case "jab 3": return ComboHit(d, 2);
+			case "f tilt": return d.Move(MoveSlot.ForwardTilt);
+			case "u tilt": return d.Move(MoveSlot.UpTilt);
+			case "d tilt": return d.Move(MoveSlot.DownTilt);
+			case "dash": return d.Move(MoveSlot.DashAttack);
+			case "f smash": return d.Move(MoveSlot.ForwardSmash);
+			case "u smash": return d.Move(MoveSlot.UpSmash);
+			case "d smash": return d.Move(MoveSlot.DownSmash);
+			case "n air": return d.Move(MoveSlot.NeutralAir);
+			case "f air": return d.Move(MoveSlot.ForwardAir);
+			case "b air": return d.Move(MoveSlot.BackAir);
+			case "u air": return d.Move(MoveSlot.UpAir);
+			case "d air": return d.Move(MoveSlot.DownAir);
+			default: return null;
+		}
+	}
+
 	public override void _Ready()
 	{
-		var fighters = new FighterData[FighterCatalog.Count];
-		for (int i = 0; i < fighters.Length; i++) fighters[i] = FighterCatalog.Get(i);
+		var fighters = new FighterData[Only >= 0 ? 1 : FighterCatalog.Count];
+		for (int i = 0; i < fighters.Length; i++) fighters[i] = FighterCatalog.Get(Only >= 0 ? Only : i);
 
 		var columns = Attacks
 			? new (string label, AnimationClip clip, System.Func<FighterData, Pose> direct)[]
@@ -120,15 +173,33 @@ public partial class RigParade : Node2D
 
 				// Much larger than in a match, which is the entire point of this view.
 				rig.Normalise(300.0f, 150.0f, 1.0f);
+				rig.DramaScale = data.AnimationDrama;
+
+				// Each attack shows the weapon it puts in his hand, or an empty hand, as in a match.
+				MoveData shown = Attacks ? MoveFor(data, columns[col].label) : null;
+				if (shown != null)
+				{
+					rig.ShowProp(shown.PropArt);
+					if (shown.PropArt == "-") rig.SetPartVisible(RigBone.PropFront, false);
+				}
 
 				// Blocking puts on any block-only extra (Lug's hard hat), exactly as in a match.
 				if (columns[col].clip == FighterAnimations.Block) rig.SetExtraVisible("hardhat", true);
+				if (shown != null && !string.IsNullOrEmpty(shown.ShowExtra)) rig.SetExtraVisible(shown.ShowExtra, true);
+
+				// Where the attack actually hits, drawn over the pose. A weapon that reaches past
+				// its hitbox, or a hitbox floating off where no weapon is, is obvious here.
+				if (shown != null && shown.HitboxRadius > 0.0f) holder.AddChild(HitboxMarker(data, shown));
 
 				slots.Add(new Slot
 				{
 					Rig = rig,
 					Clip = columns[col].clip,
 					Direct = direct,
+					Data = data,
+					Move = shown,
+					Label = columns[col].label,
+					Holder = holder,
 				});
 
 				if (row != 0) continue;
@@ -159,8 +230,34 @@ public partial class RigParade : Node2D
 		GD.Print($"RigParade: {slots.Count} rigs across {columns.Length} animations");
 	}
 
+	int frames;
+
+	/// <summary>
+	/// Once the poses have settled, prints where each attack's weapon head is against where its
+	/// hitbox is, both in match units before weight scaling - the numbers CharacterNormals uses.
+	/// </summary>
+	void ReportReach()
+	{
+		foreach (Slot slot in slots)
+		{
+			if (slot.Move == null || slot.Move.HitboxRadius <= 0.0f) continue;
+			Vector2? head = slot.Rig.PropHeadGlobal();
+			if (head == null) continue;
+
+			FighterData d = slot.Data;
+			float k = 300.0f / (d.BodySize.Y * 1.18f * d.VisualScale);
+			float range = WeightProfiles.ScaleFor(d.Weight).Range;
+			Vector2 local = slot.Holder.ToLocal(head.Value);
+			var match = new Vector2(local.X / k, (local.Y - 150.0f) / k + d.BodySize.Y * 0.5f) / range;
+			Vector2 hit = slot.Move.HitboxOffset / range;
+			GD.Print($"RigParade: {d.DisplayName,-9} {slot.Label,-8} weapon head ({match.X:0}, {match.Y:0})  hitbox ({hit.X:0}, {hit.Y:0})");
+		}
+	}
+
 	public override void _PhysicsProcess(double delta)
 	{
+		if (Attacks && ++frames == 60) ReportReach();
+
 		foreach (Slot slot in slots)
 		{
 			if (slot.Clip != null && !slot.Clip.Loops)

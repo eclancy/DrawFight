@@ -12,14 +12,21 @@ public sealed class GamepadLayout
 	public JoyButton AltJump;
 	public JoyButton Block;
 
-	/// <summary>Also accept the right trigger as block, so either shoulder input works.</summary>
+	/// <summary>Also accept the right trigger as block.</summary>
 	public bool BlockUsesRightTrigger = true;
+
+	/// <summary>Also accept the left trigger as block, so either trigger works.</summary>
+	public bool BlockUsesLeftTrigger = false;
+
+	/// <summary>Buttons that taunt. Invalid means none.</summary>
+	public JoyButton Taunt = JoyButton.Invalid;
+	public JoyButton AltTaunt = JoyButton.Invalid;
 
 	/// <summary>A one-line binding summary for the HUD.</summary>
 	public string Describe()
 	{
 		string jump = Jump == AltJump ? $"{Jump} jump" : $"{Jump}/{AltJump} jump";
-		string block = BlockUsesRightTrigger ? $"{Block} or RT block" : $"{Block} block";
+		string block = BlockUsesLeftTrigger ? "LT/RT block" : BlockUsesRightTrigger ? $"{Block} or RT block" : $"{Block} block";
 		return $"{jump}   {Attack} attack   {Special} special   {block}   down+{Jump} drop through";
 	}
 
@@ -39,11 +46,17 @@ public sealed class GamepadLayout
 	{
 		return new GamepadLayout
 		{
+			// Y jumps as well as A, so a thumb resting on either top button can jump. Either
+			// trigger blocks, and either bumper taunts.
 			Jump = JoyButton.A,
-			AltJump = JoyButton.A,
+			AltJump = JoyButton.Y,
 			Attack = JoyButton.X,
 			Special = JoyButton.B,
-			Block = JoyButton.Y,
+			Block = JoyButton.Invalid,
+			BlockUsesRightTrigger = true,
+			BlockUsesLeftTrigger = true,
+			Taunt = JoyButton.LeftShoulder,
+			AltTaunt = JoyButton.RightShoulder,
 		};
 	}
 
@@ -60,6 +73,7 @@ public sealed class GamepadLayout
 			Jump = JoyButton.X,
 			AltJump = JoyButton.Y,
 			Block = JoyButton.RightShoulder,
+			Taunt = JoyButton.LeftShoulder,
 		};
 	}
 
@@ -98,7 +112,9 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 	readonly int device;
 	readonly GamepadLayout layout;
 
-	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown;
+	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown;
+
+	bool Pressed(JoyButton button) => button != JoyButton.Invalid && Input.IsJoyButtonPressed(device, button);
 
 	public GamepadInputSource(int device, GamepadLayout layout)
 	{
@@ -128,13 +144,17 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 		bool specialDown = Input.IsJoyButtonPressed(device, layout.Special);
 		bool startDown = Input.IsJoyButtonPressed(device, JoyButton.Start);
 
-		bool blockDown = Input.IsJoyButtonPressed(device, layout.Block)
+		bool blockDown = Pressed(layout.Block)
 			|| (layout.BlockUsesRightTrigger
-				&& Input.GetJoyAxis(device, JoyAxis.TriggerRight) > TriggerThreshold);
+				&& Input.GetJoyAxis(device, JoyAxis.TriggerRight) > TriggerThreshold)
+			|| (layout.BlockUsesLeftTrigger
+				&& Input.GetJoyAxis(device, JoyAxis.TriggerLeft) > TriggerThreshold);
+		bool tauntDown = Pressed(layout.Taunt) || Pressed(layout.AltTaunt);
 
 		var state = new InputState
 		{
-			Move = ReadDirection(),
+			Move = ReadDirection(out bool fromDpad),
+			MoveFromDpad = fromDpad,
 			JumpPressed = jumpDown && !jumpWasDown,
 			AttackPressed = attackDown && !attackWasDown,
 			AttackHeld = attackDown,
@@ -142,8 +162,10 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			BlockHeld = blockDown,
 			SpecialHeld = specialDown,
 			StartPressed = startDown && !startWasDown,
+			TauntPressed = tauntDown && !tauntWasDown,
 		};
 
+		tauntWasDown = tauntDown;
 		jumpWasDown = jumpDown;
 		attackWasDown = attackDown;
 		specialWasDown = specialDown;
@@ -156,7 +178,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 	/// normalised, which gives analogue walking speed for free and gives DI something finer
 	/// than eight directions to work with.
 	/// </summary>
-	Vector2 ReadDirection()
+	Vector2 ReadDirection(out bool fromDpad)
 	{
 		var raw = new Vector2(
 			Input.GetJoyAxis(device, JoyAxis.LeftX),
@@ -178,7 +200,8 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			(Input.IsJoyButtonPressed(device, JoyButton.DpadDown) ? 1.0f : 0.0f)
 				- (Input.IsJoyButtonPressed(device, JoyButton.DpadUp) ? 1.0f : 0.0f));
 
-		return dpad.LengthSquared() > stick.LengthSquared() ? dpad : stick;
+		fromDpad = dpad.LengthSquared() > stick.LengthSquared();
+		return fromDpad ? dpad : stick;
 	}
 
 	/// <summary>

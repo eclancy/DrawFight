@@ -127,29 +127,29 @@
   "parts": {
     "ArmBack_Lower": {
       "pivot": [
-        18.5, 
-        18.74
+        23.5, 
+        23.98
       ], 
       "texture": "parts/ArmBack_Lower.png"
     }, 
     "ArmBack_Upper": {
       "pivot": [
-        19.5, 
-        19.5
+        25.0, 
+        25.2
       ], 
       "texture": "parts/ArmBack_Upper.png"
     }, 
     "ArmFront_Lower": {
       "pivot": [
-        18.5, 
-        18.74
+        23.5, 
+        23.98
       ], 
       "texture": "parts/ArmFront_Lower.png"
     }, 
     "ArmFront_Upper": {
       "pivot": [
-        19.5, 
-        19.5
+        25.0, 
+        25.2
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
@@ -169,35 +169,35 @@
     }, 
     "LegBack_Lower": {
       "pivot": [
-        19.5, 
-        19.5
+        25.0, 
+        25.2
       ], 
       "texture": "parts/LegBack_Lower.png"
     }, 
     "LegBack_Upper": {
       "pivot": [
-        20.0, 
-        20.26
+        26.0, 
+        26.42
       ], 
       "texture": "parts/LegBack_Upper.png"
     }, 
     "LegFront_Lower": {
       "pivot": [
-        19.5, 
-        19.5
+        25.0, 
+        25.2
       ], 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        20.0, 
-        20.26
+        26.0, 
+        26.42
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
     "PropFront": {
       "pivot": [
-        60.0, 
+        66.0, 
         10.0
       ], 
       "texture": "parts/PropFront.png"
@@ -217,6 +217,69 @@
         55.0
       ], 
       "texture": "poses/girder.png"
+    }, 
+    "tool_beam": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_beam.png"
+    }, 
+    "tool_crowbar": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_crowbar.png"
+    }, 
+    "tool_jackhammer": {
+      "anchor": [
+        95.0, 
+        238.0
+      ], 
+      "texture": "poses/tool_jackhammer.png"
+    }, 
+    "tool_nailgun": {
+      "anchor": [
+        94.0, 
+        160.0
+      ], 
+      "texture": "poses/tool_nailgun.png"
+    }, 
+    "tool_pickaxe": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_pickaxe.png"
+    }, 
+    "tool_pipewrench": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_pipewrench.png"
+    }, 
+    "tool_shovel": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_shovel.png"
+    }, 
+    "tool_sign": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_sign.png"
+    }, 
+    "tool_sledgehammer": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_sledgehammer.png"
     }, 
     "wheelbarrow": {
       "anchor": [

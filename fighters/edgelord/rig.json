@@ -13,8 +13,8 @@
     {
       "name": "LegBack_Upper", 
       "offset": [
-        -7.0, 
-        0.0
+        -25.0, 
+        32.0
       ], 
       "parent": "Hip", 
       "part": "LegBack_Upper"
@@ -23,7 +23,7 @@
       "name": "LegBack_Lower", 
       "offset": [
         0, 
-        123.4
+        159.6
       ], 
       "parent": "LegBack_Upper", 
       "part": "LegBack_Lower"
@@ -31,8 +31,8 @@
     {
       "name": "LegFront_Upper", 
       "offset": [
-        25.0, 
-        32.0
+        7.0, 
+        0.0
       ], 
       "parent": "Hip", 
       "part": "LegFront_Upper"
@@ -41,7 +41,7 @@
       "name": "LegFront_Lower", 
       "offset": [
         0, 
-        159.6
+        123.4
       ], 
       "parent": "LegFront_Upper", 
       "part": "LegFront_Lower"
@@ -58,8 +58,8 @@
     {
       "name": "ArmBack_Upper", 
       "offset": [
-        -137.0, 
-        -196.0
+        -184.0, 
+        -257.0
       ], 
       "parent": "Torso", 
       "part": "ArmBack_Upper"
@@ -68,7 +68,7 @@
       "name": "ArmBack_Lower", 
       "offset": [
         0, 
-        158.4
+        89.0
       ], 
       "parent": "ArmBack_Upper", 
       "part": "ArmBack_Lower"
@@ -85,8 +85,8 @@
     {
       "name": "ArmFront_Upper", 
       "offset": [
-        184.0, 
-        -257.0
+        137.0, 
+        -196.0
       ], 
       "parent": "Torso", 
       "part": "ArmFront_Upper"
@@ -95,7 +95,7 @@
       "name": "ArmFront_Lower", 
       "offset": [
         0, 
-        89.0
+        158.4
       ], 
       "parent": "ArmFront_Upper", 
       "part": "ArmFront_Lower"
@@ -104,7 +104,7 @@
       "name": "PropFront", 
       "offset": [
         0, 
-        89.0
+        158.4
       ], 
       "parent": "ArmFront_Lower", 
       "part": "PropFront"
@@ -163,105 +163,105 @@
   "parts": {
     "ArmBack_Lower": {
       "pivot": [
-        63.5, 
-        10.91
+        95.0, 
+        10.01
       ], 
       "texture": "parts/ArmBack_Lower.png"
     }, 
     "ArmBack_Upper": {
       "pivot": [
-        66.5, 
-        4.5
+        108.0, 
+        30.0
       ], 
       "texture": "parts/ArmBack_Upper.png"
     }, 
     "ArmFront_Lower": {
       "pivot": [
-        23.0, 
-        10.01
+        53.5, 
+        10.91
       ], 
       "texture": "parts/ArmFront_Lower.png"
     }, 
     "ArmFront_Upper": {
       "pivot": [
-        1.0, 
-        30.0
+        2.5, 
+        4.5
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
     "LegBack_Lower": {
       "pivot": [
-        50.5, 
-        10.86
+        30.0, 
+        10.61
       ], 
       "texture": "parts/LegBack_Lower.png"
     }, 
     "LegBack_Upper": {
       "pivot": [
-        61.5, 
-        5.5
+        85.0, 
+        34.0
       ], 
       "texture": "parts/LegBack_Upper.png"
     }, 
     "LegFront_Lower": {
       "pivot": [
-        20.0, 
-        10.61
+        27.5, 
+        10.86
       ], 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        20.0, 
-        33.0
+        5.5, 
+        5.5
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
     "PropFront": {
       "pivot": [
-        66.0, 
-        59.4
+        92.4, 
+        83.4
       ], 
       "texture": "parts/PropFront.png"
     }, 
     "Torso": {
       "pivot": [
-        263, 
+        292, 
         565
       ], 
       "texture": "parts/Torso.png"
     }, 
     "Turn0": {
       "pivot": [
-        253, 
+        293, 
         513
       ], 
       "texture": "poses/turn_000.png"
     }, 
     "Turn1": {
       "pivot": [
-        191, 
+        209, 
         513
       ], 
       "texture": "poses/turn_045.png"
     }, 
     "Turn2": {
       "pivot": [
-        71, 
+        64, 
         513
       ], 
       "texture": "poses/turn_078.png"
     }, 
     "Turn3": {
       "pivot": [
-        149, 
+        141, 
         513
       ], 
       "texture": "poses/turn_120.png"
     }, 
     "Turn4": {
       "pivot": [
-        275, 
+        253, 
         510
       ], 
       "texture": "poses/turn_180.png"
@@ -270,64 +270,85 @@
   "poses": {
     "planted": {
       "anchor": [
-        66.5, 
-        143.0
+        93.0, 
+        200.0
       ], 
       "texture": "poses/planted.png"
     }, 
+    "sword_axe": {
+      "anchor": [
+        88.2, 
+        350.0
+      ], 
+      "texture": "poses/sword_axe.png"
+    }, 
+    "sword_broadsword": {
+      "anchor": [
+        85.4, 
+        386.1
+      ], 
+      "texture": "poses/sword_broadsword.png"
+    }, 
+    "sword_claymore": {
+      "anchor": [
+        119.0, 
+        519.1
+      ], 
+      "texture": "poses/sword_claymore.png"
+    }, 
     "sword_dagger": {
       "anchor": [
-        34.0, 
-        120.2
+        47.6, 
+        168.3
       ], 
       "texture": "poses/sword_dagger.png"
     }, 
     "sword_edgeblade": {
       "anchor": [
-        74.0, 
-        310.2
+        103.6, 
+        434.3
       ], 
       "texture": "poses/sword_edgeblade.png"
     }, 
     "sword_greatsword": {
       "anchor": [
-        100.0, 
-        410.2
+        140.0, 
+        574.3
       ], 
       "texture": "poses/sword_greatsword.png"
     }, 
     "sword_katana": {
       "anchor": [
-        28.2, 
-        324.2
+        39.5, 
+        453.9
       ], 
       "texture": "poses/sword_katana.png"
     }, 
     "sword_longsword": {
       "anchor": [
-        66.0, 
-        297.6
+        92.4, 
+        416.6
       ], 
       "texture": "poses/sword_longsword.png"
     }, 
     "sword_rapier": {
       "anchor": [
-        41.0, 
-        329.0
+        57.4, 
+        460.6
       ], 
       "texture": "poses/sword_rapier.png"
     }, 
     "sword_scimitar": {
       "anchor": [
-        47.4, 
-        258.4
+        66.4, 
+        361.8
       ], 
       "texture": "poses/sword_scimitar.png"
     }, 
     "sword_shortsword": {
       "anchor": [
-        45.0, 
-        185.4
+        63.0, 
+        259.6
       ], 
       "texture": "poses/sword_shortsword.png"
     }

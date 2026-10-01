@@ -83,8 +83,19 @@ public static class RegressionChecks
 					+ "is not a Recovery archetype");
 			}
 
-			// It has to beat a standing jump, or it is not a recovery, it is a small hop.
-			if (up.SpecialRise < fighter.JumpForce * 0.8f)
+			// It has to beat a standing jump, or it is not a recovery, it is a small hop. Flight
+			// rises slowly for a long time, so for that it is the height gained that counts.
+			if (up.Flight)
+			{
+				float flown = up.SpecialRise * up.ActiveFrames / 60.0f;
+				float jumped = fighter.JumpForce * fighter.JumpForce / (2.0f * fighter.Gravity);
+				if (flown < jumped * 1.5f)
+				{
+					GD.PushError($"RegressionChecks: {fighter.DisplayName} flies {flown:0}px up, "
+						+ $"not enough against a jump of {jumped:0}px");
+				}
+			}
+			else if (up.SpecialRise < fighter.JumpForce * 0.8f)
 			{
 				GD.PushError($"RegressionChecks: {fighter.DisplayName} up-special rise "
 					+ $"{up.SpecialRise:0} is too weak against a jump of {fighter.JumpForce:0}");

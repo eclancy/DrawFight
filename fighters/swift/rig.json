@@ -108,74 +108,82 @@
   "parts": {
     "ArmBack_Lower": {
       "pivot": [
-        15.5, 
-        15.98
+        19.5, 
+        19.57
       ], 
       "texture": "parts/ArmBack_Lower.png"
     }, 
     "ArmBack_Upper": {
       "pivot": [
-        16.5, 
-        16.5
+        20.0, 
+        20.4
       ], 
       "texture": "parts/ArmBack_Upper.png"
     }, 
     "ArmFront_Lower": {
       "pivot": [
-        15.5, 
-        15.98
+        19.5, 
+        19.57
       ], 
       "texture": "parts/ArmFront_Lower.png"
     }, 
     "ArmFront_Upper": {
       "pivot": [
-        16.5, 
-        16.5
+        20.0, 
+        20.4
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
     "Head": {
       "pivot": [
         70.0, 
-        153.5
+        243.5
       ], 
       "texture": "parts/Head.png"
     }, 
     "LegBack_Lower": {
       "pivot": [
-        16.5, 
-        16.5
+        20.0, 
+        20.4
       ], 
       "texture": "parts/LegBack_Lower.png"
     }, 
     "LegBack_Upper": {
       "pivot": [
-        17.0, 
-        17.02
+        21.0, 
+        21.23
       ], 
       "texture": "parts/LegBack_Upper.png"
     }, 
     "LegFront_Lower": {
       "pivot": [
-        16.5, 
-        16.5
+        20.0, 
+        20.4
       ], 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        17.0, 
-        17.02
+        21.0, 
+        21.23
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
     "Torso": {
       "pivot": [
-        24.0, 
+        53.5, 
         221.5
       ], 
       "texture": "parts/Torso.png"
     }
   }, 
-  "poses": {}
+  "poses": {
+    "wings": {
+      "anchor": [
+        210.0, 
+        130.0
+      ], 
+      "texture": "poses/wings.png"
+    }
+  }
 }

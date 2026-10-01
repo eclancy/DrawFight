@@ -44,20 +44,33 @@ SWIFT = {
     'ink': (34, 34, 42, 255),
     'stroke': 13,
     'head_radius': 60,
-    'head_style': 'spiky',
-    'torso_style': 'stick',
+    # Shown in game as Flambe (FighterData); the folder stays fighters/swift.
+    # A fire punk: a flame-coloured mohawk, a French chef's twirled moustache, a black leather
+    # jacket with silver spikes on the shoulders and flames licking up from the hem, dark red
+    # jeans and boots.
+    'head_style': 'mohawk',
+    'mustache': True,
+    'torso_style': 'bulky',
     'torso_len': 205,
-    'torso_width': 15,
+    'torso_width': 74,
     'upper_arm': 104,
     'lower_arm': 98,
     'upper_leg': 132,
     'lower_leg': 126,
     'hip_split': 9,
     'prop': None,
+    'tools': ['wings'],
+    'colours': {
+        'jacket': (52, 48, 58, 255),
+        'shirt': (52, 48, 58, 255),
+        'skin': (236, 190, 150, 255),
+        'jeans': (126, 34, 42, 255),
+        'boots': (40, 36, 40, 255),
+    },
 }
 
 LUG = {
-    'name': 'Lug',
+    'name': 'Lug',  # shown in game as Lugnut (FighterData); the folder stays fighters/lug
     'ink': (30, 28, 32, 255),
     'stroke': 19,
     'head_radius': 76,
@@ -72,11 +85,25 @@ LUG = {
     'hip_split': 20,
     # A sledgehammer: a long handle with a heavy block across its end. Lug is a construction
     # worker, and a hard hat goes on when he blocks.
-    'prop': {'name': 'PropFront', 'style': 'sledgehammer', 'length': 168, 'head': 50},
+    'prop': {'name': 'PropFront', 'style': 'sledgehammer', 'length': 230, 'head': 56},
     'hard_hat': True,
     # Drawings for his construction-site specials, emitted as poses (whole pictures, not rig
     # parts) the way Circy's effect drawings are.
     'tools': ['wheelbarrow', 'wreckingball', 'girder'],
+    # The heavy tools he swaps into his hand for different attacks, tip up and anchored at the
+    # grip like any held weapon (see MoveData.PropArt).
+    'held_tools': ['sledgehammer', 'pickaxe', 'shovel', 'pipewrench', 'crowbar', 'jackhammer',
+                   'beam', 'sign', 'nailgun'],
+    # Colour, so he is a construction worker and not a silhouette: a hi-vis vest over a blue
+    # work shirt, jeans, boots, and a face.
+    'colours': {
+        'vest': (246, 122, 30, 255),
+        'stripe': (250, 226, 90, 255),
+        'shirt': (66, 112, 190, 255),
+        'skin': (234, 184, 142, 255),
+        'jeans': (54, 84, 144, 255),
+        'boots': (128, 82, 42, 255),
+    },
 }
 
 FIGURES = [SWIFT, LUG]
@@ -96,10 +123,11 @@ def thick_line(draw, p0, p1, width, ink):
         draw.ellipse([x - r, y - r, x + r, y + r], fill=ink)
 
 
-def limb_part(length, width, ink, taper=1.0):
+def limb_part(length, width, ink, taper=1.0, fill=None, end_fill=None, end_from=1.0):
     """
     One limb segment in canonical orientation: pointing straight down, pivot at the top.
-    Returns (image, pivot).
+    Returns (image, pivot). With a fill colour it is an ink outline coloured in - a sleeve, a
+    trouser leg - and end_fill recolours it from end_from of the way down (a hand, a boot).
     """
     end_width = max(3.0, width * taper)
     w = int(max(width, end_width) + PAD * 2)
@@ -119,6 +147,18 @@ def limb_part(length, width, ink, taper=1.0):
         r = (width + (end_width - width) * t) / 2.0
         draw.ellipse([cx - r, y - r, cx + r, y + r], fill=ink)
 
+    if fill:
+        # The colour inside the outline, leaving a rim of ink round it.
+        rim = max(3.0, width * 0.2)
+        for i in range(steps + 1):
+            t = i / float(steps) if steps else 0.0
+            y = top + t * length
+            r = (width + (end_width - width) * t) / 2.0 - rim
+            if r <= 0:
+                continue
+            colour = end_fill if end_fill and t >= end_from else fill
+            draw.ellipse([cx - r, y - r, cx + r, y + r], fill=colour)
+
     return img, (cx, top)
 
 
@@ -129,18 +169,21 @@ def head_part(cfg):
     stroke = cfg['stroke']
     neck = 30
 
+    # Room above the skull for hair that sticks up.
+    hair = r * 1.5 if cfg['head_style'] == 'mohawk' else 0
     w = int(r * 2 + PAD * 2 + 34)
-    h = int(r * 2 + neck + PAD * 2)
+    h = int(r * 2 + neck + PAD * 2 + hair)
     img = new_part(w, h)
     draw = ImageDraw.Draw(img)
 
     cx = PAD + r
-    cy = PAD + r
+    cy = PAD + r + hair
     pivot = (cx, cy + r + neck - stroke / 2.0)
 
     # Neck, then the skull on top of it.
     thick_line(draw, (cx, cy + r * 0.72), (pivot[0], pivot[1]), stroke, ink)
-    draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=ink, width=int(stroke))
+    skin = cfg.get('colours', {}).get('skin')
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=skin, outline=ink, width=int(stroke))
 
     # Profile: nose bump and one eye on the right, because the figure faces right.
     nose_x = cx + r
@@ -151,7 +194,41 @@ def head_part(cfg):
     draw.ellipse([cx + r * 0.34 - eye_r, cy - r * 0.22 - eye_r,
                   cx + r * 0.34 + eye_r, cy - r * 0.22 + eye_r], fill=ink)
 
-    if cfg['head_style'] == 'spiky':
+    if cfg.get('mustache'):
+        # A French chef's moustache, seen side on: a thick bar under the nose that sweeps out in
+        # front of the face and curls up into a tight twirl at the tip, with the far side's curl
+        # just showing behind it.
+        brown = (44, 30, 26, 255)
+        lip_y = cy + r * 0.56
+        w = stroke * 0.95
+        bar = [(cx + r * 0.72, lip_y), (cx + r * 0.98, lip_y + 5), (cx + r * 1.26, lip_y)]
+        draw.line(bar, fill=brown, width=int(w))
+        for x, y in bar:
+            draw.ellipse([x - w * 0.5, y - w * 0.5, x + w * 0.5, y + w * 0.5], fill=brown)
+        # A tight twirl curling up at each end.
+        for (x, y), start, end in (((cx + r * 1.30, lip_y - 11), 0, 250), ((cx + r * 0.68, lip_y - 11), 290, 540)):
+            draw.arc([x - 12, y - 12, x + 12, y + 12], start, end, fill=brown, width=int(stroke * 0.55))
+
+    if cfg['head_style'] == 'mohawk':
+        # A tall mohawk of flame: a row of spikes along the top of the skull, front to back,
+        # red at the root and yellow at the tips, the tallest in the middle.
+        spikes = [(-0.62, 0.9), (-0.30, 1.25), (0.02, 1.4), (0.34, 1.2), (0.62, 0.85)]
+        for i, (dx, height) in enumerate(spikes):
+            base_x = cx + r * dx
+            base_y = cy - r * (0.92 - 0.35 * abs(dx))
+            tip = (base_x - r * 0.22, base_y - r * height)
+            left = (base_x - r * 0.2, base_y + r * 0.12)
+            right = (base_x + r * 0.2, base_y + r * 0.12)
+            draw.polygon([left, tip, right], fill=(222, 58, 40, 255), outline=ink)
+            inner_tip = (base_x - r * 0.17, base_y - r * height * 0.72)
+            draw.polygon([(base_x - r * 0.1, base_y + r * 0.05), inner_tip, (base_x + r * 0.1, base_y + r * 0.05)],
+                         fill=(250, 150, 40, 255))
+            yellow_tip = (base_x - r * 0.13, base_y - r * height * 0.42)
+            draw.polygon([(base_x - r * 0.05, base_y), yellow_tip, (base_x + r * 0.05, base_y)],
+                         fill=(252, 220, 80, 255))
+        # Redraw the skull line over the roots, so the hair grows from it.
+        draw.arc([cx - r, cy - r, cx + r, cy + r], 200, 340, fill=ink, width=int(stroke))
+    elif cfg['head_style'] == 'spiky':
         for i, (dx, dy, lx, ly) in enumerate([
                 (-0.60, -0.74, -0.46, -1.52),
                 (-0.16, -0.96, -0.02, -1.70),
@@ -189,6 +266,46 @@ def torso_part(cfg):
             y = top + i
             half = (body_w * (0.92 - 0.30 * t)) / 2.0
             draw.ellipse([cx - half, y - stroke / 2.0, cx + half, y + stroke / 2.0], fill=ink)
+
+        colours = cfg.get('colours')
+        if colours and colours.get('jacket'):
+            # A leather jacket: dark inside the outline, flames licking up from the hem, a
+            # silver zip, and a row of silver spikes along the shoulders.
+            rim = stroke * 0.55
+            for i in range(int(length) + 1):
+                t = i / float(length)
+                y = top + i
+                half = (body_w * (0.92 - 0.30 * t)) / 2.0 - rim
+                if half > 0:
+                    draw.ellipse([cx - half, y - stroke / 2.0 + rim * 0.3, cx + half, y + stroke / 2.0 - rim * 0.3],
+                                 fill=colours['jacket'])
+            hem = bottom - 4
+            import math
+            for j, (fx, fh) in enumerate([(-0.28, 0.42), (0.0, 0.62), (0.28, 0.46)]):
+                bx = cx + body_w * fx
+                w_ = body_w * 0.2
+                draw.polygon([(bx - w_, hem), (bx - w_ * 0.4, hem - length * fh * 0.5), (bx, hem - length * fh),
+                              (bx + w_ * 0.4, hem - length * fh * 0.5), (bx + w_, hem)], fill=(236, 84, 36, 255))
+                draw.polygon([(bx - w_ * 0.5, hem), (bx, hem - length * fh * 0.6), (bx + w_ * 0.5, hem)],
+                             fill=(252, 196, 64, 255))
+            draw.line([(cx + body_w * 0.12, top + 10), (cx + body_w * 0.08, bottom - 10)], fill=(186, 190, 200, 255), width=3)
+            for k in range(5):
+                sx = cx - body_w * 0.4 + k * body_w * 0.2
+                sy = top + 4 + abs(k - 2) * 3
+                draw.polygon([(sx - 7, sy + 6), (sx, sy - 12), (sx + 7, sy + 6)], fill=(200, 204, 214, 255), outline=ink)
+        elif colours:
+            # A hi-vis vest, inset from the ink outline, with two reflective stripes across it.
+            rim = stroke * 0.55
+            for i in range(int(length) + 1):
+                t = i / float(length)
+                y = top + i
+                half = (body_w * (0.92 - 0.30 * t)) / 2.0 - rim
+                if half <= 0:
+                    continue
+                stripe = 0.42 < t < 0.52 or 0.70 < t < 0.80
+                colour = colours['stripe'] if stripe else colours['vest']
+                draw.ellipse([cx - half, y - stroke / 2.0 + rim * 0.3, cx + half, y + stroke / 2.0 - rim * 0.3],
+                             fill=colour)
         pivot = (cx, bottom)
     else:
         w = int(cfg['torso_width'] + PAD * 2 + stroke)
@@ -227,11 +344,12 @@ def prop_part(cfg):
     cx = w / 2.0
     grip_y = h - PAD
     if spec.get('style') == 'sledgehammer':
-        # A long handle, and a solid steel block set across its end.
+        # A long yellow fibreglass handle, and a solid steel block set across its end.
         thick_line(draw, (cx, grip_y), (cx, PAD + head * 0.5), stroke * 0.8, ink)
+        thick_line(draw, (cx, grip_y - 4), (cx, PAD + head * 0.5), stroke * 0.4, TOOL_YELLOW)
         block_w = head * 1.9
         block = [cx - block_w / 2.0, PAD, cx + block_w / 2.0, PAD + head]
-        draw.rectangle(block, fill=(118, 124, 138, 255), outline=ink, width=int(stroke * 0.8))
+        draw.rectangle(block, fill=TOOL_STEEL, outline=ink, width=int(stroke * 0.8))
     else:
         thick_line(draw, (cx, grip_y), (cx, PAD + head), stroke, ink)
         draw.ellipse([cx - head / 2.0, PAD, cx + head / 2.0, PAD + head * 1.3],
@@ -269,6 +387,104 @@ def hard_hat_part(cfg):
 TOOL_GREY = (118, 124, 138, 255)
 TOOL_ORANGE = (236, 124, 56, 255)
 TOOL_RED = (206, 70, 58, 255)
+TOOL_YELLOW = (250, 204, 44, 255)
+TOOL_STEEL = (150, 158, 174, 255)
+TOOL_DARK = (96, 102, 118, 255)
+TOOL_WOOD = (184, 126, 66, 255)
+
+
+def held_tool(name, ink, stroke):
+    """
+    One of the heavy tools Lug swaps into his hand, drawn TIP UP with the grip near the bottom,
+    as every held weapon is stored (see MoveData.PropArt). Returns (image, grip). All about as
+    long as his sledgehammer, which is what his reach is built on.
+    """
+    w, h = 190, 300
+    img = new_part(w, h)
+    d = ImageDraw.Draw(img)
+    cx = w / 2.0
+    grip = (cx, h - 30)
+    s = stroke * 0.7
+
+    def handle(top, colour, width=0.9):
+        thick_line(d, (cx, h - 16), (cx, top), s * width + 6, ink)
+        thick_line(d, (cx, h - 20), (cx, top + 4), s * width, colour)
+
+    if name == 'sledgehammer':
+        handle(40, TOOL_YELLOW)
+        d.rectangle([cx - 56, 12, cx + 56, 68], fill=TOOL_STEEL, outline=ink, width=int(s))
+        d.rectangle([cx - 50, 18, cx - 36, 62], fill=(196, 202, 214, 255))
+    elif name == 'pickaxe':
+        handle(40, TOOL_WOOD)
+        # A curved steel head, pointed at both ends, painted red at the eye.
+        d.polygon([(cx - 88, 70), (cx - 30, 28), (cx + 30, 28), (cx + 88, 70), (cx + 30, 44), (cx - 30, 44)],
+                  fill=TOOL_STEEL, outline=ink)
+        d.line([(cx - 88, 70), (cx - 30, 28), (cx + 30, 28), (cx + 88, 70), (cx + 30, 44), (cx - 30, 44), (cx - 88, 70)],
+               fill=ink, width=int(s * 0.6))
+        d.rectangle([cx - 14, 22, cx + 14, 52], fill=TOOL_RED, outline=ink, width=int(s * 0.5))
+    elif name == 'shovel':
+        handle(90, TOOL_WOOD)
+        # A pointed spade blade, and a D-grip... at the bottom, where he holds it.
+        d.polygon([(cx - 40, 96), (cx + 40, 96), (cx + 40, 40), (cx, 8), (cx - 40, 40)], fill=TOOL_STEEL, outline=ink)
+        d.line([(cx - 40, 96), (cx + 40, 96), (cx + 40, 40), (cx, 8), (cx - 40, 40), (cx - 40, 96)], fill=ink, width=int(s * 0.6))
+        d.rectangle([cx - 12, 92, cx + 12, 118], fill=TOOL_ORANGE, outline=ink, width=int(s * 0.4))
+    elif name == 'pipewrench':
+        handle(80, TOOL_RED, 1.3)
+        # Jaws at the top: a fixed hook and an adjusting nut.
+        d.polygon([(cx - 22, 90), (cx - 22, 20), (cx + 40, 20), (cx + 40, 44), (cx + 4, 44), (cx + 4, 90)],
+                  fill=TOOL_DARK, outline=ink)
+        d.rectangle([cx - 30, 58, cx + 20, 76], fill=TOOL_STEEL, outline=ink, width=int(s * 0.5))
+    elif name == 'crowbar':
+        # A red crowbar with a hooked claw at the top.
+        thick_line(d, (cx, h - 16), (cx, 60), s * 1.1 + 6, ink)
+        thick_line(d, (cx, h - 20), (cx, 64), s * 1.1, TOOL_RED)
+        d.arc([cx - 4, 14, cx + 60, 78], 180, 330, fill=ink, width=int(s * 1.1 + 6))
+        d.arc([cx - 1, 17, cx + 57, 75], 180, 330, fill=TOOL_RED, width=int(s * 1.1))
+    elif name == 'jackhammer':
+        # A yellow body, T-handles at the bottom, and the steel chisel out of the top.
+        d.rectangle([cx - 8, 6, cx + 8, 80], fill=TOOL_STEEL, outline=ink, width=int(s * 0.5))
+        d.polygon([(cx - 8, 6), (cx + 8, 6), (cx, -4)], fill=TOOL_STEEL)
+        d.rectangle([cx - 30, 80, cx + 30, 210], fill=TOOL_YELLOW, outline=ink, width=int(s * 0.7))
+        d.rectangle([cx - 30, 150, cx + 30, 166], fill=TOOL_DARK)
+        thick_line(d, (cx - 60, 238), (cx + 60, 238), s + 6, ink)
+        thick_line(d, (cx - 58, 238), (cx + 58, 238), s, TOOL_DARK)
+        thick_line(d, (cx, 210), (cx, 238), s + 6, ink)
+        grip = (cx, 238)
+    elif name == 'beam':
+        # A red steel I-beam, held by one end.
+        d.rectangle([cx - 30, 6, cx + 30, h - 30], fill=(176, 64, 52, 255), outline=ink, width=int(s * 0.6))
+        d.rectangle([cx - 30, 6, cx - 18, h - 30], fill=TOOL_RED, outline=ink, width=int(s * 0.4))
+        d.rectangle([cx + 18, 6, cx + 30, h - 30], fill=TOOL_RED, outline=ink, width=int(s * 0.4))
+        for y in range(30, h - 60, 44):
+            d.ellipse([cx - 6, y - 6, cx + 6, y + 6], fill=(250, 240, 230, 255), outline=ink)
+    elif name == 'sign':
+        # A red STOP-style octagon on a pole - the kind of sign a site has everywhere.
+        handle(120, TOOL_STEEL)
+        import math
+        pts = [(cx + 62 * math.cos(math.radians(22.5 + 45 * i)), 64 + 62 * math.sin(math.radians(22.5 + 45 * i)))
+               for i in range(8)]
+        d.polygon(pts, fill=TOOL_RED, outline=ink)
+        d.line(pts + [pts[0]], fill=ink, width=int(s * 0.6))
+        inner = [(cx + 50 * math.cos(math.radians(22.5 + 45 * i)), 64 + 50 * math.sin(math.radians(22.5 + 45 * i)))
+                 for i in range(8)]
+        d.line(inner + [inner[0]], fill=(250, 240, 230, 255), width=int(s * 0.4))
+        d.rectangle([cx - 34, 58, cx + 34, 70], fill=(250, 240, 230, 255))
+    elif name == 'nailgun':
+        # A nail gun, muzzle up: an orange body along the top and a grip sticking out to the
+        # side at the bottom, so held in the hand the barrel points the way the arm does.
+        img = new_part(150, 190)
+        d = ImageDraw.Draw(img)
+        cx = 60
+        d.rectangle([cx - 20, 10, cx + 20, 130], fill=TOOL_ORANGE, outline=ink, width=int(s * 0.6))
+        d.rectangle([cx - 10, 0, cx + 10, 14], fill=TOOL_DARK, outline=ink, width=int(s * 0.4))
+        d.rectangle([cx - 20, 60, cx + 20, 74], fill=TOOL_DARK)
+        # The magazine of nails running down the front, then the handle.
+        d.rectangle([cx + 20, 30, cx + 34, 110], fill=TOOL_STEEL, outline=ink, width=int(s * 0.4))
+        d.polygon([(cx - 20, 118), (cx + 16, 118), (cx + 70, 176), (cx + 40, 184)], fill=TOOL_DARK, outline=ink)
+        return img, (cx + 34, 160)
+    else:
+        raise ValueError(name)
+    return img, grip
 
 
 def tool_art(name, ink, stroke):
@@ -286,11 +502,36 @@ def tool_art(name, ink, stroke):
         d.ellipse([196, 104, 256, 164], fill=TOOL_GREY, outline=ink, width=int(stroke * 0.6))
         thick_line(d, (150, 110), (140, 160), stroke * 0.5, ink)
         return img
+    if name == 'wings':
+        # A pair of wings made of fire, spread wide: each a fan of flame feathers, red at the
+        # root, orange, then yellow at the tips. The middle, where they meet his back, is the anchor.
+        import math
+        img = new_part(420, 260)
+        d = ImageDraw.Draw(img)
+        cx, cy = 210, 170
+        for side in (-1, 1):
+            for k in range(5):
+                a = math.radians(-160 + k * 22) if side < 0 else math.radians(-20 - k * 22)
+                length = 190 - k * 18
+                tip = (cx + math.cos(a) * length, cy + math.sin(a) * length)
+                side_a = a + math.pi / 2
+                wbase = 26
+                pts = [(cx + math.cos(side_a) * wbase * 0.5, cy + math.sin(side_a) * wbase * 0.5), tip,
+                       (cx - math.cos(side_a) * wbase * 0.5, cy - math.sin(side_a) * wbase * 0.5)]
+                d.polygon(pts, fill=(226, 64, 36, 230))
+                mid = (cx + math.cos(a) * length * 0.8, cy + math.sin(a) * length * 0.8)
+                d.polygon([pts[0], mid, pts[2]], fill=(248, 142, 40, 235))
+                inner = (cx + math.cos(a) * length * 0.5, cy + math.sin(a) * length * 0.5)
+                d.polygon([pts[0], inner, pts[2]], fill=(252, 214, 84, 240))
+        return img
     if name == 'wreckingball':
         img = new_part(170, 170)
         d = ImageDraw.Draw(img)
-        d.ellipse([12, 12, 158, 158], fill=(70, 72, 82, 255), outline=ink, width=int(stroke * 0.7))
-        d.ellipse([40, 34, 74, 62], fill=(150, 154, 166, 255))
+        d.ellipse([12, 12, 158, 158], fill=(98, 104, 120, 255), outline=ink, width=int(stroke * 0.7))
+        # Hazard stripes round its middle, and a shackle on top for the cable.
+        d.chord([12, 12, 158, 158], 150, 210, fill=TOOL_YELLOW)
+        d.chord([12, 12, 158, 158], 330, 30, fill=TOOL_YELLOW)
+        d.ellipse([40, 34, 74, 62], fill=(186, 192, 206, 255))
         return img
     if name == 'girder':
         # A steel I-beam seen side on: two flanges and a web with rivet holes.
@@ -421,11 +662,18 @@ def build(cfg):
     if cfg['head_style']:
         emit('Head', head_part(cfg))
     emit('Torso', torso_part(cfg))
+    c = cfg.get('colours') or {}
+    # A coloured fighter gets thicker limbs, so there is room for colour inside the outline.
+    grow = 1.6 if c else 1.0
     for side in ('Front', 'Back'):
-        emit('Arm%s_Upper' % side, limb_part(cfg['upper_arm'], stroke, ink, taper=0.92))
-        emit('Arm%s_Lower' % side, limb_part(cfg['lower_arm'], stroke * 0.92, ink, taper=0.85))
-        emit('Leg%s_Upper' % side, limb_part(cfg['upper_leg'], stroke * 1.08, ink, taper=0.90))
-        emit('Leg%s_Lower' % side, limb_part(cfg['lower_leg'], stroke, ink, taper=0.80))
+        emit('Arm%s_Upper' % side, limb_part(cfg['upper_arm'], stroke * grow, ink, taper=0.92,
+                                            fill=c.get('shirt')))
+        emit('Arm%s_Lower' % side, limb_part(cfg['lower_arm'], stroke * 0.92 * grow, ink, taper=0.85,
+                                            fill=c.get('shirt'), end_fill=c.get('skin'), end_from=0.7))
+        emit('Leg%s_Upper' % side, limb_part(cfg['upper_leg'], stroke * 1.08 * grow, ink, taper=0.90,
+                                            fill=c.get('jeans')))
+        emit('Leg%s_Lower' % side, limb_part(cfg['lower_leg'], stroke * grow, ink, taper=0.80,
+                                            fill=c.get('jeans'), end_fill=c.get('boots'), end_from=0.72))
     if cfg['prop']:
         emit(cfg['prop']['name'], prop_part(cfg))
 
@@ -497,6 +745,11 @@ def build(cfg):
             img.save(os.path.join(poses_dir, tool + '.png'))
             poses[tool] = {'texture': 'poses/%s.png' % tool,
                            'anchor': [img.size[0] / 2.0, img.size[1] / 2.0]}
+        for tool in cfg.get('held_tools', []):
+            img, grip = held_tool(tool, ink, stroke)
+            name_ = 'tool_' + tool
+            img.save(os.path.join(poses_dir, name_ + '.png'))
+            poses[name_] = {'texture': 'poses/%s.png' % name_, 'anchor': [round(grip[0], 1), round(grip[1], 1)]}
 
     rig = {
         'name': name,
