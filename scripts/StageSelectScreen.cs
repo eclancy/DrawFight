@@ -95,16 +95,22 @@ public partial class StageSelectScreen : Node2D
 
 			if (cursor.Cancel)
 			{
+				SfxPlayer.Ui("ui_back");
 				GameRoot.Instance.GoCharacterSelect();
 				return;
 			}
 
 			int under = StageUnder(cursor.Position);
-			if (under >= 0) shown = under;
+			if (under >= 0 && under != shown)
+			{
+				shown = under;
+				SfxPlayer.Ui("ui_move");
+			}
 
 			if (cursor.Confirm && under >= 0)
 			{
 				GameRoot.Instance.SelectedStage = under;
+				SfxPlayer.Ui("ui_ready");
 				GameRoot.Instance.GoMatch();
 				return;
 			}

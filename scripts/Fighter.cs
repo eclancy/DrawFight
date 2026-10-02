@@ -307,6 +307,47 @@ public partial class Fighter : CharacterBody2D
 		overlay = new Node2D();
 		AddChild(overlay);
 		overlay.Draw += DrawOverlay;
+
+		// A held smash hums, rising in pitch as it charges. It is the fighter's own voice rather
+		// than one from SfxPlayer's pool so it pauses with the match and goes when he does.
+		chargeVoice = new AudioStreamPlayer2D
+		{
+			Bus = SfxPlayer.SfxBus,
+			Stream = SfxPlayer.Instance?.Stream("smash_charge"),
+			MaxDistance = 100000.0f,
+			PanningStrength = 0.5f,
+		};
+		AddChild(chargeVoice);
+	}
+
+	// --- Sound -----------------------------------------------------------------
+
+	/// <summary>The sound the current move makes, and on which of its frames.</summary>
+	SfxCatalog.Cue moveCue;
+	AudioStreamPlayer2D chargeVoice;
+
+	/// <summary>The frame a held smash freezes on while it charges.</summary>
+	static int ChargeFreezeFrame(MoveData move) => Mathf.Max(1, move.StartupFrames - ChargeHoldBeforeHit);
+
+	void CueMoveSound(MoveData move)
+	{
+		moveCue = move == Data.Taunt
+			? new SfxCatalog.Cue("taunt", 1)
+			: SfxCatalog.ForMove(move, ChargeFreezeFrame(move));
+	}
+
+	void UpdateChargeVoice()
+	{
+		if (chargeVoice == null || chargeVoice.Stream == null) return;
+		if (IsCharging && chargeFrames > 0)
+		{
+			if (!chargeVoice.Playing) chargeVoice.Play();
+			chargeVoice.PitchScale = 1.0f + 0.6f * chargeFrames / MaxChargeFrames;
+		}
+		else if (chargeVoice.Playing)
+		{
+			chargeVoice.Stop();
+		}
 	}
 
 	void Redraw()
@@ -318,6 +359,7 @@ public partial class Fighter : CharacterBody2D
 	public override void _PhysicsProcess(double delta)
 	{
 		float dt = (float)delta;
+		UpdateChargeVoice();
 
 		// Hitlag freezes this fighter completely - no movement, no state advance, no timers.
 		// Everything else in the world keeps running. This is the single biggest contributor
@@ -790,6 +832,7 @@ public partial class Fighter : CharacterBody2D
 
 		moveFrame++;
 		if (currentMove.Spin) AdvanceSpin();
+		if (!moveCue.IsNone && moveFrame == moveCue.Frame) SfxPlayer.At(moveCue.Name, GlobalPosition);
 
 		// A ball-form move spins the whole time, fastest while the hitbox is out.
 		if (currentMove.BallForm)
@@ -868,6 +911,7 @@ public partial class Fighter : CharacterBody2D
 		if (comboQueued && moveFrame > activeEnd && currentMove.ComboNext != null)
 		{
 			currentMove = currentMove.ComboNext;
+			CueMoveSound(currentMove);
 			moveFrame = 0;
 			chargeFrames = 0;
 			comboQueued = false;
@@ -956,6 +1000,7 @@ public partial class Fighter : CharacterBody2D
 		if (respawnDelayFrames > 0)
 		{
 			Visible = --respawnDelayFrames == 0;
+			if (Visible) SfxPlayer.At("respawn", respawnPoint, 0.0f);
 			return;
 		}
 
@@ -1059,6 +1104,7 @@ public partial class Fighter : CharacterBody2D
 		spinAngle = 0.0f;
 		spinDone = false;
 		State = FighterState.Attacking;
+		CueMoveSound(move);
 
 		StartSpecialMotion(move);
 	}
@@ -1183,6 +1229,7 @@ public partial class Fighter : CharacterBody2D
 				Match.SpawnHazard(this, SizedFor(move), origin + new Vector2(0.0f, spread),
 					new Vector2(Facing * move.SpecialSpeed, 0.0f));
 				burstFired++;
+				if (burstFired > 1) SfxPlayer.At("special_shot", GlobalPosition);
 				break;
 
 			case SpecialKind.Projectile:
@@ -2186,6 +2233,7 @@ public partial class Fighter : CharacterBody2D
 			{
 				blinkStarted = true;
 				blinkFrom = GlobalPosition;
+				SfxPlayer.At("special_blink", GlobalPosition, 0.0f);
 			}
 			Velocity = new Vector2(Facing * currentMove.SpecialSpeed, 0.0f);
 			return;
@@ -2384,8 +2432,8 @@ public partial class Fighter : CharacterBody2D
 
 	/// <summary>
 	/// The warning before a blink: a star of light on his blade that grows and turns, and flares
-	/// just before he goes. (There is no sound yet. When there is, this wants a rising ring that
-	/// peaks on the same frame - see .ai/fighting-design.md.)
+	/// just before he goes. Its sound, special_glint, is a ring that rises with it and peaks on
+	/// the same frame - see SfxCatalog.ForMove and .ai/fighting-design.md.
 	/// </summary>
 	void DrawBlinkGlint(CanvasItem canvas)
 	{

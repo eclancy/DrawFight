@@ -19,7 +19,56 @@ public static class RegressionChecks
 		CheckEveryUpSpecialRecovers();
 		CheckWeightSpeedRule();
 		CheckNoMoveIsAlwaysCorrect();
+		CheckSounds();
 		PrintCalibrationTable();
+	}
+
+	/// <summary>
+	/// Every sound is on disk and every loop loops, then the sound each fighter's moves were
+	/// given. A missing file or a loop that plays once is silence, which nothing else would ever
+	/// report; and since a move's sound is picked from its data, the list is the only place to
+	/// see that a new fighter's sword actually goes shing. See .ai/audio-direction.md.
+	/// </summary>
+	static void CheckSounds()
+	{
+		foreach (string name in SfxCatalog.AllNames)
+		{
+			if (!ResourceLoader.Exists(SfxCatalog.PathFor(name)))
+			{
+				GD.PushError($"RegressionChecks: sound '{name}' is missing - run python tools/audio/build.py");
+			}
+		}
+
+		foreach (string path in new[] { SfxCatalog.PathFor("smash_charge"), $"res://assets/music/{MusicPlayer.Menu}.wav",
+			$"res://assets/music/{MusicPlayer.Battle}.wav" })
+		{
+			if (!ResourceLoader.Exists(path))
+			{
+				GD.PushError($"RegressionChecks: {path} is missing - run python tools/audio/build.py --music");
+				continue;
+			}
+			// Loaded raw, not through SfxPlayer.Load, which would mend it and hide the problem.
+			if (ResourceLoader.Load<AudioStream>(path) is AudioStreamWav wav
+				&& wav.LoopMode == AudioStreamWav.LoopModeEnum.Disabled)
+			{
+				GD.PushWarning($"RegressionChecks: {path} imported without its loop - SfxPlayer.Load "
+					+ "patches it, but check edit/loop_mode in its .import file");
+			}
+		}
+
+		for (int i = 0; i < FighterCatalog.Count; i++)
+		{
+			FighterData fighter = FighterCatalog.Get(i);
+			var line = new System.Text.StringBuilder($"RegressionChecks: sounds {fighter.DisplayName,-9}");
+			foreach (MoveSlot slot in System.Enum.GetValues(typeof(MoveSlot)))
+			{
+				MoveData move = fighter.Move(slot);
+				if (move == null) continue;
+				SfxCatalog.Cue cue = SfxCatalog.ForMove(move, Mathf.Max(1, move.StartupFrames - 3));
+				line.Append($" {slot}={(cue.IsNone ? "-" : cue.Name.Replace("special_", "sp_").Replace("swing_", ""))}");
+			}
+			GD.Print(line.ToString());
+		}
 	}
 
 	/// <summary>Higher percent must always mean further launch, or the core rule is broken.</summary>

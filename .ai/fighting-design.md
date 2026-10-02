@@ -127,9 +127,9 @@ polish, they are the feature:
   must spend its startup showing that it is coming, or it is unfair: EdgeLord's Blur Slash
   glints and flashes for 22 frames, then goes in 5.
 
-**Sound is not built yet**, and some moves are waiting on it. When it lands, the telegraphs
-need it most - a rising ring through Blur Slash's glint that peaks on the frame he goes, then a
-sharp cut. A warning you can hear works even when you are not looking at the right fighter.
+**Telegraphs have a sound as well as a look**, because a warning you can hear works even when
+you are not looking at the right fighter. Blur Slash's glint has a ring that rises through it,
+peaks on the frame he goes, and is cut off sharply as he goes. See `.ai/audio-direction.md`.
 
 ## Movement
 

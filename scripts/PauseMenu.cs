@@ -74,18 +74,21 @@ public partial class PauseMenu : CanvasLayer
 			if (nav.StepY != 0)
 			{
 				selected = (selected + nav.StepY + Options.Length) % Options.Length;
+				SfxPlayer.Ui("ui_move");
 				Refresh();
 			}
 
 			// Start again, or B, is always "carry on".
 			if (nav.Start || nav.Cancel)
 			{
+				SfxPlayer.Ui("ui_back");
 				onResume?.Invoke();
 				return;
 			}
 
 			if (nav.Confirm)
 			{
+				SfxPlayer.Ui("ui_select");
 				if (selected == 0) onResume?.Invoke();
 				else onQuit?.Invoke();
 				return;

@@ -358,8 +358,8 @@ public static class Specials
 	/// price: it is a long, obvious warning, because a hit this fast with no warning would be
 	/// unfair. Once per trip into the air, or it would be a second recovery.
 	///
-	/// SOUND, when there is any: this is the move that most needs it. A rising ring through the
-	/// glint that peaks on the frame he goes, then a sharp cut.
+	/// This is the move that most needs its sound: a ring rising through the glint that peaks on
+	/// the frame he goes (special_glint), then a sharp cut (special_blink).
 	/// </summary>
 	static MoveData BlurSlash() => new MoveData
 	{

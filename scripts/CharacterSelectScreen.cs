@@ -297,6 +297,7 @@ public partial class CharacterSelectScreen : Node2D
 					slot.Joined = true;
 					slot.IsCpu = false;
 					slot.Index = -1;
+					SfxPlayer.Ui("ui_select");
 				}
 				continue;
 			}
@@ -304,6 +305,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (cursor.Cancel)
 			{
 				// B takes a pick back; with nothing picked it goes back to the title.
+				SfxPlayer.Ui("ui_back");
 				if (slot.Locked)
 				{
 					slot.Index = -1;
@@ -323,10 +325,18 @@ public partial class CharacterSelectScreen : Node2D
 				return;
 			}
 
-			if (TryCpuButtons(cursor.Position)) continue;
+			if (TryCpuButtons(cursor.Position))
+			{
+				SfxPlayer.Ui("ui_select");
+				continue;
+			}
 
 			int picked = CardUnder(cursor.Position);
-			if (picked >= 0) slot.Index = picked;
+			if (picked >= 0)
+			{
+				slot.Index = picked;
+				SfxPlayer.Ui("ui_ready");
+			}
 		}
 
 		RefreshPanels();
@@ -349,6 +359,8 @@ public partial class CharacterSelectScreen : Node2D
 		startPrompt.Scale = Vector2.One * (1.0f + 0.05f * Mathf.Sin(promptFrames * 0.12f));
 
 		if (!startFight || !everyoneReady) return;
+
+		SfxPlayer.Ui("ui_select");
 
 		for (int i = 0; i < slots.Length; i++)
 		{

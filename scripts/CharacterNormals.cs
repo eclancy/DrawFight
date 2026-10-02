@@ -275,7 +275,11 @@ public static class CharacterNormals
 		m.Special = SpecialKind.Projectile;
 		m.HitboxOffset = new Vector2(0.0f, -10.0f);
 		m.ShotAngles = new[] { 0.0f, 45.0f, 90.0f, 135.0f, 180.0f, 225.0f, 270.0f, 315.0f };
-		m.SpecialSpeed = 1300.0f; m.SpecialLifetime = 16;
+		// Close range and a real recovery: it is for when someone is on top of him, not a wall
+		// of blades to throw out over and over. It used to fly ~350px and come out three times a
+		// second; now the daggers stop at about a body length and it is about twice a second.
+		m.SpecialSpeed = 1000.0f; m.SpecialLifetime = 11;
+		m.StartupFrames = 8; m.EndlagFrames = 26;
 		m.Damage = 8.0f; m.LaunchAngleDegrees = 50.0f;
 		m.FxRadius = 18.0f; m.FxColor = new Color(0.80f, 0.82f, 0.86f);
 		m.FxTexture = EdgeFx("sword_dagger"); m.FxArtSize = 80.0f; m.FxAlongFlight = true;

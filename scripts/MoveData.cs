@@ -126,6 +126,12 @@ public partial class MoveData : Resource
 	/// <summary>Which body animation the move plays - see <see cref="FighterAnimations.PosesFor"/>.</summary>
 	[Export] public AttackAnim Anim { get; set; } = AttackAnim.Punch;
 
+	/// <summary>
+	/// The sound this move makes, by name, when the one picked from its data is wrong for it.
+	/// Empty - nearly always - lets SfxCatalog.ForMove choose. See .ai/audio-direction.md.
+	/// </summary>
+	[Export] public string Sound { get; set; } = "";
+
 	// --- Combos and charging ---------------------------------------------------
 
 	/// <summary>
@@ -386,6 +392,7 @@ public partial class MoveData : Resource
 			HitboxRadius = HitboxRadius * scale.Range,
 			Unblockable = Unblockable,
 			Anim = Anim,
+			Sound = Sound,
 			ComboNext = ComboNext?.Scaled(scale),
 			Chargeable = Chargeable,
 			BallForm = BallForm,

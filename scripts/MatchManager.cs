@@ -173,11 +173,16 @@ public partial class MatchManager : Node2D
 	{
 		fx.SpawnBlastFlash(position);
 		camera.AddShake(60.0f);
+		SfxPlayer.At("explosion", position, 0.03f);
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
-		if (countdownFrames > 0) countdownFrames--;
+		if (countdownFrames > 0)
+		{
+			CountdownSound();
+			countdownFrames--;
+		}
 		if (matchOver) return;
 
 		foreach (Fighter fighter in Fighters)
@@ -205,6 +210,7 @@ public partial class MatchManager : Node2D
 		if (inward.LengthSquared() < 1.0f) inward = Vector2.Up;
 		fx.SpawnKoBlast(edge, inward, fighter.Data.PlaceholderColor);
 		camera.AddShake(140.0f);
+		SfxPlayer.At("ko_blast", edge, 0.0f);
 
 		// A KO is the biggest moment in a match; it gets the biggest rumble.
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
@@ -229,6 +235,8 @@ public partial class MatchManager : Node2D
 		if (alive <= 1)
 		{
 			matchOver = true;
+			MusicPlayer.Stop();
+			SfxPlayer.Ui("game_set");
 			winner = last != null ? $"{last.Data.DisplayName} wins!" : "Draw!";
 		}
 	}
@@ -293,6 +301,25 @@ public partial class MatchManager : Node2D
 	}
 
 	/// <summary>
+	/// A tick as each number lands and a chord on FIGHT! - which is also where the battle music
+	/// starts, so the fight and its music begin on the same frame. The ticks are the A the
+	/// FIGHT! chord resolves, so the count sounds like it is going somewhere.
+	/// </summary>
+	void CountdownSound()
+	{
+		int intoNumbers = countdownFrames - FightBannerFrames;
+		if (intoNumbers > 0 && intoNumbers % CountdownStepFrames == 0)
+		{
+			SfxPlayer.Ui("count_tick");
+		}
+		else if (intoNumbers == 0)
+		{
+			SfxPlayer.Ui("count_go");
+			MusicPlayer.Play(MusicPlayer.Battle);
+		}
+	}
+
+	/// <summary>
 	/// FIGHT!, 1, 2, 3 - a traffic light run backwards: red, orange, yellow, then green for go.
 	/// Crayon-bright, like every accent in the game (see .ai/art-direction.md).
 	/// </summary>
@@ -318,6 +345,7 @@ public partial class MatchManager : Node2D
 	{
 		lastKnockback = knockback;
 		fx.SpawnHitSpark(contactPoint, damage, blocked);
+		SfxPlayer.Hit(contactPoint, knockback, blocked);
 		camera.AddShake(blocked ? knockback * 0.25f : knockback);
 
 		// Knockback around 150 is roughly kill range, so that is where rumble maxes out.
@@ -411,15 +439,19 @@ public partial class MatchManager : Node2D
 		pauseMenu.Open(humans, Resume, () =>
 		{
 			GetTree().Paused = false;
+			MusicPlayer.SetPaused(false);
 			GameRoot.Instance.GoCharacterSelect();
 		});
 		AddChild(pauseMenu);
 		GetTree().Paused = true;
+		SfxPlayer.Ui("pause");
+		MusicPlayer.SetPaused(true);
 	}
 
 	void Resume()
 	{
 		GetTree().Paused = false;
+		MusicPlayer.SetPaused(false);
 		pauseMenu?.QueueFree();
 		pauseMenu = null;
 	}
@@ -460,6 +492,9 @@ public partial class MatchManager : Node2D
 		winner = "";
 		lastKnockback = 0.0f;
 		Engine.TimeScale = 1.0f;
+		// The battle music comes back in on FIGHT!, like the first time.
+		MusicPlayer.Stop();
+		MusicPlayer.SetPaused(false);
 
 		BuildMatch();
 	}
