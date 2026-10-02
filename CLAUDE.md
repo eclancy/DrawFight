@@ -40,8 +40,13 @@ content decision. Do not restate its contents here.
 - `.ai/art-direction.md` — the visual contract for everything the kids do NOT draw: the value
   ladder, the two crayon styles, what an outline means, and why night is lavender. **Read
   before adding any stage, prop, effect or UI colour.**
+- `.ai/audio-direction.md` — how every sound and both music loops are generated, how a move
+  gets its sound, and the mix. **Read before adding or changing any sound.**
 - `.ai/character-design.md` — how a kid's description becomes a balanced moveset, the special
   archetype library, the weakness rule. **Read before designing any character.**
+- `.ai/releasing.md` — the downloadable Windows build, GitHub Releases, and how every copy
+  updates itself from ecec.dev. **Read before changing `UpdateScreen`, the export preset, or
+  anything under `tools/release/`.**
 - `.ai/roadmap.md` — milestones and what is deliberately deferred
 
 `for-nephew/` is written **for a 10-12 year old**, not for us. Keep the tone direct and never
@@ -92,6 +97,14 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   `sheet.md`). That folder is gitignored: a kid's drawing only enters the public repo when it is
   deliberately made into a fighter. The form and server live in the EricClancyEngineeringAndCrafts
   repo (`public/draw/`, `intake/`, `docs/DEPLOYMENT.md`).
+- **`python tools/audio/build.py`** — regenerate every sound effect into `assets/sfx/` (about
+  5 seconds). Add **`--music`** for the two music loops in `assets/music/` (about 30 seconds),
+  or name sounds to build only those. Then `"$GODOT_BIN" --headless --path . --import`.
+  Nobody on this project can hear the result, so `RegressionChecks` prints which sound each
+  fighter's moves were given - check it after adding a fighter.
+- **`bash tools/release/release.sh X.Y.Z`** — publish a version: exports the Windows build and
+  makes a GitHub Release. Every downloaded copy updates itself to it on next start. Needs a clean
+  tree and the export templates - see `.ai/releasing.md`. Never publish without being asked.
 - **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real title-screen
   frame (Lug's face). The icon is never drawn separately; when a real drawing replaces the
   stick figures, re-shoot and re-crop per the script's docstring.
@@ -197,3 +210,6 @@ something is unstated here, default to however that project does it.
   rig is a `Node2D` tree with `Centered = false` sprites offset by `-pivot`. See
   `.ai/art-pipeline.md`.
 - Call game feel or animation verified when you have only run `dotnet build`.
+- Hand-edit a file in `assets/sfx/` or `assets/music/`, or pick a move's sound per move. Sounds
+  are generated, and a move's sound is read off its data by `SfxCatalog.ForMove`; a move it
+  gets wrong sets `MoveData.Sound`. See `.ai/audio-direction.md`.

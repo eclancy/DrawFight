@@ -26,6 +26,12 @@ public partial class GameRoot : Node2D
 	public override void _Ready()
 	{
 		Instance = this;
+
+		// Sound lives here, above the screens, so the menu music carries on unbroken from one
+		// menu to the next and a sound that starts on one screen finishes on the next.
+		AddChild(new SfxPlayer());
+		AddChild(new MusicPlayer());
+
 		RegressionChecks.RunAll();
 
 		// Pads are reassigned live everywhere, not just in a match: a controller that goes to
@@ -71,7 +77,11 @@ public partial class GameRoot : Node2D
 			case "match": GoMatch(); break;
 			case "select": GoCharacterSelect(); break;
 			case "stages": GoStageSelect(); break;
-			default: GoTitle(); break;
+			// A downloaded copy checks ecec.dev for a newer version before anything else.
+			default:
+				if (UpdateScreen.ShouldCheck()) Show(new UpdateScreen());
+				else GoTitle();
+				break;
 		}
 	}
 
@@ -118,6 +128,11 @@ public partial class GameRoot : Node2D
 
 		currentScreen = screen;
 		AddChild(screen);
+
+		// A match starts in silence and brings its music in on FIGHT! (see MatchManager); the
+		// parade is a tool, not a screen. Every other screen is a menu.
+		if (screen is MatchManager || screen is RigParade) MusicPlayer.Stop();
+		else MusicPlayer.Play(MusicPlayer.Menu);
 	}
 
 	// --- Screenshots ---------------------------------------------------------

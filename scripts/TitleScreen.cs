@@ -54,6 +54,9 @@ public partial class TitleScreen : Node2D
 		// and quitting lives on the fighter select screen.
 		pressStart = MenuTheme.MakeLabel("PRESS  START", new Vector2(200.0f, 830.0f), 54, MenuTheme.Ink);
 		root.AddChild(pressStart);
+
+		// Which version this is, small, so "which one do you have?" has an answer.
+		root.AddChild(MenuTheme.MakeLabel($"v{UpdateScreen.CurrentVersion}", new Vector2(190.0f, 1010.0f), 28, MenuTheme.Soft));
 	}
 
 	Label pressStart;
@@ -94,6 +97,7 @@ public partial class TitleScreen : Node2D
 			if (!nav.AnyPress) continue;
 
 			leaving = true;
+			SfxPlayer.Ui("ui_select");
 			GameRoot.Instance.GoCharacterSelect();
 			return;
 		}

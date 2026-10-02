@@ -24,3 +24,9 @@ obj/
 
 # Fighter submissions pulled from the ecec.dev/draw form - kids' drawings, private until made into a fighter.
 fighters/incoming/
+
+# Audition reels written by tools/audio/build.py --preview - working files, never shipped.
+tools/audio/_preview_*.wav
+
+# Exported game builds and release zips - published as GitHub Releases, never committed.
+build/
