@@ -203,48 +203,104 @@ public static class Specials
 	};
 
 	// =========================================================================
-	// DOOMBOT - PLACEHOLDERS. His character sheet has not arrived yet; these four stand-ins
-	// exist so he can be played, and every one is replaced when it does.
+	// DOOMBOT - drawn and designed by Eric. "A factory robot that went rogue." Amazing at being
+	// strong, hard to knock over and long reach; terrible because he overheats, his joints are
+	// rusty, and every swing has a big windup. His coolest move is the furnace: heat builds as he
+	// fights, he glows and smokes, and his down special lets it all out at once.
 	// =========================================================================
 
-	public static MoveData[] DoomBotPlaceholder() => new[]
+	public static MoveData[] DoomBot() => new[] { EyeLaser(), ClawGrab(), RocketBoots(), FurnaceBlast() };
+
+	/// <summary>
+	/// Neutral: "an eye laser". His round grille eye glows for a long windup, then a thin red
+	/// laser shoots straight out of it across most of the stage and stays on his eye as his head
+	/// moves. Long reach and light damage - a poke that stops people keeping away from him.
+	/// </summary>
+	static MoveData EyeLaser() => new MoveData
 	{
-		new MoveData
+		MoveName = "Eye Laser",
+		Anim = AttackAnim.HeavyPunch,
+		StartupFrames = 22, ActiveFrames = 2, EndlagFrames = 26,
+		Damage = 9.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.8f,
+		LaunchAngleDegrees = 25.0f,
+		HitboxOffset = new Vector2(30.0f, -80.0f), HitboxRadius = 0.0f,
+		Special = SpecialKind.Projectile,
+		SpecialSpeed = 3200.0f, SpecialGravity = 0.0f, SpecialLifetime = 26,
+		Beam = true, Reach = 820.0f, BeamFrom = "eye",
+		FxColor = new Color(0.95f, 0.24f, 0.26f), FxRadius = 14.0f,
+	};
+
+	/// <summary>
+	/// Side: "extend his arms forward, grab someone, pull them to him, and then he kicks them."
+	/// Both arms shoot out along the ground; the first fighter they touch is seized - through a
+	/// block - reeled in to his chest, and kicked away with sparks off his steel toe. Miss, and
+	/// the arms come back empty and his rusty joints leave him stuck. The roster's second command
+	/// grab, by Eric's call (see .ai/character-design.md).
+	/// </summary>
+	static MoveData ClawGrab() => new MoveData
+	{
+		MoveName = "Claw Grab",
+		Anim = AttackAnim.PalmThrust,
+		StartupFrames = 18, ActiveFrames = 14, EndlagFrames = 24,
+		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
+		HitboxRadius = 0.0f,
+		Special = SpecialKind.CommandGrab,
+		TetherLength = 330.0f,
+		GrabThrow = new MoveData
 		{
-			MoveName = "Placeholder Blaster", Anim = AttackAnim.Punch,
-			StartupFrames = 12, ActiveFrames = 2, EndlagFrames = 22,
-			Damage = 8.0f, BaseKnockback = 26.0f, KnockbackGrowth = 0.85f, LaunchAngleDegrees = 40.0f,
-			HitboxOffset = new Vector2(64.0f, -24.0f), HitboxRadius = 0.0f,
-			Special = SpecialKind.Projectile, SpecialSpeed = 1100.0f, SpecialLifetime = 60,
-			FxColor = new Color(0.95f, 0.30f, 0.28f), FxRadius = 22.0f,
+			MoveName = "Claw Grab Kick",
+			Anim = AttackAnim.FrontKick,
+			StartupFrames = 8, ActiveFrames = 3, EndlagFrames = 22,
+			Damage = 12.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.85f,
+			LaunchAngleDegrees = 38.0f,
+			HitboxOffset = new Vector2(80.0f, 10.0f), HitboxRadius = 50.0f,
+			Unblockable = true,
+			ActiveFx = ActiveFx.Sparks,
 		},
-		new MoveData
-		{
-			MoveName = "Placeholder Charge", Anim = AttackAnim.Lunge,
-			StartupFrames = 12, ActiveFrames = 8, EndlagFrames = 24,
-			Damage = 10.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.9f, LaunchAngleDegrees = 45.0f,
-			HitboxOffset = new Vector2(44.0f, -16.0f), HitboxRadius = 56.0f, CarriesMomentum = true,
-			Special = SpecialKind.Dash, SpecialSpeed = 1300.0f,
-			FxColor = new Color(0.95f, 0.30f, 0.28f), FxRadius = 40.0f,
-		},
-		new MoveData
-		{
-			MoveName = "Placeholder Rocket", Anim = AttackAnim.UpSmash,
-			StartupFrames = 8, ActiveFrames = 10, EndlagFrames = 20,
-			Damage = 7.0f, BaseKnockback = 28.0f, KnockbackGrowth = 0.85f, LaunchAngleDegrees = 80.0f,
-			HitboxOffset = new Vector2(0.0f, -30.0f), HitboxRadius = 50.0f,
-			Special = SpecialKind.Recovery, SpecialRise = 1700.0f, SpecialSpeed = 300.0f,
-			FxColor = new Color(0.98f, 0.70f, 0.25f), FxRadius = 40.0f,
-		},
-		new MoveData
-		{
-			MoveName = "Placeholder Mine", Anim = AttackAnim.LowKick,
-			StartupFrames = 14, ActiveFrames = 2, EndlagFrames = 24,
-			Damage = 7.0f, BaseKnockback = 38.0f, KnockbackGrowth = 0.6f, LaunchAngleDegrees = 70.0f,
-			HitboxOffset = new Vector2(48.0f, 30.0f), HitboxRadius = 36.0f,
-			Special = SpecialKind.Trap, SpecialLifetime = 240, MaxOut = 2,
-			FxColor = new Color(0.95f, 0.30f, 0.28f), FxRadius = 30.0f,
-		},
+		FxColor = new Color(0.86f, 0.28f, 0.26f), FxRadius = 0.0f,
+	};
+
+	/// <summary>
+	/// Up: the recovery. "Booster jets below his feet that can set people on fire." Rocket
+	/// flames light under both boots and he flies straight up for most of a second, steering
+	/// left and right. Anyone under him is pushed away and set on fire.
+	/// </summary>
+	static MoveData RocketBoots() => new MoveData
+	{
+		MoveName = "Rocket Boots",
+		Anim = AttackAnim.Soar,
+		StartupFrames = 10, ActiveFrames = 50, EndlagFrames = 18,
+		Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.6f,
+		LaunchAngleDegrees = 20.0f, LaunchAway = true,
+		// Under his boots, where the flames are.
+		HitboxOffset = new Vector2(0.0f, 104.0f), HitboxRadius = 48.0f,
+		Special = SpecialKind.Recovery,
+		Flight = true, SpecialRise = 640.0f,
+		BurnFrames = 90, BurnDamage = 6.0f,
+		ActiveFx = ActiveFx.Jets,
+		FxColor = new Color(0.98f, 0.55f, 0.20f), FxRadius = 40.0f,
+	};
+
+	/// <summary>
+	/// Down: the coolest move, Furnace Blast. "His down special should release all of that heat
+	/// - at max heat, it's a powerful all direction flame attack." These are the numbers at full
+	/// heat; Heat.VentAt scales them down to however hot he is, and below a quarter heat it is
+	/// only a puff of steam. Everyone it catches flies away from him, whichever side they are on,
+	/// and burns.
+	/// </summary>
+	static MoveData FurnaceBlast() => new MoveData
+	{
+		MoveName = "Furnace Blast",
+		Anim = AttackAnim.Spread,
+		StartupFrames = 12, ActiveFrames = 2, EndlagFrames = 26,
+		Damage = 21.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.92f,
+		LaunchAngleDegrees = 50.0f, LaunchAway = true,
+		HitboxRadius = 0.0f,
+		Special = SpecialKind.Vent,
+		SpecialLifetime = 16,
+		BurnFrames = 150, BurnDamage = 9.0f,
+		FxFlame = true,
+		FxColor = new Color(0.97f, 0.50f, 0.20f), FxRadius = 230.0f,
 	};
 
 	// =========================================================================
@@ -266,22 +322,23 @@ public static class Specials
 	}
 
 	/// <summary>
-	/// Neutral: the signature. Press special and four swords appear around him - up, forward,
-	/// back and down - and pushing the stick throws that one. Each is a different tool, so the
-	/// choice is the skill: the greatsword for someone above, the rapier for a quick poke, the
-	/// daggers for someone far away, the saw-blade for someone on the ground. Every one of them
-	/// flies the way he is facing - picking "back" chooses the daggers, it does not turn him.
+	/// Neutral: the signature. Press special and his swords appear around him - up, forward and
+	/// down - and pushing the stick throws that one. Each is a different tool, so the choice is the
+	/// skill: the greatsword for someone above, the daggers for someone far away, the saw-blade for
+	/// someone on the ground. Every one flies the way he is facing. Pushing BACK puts them away
+	/// with nothing thrown - a cancel, marked with a cross - so opening the menu is not a promise.
 	/// </summary>
 	static MoveData InfiniteSwords() => new MoveData
 	{
 		MoveName = "Infinite Swords",
 		// The active window is how long the swords stay up to choose from. Letting it run out
-		// throws the forward one, so a tap is never wasted.
+		// throws the forward one (the daggers), so a tap is never wasted.
 		StartupFrames = 3, ActiveFrames = 40, EndlagFrames = 8,
 		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
 		HitboxRadius = 0.0f,
 		Special = SpecialKind.Choice,
-		Choices = new[] { ThrownGreatsword(), ThrownRapier(), ThrownDaggers(), ThrownSawblade() },
+		// Up, forward, back, down. Back is null: it cancels.
+		Choices = new[] { ThrownGreatsword(), ThrownDaggers(), null, ThrownSawblade() },
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 0.0f,
 	};
 
@@ -300,29 +357,14 @@ public static class Specials
 		FxTexture = EdgeFx("sword_greatsword"), FxArtSize = 200.0f, FxSpin = 17.0f,
 	};
 
-	/// <summary>Forward: a rapier, point first, faster and further than anything. Weak - it is for reach.</summary>
-	static MoveData ThrownRapier() => new MoveData
-	{
-		MoveName = "Rapier",
-		Anim = AttackAnim.Punch,
-		StartupFrames = 9, ActiveFrames = 2, EndlagFrames = 16,
-		Damage = 6.0f, BaseKnockback = 24.0f, KnockbackGrowth = 0.6f,
-		LaunchAngleDegrees = 24.0f,
-		HitboxOffset = new Vector2(64.0f, -24.0f), HitboxRadius = 16.0f,
-		Special = SpecialKind.Projectile,
-		SpecialSpeed = 1900.0f, SpecialGravity = 0.0f, SpecialLifetime = 34,
-		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 16.0f,
-		FxTexture = EdgeFx("sword_rapier"), FxArtSize = 156.0f, FxAlongFlight = true,
-	};
-
 	/// <summary>
-	/// Back: three daggers fanned forward - the fastest and furthest-flying of the four. Weak
-	/// each, but they cross the whole stage before anyone can close in.
+	/// Forward: three daggers thrown one after another - the fastest and furthest-flying of the
+	/// three. Weak each, but they cross the whole stage before anyone can close in.
 	/// </summary>
 	static MoveData ThrownDaggers() => new MoveData
 	{
 		MoveName = "Daggers",
-		Anim = AttackAnim.PunchBack,
+		Anim = AttackAnim.Punch,
 		StartupFrames = 7, ActiveFrames = 12, EndlagFrames = 16,
 		Damage = 3.0f, BaseKnockback = 16.0f, KnockbackGrowth = 0.35f,
 		LaunchAngleDegrees = 30.0f,

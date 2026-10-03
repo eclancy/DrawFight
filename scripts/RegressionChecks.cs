@@ -252,7 +252,20 @@ public static class RegressionChecks
 				if (move != null) Report(move.MoveName, move, victim);
 
 				// A choice of moves is only as strong as what is on offer, so list each one.
-				if (move != null) foreach (MoveData choice in move.Choices) Report("  " + choice.MoveName, choice, victim);
+				if (move != null) foreach (MoveData choice in move.Choices) if (choice != null) Report("  " + choice.MoveName, choice, victim);
+
+				// A command grab hits with what follows it, and a vent with however hot he is.
+				if (move?.Special == SpecialKind.CommandGrab && move.GrabThrow != null)
+				{
+					Report("  " + move.GrabThrow.MoveName, move.GrabThrow, victim);
+				}
+				if (move?.Special == SpecialKind.Vent)
+				{
+					foreach (float heat in new[] { 0.1f, 0.5f, 1.0f })
+					{
+						Report($"  at {Mathf.RoundToInt(heat * 100.0f)}% heat", Heat.VentAt(move, heat), victim);
+					}
+				}
 			}
 		}
 

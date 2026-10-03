@@ -185,6 +185,135 @@ public static class CharacterNormals
 	}
 
 	// =========================================================================
+	// DOOMBOT - heavy, a factory robot gone rogue. Steel boots, claw hands on long arms,
+	// antennae that spark. Every swing winds up big - that is on his sheet as a weakness - so
+	// most startups here are a few frames past the baseline before heavy scaling adds more.
+	// The reach is the payoff: his arms are long and his piston punch goes further still.
+	// =========================================================================
+
+	/// <summary>
+	/// "A single strong kick with his foot, some sparks come out, no combo." Authored at final
+	/// numbers like every jab: one slow steel-toe kick that hits harder than anyone's jab.
+	/// </summary>
+	public static MoveData DoomBotJab() => new MoveData
+	{
+		MoveName = "Steel Toe",
+		Anim = AttackAnim.FrontKick,
+		StartupFrames = 10, ActiveFrames = 3, EndlagFrames = 24,
+		Damage = 10.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.7f,
+		LaunchAngleDegrees = 35.0f,
+		HitboxOffset = new Vector2(88.0f, 14.0f), HitboxRadius = 46.0f,
+		ActiveFx = ActiveFx.Sparks,
+	};
+
+	public static void DoomBot(MoveData[] moves)
+	{
+		// A piston punch: the arm shoots out to twice its length and snaps back. His longest
+		// reach on the ground.
+		MoveData m = M(moves, MoveSlot.ForwardTilt);
+		m.MoveName = "Piston Punch"; m.Anim = AttackAnim.HeavyPunch; m.PropArt = "-";
+		m.StretchArm = true;
+		m.HitboxOffset = new Vector2(132.0f, -30.0f); m.HitboxRadius = 42.0f;
+		m.StartupFrames = 10; m.LaunchAngleDegrees = 32.0f;
+
+		m = M(moves, MoveSlot.UpTilt);
+		m.MoveName = "Claw Snap"; m.Anim = AttackAnim.Uppercut; m.PropArt = "-";
+		m.HitboxOffset = new Vector2(16.0f, -118.0f); m.HitboxRadius = 54.0f;
+		m.StartupFrames = 8; m.LaunchAngleDegrees = 85.0f;
+
+		m = M(moves, MoveSlot.DownTilt);
+		m.MoveName = "Boot Sweep"; m.Anim = AttackAnim.LowKick;
+		m.HitboxOffset = new Vector2(84.0f, 44.0f); m.HitboxRadius = 46.0f;
+		m.StartupFrames = 7; m.LaunchAngleDegrees = 20.0f;
+
+		// "Spin his arms windmill style": both arms whirl round at the shoulders as he charges,
+		// clipping whoever is in front four times - three light hits that carry them along, then
+		// one that knocks them away.
+		m = M(moves, MoveSlot.DashAttack);
+		m.MoveName = "Windmill"; m.Anim = AttackAnim.Windmill; m.PropArt = "-";
+		m.StartupFrames = 8; m.ActiveFrames = 18; m.EndlagFrames = 22;
+		m.RehitFrames = 5;
+		m.Damage = 6.0f; m.BaseKnockback = 38.0f; m.KnockbackGrowth = 0.85f; m.LaunchAngleDegrees = 45.0f;
+		m.HitboxOffset = new Vector2(52.0f, -24.0f); m.HitboxRadius = 64.0f;
+		m.LinkHit = new MoveData
+		{
+			MoveName = "Windmill (link)",
+			Damage = 2.5f, BaseKnockback = 16.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 60.0f,
+		};
+
+		// Hydraulic press: both claws raised high, then slammed down together in front of him.
+		m = M(moves, MoveSlot.ForwardSmash);
+		m.MoveName = "Hydraulic Press"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "-";
+		m.StartupFrames = 18;
+		m.Damage = 16.0f; m.LaunchAngleDegrees = 40.0f;
+		m.HitboxOffset = new Vector2(112.0f, 20.0f); m.HitboxRadius = 60.0f;
+		m.ActiveFx = ActiveFx.Sparks;
+
+		// "An electric shock from his antennae": lightning arcs off both antenna tips into the
+		// air above him.
+		m = M(moves, MoveSlot.UpSmash);
+		m.MoveName = "Antenna Shock"; m.Anim = AttackAnim.UpSmash; m.PropArt = "-";
+		m.StartupFrames = 14; m.ActiveFrames = 7;
+		m.HitboxOffset = new Vector2(0.0f, -146.0f); m.HitboxRadius = 66.0f;
+		m.ActiveFx = ActiveFx.Electric;
+
+		// Both steel boots stomped into the floor, and a quake runs out both ways along it.
+		m = M(moves, MoveSlot.DownSmash);
+		m.MoveName = "Stomp Quake"; m.Anim = AttackAnim.Split; m.PropArt = "-";
+		m.StartupFrames = 16;
+		m.Damage = 15.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 0.95f;
+		m.HitboxOffset = new Vector2(0.0f, 52.0f); m.HitboxRadius = 70.0f;
+		m.LaunchAngleDegrees = 70.0f;
+		m.Special = SpecialKind.Shockwave;
+		m.ShockwavePower = 0.75f;
+		m.SpecialSpeed = 900.0f; m.SpecialLifetime = 14;
+		m.FxRadius = 30.0f; m.FxColor = new Color(0.80f, 0.76f, 0.70f);
+
+		// "Neutral air makes an electricity field around him": a crackling ring that holds anyone
+		// inside it for three zaps, then throws them out.
+		m = M(moves, MoveSlot.NeutralAir);
+		m.MoveName = "Static Field"; m.Anim = AttackAnim.Spread; m.PropArt = "-";
+		m.StartupFrames = 8; m.ActiveFrames = 15; m.EndlagFrames = 16;
+		m.RehitFrames = 5;
+		m.Damage = 6.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 0.9f; m.LaunchAngleDegrees = 45.0f;
+		m.HitboxOffset = new Vector2(0.0f, -10.0f); m.HitboxRadius = 80.0f;
+		m.LinkHit = new MoveData
+		{
+			MoveName = "Static Field (link)",
+			Damage = 2.0f, BaseKnockback = 10.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 60.0f,
+		};
+		m.ActiveFx = ActiveFx.Electric;
+
+		// "Forward air shoots a low power missile": a little missile out of his chest, straight
+		// ahead. Chip damage at range, nothing more.
+		m = M(moves, MoveSlot.ForwardAir);
+		m.MoveName = "Pocket Missile"; m.Anim = AttackAnim.PalmThrust; m.PropArt = "-";
+		m.StartupFrames = 10; m.EndlagFrames = 18;
+		m.Damage = 5.0f; m.BaseKnockback = 22.0f; m.KnockbackGrowth = 0.5f; m.LaunchAngleDegrees = 30.0f;
+		m.HitboxOffset = new Vector2(60.0f, -14.0f); m.HitboxRadius = 0.0f;
+		m.Special = SpecialKind.Projectile;
+		m.SpecialSpeed = 950.0f; m.SpecialGravity = 0.0f; m.SpecialLifetime = 55;
+		m.FxMissile = true; m.FxRadius = 12.0f; m.FxColor = new Color(0.62f, 0.64f, 0.70f);
+
+		m = M(moves, MoveSlot.BackAir);
+		m.MoveName = "Boot Kick"; m.Anim = AttackAnim.Bair;
+		m.HitboxOffset = new Vector2(-86.0f, -4.0f); m.HitboxRadius = 50.0f;
+		m.StartupFrames = 10;
+
+		// Claws clapped together over his head.
+		m = M(moves, MoveSlot.UpAir);
+		m.MoveName = "Claw Clap"; m.Anim = AttackAnim.UpSmash; m.PropArt = "-";
+		m.HitboxOffset = new Vector2(6.0f, -112.0f); m.HitboxRadius = 56.0f;
+		m.StartupFrames = 8;
+
+		// Dropped boots first. Slow to start, and a spike.
+		m = M(moves, MoveSlot.DownAir);
+		m.MoveName = "Steel Boots"; m.Anim = AttackAnim.Dair;
+		m.HitboxOffset = new Vector2(6.0f, 96.0f); m.HitboxRadius = 48.0f;
+		m.StartupFrames = 14;
+	}
+
+	// =========================================================================
 	// EDGELORD - light, "infinite swords". Every normal draws a different weapon: a katana, a
 	// claymore, a rapier... and some do not hold one at all, but summon them - daggers in a ring,
 	// a shortsword flung from behind him, axes up out of the floor.
@@ -247,9 +376,16 @@ public static class CharacterNormals
 		m.StartupFrames = 18;
 		m.HitboxOffset = new Vector2(126.0f, -10.0f); m.HitboxRadius = 64.0f;
 
+		// A wide, slow arc: the greatsword drawn right back behind him, then swept up over his head
+		// and down in front. The hitbox travels the whole arc, so it covers behind, above and in
+		// front - but it comes slowly and stays out a long time, so it is easy to see coming and
+		// easy to punish.
 		m = M(moves, MoveSlot.UpSmash);
-		m.MoveName = "Sky Pierce"; m.Anim = AttackAnim.UpSmash; m.PropArt = "sword_greatsword";
-		m.HitboxOffset = new Vector2(16.0f, -136.0f); m.HitboxRadius = 58.0f;
+		m.MoveName = "Great Arc"; m.Anim = AttackAnim.WideArc; m.PropArt = "sword_greatsword";
+		m.StartupFrames = 18; m.ActiveFrames = 12; m.EndlagFrames = 32;
+		m.HitboxOffset = new Vector2(0.0f, -172.0f); m.HitboxRadius = 56.0f;
+		m.SweepDegrees = 150.0f;
+		m.LaunchAngleDegrees = 80.0f;
 
 		// He throws his arms down and two axes burst up out of the floor, one either side of him,
 		// then sink back. It covers both sides like every down smash, and hits upward. Charging

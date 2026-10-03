@@ -11,7 +11,7 @@ and rigged cutout puppets play the shared animation library. M2's last piece, a 
 a **real drawing**, is **Circy**: designed and drawn by Elim, cut from Elim's drawings by
 `tools/art/cut_circy.py`. **EdgeLord** and **DoomBot** are drawn by Eric (the kids' uncle and
 the project owner); EdgeLord plays with our placeholder colouring and sword art until the
-finished drawings arrive, and DoomBot's moves are placeholders until his sheet arrives. `fighters/` also holds two generated stick
+finished drawings arrive. DoomBot's moves come from Eric's own sheet (`fighters/doombot/sheet.md`). `fighters/` also holds two generated stick
 figures (Swift, Lug); `fighters/README.md` says when they go. M3 is the import tool.
 
 Every rule about "his" linework below applies to every kid who sends a fighter, Elim included.

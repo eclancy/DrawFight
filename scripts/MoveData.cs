@@ -60,11 +60,50 @@ public enum SpecialKind
 
 	/// <summary>
 	/// A stance that lays out four moves around the fighter - up, forward, back and down - and
-	/// the first way the stick is pushed picks which comes out (see <see cref="MoveData.Choices"/>).
+	/// the first way the stick is pushed picks which comes out (see <see cref="MoveData.Choices"/>). A
+	/// null choice is "cancel": pushing that way puts the stance away with nothing thrown.
 	/// Back turns the fighter round first. Nothing picked by the end of the window throws the
 	/// forward one, so a tap still does something. EdgeLord's Infinite Swords.
 	/// </summary>
 	Choice,
+
+	/// <summary>
+	/// The CommandGrab archetype on its own, not riding on a recovery: the front arms stretch out
+	/// along the ground through the startup and seize the first fighter they touch, reel them in
+	/// through the active frames, then <see cref="MoveData.GrabThrow"/> plays as the follow-up -
+	/// DoomBot's grab-and-kick. Goes through blocking. Catching nobody is a whiff: the arms come
+	/// back empty. See .ai/character-design.md for how rare these are meant to stay.
+	/// </summary>
+	CommandGrab,
+
+	/// <summary>
+	/// Lets out all of a fighter's heat at once (see <see cref="FighterData.HasHeat"/>): a burst
+	/// in every direction around them whose size, damage and knockback follow how hot they were.
+	/// Cool, it is a puff of steam; at full heat it is a blast of flame. Heat goes back to zero.
+	/// DoomBot's Furnace Blast.
+	/// </summary>
+	Vent,
+}
+
+/// <summary>
+/// Something drawn at a normal attack's hitbox while it is live - what the hit is made of, when
+/// a swing trail alone would not say it. Drawn by Fighter, never hits anything itself.
+/// </summary>
+public enum ActiveFx
+{
+	None,
+
+	/// <summary>A spray of sparks off the hitbox - steel striking.</summary>
+	Sparks,
+
+	/// <summary>
+	/// Crackling electricity: bolts up from the head to a hitbox above it (antennae), or a
+	/// crackling ring around a hitbox anywhere else (a field).
+	/// </summary>
+	Electric,
+
+	/// <summary>Twin flame jets out of the bottom of both feet - rocket boots.</summary>
+	Jets,
 }
 
 [GlobalClass]
@@ -131,6 +170,37 @@ public partial class MoveData : Resource
 	/// Empty - nearly always - lets SfxCatalog.ForMove choose. See .ai/audio-direction.md.
 	/// </summary>
 	[Export] public string Sound { get; set; } = "";
+
+	/// <summary>
+	/// A hitbox that travels round an arc through the active frames instead of sitting still - a
+	/// real swing. <see cref="HitboxOffset"/> is the MIDDLE of the arc; the hitbox starts this many
+	/// degrees round from it, on the side behind him, and sweeps through to the same distance on
+	/// the far side, round the swing pivot near the shoulders. Positive sweeps from behind, up and
+	/// over, to the front. Zero is an ordinary hitbox. EdgeLord's up smash. Use with
+	/// <see cref="AttackAnim.WideArc"/>, whose arms follow the hitbox round.
+	/// </summary>
+	[Export] public float SweepDegrees { get; set; } = 0.0f;
+
+	/// <summary>What the move's hitbox is drawn as while live, on top of its swing trail.</summary>
+	[Export] public ActiveFx ActiveFx { get; set; } = ActiveFx.None;
+
+	// --- Burning -----------------------------------------------------------------
+
+	/// <summary>
+	/// Sets whoever it hits on fire for this many frames: they take <see cref="BurnDamage"/> in
+	/// small ticks while flames lick off them. Zero does not burn. A blocked hit does not burn,
+	/// and burning again only tops the burn back up - it never stacks.
+	/// </summary>
+	[Export] public int BurnFrames { get; set; } = 0;
+
+	/// <summary>The percent a whole burn adds, spread over its ticks.</summary>
+	[Export] public float BurnDamage { get; set; } = 0.0f;
+
+	/// <summary>
+	/// Launches away from the attacker on whichever side the victim is, instead of the way the
+	/// attacker faces. For a blast in every direction - someone behind it flies backward.
+	/// </summary>
+	[Export] public bool LaunchAway { get; set; } = false;
 
 	// --- Combos and charging ---------------------------------------------------
 
@@ -342,6 +412,16 @@ public partial class MoveData : Resource
 	/// <summary>Draw a projectile with no art as a ball of fire with a flickering tail.</summary>
 	[Export] public bool FxFlame { get; set; } = false;
 
+	/// <summary>Draw a projectile with no art as a little missile with fins and an exhaust flame.</summary>
+	[Export] public bool FxMissile { get; set; } = false;
+
+	/// <summary>
+	/// A named spot on the fighter's drawing (a "points" entry in rig.json) that a
+	/// <see cref="Beam"/> comes out of and stays attached to. Empty, or a drawing without that
+	/// spot, means the hands. DoomBot's eye laser comes out of his "eye".
+	/// </summary>
+	[Export] public string BeamFrom { get; set; } = "";
+
 	/// <summary>An extra drawing from the rig shown for this move - Lug's hard hat on a barge.</summary>
 	[Export] public string ShowExtra { get; set; } = "";
 
@@ -393,6 +473,13 @@ public partial class MoveData : Resource
 			Unblockable = Unblockable,
 			Anim = Anim,
 			Sound = Sound,
+			ActiveFx = ActiveFx,
+			SweepDegrees = SweepDegrees,
+			BurnFrames = BurnFrames,
+			BurnDamage = BurnDamage * scale.Damage,
+			LaunchAway = LaunchAway,
+			FxMissile = FxMissile,
+			BeamFrom = BeamFrom,
 			ComboNext = ComboNext?.Scaled(scale),
 			Chargeable = Chargeable,
 			BallForm = BallForm,

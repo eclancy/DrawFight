@@ -16,6 +16,9 @@ public partial class MatchHud : CanvasLayer
 	readonly List<Label> percentLabels = new List<Label>();
 	readonly List<Label> stockLabels = new List<Label>();
 
+	/// <summary>A heat gauge per player, or null for a fighter without heat.</summary>
+	readonly List<Control> heatGauges = new List<Control>();
+
 	Label bannerLabel;
 	Label subBannerLabel;
 	Label countdownLabel;
@@ -72,6 +75,8 @@ public partial class MatchHud : CanvasLayer
 			stocks.Position = new Vector2(left, 1000.0f);
 			stocks.Size = new Vector2(Column, 44.0f);
 			stockLabels.Add(stocks);
+
+			heatGauges.Add(fighters[i].Data.HasHeat ? MakeHeatGauge(root, fighters[i], centreX) : null);
 		}
 
 		bannerLabel = MakeLabel(root, 190, Ink, 26);
@@ -128,6 +133,35 @@ public partial class MatchHud : CanvasLayer
 		countdownLabel.Modulate = new Color(1.0f, 1.0f, 1.0f, fade);
 	}
 
+	/// <summary>
+	/// A thermometer beside the percent for a fighter with heat: paper-backed with an ink edge,
+	/// like every HUD readout, filling from orange to red. It flashes at full heat and goes
+	/// white while overheated, so "he is about to blow" reads even when nobody is looking at him.
+	/// </summary>
+	static Control MakeHeatGauge(Control root, Fighter fighter, float centreX)
+	{
+		var gauge = new Control
+		{
+			Position = new Vector2(centreX + 118.0f, 892.0f),
+			Size = new Vector2(30.0f, 96.0f),
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		root.AddChild(gauge);
+		gauge.Draw += () =>
+		{
+			var box = new Rect2(Vector2.Zero, gauge.Size);
+			gauge.DrawRect(box.Grow(5.0f), Paper);
+			float h = Mathf.Clamp(fighter.HeatFraction, 0.0f, 1.0f);
+			Color fill = new Color(0.98f, 0.66f, 0.22f).Lerp(new Color(0.90f, 0.22f, 0.18f), h);
+			if (fighter.IsOverheated) fill = new Color(0.96f, 0.96f, 0.98f);
+			else if (h >= 1.0f && (Time.GetTicksMsec() / 120) % 2 == 0) fill = new Color(1.0f, 0.88f, 0.45f);
+			float height = fighter.IsOverheated ? box.Size.Y : box.Size.Y * h;
+			gauge.DrawRect(new Rect2(0.0f, box.Size.Y - height, box.Size.X, height), fill);
+			gauge.DrawRect(box, Ink, false, 3.0f);
+		};
+		return gauge;
+	}
+
 	public void Refresh(List<Fighter> fighters, string debug)
 	{
 		for (int i = 0; i < fighters.Count && i < percentLabels.Count; i++)
@@ -145,6 +179,8 @@ public partial class MatchHud : CanvasLayer
 			stockLabels[i].Text = f.Stocks > 0
 				? string.Join(" ", new string('●', f.Stocks).ToCharArray())
 				: "OUT";
+
+			heatGauges[i]?.QueueRedraw();
 		}
 
 		if (debugLabel != null) debugLabel.Text = debug;

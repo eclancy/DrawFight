@@ -241,8 +241,48 @@ public partial class Fighter : CharacterBody2D
 	Fighter heldBy;
 	int heldFrames;
 
-	/// <summary>A held fighter is let go after this long whatever happens, so a bug can never pin someone.</summary>
-	const int MaxHeldFrames = 40;
+	/// <summary>
+	/// A held fighter is let go after this long whatever happens, so a bug can never pin someone.
+	/// Long enough for the slowest hold there is: DoomBot's reel-in and the kick that follows it.
+	/// </summary>
+	const int MaxHeldFrames = 60;
+
+	/// <summary>The follow-up a command grab hands over to once its victim is reeled in - DoomBot's kick.</summary>
+	MoveData grabKick;
+
+	// --- Heat, burning and rusty joints -------------------------------------------
+
+	/// <summary>0 to <see cref="Heat.Max"/>, for a fighter with <see cref="FighterData.HasHeat"/>.</summary>
+	float heat;
+	int framesSinceHeat;
+	int framesAtMaxHeat;
+	int overheatFrames;
+	readonly Dictionary<int, MoveData> ventMoves = new Dictionary<int, MoveData>();
+
+	/// <summary>On fire: frames left, percent per tick, and frames to the next tick.</summary>
+	int burnFrames;
+	float burnTick;
+	int burnTickTimer;
+	const int BurnTickFrames = 15;
+
+	/// <summary>Whether the move in progress has hit anyone yet - blocked counts - for whiff lag.</summary>
+	bool hitSomethingThisMove;
+
+	/// <summary>Extra frames added to the end of this move because it missed (rusty joints).</summary>
+	int whiffExtraFrames;
+
+	/// <summary>
+	/// Counts up every frame, hitlag included. Effects that flicker - smoke, flames, electricity -
+	/// are hashed from it, so they move without ever being random.
+	/// </summary>
+	int fxFrames;
+
+	/// <summary>The spot on the drawing the last beam came out of, for as long as it stays attached.</summary>
+	string activeBeamFrom = "";
+
+	public float HeatFraction => Data.HasHeat ? heat / Heat.Max : 0.0f;
+	public bool IsOverheated => overheatFrames > 0;
+	public bool IsBurning => burnFrames > 0;
 
 	/// <summary>How far round a Spin has gone, in degrees, and whether it has come back to the front.</summary>
 	float spinAngle;
@@ -360,6 +400,7 @@ public partial class Fighter : CharacterBody2D
 	{
 		float dt = (float)delta;
 		UpdateChargeVoice();
+		fxFrames++;
 
 		// Hitlag freezes this fighter completely - no movement, no state advance, no timers.
 		// Everything else in the world keeps running. This is the single biggest contributor
@@ -378,6 +419,8 @@ public partial class Fighter : CharacterBody2D
 			if (Controller?.Poll().StartPressed == true) Match?.OnStartPressed();
 			return;
 		}
+
+		TickBurn();
 
 		// Caught on someone's tether: no control and no physics - the holder puts them where
 		// they go, until the throw.
@@ -400,9 +443,13 @@ public partial class Fighter : CharacterBody2D
 		// During the 3-2-1 the controller is still read, so button edges stay honest, but
 		// nothing it says is acted on.
 		if (Match != null && Match.InputLocked) input = InputState.None;
+
+		// Overheated: steam pouring off him, and nothing the controller says does anything.
+		if (overheatFrames > 0) input = InputState.None;
 		lastStick = input.Move;
 
 		TickTimers(input);
+		TickHeat();
 
 		switch (State)
 		{
@@ -521,8 +568,9 @@ public partial class Fighter : CharacterBody2D
 		bool spinning = IsSpinning;
 		bool armOut = IsArmStretched;
 		rig.SetPartVisible(RigBone.Torso, !spinning);
-		rig.SetPartVisible(RigBone.ArmBackUpper, !spinning);
-		rig.SetPartVisible(RigBone.ArmBackLower, !spinning);
+		bool grabbing = IsCommandGrabbing;
+		rig.SetPartVisible(RigBone.ArmBackUpper, !spinning && !grabbing);
+		rig.SetPartVisible(RigBone.ArmBackLower, !spinning && !grabbing);
 		rig.SetPartVisible(RigBone.ArmFrontUpper, !spinning && !armOut);
 		rig.SetPartVisible(RigBone.ArmFrontLower, !spinning && !armOut);
 		// A move can put a different weapon in his hand, or empty it to summon one instead.
@@ -628,6 +676,26 @@ public partial class Fighter : CharacterBody2D
 			float t = chargeFrames / (float)MaxChargeFrames;
 			float pulse = 0.5f + 0.5f * Mathf.Sin(chargeFrames * (0.3f + 0.5f * t));
 			tint = Colors.White.Lerp(new Color(1.3f, 1.1f, 0.55f), (0.3f + 0.7f * t) * pulse);
+		}
+
+		else if (overheatFrames > 0)
+		{
+			// Stalled in his own steam: washed out and flickering.
+			tint = new Color(1.25f, 1.2f, 1.15f).Lerp(Colors.White, 0.5f + 0.5f * Mathf.Sin(fxFrames * 0.9f));
+		}
+		else if (whiffExtraFrames > 0 && State == FighterState.Attacking
+			&& moveFrame > currentMove.TotalFrames - currentMove.EndlagFrames)
+		{
+			// Seized up after a miss: a dull, rusty cast while he is stuck.
+			tint = new Color(0.86f, 0.72f, 0.62f);
+		}
+		else if (burnFrames > 0)
+		{
+			tint = Colors.White.Lerp(new Color(1.35f, 0.85f, 0.55f), 0.5f + 0.25f * Mathf.Sin(fxFrames * 0.7f));
+		}
+		else if (Data.HasHeat && heat > 0.0f)
+		{
+			tint = HeatTint();
 		}
 
 		if (invulnFrames > 0 && (invulnFrames / 4) % 2 == 0) tint.A = 0.4f;
@@ -854,6 +922,16 @@ public partial class Fighter : CharacterBody2D
 
 		bool active = moveFrame > activeStart && moveFrame <= activeEnd;
 
+		// Reeled in and about to be kicked: held at his hand until the kick lands.
+		if (grabbed != null && currentMove == grabKick) grabbed.GlobalPosition = GrabHand();
+
+		// A swing that met nobody leaves him stuck at the end of it a while (rusty joints).
+		if (moveFrame == activeEnd + 1 && Data.WhiffLagFrames > 0 && !hitSomethingThisMove && WhiffCounts(currentMove))
+		{
+			whiffExtraFrames = Data.WhiffLagFrames;
+			SfxPlayer.At("creak", GlobalPosition, 0.08f);
+		}
+
 		// A multi-hit lets the same fighter be hit again every few frames.
 		if (active && currentMove.RehitFrames > 0 && moveFrame > activeStart + 1
 			&& (moveFrame - activeStart - 1) % currentMove.RehitFrames == 0)
@@ -881,6 +959,16 @@ public partial class Fighter : CharacterBody2D
 				TickBomb(activeEnd);
 				break;
 
+			case SpecialKind.CommandGrab:
+				if (TickCommandGrab(activeStart, activeEnd)) return;
+				break;
+
+			case SpecialKind.Vent:
+				// Planted while the furnace opens; in the air he hangs for it.
+				Velocity = IsOnFloor() ? new Vector2(0.0f, Velocity.Y) : new Vector2(Velocity.X * 0.8f, Mathf.Min(Velocity.Y, 200.0f));
+				if (active && !hazardSpawned) Vent();
+				break;
+
 			case SpecialKind.Recovery when currentMove.Flight:
 				TickFlight(input, active, dt);
 				if (active) QueryHits();
@@ -894,6 +982,8 @@ public partial class Fighter : CharacterBody2D
 			default:
 				if (active)
 				{
+					// A command grab's follow-up: the one being held takes it first, unblockable.
+					if (grabbed != null && currentMove == grabKick) ThrowGrabbed(currentMove);
 					SpawnSpecialHazard(currentMove);
 					QueryHits();
 				}
@@ -912,6 +1002,8 @@ public partial class Fighter : CharacterBody2D
 		{
 			currentMove = currentMove.ComboNext;
 			CueMoveSound(currentMove);
+			hitSomethingThisMove = false;
+			whiffExtraFrames = 0;
 			moveFrame = 0;
 			chargeFrames = 0;
 			comboQueued = false;
@@ -919,7 +1011,7 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
-		if (moveFrame >= currentMove.TotalFrames)
+		if (moveFrame >= currentMove.TotalFrames + whiffExtraFrames)
 		{
 			ReleaseGrabbed();
 			currentMove = null;
@@ -1103,8 +1195,12 @@ public partial class Fighter : CharacterBody2D
 		swingReleased = false;
 		spinAngle = 0.0f;
 		spinDone = false;
+		hitSomethingThisMove = false;
+		whiffExtraFrames = 0;
+		grabKick = null;
 		State = FighterState.Attacking;
 		CueMoveSound(move);
+		if (move != Data.Taunt && move.Special != SpecialKind.Vent) AddHeat(Heat.PerAttack);
 
 		StartSpecialMotion(move);
 	}
@@ -1237,6 +1333,7 @@ public partial class Fighter : CharacterBody2D
 				// Only an arcing projectile gets the little upward toss - or a big one, for a
 				// throw that lobs high; a beam starts at the hands and grows straight out.
 				float toss = move.LaunchLift > 0.0f ? -move.LaunchLift : move.SpecialGravity > 0.0f ? -120.0f : 0.0f;
+				if (move.Beam) activeBeamFrom = move.BeamFrom;
 				Vector2 start = move.Beam ? BeamOrigin() : origin;
 				MoveData shot = move.ChargeWithSpecial ? ChargedFor(move) : SizedFor(move);
 				Match.SpawnHazard(this, shot, start, new Vector2(Facing * move.SpecialSpeed, toss));
@@ -1504,6 +1601,7 @@ public partial class Fighter : CharacterBody2D
 				: currentMove;
 
 			alreadyHitThisMove.Add(other);
+			hitSomethingThisMove = true;
 			other.ReceiveHit(this, hit, nearest, ChargeScale);
 
 			// "He will also take some damage." Percent only - never knockback.
@@ -1520,6 +1618,15 @@ public partial class Fighter : CharacterBody2D
 		if (!string.IsNullOrEmpty(currentMove.SwingArt))
 		{
 			return HookOrigin() + SwingDirection() * currentMove.SwingLength;
+		}
+		if (currentMove.SweepDegrees != 0.0f)
+		{
+			// Round the arc: the same distance from the pivot all the way, the angle moving on.
+			Vector2 pivot = FighterAnimations.SweepPivot;
+			float reach = (currentMove.HitboxOffset - pivot).Length();
+			float a = Mathf.DegToRad(FighterAnimations.SweepAngle(currentMove, pivot,
+				FighterAnimations.SweepT(currentMove, moveFrame)));
+			return GlobalPosition + new Vector2(pivot.X * Facing + Mathf.Cos(a) * reach * Facing, pivot.Y + Mathf.Sin(a) * reach);
 		}
 		return GlobalPosition + new Vector2(
 			currentMove.HitboxOffset.X * Facing,
@@ -1574,10 +1681,23 @@ public partial class Fighter : CharacterBody2D
 
 		bool blocked = IsBlocking && !move.Unblockable;
 
+		// A blast in every direction sends people away from it, whichever side they are on.
+		if (move.LaunchAway && attacker != null)
+		{
+			attackerFacing = GlobalPosition.X >= attacker.GlobalPosition.X ? 1 : -1;
+		}
+
 		// Blocking reduces; it never negates. Chip damage still raises percent, which is the
 		// entire cost of blocking - there is no shield health here by design.
 		float damage = move.Damage * damageScale * (blocked ? Tuning.BlockDamageMultiplier : 1.0f);
 		Percent += damage;
+
+		if (!blocked && move.BurnFrames > 0) Ignite(move.BurnFrames, move.BurnDamage);
+
+		// Heat: the one who dealt it warms up a lot, the one who took it a little. Venting is
+		// letting heat out, so its own blast never puts any back.
+		if (move.Special != SpecialKind.Vent) attacker?.AddHeat(damage * Heat.PerDamageDealt);
+		AddHeat(damage * Heat.PerDamageTaken);
 
 		float knockback = Knockback.Compute(
 			Percent, damage, Data.BodyWeight, move.BaseKnockback, move.KnockbackGrowth);
@@ -1634,6 +1754,11 @@ public partial class Fighter : CharacterBody2D
 		ReleaseGrabbed();
 		heldBy = null;
 		drawnAsBall = false;
+		heat = 0.0f;
+		framesAtMaxHeat = 0;
+		overheatFrames = 0;
+		burnFrames = 0;
+		whiffExtraFrames = 0;
 		SetSizeLevel(SizeLevels.Normal);
 		CollisionMask = GroundMask;
 
@@ -1728,7 +1853,17 @@ public partial class Fighter : CharacterBody2D
 	/// Where a beam comes out: his hands, held out in front of the body. It is asked every frame,
 	/// so a beam fired in the air follows him down.
 	/// </summary>
-	public Vector2 BeamOrigin() => GlobalPosition + new Vector2(Facing * bodySize.X * 0.45f, -bodySize.Y * 0.05f);
+	public Vector2 BeamOrigin()
+	{
+		// Charging, the move in hand says where; once fired, the beam keeps the spot it left from -
+		// and follows it, so a laser from the eye moves with his head.
+		string from = State == FighterState.Attacking && currentMove != null && currentMove.Beam
+			? currentMove.BeamFrom
+			: activeBeamFrom;
+		Vector2? spot = rig != null && rig.Loaded ? rig.PointGlobal(from) : null;
+		if (spot.HasValue) return spot.Value;
+		return GlobalPosition + new Vector2(Facing * bodySize.X * 0.45f, -bodySize.Y * 0.05f);
+	}
 
 	/// <summary>
 	/// The charge before a beam: a glow at his hands that grows until it fires, so a player can
@@ -1899,7 +2034,7 @@ public partial class Fighter : CharacterBody2D
 		hookFired = true;
 
 		// The throw goes on the same frame as the launch: one yank flings them down and him up.
-		if (grabbed != null) ThrowGrabbed();
+		if (grabbed != null) ThrowGrabbed(currentMove.GrabThrow);
 
 		Vector2 pull = new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise);
 		hookPoint = HookOrigin() + pull.Normalized() * currentMove.TetherLength;
@@ -1925,35 +2060,123 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (grabbed == null)
 		{
-			Vector2 tip = HookOrigin() + TetherDirection() * currentMove.TetherLength * TetherReach();
-			const float Reach = 36.0f;
-			foreach (Fighter other in Match.Fighters)
-			{
-				if (other == this || !other.CanBeHit || other.heldBy != null) continue;
-				// A bomb is not something you pick up.
-				if (other.CurrentMove != null && other.CurrentMove.Special == SpecialKind.Bomb) continue;
-
-				Rect2 body = other.BodyRect();
-				Vector2 nearest = new Vector2(
-					Mathf.Clamp(tip.X, body.Position.X, body.End.X),
-					Mathf.Clamp(tip.Y, body.Position.Y, body.End.Y));
-				if (nearest.DistanceSquaredTo(tip) > Reach * Reach) continue;
-
-				grabbed = other;
-				grabPoint = other.GlobalPosition;
-				grabFrame = moveFrame;
-				other.BeginHeld(this);
-				break;
-			}
+			CatchAt(HookOrigin() + TetherDirection() * currentMove.TetherLength * TetherReach());
 			return;
 		}
 
 		float t = (moveFrame - grabFrame) / (float)Mathf.Max(1, activeStart - grabFrame);
-		Vector2 hand = HookOrigin() + new Vector2(Facing * bodySize.X * 0.7f, 0.0f);
-		grabbed.GlobalPosition = grabPoint.Lerp(hand, t * t);
+		grabbed.GlobalPosition = grabPoint.Lerp(GrabHand(), t * t);
 	}
 
-	void ThrowGrabbed()
+	/// <summary>Where a reeled-in fighter ends up: just in front of the hand.</summary>
+	Vector2 GrabHand() => GrabShoulder(RigBone.ArmFrontUpper) + new Vector2(Facing * bodySize.X * 0.7f, 0.0f);
+
+	/// <summary>
+	/// A command grab's arms come out of the drawing's own shoulders when it has them - DoomBot's
+	/// sit high on his boxy body - and from the usual hook point otherwise. The tether recovery
+	/// keeps <see cref="HookOrigin"/>, which its timing was tuned against.
+	/// </summary>
+	Vector2 GrabShoulder(RigBone upperArm)
+	{
+		if (currentMove == null || currentMove.Special != SpecialKind.CommandGrab && currentMove != grabKick) return HookOrigin();
+		return rig?.JointGlobal(upperArm) ?? HookOrigin();
+	}
+
+	/// <summary>Seizes the first fighter touching <paramref name="tip"/>, if any. Goes through blocking.</summary>
+	void CatchAt(Vector2 tip)
+	{
+		const float Reach = 36.0f;
+		foreach (Fighter other in Match.Fighters)
+		{
+			if (other == this || !other.CanBeHit || other.heldBy != null) continue;
+			// A bomb is not something you pick up.
+			if (other.CurrentMove != null && other.CurrentMove.Special == SpecialKind.Bomb) continue;
+
+			Rect2 body = other.BodyRect();
+			Vector2 nearest = new Vector2(
+				Mathf.Clamp(tip.X, body.Position.X, body.End.X),
+				Mathf.Clamp(tip.Y, body.Position.Y, body.End.Y));
+			if (nearest.DistanceSquaredTo(tip) > Reach * Reach) continue;
+
+			grabbed = other;
+			grabPoint = other.GlobalPosition;
+			grabFrame = moveFrame;
+			hitSomethingThisMove = true;
+			other.BeginHeld(this);
+			return;
+		}
+	}
+
+	// --- Command grab ----------------------------------------------------------------
+
+	/// <summary>
+	/// The arms shoot straight out through the startup and catch the first fighter they touch;
+	/// through the active frames a catch is reeled in to his hands, and an empty grab pulls the
+	/// arms back. Reeled all the way in, the move hands over to its follow-up - the kick - which
+	/// plays as a move of its own with the victim held in front of him until it lands. Returns
+	/// true when it has handed over.
+	/// </summary>
+	bool TickCommandGrab(int activeStart, int activeEnd)
+	{
+		// He stays where he is; the arms do the travelling.
+		Velocity = IsOnFloor()
+			? new Vector2(0.0f, Velocity.Y)
+			: new Vector2(Velocity.X * 0.85f, Mathf.Min(Velocity.Y * 0.8f, 120.0f));
+
+		if (moveFrame <= activeStart)
+		{
+			if (grabbed == null) CatchAt(GrabTip());
+			return false;
+		}
+
+		if (grabbed == null) return false;
+
+		float t = (moveFrame - activeStart) / (float)Mathf.Max(1, currentMove.ActiveFrames);
+		grabbed.GlobalPosition = grabPoint.Lerp(GrabHand(), t * t);
+
+		if (moveFrame < activeEnd || currentMove.GrabThrow == null) return false;
+
+		grabKick = currentMove.GrabThrow;
+		currentMove = grabKick;
+		moveFrame = 0;
+		chargeFrames = 0;
+		whiffExtraFrames = 0;
+		CueMoveSound(currentMove);
+		return true;
+	}
+
+	/// <summary>
+	/// Where a command grab's hands are: out along the ground in front through the startup, on
+	/// whoever they caught, or coming back empty through the active frames.
+	/// </summary>
+	Vector2 GrabTip()
+	{
+		if (grabbed != null) return grabbed.GlobalPosition;
+		int activeStart = currentMove.StartupFrames;
+		float reach = moveFrame <= activeStart
+			? moveFrame / (float)Mathf.Max(1, activeStart)
+			: 1.0f - (moveFrame - activeStart) / (float)Mathf.Max(1, currentMove.ActiveFrames);
+		return GrabShoulder(RigBone.ArmFrontUpper)
+			+ new Vector2(Facing * currentMove.TetherLength * Mathf.Clamp(reach, 0.0f, 1.0f), 0.0f);
+	}
+
+	bool IsCommandGrabbing =>
+		State == FighterState.Attacking && currentMove != null && currentMove.Special == SpecialKind.CommandGrab
+		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
+
+	/// <summary>Both arms stretched from the shoulders out to the hands - the back one a little behind.</summary>
+	void DrawGrabArms()
+	{
+		if (!IsCommandGrabbing) return;
+		Vector2 tip = GrabTip() - GlobalPosition;
+		Vector2 front = GrabShoulder(RigBone.ArmFrontUpper) - GlobalPosition;
+		Vector2 back = GrabShoulder(RigBone.ArmBackUpper) - GlobalPosition;
+		// The two claws close on the catch from just above and just below, like a pincer.
+		DrawStretchedArm(back, tip + new Vector2(0.0f, -bodySize.Y * 0.08f), RigBone.ArmBackLower);
+		DrawStretchedArm(front, tip + new Vector2(0.0f, bodySize.Y * 0.04f), RigBone.ArmFrontLower);
+	}
+
+	void ThrowGrabbed(MoveData throwMove)
 	{
 		Fighter victim = grabbed;
 		grabbed = null;
@@ -1961,8 +2184,9 @@ public partial class Fighter : CharacterBody2D
 
 		// The launch that follows must not hit them a second time.
 		alreadyHitThisMove.Add(victim);
-		victim.ReceiveHit(this, currentMove.GrabThrow, victim.GlobalPosition);
-		hitlagFrames = Knockback.HitlagFrames(currentMove.GrabThrow.Damage);
+		hitSomethingThisMove = true;
+		victim.ReceiveHit(this, throwMove, victim.GlobalPosition);
+		hitlagFrames = Knockback.HitlagFrames(throwMove.Damage);
 	}
 
 	/// <summary>Lets go of whoever this fighter is holding, without throwing them.</summary>
@@ -2033,7 +2257,27 @@ public partial class Fighter : CharacterBody2D
 		// is a smear, not a shape: strongest along the middle of the swing and fading to nothing
 		// at both ends of the arc and at its inner and outer edges, so it shows the direction of
 		// the hit without a hard-edged band covering the fighter or the one being hit.
-		const float Sweep = 0.9f;
+		float Sweep = 0.9f;
+
+		// A sweeping hitbox smears along everything it has swept so far, from where the swing
+		// started to where the hitbox is now, round its own pivot.
+		if (currentMove.SweepDegrees != 0.0f)
+		{
+			Vector2 sweepPivot = new Vector2(FighterAnimations.SweepPivot.X * Facing, FighterAnimations.SweepPivot.Y);
+			pivot = sweepPivot;
+			reach = (currentMove.HitboxOffset - FighterAnimations.SweepPivot).Length();
+			float t = FighterAnimations.SweepT(currentMove, moveFrame);
+			float from = FighterAnimations.SweepAngle(currentMove, FighterAnimations.SweepPivot, 0.0f);
+			float to = FighterAnimations.SweepAngle(currentMove, FighterAnimations.SweepPivot, t);
+			// Mirrored when facing left: a screen angle a becomes 180 - a.
+			if (Facing < 0)
+			{
+				from = 180.0f - from;
+				to = 180.0f - to;
+			}
+			angle = Mathf.DegToRad((from + to) * 0.5f);
+			Sweep = Mathf.Max(0.15f, Mathf.Abs(Mathf.DegToRad(to - from)) * 0.5f);
+		}
 		const int Along = 14;
 		const int Across = 4;
 		float width = currentMove.HitboxRadius * 0.6f;
@@ -2136,7 +2380,7 @@ public partial class Fighter : CharacterBody2D
 		Vector2 from = HookOrigin() - GlobalPosition;
 		Vector2 to = tip - GlobalPosition;
 
-		if (currentMove.StretchArm && DrawStretchedArm(from, to)) return;
+		if (currentMove.StretchArm && DrawStretchedArm(from, to, RigBone.ArmFrontLower)) return;
 
 		// Elim drew the rope, the gun and the hook. When they are there, those are what fly.
 		RigArt ropeArt = rig?.PoseArtFor("rope");
@@ -2196,7 +2440,7 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	bool TickChoice(InputState input, int activeStart, int activeEnd)
 	{
-		if (moveFrame <= activeStart || currentMove.Choices.Length < 4) return false;
+		if (moveFrame <= activeStart || moveFrame > activeEnd || currentMove.Choices.Length < 4) return false;
 
 		int pick = -1;
 		Vector2 stick = input.Move;
@@ -2210,6 +2454,13 @@ public partial class Fighter : CharacterBody2D
 			pick = 1;
 		}
 		if (pick < 0) return false;
+
+		// A null choice is "cancel": the stance is put away and its short endlag plays out.
+		if (currentMove.Choices[pick] == null)
+		{
+			moveFrame = activeEnd;
+			return false;
+		}
 
 		BeginMove(currentMove.Choices[pick], currentSlot);
 		return true;
@@ -2270,9 +2521,14 @@ public partial class Fighter : CharacterBody2D
 		State == FighterState.Attacking && currentMove != null && currentMove.Spin && !spinDone
 		&& rig != null && rig.HasExtra(TurnNames[0]);
 
+	/// <summary>
+	/// The drawn front arm gives way to a stretched one: all through a tether recovery, only while
+	/// the hit is live for a piston punch, and for the whole reach of a command grab.
+	/// </summary>
 	bool IsArmStretched =>
-		State == FighterState.Attacking && currentMove != null && currentMove.StretchArm
-		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
+		(State == FighterState.Attacking && currentMove != null && currentMove.StretchArm
+		&& (currentMove.DelayedLaunch ? moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames : IsActiveFrame()))
+		|| IsCommandGrabbing;
 
 	/// <summary>Shows the turning frame nearest the spin's angle, mirrored for the far half of the turn.</summary>
 	void ShowTurnFrame(bool spinning)
@@ -2307,16 +2563,16 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>His own forearm, hand and all, stretched from the shoulder out to the tether's tip.</summary>
-	bool DrawStretchedArm(Vector2 from, Vector2 to)
+	bool DrawStretchedArm(Vector2 from, Vector2 to, RigBone bone)
 	{
-		Texture2D arm = rig?.PartTexture(RigBone.ArmFrontLower);
+		Texture2D arm = rig?.PartTexture(bone);
 		if (arm == null) return false;
 
 		Vector2 span = to - from;
 		float length = span.Length();
 		if (length < 1.0f) return true;
 
-		Vector2 pivot = rig.PartPivot(RigBone.ArmFrontLower);
+		Vector2 pivot = rig.PartPivot(bone);
 		float drawn = Mathf.Max(1.0f, arm.GetSize().Y - pivot.Y);
 		// A touch thicker than the arm at rest, so a long thin stretch still reads.
 		float across = rig.PuppetScale * 1.3f * Facing;
@@ -2331,6 +2587,9 @@ public partial class Fighter : CharacterBody2D
 		DrawChoiceMenu(overlay);
 		DrawSpinBlades(overlay, true);
 		DrawBlinkGlint(overlay);
+		DrawActiveFx(overlay);
+		DrawHeatSmoke(overlay);
+		DrawBurnFlames(overlay);
 	}
 
 	/// <summary>
@@ -2386,6 +2645,16 @@ public partial class Fighter : CharacterBody2D
 			// Paper discs with a mid-grey rim: the swords themselves carry the dark ink.
 			canvas.DrawCircle(at, disc, new Color(0.97f, 0.95f, 0.89f, 0.85f));
 			canvas.DrawArc(at, disc, 0.0f, Mathf.Tau, 32, new Color(0.42f, 0.40f, 0.46f, 0.9f), 3.0f);
+
+			// The cancel slot: a crayon cross instead of a sword.
+			if (currentMove.Choices[i] == null)
+			{
+				float x = 22.0f * open;
+				var cross = new Color(0.86f, 0.30f, 0.28f, 0.95f);
+				CrayonBrush.InkLine(canvas, at + new Vector2(-x, -x), at + new Vector2(x, x), cross, 7.0f, 51, 1.2f);
+				CrayonBrush.InkLine(canvas, at + new Vector2(-x, x), at + new Vector2(x, -x), cross, 7.0f, 53, 1.2f);
+				continue;
+			}
 
 			Texture2D art = currentMove.Choices[i].FxTexture;
 			if (art == null) continue;
@@ -2654,6 +2923,319 @@ public partial class Fighter : CharacterBody2D
 		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
 	}
 
+	// --- Heat ------------------------------------------------------------------------
+
+	void AddHeat(float amount)
+	{
+		if (!Data.HasHeat || amount <= 0.0f || overheatFrames > 0) return;
+		heat = Mathf.Min(Heat.Max, heat + amount);
+		framesSinceHeat = 0;
+	}
+
+	/// <summary>
+	/// Cools him once he has gone a while without heating up, and counts how long he has sat at
+	/// full heat. Too long there and he overheats: a stall in a cloud of steam that lets some of
+	/// it out. It waits until he is free - never in the middle of a swing or a hit.
+	/// </summary>
+	void TickHeat()
+	{
+		if (!Data.HasHeat) return;
+		if (overheatFrames > 0)
+		{
+			overheatFrames--;
+			return;
+		}
+
+		if (++framesSinceHeat > Heat.CoolDelayFrames) heat = Mathf.Max(0.0f, heat - Heat.CoolPerFrame);
+
+		framesAtMaxHeat = heat >= Heat.Max ? framesAtMaxHeat + 1 : 0;
+		if (framesAtMaxHeat >= Heat.OverheatAfterFrames
+			&& (State == FighterState.Grounded || State == FighterState.Airborne))
+		{
+			overheatFrames = Heat.OverheatStallFrames;
+			heat = Heat.AfterOverheat;
+			framesAtMaxHeat = 0;
+			IsBlocking = false;
+			SfxPlayer.At("overheat", GlobalPosition, 0.0f);
+		}
+	}
+
+	/// <summary>
+	/// Grey steel warming to a dull red, then orange, and a light pulse at full heat - so how hot
+	/// he is reads from across the room, and full heat is a warning to everyone.
+	/// </summary>
+	Color HeatTint()
+	{
+		float h = HeatFraction;
+		Color tint = Colors.White.Lerp(new Color(1.32f, 0.70f, 0.52f), Mathf.Min(1.0f, h * 1.25f) * 0.8f);
+		if (h >= 1.0f)
+		{
+			float pulse = 0.5f + 0.5f * Mathf.Sin(fxFrames * 0.32f);
+			tint = tint.Lerp(new Color(1.7f, 1.3f, 0.95f), 0.4f * pulse);
+		}
+		return tint;
+	}
+
+	/// <summary>
+	/// Lets all the heat out at once: a burst around him sized by how hot he was (see
+	/// <see cref="Heat.VentAt"/>). Each size is built once and kept, like a charged projectile.
+	/// </summary>
+	void Vent()
+	{
+		hazardSpawned = true;
+		float h = Data.HasHeat ? HeatFraction : 1.0f;
+		int step = Mathf.RoundToInt(h * Heat.VentSteps);
+		if (!ventMoves.TryGetValue(step, out MoveData vent) || vent == null)
+		{
+			vent = Heat.VentAt(currentMove, step / (float)Heat.VentSteps);
+			ventMoves[step] = vent;
+		}
+		Match?.SpawnHazard(this, vent, GlobalPosition, Vector2.Zero);
+
+		bool flame = h >= Heat.FlameFrom;
+		SfxPlayer.At(flame ? "furnace_blast" : "steam", GlobalPosition, 0.03f);
+		if (flame) Match?.Shake(25.0f + 60.0f * h);
+
+		heat = 0.0f;
+		framesAtMaxHeat = 0;
+	}
+
+	// --- Burning ----------------------------------------------------------------------
+
+	/// <summary>Sets this fighter on fire, or tops the fire back up - burns never stack.</summary>
+	void Ignite(int frames, float totalDamage)
+	{
+		int ticks = Mathf.Max(1, frames / BurnTickFrames);
+		float tick = totalDamage / ticks;
+		burnTick = burnFrames > 0 ? Mathf.Max(burnTick, tick) : tick;
+		burnFrames = Mathf.Max(burnFrames, frames);
+		if (burnTickTimer <= 0) burnTickTimer = BurnTickFrames;
+	}
+
+	void TickBurn()
+	{
+		if (burnFrames <= 0) return;
+		if (State == FighterState.Respawning)
+		{
+			burnFrames = 0;
+			return;
+		}
+		burnFrames--;
+		if (--burnTickTimer > 0) return;
+		burnTickTimer = BurnTickFrames;
+		Percent += burnTick;
+		SfxPlayer.At("burn", GlobalPosition, 0.1f);
+	}
+
+	// --- Rusty joints -----------------------------------------------------------------
+
+	/// <summary>
+	/// The moves a miss is counted for: anything swung at someone, and a grab. Projectiles are
+	/// not - whether they hit is decided long after the move is over.
+	/// </summary>
+	static bool WhiffCounts(MoveData move) =>
+		(move.Special == SpecialKind.None && move.HitboxRadius > 0.0f) || move.Special == SpecialKind.CommandGrab;
+
+	// --- Effects on a live hit -----------------------------------------------------------
+
+	bool IsActiveFrame(int linger = 0) =>
+		State == FighterState.Attacking && currentMove != null
+		&& moveFrame > currentMove.StartupFrames
+		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames + linger;
+
+	/// <summary>
+	/// What the hit is made of, drawn over the fighter while it is live: sparks off steel,
+	/// crackling electricity, rocket jets. Every flicker is hashed from the frame count, so it
+	/// moves without being random - see the crayon-wobble rule in CLAUDE.md.
+	/// </summary>
+	void DrawActiveFx(CanvasItem canvas)
+	{
+		if (State != FighterState.Attacking || currentMove == null) return;
+		Vector2 hit = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y);
+
+		switch (currentMove.ActiveFx)
+		{
+			case ActiveFx.Sparks when IsActiveFrame(6):
+				DrawSparks(canvas, hit);
+				break;
+			case ActiveFx.Electric when IsActiveFrame(3):
+				DrawElectric(canvas, hit, currentMove.HitboxRadius);
+				break;
+			// The jets light halfway through the startup, small, and roar for the whole flight.
+			case ActiveFx.Jets when moveFrame > currentMove.StartupFrames / 2
+				&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames:
+				DrawJets(canvas);
+				break;
+		}
+	}
+
+	void DrawSparks(CanvasItem canvas, Vector2 at)
+	{
+		int since = moveFrame - currentMove.StartupFrames;
+		float t = Mathf.Clamp(since / 9.0f, 0.0f, 1.0f);
+		const int Count = 9;
+		for (int i = 0; i < Count; i++)
+		{
+			float angle = Mathf.Tau * i / Count + CrayonBrush.Noise(31, i) * 0.5f;
+			float reach = (22.0f + 46.0f * Mathf.Abs(CrayonBrush.Noise(37, i))) * (0.3f + t);
+			Vector2 dir = Vector2.Right.Rotated(angle);
+			Vector2 tip = at + dir * reach;
+			Vector2 tail = at + dir * reach * Mathf.Max(0.0f, t - 0.25f);
+			var spark = new Color(1.0f, 0.92f, 0.45f, 1.0f - t * 0.8f);
+			canvas.DrawLine(tail, tip, spark, 4.0f * (1.0f - t * 0.6f));
+			canvas.DrawCircle(tip, 2.5f, new Color(1.0f, 1.0f, 0.9f, 1.0f - t));
+		}
+		canvas.DrawCircle(at, 16.0f * (1.0f - t), new Color(1.0f, 0.97f, 0.8f, 0.8f * (1.0f - t)));
+	}
+
+	/// <summary>
+	/// Above the head, bolts arc up from the antennae into the hit; anywhere else, a crackling
+	/// ring round it. The bolts jump to a new shape every two frames, which is what makes it read
+	/// as electricity rather than as lines.
+	/// </summary>
+	void DrawElectric(CanvasItem canvas, Vector2 at, float radius)
+	{
+		int jolt = fxFrames / 2;
+		var glow = new Color(0.45f, 0.82f, 1.0f, 0.55f);
+		var core = new Color(1.0f, 0.98f, 0.75f);
+
+		if (at.Y < -bodySize.Y * 0.5f)
+		{
+			// From the tips of his antennae if his drawing names them, or else the top of his head.
+			float top = bodySize.Y * 0.5f - bodySize.Y * 1.18f * Data.VisualScale;
+			for (int side = -1; side <= 1; side += 2)
+			{
+				Vector2? tip = rig?.PointGlobal(side < 0 ? "antenna_back" : "antenna_front");
+				Vector2 antenna = tip.HasValue
+					? tip.Value - GlobalPosition
+					: new Vector2(Facing * side * bodySize.X * 0.2f, top);
+				for (int b = 0; b < 2; b++)
+				{
+					float a = Mathf.Pi * (1.2f + 0.6f * Mathf.Abs(CrayonBrush.Noise(jolt * 3 + b, side + 5)));
+					Vector2 end = at + Vector2.Right.Rotated(a) * radius * 0.7f;
+					DrawBolt(canvas, antenna, end, jolt * 7 + b * 13 + side, glow, core);
+				}
+			}
+			canvas.DrawCircle(at, radius * 0.45f, new Color(0.55f, 0.85f, 1.0f, 0.25f));
+			return;
+		}
+
+		const int Arcs = 7;
+		for (int i = 0; i < Arcs; i++)
+		{
+			float a0 = Mathf.Tau * i / Arcs + CrayonBrush.Noise(jolt, i) * 0.4f;
+			float a1 = a0 + 0.7f;
+			Vector2 p0 = at + Vector2.Right.Rotated(a0) * radius * 0.9f;
+			Vector2 p1 = at + Vector2.Right.Rotated(a1) * radius * 0.9f;
+			DrawBolt(canvas, p0, p1, jolt * 11 + i, glow, core);
+		}
+		canvas.DrawCircle(at, radius * 0.95f, new Color(0.55f, 0.85f, 1.0f, 0.12f));
+	}
+
+	static void DrawBolt(CanvasItem canvas, Vector2 from, Vector2 to, int seed, Color glow, Color core)
+	{
+		const int Segments = 6;
+		var points = new Vector2[Segments + 1];
+		Vector2 side = (to - from).Orthogonal().Normalized();
+		float jag = from.DistanceTo(to) * 0.16f;
+		for (int i = 0; i <= Segments; i++)
+		{
+			float t = i / (float)Segments;
+			float off = i == 0 || i == Segments ? 0.0f : CrayonBrush.Noise(seed, i) * jag;
+			points[i] = from.Lerp(to, t) + side * off;
+		}
+		canvas.DrawPolyline(points, glow, 9.0f);
+		canvas.DrawPolyline(points, core, 3.0f);
+	}
+
+	/// <summary>Rocket flames out of the bottom of both feet, pointing down, flickering.</summary>
+	void DrawJets(CanvasItem canvas)
+	{
+		float feet = bodySize.Y * 0.5f;
+		bool live = moveFrame > currentMove.StartupFrames;
+		for (int side = -1; side <= 1; side += 2)
+		{
+			Vector2 nozzle = new Vector2(side * bodySize.X * 0.3f, feet);
+			float flicker = 0.8f + 0.2f * CrayonBrush.Noise(fxFrames, side + 3);
+			float length = (live ? 92.0f : 40.0f) * flicker;
+			float width = 22.0f;
+			canvas.DrawColoredPolygon(new[] { nozzle + new Vector2(-width, 0.0f), nozzle + new Vector2(width, 0.0f), nozzle + new Vector2(0.0f, length) },
+				new Color(0.96f, 0.42f, 0.18f, 0.9f));
+			canvas.DrawColoredPolygon(new[] { nozzle + new Vector2(-width * 0.6f, 0.0f), nozzle + new Vector2(width * 0.6f, 0.0f), nozzle + new Vector2(0.0f, length * 0.68f) },
+				new Color(0.99f, 0.78f, 0.25f, 0.95f));
+			canvas.DrawColoredPolygon(new[] { nozzle + new Vector2(-width * 0.28f, 0.0f), nozzle + new Vector2(width * 0.28f, 0.0f), nozzle + new Vector2(0.0f, length * 0.36f) },
+				new Color(1.0f, 0.97f, 0.85f));
+		}
+	}
+
+	/// <summary>
+	/// Smoke rising off a hot fighter, thicker the hotter he is; steam pouring off him while he
+	/// is overheated. Pale grey and see-through - nothing outside a character is allowed near
+	/// black (see .ai/art-direction.md).
+	/// </summary>
+	void DrawHeatSmoke(CanvasItem canvas)
+	{
+		if (!Data.HasHeat || State == FighterState.Respawning) return;
+		bool steaming = overheatFrames > 0;
+		float h = HeatFraction;
+		if (!steaming && h < 0.3f) return;
+
+		float strength = steaming ? 1.0f : (h - 0.3f) / 0.7f;
+		int puffs = steaming ? 9 : 2 + Mathf.RoundToInt(4.0f * strength);
+		int period = steaming ? 36 : 54;
+		float top = -bodySize.Y * 0.5f - bodySize.Y * 0.1f;
+
+		for (int i = 0; i < puffs; i++)
+		{
+			int clock = fxFrames + i * period / puffs;
+			int cycle = clock / period;
+			float t = (clock % period) / (float)period;
+			float x = CrayonBrush.Noise(cycle * 17 + i, 3) * bodySize.X * (steaming ? 0.8f : 0.4f);
+			float y = steaming ? Mathf.Lerp(bodySize.Y * 0.3f, top, Mathf.Abs(CrayonBrush.Noise(cycle, i + 9))) : top;
+			Vector2 at = new Vector2(x + CrayonBrush.Noise(cycle, i) * 18.0f * t, y - (steaming ? 90.0f : 130.0f) * t);
+			float radius = (steaming ? 18.0f : 12.0f) + (steaming ? 30.0f : 24.0f) * t;
+			float alpha = (1.0f - t) * (steaming ? 0.6f : 0.25f + 0.25f * strength);
+			Color puff = steaming ? new Color(0.97f, 0.97f, 0.98f, alpha) : new Color(0.78f, 0.78f, 0.80f, alpha);
+			canvas.DrawCircle(at, radius, puff);
+		}
+	}
+
+	/// <summary>Flames licking up off a burning fighter, hashed so they dance without being random.</summary>
+	void DrawBurnFlames(CanvasItem canvas)
+	{
+		if (burnFrames <= 0 || State == FighterState.Respawning || !Visible) return;
+		float fade = Mathf.Min(1.0f, burnFrames / 20.0f);
+		const int Tongues = 6;
+		for (int i = 0; i < Tongues; i++)
+		{
+			int clock = fxFrames + i * 5;
+			float t = (clock % 24) / 24.0f;
+			float x = (i / (float)(Tongues - 1) - 0.5f) * bodySize.X * 0.9f + CrayonBrush.Noise(clock / 24, i) * 8.0f;
+			float baseY = bodySize.Y * (0.25f - 0.5f * Mathf.Abs(CrayonBrush.Noise(i, 41)));
+			Vector2 foot = new Vector2(x, baseY - 40.0f * t);
+			float height = (34.0f + 16.0f * Mathf.Abs(CrayonBrush.Noise(clock / 6, i))) * (1.0f - t * 0.5f);
+			float width = 13.0f * (1.0f - t * 0.6f);
+			float alpha = fade * (1.0f - t);
+			canvas.DrawColoredPolygon(new[] { foot + new Vector2(-width, 0.0f), foot + new Vector2(width, 0.0f), foot + new Vector2(CrayonBrush.Noise(clock, i) * 6.0f, -height) },
+				new Color(0.97f, 0.45f, 0.18f, 0.85f * alpha));
+			canvas.DrawColoredPolygon(new[] { foot + new Vector2(-width * 0.5f, 0.0f), foot + new Vector2(width * 0.5f, 0.0f), foot + new Vector2(0.0f, -height * 0.6f) },
+				new Color(1.0f, 0.86f, 0.35f, 0.9f * alpha));
+		}
+	}
+
+	/// <summary>
+	/// A normal attack with <see cref="MoveData.StretchArm"/>: the front arm shoots out from the
+	/// shoulder to the hit for its active frames - a piston punch - and snaps back after.
+	/// </summary>
+	void DrawPistonArm()
+	{
+		if (State != FighterState.Attacking || currentMove == null || !currentMove.StretchArm || currentMove.DelayedLaunch) return;
+		if (!IsActiveFrame()) return;
+		Vector2 from = HookOrigin() - GlobalPosition;
+		Vector2 to = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y);
+		DrawStretchedArm(from, to, RigBone.ArmFrontLower);
+	}
+
 	// --- Drawing (M1 placeholder) --------------------------------------------
 
 	public override void _Draw()
@@ -2671,6 +3253,8 @@ public partial class Fighter : CharacterBody2D
 			DrawBlinkTrail();
 			DrawSpinBlades(this, false);
 			DrawSwingTrail();
+			DrawGrabArms();
+			DrawPistonArm();
 			DrawTether();
 			DrawSwing();
 			DrawHeldArt();

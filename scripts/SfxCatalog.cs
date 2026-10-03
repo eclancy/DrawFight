@@ -22,6 +22,7 @@ public static class SfxCatalog
 		"hit_light", "hit_medium", "hit_heavy", "hit_smash", "hit_block",
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
 		"ui_move", "ui_select", "ui_back", "ui_ready", "pause",
+		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
 	};
 
 	/// <summary>Sounds that loop until stopped. Everything else is a one-shot.</summary>
@@ -72,6 +73,8 @@ public static class SfxCatalog
 				return new Cue("special_volley", active);
 			case SpecialKind.Projectile when move.FxFlame:
 				return new Cue("special_fire", active);
+			case SpecialKind.Projectile when move.FxMissile:
+				return new Cue("missile", active);
 			case SpecialKind.Projectile:
 				return new Cue("special_shot", active);
 
@@ -82,6 +85,9 @@ public static class SfxCatalog
 			case SpecialKind.Dash:
 				return new Cue("special_dash", 1);
 
+			case SpecialKind.Recovery when move.ActiveFx == ActiveFx.Jets:
+				// Lit halfway through the startup, when the flames first show.
+				return new Cue("jets", move.StartupFrames / 2 + 1);
 			case SpecialKind.Recovery when move.Flight:
 				return new Cue("special_wings", 1);
 			case SpecialKind.Recovery when move.DelayedLaunch:
@@ -98,7 +104,16 @@ public static class SfxCatalog
 
 			// Picking a sword starts the sword's own move, which makes its own sound.
 			case SpecialKind.Choice: return default;
+
+			// The arms shooting out: a thwip, and the clank of claws closing.
+			case SpecialKind.CommandGrab: return new Cue("special_hook", 1);
+
+			// Steam or flame depends on how hot he is when it goes, so the move plays it itself.
+			case SpecialKind.Vent: return default;
 		}
+
+		// Electricity crackles when it is live, with no whoosh leading in - nothing is swung.
+		if (move.ActiveFx == ActiveFx.Electric) return new Cue("zap", active);
 
 		int swingFrame = move.Chargeable ? chargeFrame + 1 : active - SwingLeadFrames;
 		return new Cue(SwingFor(move), swingFrame);

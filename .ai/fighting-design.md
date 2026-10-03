@@ -127,6 +127,12 @@ polish, they are the feature:
   must spend its startup showing that it is coming, or it is unfair: EdgeLord's Blur Slash
   glints and flashes for 22 frames, then goes in 5.
 
+**Burning** is the one damage-over-time effect: a move with `BurnFrames` sets whoever it hits
+on fire, adding its `BurnDamage` in small ticks every quarter-second with flames licking off
+them. It never stacks - burning again only tops it back up - and a blocked hit does not burn.
+It adds percent, never knockback, so it softens someone up for the next hit rather than killing
+them by itself.
+
 **Telegraphs have a sound as well as a look**, because a warning you can hear works even when
 you are not looking at the right fighter. Blur Slash's glint has a ring that rises through it,
 peaks on the frame he goes, and is cut off sharply as he goes. See `.ai/audio-direction.md`.

@@ -36,6 +36,20 @@ public enum AttackAnim
 	BackSlash,
 	HangUp,
 	Soar,
+
+	/// <summary>
+	/// Both arms spinning round at the shoulders like a windmill, leaning into a charge. Not a
+	/// windup and a strike: through the active frames the arms keep turning, one hit per turn.
+	/// DoomBot's dash attack.
+	/// </summary>
+	Windmill,
+
+	/// <summary>
+	/// A wide, slow swing of a two-handed weapon: drawn right back behind him, then swept up over
+	/// his head and down in front through the active frames, the arms following a hitbox that
+	/// travels the same arc (<see cref="MoveData.SweepDegrees"/>). EdgeLord's up smash.
+	/// </summary>
+	WideArc,
 }
 
 /// <summary>
@@ -539,6 +553,92 @@ public static class FighterAnimations
 		(AFU, 120), (AFL, 10), (ABU, 110), (ABL, 10),
 		(LFU, 6), (LFL, 24), (LBU, 26), (LBL, 36));
 
+	// Windmill: arms drawn back, then leaning in at a run while they spin. The arms in the strike
+	// pose are only where the spin starts; WindmillAt turns them.
+	static readonly Pose WindmillWindup = new Pose(new Vector2(-4, 6),
+		(Torso, 18), (Head, -8),
+		(AFU, 120), (AFL, -10), (ABU, -60), (ABL, -10),
+		(LFU, -30), (LFL, 40), (LBU, 24), (LBL, 20));
+
+	static readonly Pose WindmillStrike = new Pose(new Vector2(10, 4),
+		(Torso, -24), (Head, 12),
+		(AFU, -90), (AFL, -6), (ABU, 90), (ABL, -6),
+		(LFU, -48), (LFL, 16), (LBU, 40), (LBL, 34));
+
+	/// <summary>Degrees the arms turn each frame of a windmill: a full turn every eight frames.</summary>
+	const float WindmillSpeed = 45.0f;
+
+	/// <summary>
+	/// The windmill's active frames: the strike pose with both arms swung round, half a turn
+	/// apart. Angles are wrapped into -180..180, since a joint only ever needs to point somewhere.
+	/// </summary>
+	static void WindmillAt(float framesIn, Pose into)
+	{
+		into.CopyFrom(WindmillStrike);
+		float front = Mathf.Wrap(-90.0f - WindmillSpeed * framesIn, -180.0f, 180.0f);
+		into.Set(AFU, front);
+		into.Set(ABU, Mathf.Wrap(front + 180.0f, -180.0f, 180.0f));
+	}
+
+	// Wide arc: the body coiled back with the weapon low behind, then leaning through into the
+	// front by the end. The arms in these poses are only where the swing starts and ends;
+	// WideArcAt points them along the arc in between.
+	static readonly Pose WideArcWindup = new Pose(new Vector2(-4, 14),
+		(Torso, 14), (Head, -8),
+		(AFU, 110), (AFL, -8), (ABU, 104), (ABL, -8),
+		(LFU, -36), (LFL, 50), (LBU, 30), (LBL, 50));
+
+	static readonly Pose WideArcStrike = new Pose(new Vector2(6, 8),
+		(Torso, -20), (Head, 10),
+		(AFU, -66), (AFL, -6), (ABU, -60), (ABL, -6),
+		(LFU, -44), (LFL, 30), (LBU, 36), (LBL, 30));
+
+	/// <summary>
+	/// Where a sweeping hitbox is pointing at <paramref name="t"/> (0 to 1 through the active
+	/// frames), in screen degrees for a fighter facing right: 0 forward, -90 straight up, -180
+	/// straight back. The middle is the direction of <see cref="MoveData.HitboxOffset"/> from the
+	/// swing pivot.
+	/// </summary>
+	public static float SweepAngle(MoveData move, Vector2 pivot, float t)
+	{
+		Vector2 mid = move.HitboxOffset - pivot;
+		float middle = Mathf.RadToDeg(mid.Angle());
+		return middle + move.SweepDegrees * (t - 0.5f);
+	}
+
+	/// <summary>How far through a sweep's active frames this frame is, 0 to 1.</summary>
+	public static float SweepT(MoveData move, float moveFrame) =>
+		Mathf.Clamp((moveFrame - move.StartupFrames - 1) / Mathf.Max(1, move.ActiveFrames - 1), 0.0f, 1.0f);
+
+	/// <summary>
+	/// The frame an attack is shown at in the parade: its first active frame, or for a sweep, the
+	/// middle of it - where the hitbox the parade rings actually is.
+	/// </summary>
+	public static float ShowFrame(MoveData move) =>
+		move.SweepDegrees != 0.0f
+			? move.StartupFrames + 1 + (move.ActiveFrames - 1) * 0.5f
+			: move.StartupFrames + 1;
+
+	/// <summary>
+	/// A wide arc's active frames: the body leans through from back to front while both arms -
+	/// and the weapon, which continues the forearm - point along the arc at the hitbox. A joint's
+	/// angle is relative to the torso, so the torso's own lean is taken back out; and a limb
+	/// hanging straight down is 0, so a direction in screen degrees is that minus 90.
+	/// </summary>
+	static void WideArcAt(MoveData move, float moveFrame, Pose into)
+	{
+		float t = SweepT(move, moveFrame);
+		Pose.Blend(WideArcWindup, WideArcStrike, t, into);
+		// The pivot here only steers the angle; Fighter uses the same one for the hitbox itself.
+		float aim = SweepAngle(move, SweepPivot, t);
+		float arm = Mathf.Wrap(aim - 90.0f + into[Torso], -180.0f, 180.0f);
+		into.Set(AFU, arm);
+		into.Set(ABU, arm + 6.0f);
+	}
+
+	/// <summary>The point a sweeping hitbox turns round, in match units from the body centre: near the shoulders.</summary>
+	public static readonly Vector2 SweepPivot = new Vector2(0.0f, -30.0f);
+
 	/// <summary>Curled up in a ball - knees to the chest, arms wrapped in - for a dodge roll.</summary>
 	public static readonly Pose Tuck = new Pose(new Vector2(0, 30),
 		(Torso, -36), (Head, 24),
@@ -579,6 +679,8 @@ public static class FighterAnimations
 			case AttackAnim.BackSlash: return (BackSlashWindup, BackSlashStrike);
 			case AttackAnim.HangUp: return (HangUpWindup, HangUpStrike);
 			case AttackAnim.Soar: return (SoarWindup, SoarStrike);
+			case AttackAnim.Windmill: return (WindmillWindup, WindmillStrike);
+			case AttackAnim.WideArc: return (WideArcWindup, WideArcStrike);
 			default: return (AttackWindup, AttackStrike);
 		}
 	}
@@ -631,6 +733,18 @@ public static class FighterAnimations
 				float a = (t - WindupReached) / (1.0f - WindupReached);
 				Pose.Blend(AttackRecover, windup, 1.0f + anticipation * a, into);
 			}
+			return;
+		}
+
+		if (moveFrame <= activeEnd && move.Anim == AttackAnim.Windmill)
+		{
+			WindmillAt(moveFrame - startup, into);
+			return;
+		}
+
+		if (moveFrame <= activeEnd && move.Anim == AttackAnim.WideArc)
+		{
+			WideArcAt(move, moveFrame, into);
 			return;
 		}
 

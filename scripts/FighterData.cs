@@ -71,6 +71,22 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public bool TumblesWhenHit { get; set; } = false;
 
+	/// <summary>
+	/// Builds up heat as it fights - attacking, landing hits, and a little from being hit - and
+	/// cools slowly when it stops. Visible: the drawing glows hotter and smokes, and flashes at
+	/// full heat. A <see cref="SpecialKind.Vent"/> move lets it all out at once; sitting at full
+	/// heat too long instead overheats, stalling the fighter in a cloud of steam. Numbers in
+	/// <see cref="Heat"/>. DoomBot's furnace.
+	/// </summary>
+	[Export] public bool HasHeat { get; set; } = false;
+
+	/// <summary>
+	/// Extra frames stuck at the end of an attack that hit nobody - joints that seize up after a
+	/// missed swing. Hitting, or having the hit blocked, costs nothing extra. DoomBot's rusty
+	/// joints; a reusable trait for anything clumsy.
+	/// </summary>
+	[Export] public int WhiffLagFrames { get; set; } = 0;
+
 	// --- Moveset -------------------------------------------------------------
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
@@ -194,10 +210,15 @@ public partial class FighterData : Resource
 	}
 
 	/// <summary>
-	/// DoomBot, drawn by Eric: a boxy robot with claw hands, cut from the drawing by
-	/// tools/art/cut_doombot.py. A heavy. The rest is placeholder until his character sheet
-	/// arrives - the shared default normals, heavy movement numbers, and four stand-in specials -
-	/// so he can be played and his rig checked in the meantime.
+	/// DoomBot, drawn and designed by Eric: "a factory robot that went rogue", cut from the drawing
+	/// by tools/art/cut_doombot.py. His sheet is fighters/doombot/sheet.md. What he asked for,
+	/// in stats:
+	///   - "strong, hard to knock over": Heavy - the most damage and the most weight
+	///   - "long reach": long arms on every normal, a piston punch, and a grab that crosses half the stage
+	///   - "overheats": HasHeat - sit at full heat too long and he stalls in steam
+	///   - "rusty joints": WhiffLagFrames - stuck for a moment after any swing that misses
+	///   - "big windups": startups a few frames past the baseline, and a higher AnimationDrama so
+	///     every windup is drawn big enough to see coming
 	/// </summary>
 	public static FighterData DoomBot()
 	{
@@ -216,9 +237,13 @@ public partial class FighterData : Resource
 			RigPath = "res://fighters/doombot/rig.json",
 			// Long legs and a narrow body read small at the standard height; a little bigger.
 			VisualScale = 1.1f,
+			AnimationDrama = 1.15f,
 			TrailColor = new Color(0.95f, 0.30f, 0.28f),
+			HasHeat = true,
+			WhiffLagFrames = 10,
 		};
-		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBotPlaceholder());
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBot(),
+			CharacterNormals.DoomBot, CharacterNormals.DoomBotJab());
 		data.Taunt = Taunts.Make(AttackAnim.Spread);
 		return data;
 	}

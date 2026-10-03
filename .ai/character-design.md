@@ -97,7 +97,10 @@ Every fighter gets exactly four, one per direction. The slots have fixed jobs:
   rest of the kit is. This constraint is non-negotiable and it is the first thing to check on
   any new character. It can have a second identity on top — a recovery that also attacks is
   normal — but recovery comes first.
-- **Down special** — defence or utility. A counter, a trap, a reflector, a stance.
+- **Down special** — defence or utility. A counter, a trap, a reflector, a stance. Like any
+  slot it can carry the signature instead when the sheet asks for it there: DoomBot's coolest
+  move, the Furnace Blast, is his down special because Eric said so, and his neutral special is
+  the eye laser.
 
 ## The archetype library
 
@@ -121,11 +124,14 @@ the signal to build one.
 | `CommandGrab`   | unblockable; seizes the victim and throws them        | neutral, side  |
 | `Resize`        | held stance; stick up grows, down shrinks. Each size is a trade (`SizeLevels`) | neutral |
 | `Bomb`          | a counter that explodes: hit it or wait out the fuse, it hits everyone near, user takes `SelfDamage` | down |
-| `Choice`        | a stance showing four moves round the fighter; the stick picks one (`Choices`: up, forward, back, down) | neutral |
+| `Choice`        | a stance showing moves round the fighter; the stick picks one (`Choices`: up, forward, back, down). A null slot is a cancel, drawn as a cross: EdgeLord's back puts the swords away | neutral |
+| `Vent`          | lets a fighter's heat out at once: a burst all round them, sized by how hot they were (`Heat.VentAt`) | down |
 
 Built so far: `Projectile`, `Dash`, `Recovery`, `Trap`, `Drop` (as `SpecialKind.Drop`, a falling
-spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform` and `Choice`. `CommandGrab` exists only as
-a flag on a tether recovery (`GrabThrow`, below). The rest are designs, not code.
+spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform`, `Choice`, `CommandGrab` and `Vent`.
+`CommandGrab` exists twice: as its own kind (DoomBot's Claw Grab - arms stretch out along the
+ground, catch, reel in, then `GrabThrow` plays as a follow-up move) and as a flag on a tether
+recovery (`GrabThrow`, below). The rest are designs, not code.
 
 Some behaviour is a **flag on `MoveData`** rather than a whole archetype, because it bolts onto
 any of them:
@@ -157,7 +163,25 @@ any of them:
 - `Flight` - a recovery that flies: a steady slow rise through a long active window, steered
   left and right, with `HeldArt` drawn behind as flapping wings. Checked by the height it gains
   rather than by launch speed. Swift's fire wings.
-- `FxFlame` - a projectile with no art drawn as a ball of fire with a tail.
+- `FxFlame` - a projectile with no art drawn as a ball of fire with a tail. `FxMissile` draws
+  one as a little finned missile with an exhaust flame (DoomBot's forward air).
+- `BurnFrames` + `BurnDamage` - sets whoever it hits on fire: small ticks of damage over the
+  burn, flames on them, never stacking. A blocked hit does not burn. DoomBot's rocket boots and
+  furnace.
+- `LaunchAway` - launches away from the attacker on whichever side the victim is, for a blast
+  in every direction.
+- `ActiveFx` - what a hit is drawn as while live: `Sparks` (steel), `Electric` (bolts from the
+  antennae to a hitbox overhead, or a crackling ring round one anywhere else) and `Jets` (rocket
+  flames out of both feet). Electric also picks the `zap` sound.
+- `BeamFrom` - a beam that comes out of a named spot on the drawing rather than the hands
+  (`"points"` in rig.json - see `.ai/art-pipeline.md`). DoomBot's eye laser.
+- `StretchArm` on a **normal** - the front arm shoots out to the hitbox for its active frames, a
+  piston punch. On a tether recovery it is the tether.
+- `SweepDegrees` + `AttackAnim.WideArc` - a real swing: the hitbox travels round an arc through
+  the active frames (centred on `HitboxOffset`, round a pivot near the shoulders) and the arms and
+  weapon follow it, with the trail growing along the arc. EdgeLord's Great Arc sweeps 150 degrees
+  from behind him, over his head, to the front - wide and slow, so it covers a lot and is easy
+  to punish.
 - `HangFromArt` + `ReleaseDrop` - a swung-art recovery that ends up directly above the
   fighter, who hangs from its rope while it hauls him up, then lets go of it: it drops away as
   a `Drop` hazard onto whoever is below. Lug's wrecking ball.
@@ -171,10 +195,20 @@ any of them:
   EdgeLord's ring of daggers, the sword he sends up from behind him, and the axes of his down
   smash are all projectiles in normal-attack slots.
 
-And one is a **trait on `FighterData`**: `TumblesWhenHit`. A real hit knocks the fighter over into
-a ball with no arms or legs, which rolls until it gets back up and can roll off the edge. Control
-and both jumps come back when it ends, even off-stage, so it is dangerous without being a death
-sentence.
+Some are **traits on `FighterData`**, because they are about the fighter rather than one move:
+
+- `TumblesWhenHit` - a real hit knocks the fighter over into a ball with no arms or legs, which
+  rolls until it gets back up and can roll off the edge. Control and both jumps come back when it
+  ends, even off-stage, so it is dangerous without being a death sentence. Circy.
+- `HasHeat` - heat builds as the fighter attacks, lands hits and (a little) takes them, and cools
+  after two idle seconds. It shows: the drawing warms from grey to a dull red to orange, smokes,
+  and pulses at full heat, and a thermometer sits beside their percent. A `Vent` move spends it.
+  Sitting at full heat for five seconds overheats them instead - over a second stalled in steam
+  with no control, keeping only a third of the heat. Numbers in `Heat.cs`. DoomBot's "overheats",
+  and the loop his whole kit turns on: build it up, then pick the moment.
+- `WhiffLagFrames` - extra frames stuck at the end of any swing or grab that met nobody, with a
+  creak and a rusty tint. A hit, even a blocked one, costs nothing extra. DoomBot's "rusty
+  joints": a heavy with long reach is only fair if missing with it is a real risk.
 
 ### Worked example: Circy
 
@@ -194,10 +228,27 @@ need again:
   calibration table has him dying to Lug about as early as Swift does - so watch his KO
   percents first if he plays too weak.
 
-`CommandGrab` is the one archetype with a standing restriction: **at most one fighter in the
-roster may have one** - and EdgeLord's Grapple Arm now is it. Universal grabs are out of scope (see `.ai/fighting-design.md`), and the
-reason a single command grab is still fine is that it reads as that character's identity rather
-than as a mechanic everyone must learn. Two of them and it is a mechanic again.
+`CommandGrab` is the one archetype with a standing restriction: **a few, and rare.** There are
+two: EdgeLord's Grapple Arm and DoomBot's Claw Grab. The rule was "at most one" until Eric chose
+a real grab for DoomBot over a blockable hook (2026-10-02). Universal grabs are still out of
+scope (see `.ai/fighting-design.md`). A command grab is fine while it reads as that character's
+identity rather than a mechanic everyone must learn, so each one has to look and play
+differently: EdgeLord's is a recovery that throws down, DoomBot's is a slow, long ground reach
+that is punished hard when it misses. A third should be a conversation, not a default.
+
+### Worked example: DoomBot
+
+Eric's sheet (`fighters/doombot/sheet.md`) asked for **three** strengths and **three**
+weaknesses, and filled in most of the moveset himself. What that took:
+
+- **Three strengths need three weaknesses that bite.** Strong and hard to knock over are just
+  Heavy. Long reach is long hitboxes and a piston punch. Each weakness is a different kind of
+  cost: big windups are paid on every move, rusty joints only when he misses, and overheating
+  only when he is greedy with his heat.
+- **The coolest move was in the down slot**, and it needed a resource. Heat became a reusable
+  trait rather than a DoomBot special case, so a future fighter can have a meter too.
+- **A full-heat vent first KO'd at 60%**, by far the strongest hit in the game. Tuned to 75%,
+  with the burn on top, it stays the best thing he can do without being the only thing.
 
 `Summon` deserves special attention: it is the slot where **his other drawings become content**.
 A pet, a sidekick, a smaller monster he drew on the same page can be a summon, which means art

@@ -186,6 +186,7 @@ public partial class FighterRig : Node2D
 		}
 
 		LoadExtras(root, parts, baseDir);
+		LoadPoints(root);
 
 		Loaded = true;
 		Play(FighterAnimations.Idle);
@@ -223,6 +224,35 @@ public partial class FighterRig : Node2D
 			extras[(string)entry["name"]] = sprite;
 		}
 	}
+
+	/// <summary>Named spots on the drawing, each on a bone and in its canonical units from the joint.</summary>
+	readonly Dictionary<string, (RigBone bone, Vector2 offset)> points = new Dictionary<string, (RigBone, Vector2)>();
+
+	void LoadPoints(Godot.Collections.Dictionary root)
+	{
+		points.Clear();
+		if (!root.ContainsKey("points")) return;
+		foreach (Godot.Collections.Dictionary entry in (Godot.Collections.Array)root["points"])
+		{
+			if (!RigBones.TryParse((string)entry["bone"], out RigBone bone) || !present[(int)bone]) continue;
+			var offset = (Godot.Collections.Array)entry["offset"];
+			points[(string)entry["name"]] = (bone, new Vector2((float)offset[0], (float)offset[1]));
+		}
+	}
+
+	/// <summary>
+	/// Where a named spot on the drawing is right now, in global coordinates - DoomBot's eye, the
+	/// tip of an antenna. It rides on its bone, so it follows every pose, the facing and the
+	/// squash. Null if this drawing does not name that spot.
+	/// </summary>
+	public Vector2? PointGlobal(string name)
+	{
+		if (string.IsNullOrEmpty(name) || !points.TryGetValue(name, out var point)) return null;
+		return bones[(int)point.bone].GlobalTransform * point.offset;
+	}
+
+	/// <summary>Where a bone's joint is right now, in global coordinates. Null if the drawing has no such bone.</summary>
+	public Vector2? JointGlobal(RigBone bone) => present[(int)bone] ? bones[(int)bone].GlobalPosition : null;
 
 	/// <summary>Shows or hides an extra drawing by name. Unknown names are ignored.</summary>
 	public void SetExtraVisible(string name, bool visible)

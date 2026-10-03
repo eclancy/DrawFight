@@ -80,6 +80,9 @@ public sealed class Pose
 
 	public float this[RigBone bone] => rotations[(int)bone];
 
+	/// <summary>Sets one joint - for a pose worked out each frame rather than authored, like a windmill.</summary>
+	public void Set(RigBone bone, float degrees) => rotations[(int)bone] = degrees;
+
 	public static void Blend(Pose a, Pose b, float t, Pose into)
 	{
 		for (int i = 0; i < (int)RigBone.Count; i++)

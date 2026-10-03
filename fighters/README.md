@@ -110,8 +110,11 @@ carried on through it - filling in what is missing, not replacing what is there.
 socket is cut out as an extra (`"always": true`) drawn over the arm's root, so wherever the arm
 swings it looks like it comes out of the hole.
 
-He is a heavy. His other stats and four specials are placeholders until his character sheet
-arrives.
+**Named spots.** `rig.json` also names three points on his head (`"points"`): his round grille
+`eye`, which the eye laser comes out of, and the tips of his two antennae, which the up smash's
+lightning arcs from. They ride on the head bone, so they follow every pose.
+
+He is a heavy, built from Eric's own character sheet - `sheet.md` in this folder.
 
 ## The canonical orientation contract
 

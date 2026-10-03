@@ -384,6 +384,80 @@ def pause():
 
 
 # ---------------------------------------------------------------------------
+# DoomBot - electricity, rockets, a furnace, and rusty joints
+# ---------------------------------------------------------------------------
+
+def zap():
+    """An electric shock: a buzzing ring-modulated saw, chopped irregularly so it crackles."""
+    dur = 0.32
+    n = S.n_samples(dur)
+    buzz = S.ringmod(S.osc("saw", S.sweep(dur, 180, 120), dur), 97.0, 0.7)
+    buzz = S.gate(S.bandpass(buzz, 2400, 0.9), 55.0, 0.7, seed=SEED + 80)
+    crack = S.env_mul(S.highpass(S.osc("noise", 0, dur, seed=SEED + 81), 4000), S.expdecay(n, 9.0))
+    return S.env_mul(S.mix(buzz, S.gain(crack, 0.7)), S.ad(dur, 0.002, 1.6))
+
+
+def jets():
+    """Rocket boots lighting: a roar of filtered noise with a low rumble, swelling then easing."""
+    dur = 0.8
+    roar = S.lowpass(S.osc("noise", 0, dur, seed=SEED + 82), S.sweep(dur, 900, 2400, 0.6), 0.9)
+    rumble = S.lowpass(S.osc("noise", 0, dur, seed=SEED + 83), 180)
+    v = S.mix(roar, S.gain(rumble, 1.4))
+    return S.env_mul(v, S.adsr(dur, 0.06, 0.1, 0.7, 0.3))
+
+
+def missile():
+    """A small missile launching: a whoosh with a rising rocket whine."""
+    dur = 0.36
+    whine = S.env_mul(S.osc("tri", S.sweep(dur, 500, 1400, 0.7), dur), S.ad(dur, 0.01, 1.8))
+    return S.mix(whoosh(dur, 700, 2600, 1.0, seed=84, peak_at=0.2), S.gain(whine, 0.35),
+                 S.gain(slap(0.05, 2000, 30.0, seed=85), 0.5))
+
+
+def steam():
+    """A puff of steam: a short hiss that swells and fades."""
+    dur = 0.42
+    hiss = S.highpass(S.osc("noise", 0, dur, seed=SEED + 86), 2600)
+    return S.env_mul(hiss, swell(dur, 0.15, 2.4))
+
+
+def overheat():
+    """Overheating: a long hiss of steam pouring out, sputtering, under a falling clunk."""
+    dur = 1.2
+    hiss = S.highpass(S.osc("noise", 0, dur, seed=SEED + 87), 2200)
+    hiss = S.gate(hiss, 14.0, 0.8, seed=SEED + 88)
+    hiss = S.env_mul(hiss, S.adsr(dur, 0.02, 0.1, 0.8, 0.5))
+    clunk = S.layer([(metal(300, 0.4, 8.0), 0.0, 1.0), (thump(0.2, 140, 60, 9.0), 0.0, 0.8)])
+    return S.layer([(clunk, 0.0, 0.7), (hiss, 0.05, 1.0)])
+
+
+def furnace_blast():
+    """The furnace let out at once: a whoomph of flame round a heavy thump, with a roaring tail."""
+    dur = 1.0
+    n = S.n_samples(dur)
+    roar = S.bandpass(S.osc("noise", 0, dur, seed=SEED + 89), S.sweep(dur, 1800, 300, 0.5), 0.8)
+    roar = S.drive(S.env_mul(roar, S.expdecay(n, 3.5)), 2.2)
+    v = S.layer([(boom(0.9, 0.8, seed=90), 0.0, 0.9), (roar, 0.0, 0.9),
+                 (whoosh(0.4, 400, 2200, 0.8, seed=91, peak_at=0.1), 0.0, 0.6)])
+    return S.reverb(S.pad(v, 1.3), size=0.5, damp=0.5, mix=0.15)
+
+
+def burn():
+    """One tick of burning: a small crackle."""
+    dur = 0.16
+    crackle = S.gate(S.highpass(S.osc("noise", 0, dur, seed=SEED + 92), 1800), 120.0, 0.35, seed=SEED + 93)
+    return S.env_mul(crackle, S.ad(dur, 0.002, 2.0))
+
+
+def creak():
+    """Rusty joints seizing after a miss: a slow, squeaky groan that bends down in pitch."""
+    dur = 0.34
+    squeal = S.fm("saw", S.sweep(dur, 640, 420, 0.8), 31.0, 0.05, dur)
+    squeal = S.bandpass(squeal, 1300, 2.2)
+    return S.env_mul(squeal, S.adsr(dur, 0.03, 0.05, 0.75, 0.12))
+
+
+# ---------------------------------------------------------------------------
 # REGISTRY - (name, category, peak target dBFS, builder, loops)
 #
 # The targets ARE the mix: the game plays every file at unity. Loudness follows how often a
@@ -433,4 +507,13 @@ REGISTRY = [
     ("ui_back", "ui", -14.0, ui_back, False),
     ("ui_ready", "ui", -11.0, ui_ready, False),
     ("pause", "ui", -12.0, pause, False),
+
+    ("zap", "special", -10.0, zap, False),
+    ("jets", "special", -11.0, jets, False),
+    ("missile", "special", -13.0, missile, False),
+    ("steam", "special", -12.0, steam, False),
+    ("overheat", "special", -7.0, overheat, False),
+    ("furnace_blast", "special", -4.0, furnace_blast, False),
+    ("burn", "hit", -20.0, burn, False),
+    ("creak", "swing", -14.0, creak, False),
 ]

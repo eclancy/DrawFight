@@ -87,6 +87,13 @@ FRONT_FOOT = (930, 1866)
 COVERED = [(470, 694), (606, 694), (606, 822), (470, 822)]
 SOCKET = ((630, 771), (52, 92))
 BODY_EDGE = [(491, 690), (489, 826)]
+
+# Named spots on the drawing that moves come out of, in the same pixels: his round grille eye
+# fires the eye laser, and the tips of his antennae throw the up smash's lightning. Written into
+# rig.json relative to the head's joint, so they move with his head.
+EYE = (831, 464)
+ANTENNA_BACK = (624, 219)
+ANTENNA_FRONT = (879, 233)
 # Where the grey comes from: the clean band of body between the white glint under the socket
 # and the panel line across his middle. It is shorter than the patch, so the patch takes two
 # copies of it, stacked: (first row of the patch that uses it, how far below to copy from).
@@ -275,6 +282,11 @@ def main():
         # The socket over the arm that comes out of it. On the Torso bone, whose extras draw
         # after its limbs; its pivot is the hip, so offset zero puts it back where it was drawn.
         'extras': [{'name': 'socket', 'bone': 'Torso', 'part': 'Socket', 'offset': [0, 0], 'always': True}],
+        'points': [
+            {'name': 'eye', 'bone': 'Head', 'offset': [EYE[0] - NECK[0], EYE[1] - NECK[1]]},
+            {'name': 'antenna_back', 'bone': 'Head', 'offset': [ANTENNA_BACK[0] - NECK[0], ANTENNA_BACK[1] - NECK[1]]},
+            {'name': 'antenna_front', 'bone': 'Head', 'offset': [ANTENNA_FRONT[0] - NECK[0], ANTENNA_FRONT[1] - NECK[1]]},
+        ],
     }
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))

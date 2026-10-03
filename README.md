@@ -35,7 +35,7 @@ played it.
 |---|---|
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
-| **Fighters** | 5 — **Circy**, the first fighter designed by a kid (Elim); **EdgeLord**, a sword fighter drawn by Eric, with placeholder colouring; **DoomBot**, a robot drawn by Eric, waiting on his moves; and two generated stick figures (Flambé and Lugnut) |
+| **Fighters** | 5 — **Circy**, the first fighter designed by a kid (Elim); **EdgeLord**, a sword fighter drawn by Eric, with placeholder colouring; **DoomBot**, a rogue factory robot drawn and designed by Eric, with a furnace that heats up as he fights; and two generated stick figures (Flambé and Lugnut) |
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
 | **Input** | Xbox pads (hot-pluggable) and keyboard |

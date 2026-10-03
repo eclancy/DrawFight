@@ -196,5 +196,31 @@
       ], 
       "texture": "parts/Torso.png"
     }
-  }
+  }, 
+  "points": [
+    {
+      "bone": "Head", 
+      "name": "eye", 
+      "offset": [
+        136, 
+        -178
+      ]
+    }, 
+    {
+      "bone": "Head", 
+      "name": "antenna_back", 
+      "offset": [
+        -71, 
+        -423
+      ]
+    }, 
+    {
+      "bone": "Head", 
+      "name": "antenna_front", 
+      "offset": [
+        184, 
+        -409
+      ]
+    }
+  ]
 }

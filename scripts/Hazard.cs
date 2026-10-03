@@ -260,7 +260,7 @@ public partial class Hazard : Node2D
 			return band.Intersects(body);
 		}
 
-		float radius = move.FxRadius;
+		float radius = move.Special == SpecialKind.Vent ? VentRadius() : move.FxRadius;
 		float length = move.Beam ? beamLength : 0.0f;
 
 		if (rising)
@@ -290,7 +290,12 @@ public partial class Hazard : Node2D
 
 	/// <summary>A trap burns and an explosion blasts; both keep hitting until they fade.</summary>
 	bool Lingers => move.Special == SpecialKind.Trap || move.Special == SpecialKind.Bomb
-		|| move.Special == SpecialKind.Shockwave || move.FromGround;
+		|| move.Special == SpecialKind.Shockwave || move.Special == SpecialKind.Vent || move.FromGround;
+
+	/// <summary>A vent bursts outward from him over its first few frames, rather than appearing whole.</summary>
+	const int VentGrowFrames = 6;
+
+	float VentRadius() => move.FxRadius * Mathf.Min(1.0f, 0.35f + 0.65f * ageFrames / (float)VentGrowFrames);
 
 	void Expire()
 	{
@@ -436,6 +441,65 @@ public partial class Hazard : Node2D
 		DrawCircle(Vector2.Zero, radius * 0.45f, new Color(1.0f, 0.93f, 0.62f));
 	}
 
+	/// <summary>
+	/// The furnace let out all at once: a ring of flame tongues bursting outward round a hot
+	/// core, or - for a cool vent - a soft cloud of steam. Hashed flicker, never random.
+	/// </summary>
+	void DrawVent(float alpha)
+	{
+		float r = VentRadius();
+		float t = ageFrames / (float)Mathf.Max(1, lifeFrames);
+
+		if (!move.FxFlame)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				Vector2 at = Vector2.Right.Rotated(Mathf.Tau * i / 8 + CrayonBrush.Noise(i, 5) * 0.3f) * r * 0.55f;
+				DrawCircle(at, r * 0.45f, new Color(0.97f, 0.97f, 0.98f, 0.55f * alpha));
+			}
+			return;
+		}
+
+		const int Tongues = 14;
+		for (int i = 0; i < Tongues; i++)
+		{
+			float a = Mathf.Tau * i / Tongues + CrayonBrush.Noise(ageFrames / 2, i) * 0.12f;
+			Vector2 dir = Vector2.Right.Rotated(a);
+			Vector2 side = dir.Orthogonal() * r * 0.2f;
+			float reach = r * (0.95f + 0.25f * Mathf.Abs(CrayonBrush.Noise(ageFrames, i + 20)));
+			DrawColoredPolygon(new[] { side, dir * reach, -side }, new Color(0.95f, 0.36f, 0.16f, 0.85f * alpha));
+			DrawColoredPolygon(new[] { side * 0.6f, dir * reach * 0.72f, -side * 0.6f }, new Color(0.99f, 0.66f, 0.22f, 0.9f * alpha));
+		}
+		DrawCircle(Vector2.Zero, r * 0.62f, new Color(0.99f, 0.70f, 0.25f, 0.9f * alpha));
+		DrawCircle(Vector2.Zero, r * 0.38f * (1.0f - 0.4f * t), new Color(1.0f, 0.95f, 0.75f, alpha));
+	}
+
+	/// <summary>A little missile pointing the way it flies: a red-tipped grey body, fins, and an exhaust flame.</summary>
+	void DrawMissile(float radius)
+	{
+		Vector2 dir = velocity.LengthSquared() > 1.0f ? velocity.Normalized() : Vector2.Right;
+		Vector2 side = dir.Orthogonal();
+		float length = radius * 3.4f;
+		float half = radius * 0.55f;
+		Vector2 nose = dir * length * 0.5f;
+		Vector2 tail = -dir * length * 0.5f;
+
+		float flicker = 0.75f + 0.25f * CrayonBrush.Noise(ageFrames, 7);
+		DrawColoredPolygon(new[] { tail + side * half * 0.8f, tail - side * half * 0.8f, tail - dir * radius * 2.2f * flicker },
+			new Color(0.98f, 0.62f, 0.22f, 0.9f));
+		DrawColoredPolygon(new[] { tail + side * half * 0.4f, tail - side * half * 0.4f, tail - dir * radius * 1.2f * flicker },
+			new Color(1.0f, 0.93f, 0.62f));
+
+		var steel = new Color(0.62f, 0.64f, 0.70f);
+		var edge = new Color(0.36f, 0.36f, 0.42f);
+		DrawColoredPolygon(new[] { tail + side * half * 2.0f, tail + side * half, tail + dir * radius * 1.1f + side * half }, edge);
+		DrawColoredPolygon(new[] { tail - side * half * 2.0f, tail - side * half, tail + dir * radius * 1.1f - side * half }, edge);
+		DrawColoredPolygon(new[] { tail + side * half, nose - dir * radius * 0.6f + side * half,
+			nose - dir * radius * 0.6f - side * half, tail - side * half }, steel);
+		DrawColoredPolygon(new[] { nose - dir * radius * 0.6f + side * half, nose, nose - dir * radius * 0.6f - side * half },
+			new Color(0.92f, 0.28f, 0.26f));
+	}
+
 	public override void _Draw()
 	{
 		if (move == null) return;
@@ -481,6 +545,18 @@ public partial class Hazard : Node2D
 			DrawLine(Vector2.Zero, tip, body, radius * 2.0f);
 			DrawCircle(tip, radius, body);
 			DrawLine(Vector2.Zero, tip, new Color(1.0f, 0.95f, 0.85f, 0.9f), radius * 0.7f);
+			return;
+		}
+
+		if (move.Special == SpecialKind.Vent)
+		{
+			DrawVent(body.A);
+			return;
+		}
+
+		if (move.FxMissile)
+		{
+			DrawMissile(radius);
 			return;
 		}
 

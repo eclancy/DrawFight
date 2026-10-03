@@ -43,7 +43,7 @@ public partial class RigParade : Node2D
 	{
 		if (move == null) return null;
 		var pose = new Pose();
-		FighterAnimations.SampleAttack(move, move.StartupFrames + 1, pose);
+		FighterAnimations.SampleAttack(move, FighterAnimations.ShowFrame(move), pose);
 		return pose;
 	}
 

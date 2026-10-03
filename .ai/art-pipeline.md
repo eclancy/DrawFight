@@ -165,6 +165,14 @@ with `Offset = -pivot`, which puts the joint at the bone's origin — so rotatin
 the part about its joint rather than about its corner. Get that wrong and limbs pinwheel around
 their own top-left corner, which is the most likely way a new fighter looks broken.
 
+**Named spots.** A manifest may name points on the drawing that a move comes out of -
+`"points": [{"name": "eye", "bone": "Head", "offset": [x, y]}]`, the offset in canonical units
+from that bone's joint. `FighterRig.PointGlobal(name)` returns where one is right now, so it
+follows the pose. DoomBot's eye laser fires from his `eye` and his up smash arcs from
+`antenna_back` and `antenna_front`. A move that names a spot a drawing does not have falls back
+to the hands or the head, so naming them is never required. The cut script writes them, from
+pixels picked off the photo, exactly like the joints.
+
 `FighterRig.cs` builds this tree from `rig.json`. It returns false rather than throwing when a
 manifest is missing, so a fighter with broken art still plays as a rectangle instead of taking
 the whole match down with it.
