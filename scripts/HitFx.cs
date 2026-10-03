@@ -26,11 +26,14 @@ public partial class HitFx : Node2D
 	struct KoBlast
 	{
 		/// <summary>
-		/// Where on the SCREEN it sits, as a fraction of the half-view from the centre. Stored
-		/// that way because the camera swings back to the fighters still playing the moment
-		/// someone is KO'd, and a blast pinned to the world would be left behind off screen.
+		/// Where in the WORLD it goes off: the spot the fighter left the screen. It stays there
+		/// while the camera swings back to the fighters still playing, so it reads as an explosion
+		/// at the place they fell out, not a sticker on the screen.
 		/// </summary>
-		public Vector2 ScreenSpot;
+		public Vector2 Position;
+		/// <summary>Its size, fixed from the camera zoom at the moment of the KO, so a zoom
+		/// afterwards does not make it swell or shrink.</summary>
+		public float Scale;
 		public Vector2 Inward;
 		public float Age;
 		public Color Tint;
@@ -41,16 +44,15 @@ public partial class HitFx : Node2D
 	const float KoLife = 1.1f;
 	int koCount;
 
-	/// <summary>The match camera, which KO blasts ride along with.</summary>
+	/// <summary>The match camera, which sets how big a KO blast is drawn.</summary>
 	public GameCamera Camera;
 
 	public void SpawnKoBlast(Vector2 position, Vector2 inward, Color tint)
 	{
-		Vector2 centre = Camera?.GlobalPosition ?? Vector2.Zero;
-		Vector2 half = Camera != null ? Camera.VisibleRect().Size * 0.5f : Vector2.One;
 		blasts.Add(new KoBlast
 		{
-			ScreenSpot = (position - centre) / half,
+			Position = position,
+			Scale = Camera != null ? Camera.VisibleRect().Size.X / 1920.0f : 1.0f,
 			Inward = inward.Normalized(),
 			Tint = tint,
 			Seed = 97 + koCount++ * 31,
@@ -118,15 +120,7 @@ public partial class HitFx : Node2D
 		}
 	}
 
-	void DrawKoBlast(KoBlast b)
-	{
-		// Rebuilt from the camera every frame, and sized against the zoom, so it stays put on the
-		// screen at the same size however the camera moves.
-		Rect2 view = Camera != null ? Camera.VisibleRect() : new Rect2(-960.0f, -540.0f, 1920.0f, 1080.0f);
-		Vector2 at = view.GetCenter() + b.ScreenSpot * view.Size * 0.5f;
-		float k = view.Size.X / 1920.0f;
-		DrawKoBlastAt(b, at, k);
-	}
+	void DrawKoBlast(KoBlast b) => DrawKoBlastAt(b, b.Position, b.Scale);
 
 	void DrawKoBlastAt(KoBlast b, Vector2 position, float k)
 	{

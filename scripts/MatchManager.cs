@@ -202,7 +202,8 @@ public partial class MatchManager : Node2D
 	void KillOffStage(Fighter fighter)
 	{
 		// The blast goes off at the edge of what is on screen, nearest where they went out, and
-		// fires back in across the stage - so it is seen even though the fighter is long gone.
+		// fires back in across the stage - so it is seen even though the fighter is long gone. It
+		// stays at that spot in the world while the camera moves on.
 		Vector2 at = fighter.GlobalPosition;
 		Rect2 view = camera.VisibleRect().Grow(-camera.VisibleRect().Size.X * 0.04f);
 		Vector2 edge = new Vector2(Mathf.Clamp(at.X, view.Position.X, view.End.X), Mathf.Clamp(at.Y, view.Position.Y, view.End.Y));
