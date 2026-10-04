@@ -22,10 +22,12 @@ public static class Tuning
 
 	// --- Impact feel ---------------------------------------------------------
 	// Hitlag is the single biggest contributor to a hit feeling like it has weight.
-	// See .ai/fighting-design.md. Do not make it subtle.
+	// See .ai/fighting-design.md. It was 3 + damage * 0.5 and that froze the fight too long:
+	// throwing out an attack and moving on is what makes a match flow. A jab now freezes for 3
+	// frames rather than 5, a heavy smash for about 8 rather than 13 - still felt, never a stall.
 
-	public const float HitlagBaseFrames = 3.0f;
-	public const float HitlagFramesPerDamage = 0.5f;
+	public const float HitlagBaseFrames = 2.0f;
+	public const float HitlagFramesPerDamage = 0.3f;
 
 	public const float ScreenShakePerKnockback = 0.11f;
 	public const float ScreenShakeMax = 26.0f;
@@ -65,6 +67,22 @@ public static class Tuning
 	public const float FallSpeedScale = 0.8f;
 	public const float FallStartGravity = 0.45f;
 	public const int FallRampFrames = 26;
+
+	/// <summary>
+	/// Every fighter's gravity is scaled by this, so everyone hangs in the air longer: a fighter
+	/// knocked off the stage falls more slowly and has more time to get back. Jumps are launched
+	/// at <see cref="JumpScale"/> of their speed to match, so every jump still reaches exactly the
+	/// height it did - height is v^2 / 2g - and only the time in the air changes.
+	/// </summary>
+	public const float GravityScale = 0.8f;
+
+	/// <summary>
+	/// The square root of <see cref="GravityScale"/>: what keeps jump heights where they were. A
+	/// launch is slowed by it too, and its slowdown (LaunchDecay) by GravityScale, so a launched
+	/// fighter flies exactly the path they used to - the same KO percents - only about 12% more
+	/// slowly, which is more time to steer it and get back.
+	/// </summary>
+	public static readonly float JumpScale = Mathf.Sqrt(GravityScale);
 
 	/// <summary>
 	/// After a KO the fighter is gone for this long before they reappear, so the blast has the

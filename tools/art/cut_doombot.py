@@ -92,6 +92,12 @@ BODY_EDGE = [(491, 690), (489, 826)]
 # fires the eye laser, and the tips of his antennae throw the up smash's lightning. Written into
 # rig.json relative to the head's joint, so they move with his head.
 EYE = (831, 464)
+
+# Where each claw begins on its forearm, in the same pixels: the stretched-arm grab stretches the
+# arm above this and leaves the claw below it its own size. Written into rig.json as the texture
+# row of the lower arm where the hand starts ("hand").
+FRONT_CLAW_START = (1188, 584)
+BACK_CLAW_START = (268, 950)
 ANTENNA_BACK = (624, 219)
 ANTENNA_FRONT = (879, 233)
 # Where the grey comes from: the clean band of body between the white glint under the socket
@@ -180,6 +186,14 @@ def fill_covered(torso, photo):
     return torso
 
 
+def hand_row(parts, name, joint, end, start):
+    """Marks where the hand begins on a limb part hanging from `joint` toward `end`: the distance
+    from the joint to `start`, measured along the limb, below the part's pivot."""
+    length = math.hypot(end[0] - joint[0], end[1] - joint[1])
+    along = ((start[0] - joint[0]) * (end[0] - joint[0]) + (start[1] - joint[1]) * (end[1] - joint[1])) / length
+    parts[name]['hand'] = round(parts[name]['pivot'][1] + along, 1)
+
+
 def canonical(piece, joint, end, name_upper, name_lower, parts_dir, parts, split=0.5):
     """
     Rotates a limb about its joint until it hangs straight down, then cuts it in two a little
@@ -250,6 +264,8 @@ def main():
     canonical(cut(photo, BACK_LOWER), BACK_ELBOW, BACK_HAND, 'ArmBack_Lower', None, parts_dir, parts)
     upper_front = canonical(cut(photo, FRONT_UPPER), FRONT_SHOULDER, FRONT_ELBOW, 'ArmFront_Upper', None, parts_dir, parts)
     canonical(cut(photo, FRONT_LOWER), FRONT_ELBOW, FRONT_HAND, 'ArmFront_Lower', None, parts_dir, parts)
+    hand_row(parts, 'ArmBack_Lower', BACK_ELBOW, BACK_HAND, BACK_CLAW_START)
+    hand_row(parts, 'ArmFront_Lower', FRONT_ELBOW, FRONT_HAND, FRONT_CLAW_START)
 
     # Legs: one straight piece each, halved - there is no knee drawn, so the middle is the knee.
     knee_back = canonical(cut(photo, BACK_LEG), BACK_HIP, BACK_FOOT, 'LegBack_Upper', 'LegBack_Lower', parts_dir, parts)

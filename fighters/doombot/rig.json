@@ -120,6 +120,7 @@
   "name": "DoomBot", 
   "parts": {
     "ArmBack_Lower": {
+      "hand": 250.0, 
       "pivot": [
         166.5, 
         58.5
@@ -134,6 +135,7 @@
       "texture": "parts/ArmBack_Upper.png"
     }, 
     "ArmFront_Lower": {
+      "hand": 238.1, 
       "pivot": [
         118.0, 
         64.0

@@ -18,69 +18,171 @@ public static class CharacterNormals
 	static MoveData M(MoveData[] moves, MoveSlot slot) => moves[(int)slot];
 
 	// =========================================================================
-	// SWIFT - light, fire. A quick martial artist: kicks, spins and a flaming palm.
+	// SWIFT (FLAMBE) - light, fire. A fire-punk French chef: fast feet, flames on everything, and
+	// a frying pan for his big hits. Every move has its own trick - combos that need a second
+	// press, flurries of hits that end in a launch, a crepe flip, fire geysers - so no two of his
+	// attacks feel the same.
 	// =========================================================================
 
-	public static MoveData SwiftJab() => DefaultMoveset.LightJab();
+	/// <summary>Two flicker jabs, then "Flambe!" - a palm that bursts into flame and sets them alight.</summary>
+	public static MoveData SwiftJab()
+	{
+		MoveData jab = DefaultMoveset.LightJab();
+		jab.MoveName = "Flicker Jab";
+		jab.EndlagFrames = 7;
+		jab.ComboNext.MoveName = "Flicker Jab 2";
+		jab.ComboNext.EndlagFrames = 7;
+		MoveData finish = jab.ComboNext.ComboNext;
+		finish.MoveName = "Flambe!";
+		finish.Anim = AttackAnim.PalmThrust;
+		finish.StartupFrames = 4; finish.ActiveFrames = 3; finish.EndlagFrames = 14;
+		finish.Damage = 4.0f; finish.BaseKnockback = 32.0f; finish.KnockbackGrowth = 0.8f;
+		finish.LaunchAngleDegrees = 40.0f;
+		finish.HitboxOffset = new Vector2(60.0f, -14.0f); finish.HitboxRadius = 46.0f;
+		finish.ActiveFx = ActiveFx.Flame;
+		finish.BurnFrames = 45; finish.BurnDamage = 2.0f;
+		return jab;
+	}
 
 	public static void Swift(MoveData[] moves)
 	{
-		// A roundhouse: the longest reach he has on the ground, but a flatter, weaker launch.
+		// Twin Roundhouse: a low roundhouse that only pushes - press again for a spinning heel
+		// hook, on fire, that launches. The first kick alone is the safest poke he has.
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
 		m.MoveName = "Roundhouse"; m.Anim = AttackAnim.FrontKick;
-		m.HitboxOffset = new Vector2(98.0f, -26.0f); m.HitboxRadius = 46.0f;
-		m.LaunchAngleDegrees = 32.0f;
+		m.HitboxOffset = new Vector2(92.0f, -8.0f); m.HitboxRadius = 44.0f;
+		m.Damage = 6.0f; m.BaseKnockback = 20.0f; m.KnockbackGrowth = 0.4f;
+		m.LaunchAngleDegrees = 22.0f; m.EndlagFrames = 12;
+		m.ComboNext = new MoveData
+		{
+			MoveName = "Heel Hook", Anim = AttackAnim.HeavyPunch,
+			StartupFrames = 5, ActiveFrames = 3, EndlagFrames = 16,
+			Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.95f, LaunchAngleDegrees = 42.0f,
+			HitboxOffset = new Vector2(96.0f, -40.0f), HitboxRadius = 46.0f,
+			ActiveFx = ActiveFx.Flame,
+		};
 
-		// A flip kick that also covers a little behind him.
+		// Torch Flip: a flip kick that throws a fountain of sparks up off his heel - three quick
+		// weak hits holding them in the air, then the last pops them up.
 		m = M(moves, MoveSlot.UpTilt);
-		m.MoveName = "Flip Kick"; m.Anim = AttackAnim.Uair;
+		m.MoveName = "Torch Flip"; m.Anim = AttackAnim.Uair;
 		m.HitboxOffset = new Vector2(-6.0f, -96.0f); m.HitboxRadius = 58.0f;
-		m.StartupFrames = 5; m.LaunchAngleDegrees = 95.0f;
+		m.StartupFrames = 5; m.ActiveFrames = 9; m.EndlagFrames = 12;
+		m.RehitFrames = 3;
+		m.Damage = 5.0f; m.LaunchAngleDegrees = 92.0f;
+		m.LinkHit = new MoveData { MoveName = "Torch Flip (link)", Damage = 1.5f, BaseKnockback = 12.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 90.0f };
+		m.ActiveFx = ActiveFx.Flame;
 
-		// A sweep that pops them up rather than away - it starts air combos.
+		// Crepe Flip: the pan slid flat along the floor under their feet and flipped - straight up,
+		// head over heels, like a crepe. Low along the floor, so it is still a sweep, and it sets
+		// up everything he has that hits above him.
 		m = M(moves, MoveSlot.DownTilt);
-		m.MoveName = "Sweep"; m.Anim = AttackAnim.LowKick;
-		m.LaunchAngleDegrees = 78.0f; m.Damage = 6.0f;
-		m.BaseKnockback = 30.0f; m.KnockbackGrowth = 0.7f;
+		m.MoveName = "Crêpe Flip"; m.Anim = AttackAnim.LowSweep; m.PropArt = "tool_pan";
+		m.HitboxOffset = new Vector2(98.0f, 44.0f); m.HitboxRadius = 46.0f;
+		m.StartupFrames = 7; m.EndlagFrames = 15;
+		m.Damage = 6.0f; m.BaseKnockback = 50.0f; m.KnockbackGrowth = 0.45f;
+		m.LaunchAngleDegrees = 88.0f;
+		m.SpinVictim = true;
 
+		// Comet Knee: a flying knee that carries him through - press again in the middle of it
+		// for a heel chop that sends them skidding away along the ground.
 		m = M(moves, MoveSlot.DashAttack);
-		m.MoveName = "Flying Knee"; m.Anim = AttackAnim.FlyingKick;
-		m.StartupFrames = 7; m.LaunchAngleDegrees = 46.0f;
+		m.MoveName = "Comet Knee"; m.Anim = AttackAnim.FlyingKick;
+		m.StartupFrames = 7; m.Damage = 7.0f; m.LaunchAngleDegrees = 60.0f;
+		m.BaseKnockback = 30.0f; m.KnockbackGrowth = 0.6f;
+		m.ComboNext = new MoveData
+		{
+			MoveName = "Heel Chop", Anim = AttackAnim.Fair,
+			StartupFrames = 6, ActiveFrames = 3, EndlagFrames = 18,
+			Damage = 6.0f, BaseKnockback = 36.0f, KnockbackGrowth = 0.85f, LaunchAngleDegrees = 24.0f,
+			HitboxOffset = new Vector2(70.0f, 10.0f), HitboxRadius = 50.0f,
+			CarriesMomentum = true, ActiveFx = ActiveFx.Flame,
+		};
 
+		// Flambe Pan: the chef's big hit. He hauls a frying pan up over his head with the fire
+		// roaring off it and brings it down in front of him. Slow, obvious, and it burns.
 		m = M(moves, MoveSlot.ForwardSmash);
-		m.MoveName = "Blaze Palm"; m.Anim = AttackAnim.PalmThrust;
-		m.HitboxOffset = new Vector2(86.0f, -26.0f); m.HitboxRadius = 58.0f;
-		m.LaunchAngleDegrees = 36.0f;
+		m.MoveName = "Flambe Pan"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_pan";
+		m.StartupFrames = 17;
+		// On the pan's face where it lands, low in front of his feet (see the attack parade).
+		m.HitboxOffset = new Vector2(120.0f, 42.0f); m.HitboxRadius = 60.0f;
+		m.LaunchAngleDegrees = 38.0f;
+		m.BurnFrames = 90; m.BurnDamage = 5.0f;
+		m.ActiveFx = ActiveFx.Flame;
 
-		// Stays out longer than anyone's: hard to time, easy to hit with.
+		// Fire Pillar: a column of fire roars up over him - four hits climbing it, the last one
+		// throwing them out of the top.
 		m = M(moves, MoveSlot.UpSmash);
-		m.MoveName = "Rising Flame"; m.Anim = AttackAnim.UpSmash;
-		m.ActiveFrames = 8;
+		m.MoveName = "Fire Pillar"; m.Anim = AttackAnim.UpSmash;
+		m.ActiveFrames = 12; m.RehitFrames = 4;
+		m.Damage = 14.0f; m.LaunchAngleDegrees = 90.0f;
+		m.HitboxOffset = new Vector2(0.0f, -118.0f); m.HitboxRadius = 64.0f;
+		m.LinkHit = new MoveData { MoveName = "Fire Pillar (link)", Damage = 2.0f, BaseKnockback = 14.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 90.0f };
+		m.ActiveFx = ActiveFx.Flame;
 
+		// Fire Geysers: he drops into the splits and two jets of fire burst up out of the floor,
+		// one each side of him, then die down. Charging it makes them hit harder.
 		m = M(moves, MoveSlot.DownSmash);
-		m.MoveName = "Breaker Split"; m.Anim = AttackAnim.Split;
+		m.MoveName = "Fire Geysers"; m.Anim = AttackAnim.Split;
+		m.HitboxOffset = new Vector2(110.0f, 30.0f); m.HitboxRadius = 0.0f;
+		m.Special = SpecialKind.Projectile;
+		m.Mirrored = true; m.FromGround = true; m.ShotAngles = new[] { 88.0f };
+		m.SpecialSpeed = 1500.0f; m.SpecialGravity = 5200.0f; m.SpecialLifetime = 40;
+		m.FxFlame = true; m.FxRadius = 38.0f; m.FxColor = new Color(0.98f, 0.52f, 0.20f);
+		// Two projectiles at once reads as a volley to SfxCatalog, which is a ring of blades;
+		// these are fire.
+		m.Sound = "special_fire";
+		// Up and away, not straight up: a down smash has to be able to finish off the side.
+		m.LaunchAngleDegrees = 36.0f; m.BaseKnockback = 30.0f;
+		m.BurnFrames = 45; m.BurnDamage = 2.0f;
 
-		// A long spin: weak, but out for ten frames, so it is his get-off-me move.
+		// Fire Wheel: he spins with fire streaming off him - a ring of weak hits all round that
+		// carries them with him, and a last one that throws them off. Quick to come out of.
 		m = M(moves, MoveSlot.NeutralAir);
-		m.MoveName = "Flame Spin"; m.Anim = AttackAnim.Nair;
-		m.ActiveFrames = 10; m.Damage = 7.0f;
+		m.MoveName = "Fire Wheel"; m.Anim = AttackAnim.Nair;
+		m.ActiveFrames = 12; m.RehitFrames = 4; m.EndlagFrames = 8;
+		m.Damage = 4.0f;
+		m.LinkHit = new MoveData { MoveName = "Fire Wheel (link)", Damage = 1.5f, BaseKnockback = 10.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 60.0f };
+		m.ActiveFx = ActiveFx.Flame;
 
+		// Double Axe: an axe kick that pops them up - press again for a second, harder one that
+		// knocks them away.
 		m = M(moves, MoveSlot.ForwardAir);
 		m.MoveName = "Axe Kick"; m.Anim = AttackAnim.Fair;
-		m.LaunchAngleDegrees = 30.0f;
+		m.Damage = 5.0f; m.BaseKnockback = 24.0f; m.KnockbackGrowth = 0.3f; m.LaunchAngleDegrees = 70.0f;
+		m.EndlagFrames = 12;
+		m.ComboNext = new MoveData
+		{
+			MoveName = "Second Axe", Anim = AttackAnim.Fair,
+			StartupFrames = 6, ActiveFrames = 3, EndlagFrames = 16,
+			Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 1.0f, LaunchAngleDegrees = 32.0f,
+			HitboxOffset = new Vector2(82.0f, -12.0f), HitboxRadius = 48.0f,
+			ActiveFx = ActiveFx.Flame,
+		};
 
+		// Backdraft: a back kick that blows a burst of fire out behind him. His surest finisher.
 		m = M(moves, MoveSlot.BackAir);
-		m.MoveName = "Back Kick"; m.Anim = AttackAnim.Bair;
+		m.MoveName = "Backdraft"; m.Anim = AttackAnim.Bair;
+		m.ActiveFx = ActiveFx.Flame;
+		m.BurnFrames = 45; m.BurnDamage = 2.0f;
 
+		// Bicycle Kick: legs pedalling overhead - three quick hits and a last that sends them up.
 		m = M(moves, MoveSlot.UpAir);
 		m.MoveName = "Bicycle Kick"; m.Anim = AttackAnim.Uair;
+		m.ActiveFrames = 9; m.RehitFrames = 3;
+		m.Damage = 5.0f;
+		m.LinkHit = new MoveData { MoveName = "Bicycle Kick (link)", Damage = 1.5f, BaseKnockback = 12.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 90.0f };
 
-		// A drill kick that sends them down and away - not a spike, because a light fighter
-		// with a spike and a fast air game would be the whole edge-guarding game.
+		// Fire Drill: a burning drill kick straight down - four grinding hits, the last sending
+		// them down and away. Not a spike: a light fighter with a fast air game and a spike would
+		// be the whole edge-guarding game.
 		m = M(moves, MoveSlot.DownAir);
-		m.MoveName = "Drill Kick"; m.Anim = AttackAnim.Dair;
+		m.MoveName = "Fire Drill"; m.Anim = AttackAnim.Dair;
 		m.Spikes = false; m.LaunchAngleDegrees = -35.0f;
-		m.StartupFrames = 8;
+		m.StartupFrames = 8; m.ActiveFrames = 9; m.RehitFrames = 3; m.EndlagFrames = 12;
+		m.Damage = 5.0f;
+		m.LinkHit = new MoveData { MoveName = "Fire Drill (link)", Damage = 1.2f, BaseKnockback = 10.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = -70.0f };
+		m.ActiveFx = ActiveFx.Flame;
 	}
 
 	// =========================================================================
@@ -89,6 +191,20 @@ public static class CharacterNormals
 	// jackhammer - and every one is about as long as his sledgehammer, which is what his reach is
 	// built on. His specials are site tools too (see Specials.Construction).
 	// =========================================================================
+
+	/// <summary>
+	/// Hard hat armour, on his three smashes and his barge: through the windup and the swing, a
+	/// hit of this much damage or less bounces off - it still counts, but he does not flinch. A
+	/// jab cannot stop a sledgehammer; a real hit, or a grab, still can.
+	/// </summary>
+	const float HardHatArmor = 8.0f;
+
+	/// <summary>One of Lug's tool drawings, or null so the move falls back to a crayon shape.</summary>
+	static Texture2D LugFx(string name)
+	{
+		string path = $"res://fighters/lug/poses/{name}.png";
+		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+	}
 
 	public static MoveData LugJab()
 	{
@@ -116,22 +232,31 @@ public static class CharacterNormals
 		m.HitboxOffset = new Vector2(10.0f, -140.0f); m.HitboxRadius = 62.0f;
 		m.LaunchAngleDegrees = 80.0f;
 
-		// From a crouch, a crowbar swept low along the floor: slow, long, and it knocks them off
-		// their feet.
+		// Cone Kick: a traffic cone set down and booted along the floor. It skids to a stop and
+		// stays put, and the next one to run into it trips over it and goes head over heels. Low
+		// along the ground, so it is still a sweep - one that leaves something behind.
 		m = M(moves, MoveSlot.DownTilt);
-		m.MoveName = "Crowbar Sweep"; m.Anim = AttackAnim.LowSweep; m.PropArt = "tool_crowbar";
-		m.HitboxOffset = new Vector2(122.0f, 50.0f); m.HitboxRadius = 52.0f;
-		m.StartupFrames = 8; m.LaunchAngleDegrees = 22.0f; m.Damage = 9.0f;
+		m.MoveName = "Cone Kick"; m.Anim = AttackAnim.LowKick;
+		m.HitboxOffset = new Vector2(92.0f, 50.0f); m.HitboxRadius = 44.0f;
+		m.StartupFrames = 7; m.EndlagFrames = 10; m.LaunchAngleDegrees = 80.0f;
+		m.Damage = 4.0f; m.BaseKnockback = 40.0f; m.KnockbackGrowth = 0.4f;
+		m.SpinVictim = true;
+		m.Special = SpecialKind.Trap; m.MaxOut = 1; m.SpentOnHit = true;
+		m.SpecialSpeed = 820.0f; m.SlideFriction = 1600.0f; m.SpecialGravity = 0.0f; m.SpecialLifetime = 300;
+		m.FxTexture = LugFx("cone"); m.FxArtSize = 70.0f; m.FxRadius = 28.0f;
+		m.FxColor = new Color(0.93f, 0.49f, 0.22f);
 
 		// Head down, hard hat on, straight through them.
 		m = M(moves, MoveSlot.DashAttack);
 		m.MoveName = "Hard Hat Barge"; m.Anim = AttackAnim.Lunge; m.PropArt = "-"; m.ShowExtra = "hardhat";
 		m.HitboxRadius = 58.0f;
+		m.Armor = HardHatArmor;
 
 		// The sledgehammer itself, brought all the way over and down.
 		m = M(moves, MoveSlot.ForwardSmash);
 		m.MoveName = "Sledge Slam"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_sledgehammer";
 		m.HitboxOffset = new Vector2(128.0f, 34.0f); m.HitboxRadius = 66.0f;
+		m.Armor = HardHatArmor;
 
 		// A steel I-beam heaved from low behind him up and over his head. Huge and slow;
 		// everyone can see it coming, and anyone above him who does not move takes all of it.
@@ -140,6 +265,7 @@ public static class CharacterNormals
 		m.StartupFrames = 20; m.ActiveFrames = 8;
 		m.Damage = 16.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 1.0f;
 		m.HitboxOffset = new Vector2(-10.0f, -150.0f); m.HitboxRadius = 86.0f;
+		m.Armor = HardHatArmor;
 
 		// Sledgehammer Quake: slams the ground in front, and a shockwave runs out both ways along
 		// the floor. Charging it powers up the waves too. They pop people up rather than away,
@@ -159,6 +285,7 @@ public static class CharacterNormals
 		m.ShockwavePower = 0.85f;
 		m.SpecialSpeed = 950.0f; m.SpecialLifetime = 14;
 		m.FxRadius = 34.0f; m.FxColor = new Color(0.98f, 0.70f, 0.22f);
+		m.Armor = HardHatArmor;
 
 		// A stop sign swung all the way round him.
 		m = M(moves, MoveSlot.NeutralAir);
@@ -213,7 +340,9 @@ public static class CharacterNormals
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
 		m.MoveName = "Piston Punch"; m.Anim = AttackAnim.HeavyPunch; m.PropArt = "-";
 		m.StretchArm = true;
-		m.HitboxOffset = new Vector2(132.0f, -30.0f); m.HitboxRadius = 42.0f;
+		// Low enough, once he is grown to his full size, to land on someone half his height - level
+		// with his own chest it would go over every head.
+		m.HitboxOffset = new Vector2(132.0f, 16.0f); m.HitboxRadius = 42.0f;
 		m.StartupFrames = 10; m.LaunchAngleDegrees = 32.0f;
 
 		m = M(moves, MoveSlot.UpTilt);
@@ -221,10 +350,29 @@ public static class CharacterNormals
 		m.HitboxOffset = new Vector2(16.0f, -118.0f); m.HitboxRadius = 54.0f;
 		m.StartupFrames = 8; m.LaunchAngleDegrees = 85.0f;
 
+		// MiniBot: he crouches and sets down a little copy of himself, which marches off along the
+		// floor. It stops at an edge and waits; the moment it touches anyone it goes off in a
+		// small furnace burst - or by itself after three seconds. One out at a time. It replaces a
+		// sweep, so his down tilt is a summon, not a hit: the bot is the hit.
 		m = M(moves, MoveSlot.DownTilt);
-		m.MoveName = "Boot Sweep"; m.Anim = AttackAnim.LowKick;
-		m.HitboxOffset = new Vector2(84.0f, 44.0f); m.HitboxRadius = 46.0f;
-		m.StartupFrames = 7; m.LaunchAngleDegrees = 20.0f;
+		m.MoveName = "MiniBot"; m.Anim = AttackAnim.SetDown; m.PropArt = "-";
+		m.StartupFrames = 12; m.ActiveFrames = 2; m.EndlagFrames = 18;
+		m.Damage = 0.0f; m.BaseKnockback = 0.0f; m.KnockbackGrowth = 0.0f;
+		m.HitboxOffset = new Vector2(56.0f, 0.0f); m.HitboxRadius = 0.0f;
+		m.Special = SpecialKind.Walker; m.MaxOut = 1;
+		m.SpecialSpeed = 280.0f; m.SpecialGravity = 3000.0f; m.SpecialLifetime = 180;
+		// About a third of his height: unmistakably him, and small enough to walk under a jump.
+		m.FxArtSize = 100.0f; m.FxRadius = 40.0f;
+		m.Burst = new MoveData
+		{
+			MoveName = "MiniBot Burst",
+			Damage = 7.0f, BaseKnockback = 38.0f, KnockbackGrowth = 0.55f,
+			LaunchAngleDegrees = 60.0f, LaunchAway = true,
+			HitboxRadius = 0.0f,
+			Special = SpecialKind.Vent, SpecialLifetime = 14,
+			BurnFrames = 30, BurnDamage = 1.5f,
+			FxFlame = true, FxColor = new Color(0.97f, 0.50f, 0.20f), FxRadius = 100.0f,
+		};
 
 		// "Spin his arms windmill style": both arms whirl round at the shoulders as he charges,
 		// clipping whoever is in front four times - three light hits that carry them along, then
@@ -257,9 +405,10 @@ public static class CharacterNormals
 		m.HitboxOffset = new Vector2(0.0f, -146.0f); m.HitboxRadius = 66.0f;
 		m.ActiveFx = ActiveFx.Electric;
 
-		// Both steel boots stomped into the floor, and a quake runs out both ways along it.
+		// One steel boot raised high and stamped down - the other stays planted - and a quake runs
+		// out both ways along the floor.
 		m = M(moves, MoveSlot.DownSmash);
-		m.MoveName = "Stomp Quake"; m.Anim = AttackAnim.Split; m.PropArt = "-";
+		m.MoveName = "Stomp Quake"; m.Anim = AttackAnim.Stomp; m.PropArt = "-";
 		m.StartupFrames = 16;
 		m.Damage = 15.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 0.95f;
 		m.HitboxOffset = new Vector2(0.0f, 52.0f); m.HitboxRadius = 70.0f;
@@ -273,7 +422,7 @@ public static class CharacterNormals
 		// inside it for three zaps, then throws them out.
 		m = M(moves, MoveSlot.NeutralAir);
 		m.MoveName = "Static Field"; m.Anim = AttackAnim.Spread; m.PropArt = "-";
-		m.StartupFrames = 8; m.ActiveFrames = 15; m.EndlagFrames = 16;
+		m.StartupFrames = 8; m.ActiveFrames = 12; m.EndlagFrames = 12;
 		m.RehitFrames = 5;
 		m.Damage = 6.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 0.9f; m.LaunchAngleDegrees = 45.0f;
 		m.HitboxOffset = new Vector2(0.0f, -10.0f); m.HitboxRadius = 80.0f;
@@ -288,7 +437,8 @@ public static class CharacterNormals
 		// ahead. Chip damage at range, nothing more.
 		m = M(moves, MoveSlot.ForwardAir);
 		m.MoveName = "Pocket Missile"; m.Anim = AttackAnim.PalmThrust; m.PropArt = "-";
-		m.StartupFrames = 10; m.EndlagFrames = 18;
+		// Chip damage, so it is quick: the one thing he can throw out without committing.
+		m.StartupFrames = 7; m.EndlagFrames = 12;
 		m.Damage = 5.0f; m.BaseKnockback = 22.0f; m.KnockbackGrowth = 0.5f; m.LaunchAngleDegrees = 30.0f;
 		m.HitboxOffset = new Vector2(60.0f, -14.0f); m.HitboxRadius = 0.0f;
 		m.Special = SpecialKind.Projectile;
@@ -415,8 +565,9 @@ public static class CharacterNormals
 		// of blades to throw out over and over. It used to fly ~350px and come out three times a
 		// second; now the daggers stop at about a body length and it is about twice a second.
 		m.SpecialSpeed = 1000.0f; m.SpecialLifetime = 11;
-		m.StartupFrames = 8; m.EndlagFrames = 26;
-		m.Damage = 8.0f; m.LaunchAngleDegrees = 50.0f;
+		// Still slower than his pokes, so it hits harder than them: a weak move is a quick one.
+		m.StartupFrames = 8; m.EndlagFrames = 20;
+		m.Damage = 11.0f; m.LaunchAngleDegrees = 50.0f;
 		m.FxRadius = 18.0f; m.FxColor = new Color(0.80f, 0.82f, 0.86f);
 		m.FxTexture = EdgeFx("sword_dagger"); m.FxArtSize = 80.0f; m.FxAlongFlight = true;
 
@@ -484,10 +635,12 @@ public static class CharacterNormals
 
 	public static void Circy(MoveData[] moves)
 	{
-		// His legs stretch, so his kicks outreach everyone's - the payoff for his short jump.
+		// One leg shoots out long to the hit and snaps back: stretching is his thing, and his kicks
+		// outreach everyone's - the payoff for his short jump.
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
 		m.MoveName = "Long Leg"; m.Anim = AttackAnim.FrontKick;
-		m.HitboxOffset = new Vector2(112.0f, 0.0f); m.HitboxRadius = 42.0f;
+		m.HitboxOffset = new Vector2(140.0f, 2.0f); m.HitboxRadius = 42.0f;
+		m.StretchLeg = true;
 
 		m = M(moves, MoveSlot.UpTilt);
 		m.MoveName = "Leg Up"; m.Anim = AttackAnim.Uair;
@@ -501,6 +654,7 @@ public static class CharacterNormals
 		m = M(moves, MoveSlot.DashAttack);
 		m.MoveName = "Rolling Tackle"; m.BallForm = true; m.Anim = AttackAnim.Lunge;
 		m.ActiveFrames = 10; m.HitboxOffset = new Vector2(30.0f, 10.0f); m.HitboxRadius = 52.0f;
+		m.EndlagFrames = 17;
 
 		// A headbutt with the whole ball.
 		m = M(moves, MoveSlot.ForwardSmash);
@@ -522,7 +676,8 @@ public static class CharacterNormals
 
 		m = M(moves, MoveSlot.ForwardAir);
 		m.MoveName = "Stretch Kick"; m.Anim = AttackAnim.FrontKick;
-		m.HitboxOffset = new Vector2(104.0f, -6.0f);
+		m.HitboxOffset = new Vector2(132.0f, -6.0f);
+		m.StretchLeg = true;
 
 		m = M(moves, MoveSlot.BackAir);
 		m.MoveName = "Donkey Kick"; m.Anim = AttackAnim.Bair;

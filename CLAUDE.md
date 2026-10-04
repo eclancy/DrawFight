@@ -79,9 +79,11 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   side by side and large, and write a screenshot to `.shots/`. **This is how rig and animation
   changes get verified.** A wrong pivot or a flipped rotation sign is obvious here and invisible
   in a match. Add **`--attacks`** to see every fighter's own attacks at the frame they hit,
-  holding the weapon each one draws, and **`--only=N`** to show one fighter by catalog index.
+  holding the weapon each one draws, and **`--only=N`** to show one fighter by catalog index
+  (wrapped onto two rows, so a long reach does not run into the next column).
   The attack parade rings each hitbox and prints where the weapon head is against it - put a
-  hitbox where the weapon actually is, not where it seems like it should be.
+  hitbox where the weapon actually is, not where it seems like it should be. A move with a
+  stretching leg reaches and points at its ring there exactly as it does in a match.
   `--shot=N` works on the match too; `F12` grabs a frame while playing.
 - **`python tools/art/stickfigures.py [name]`** — regenerate the two generated test fighters.
   A name builds just that one.

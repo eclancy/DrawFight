@@ -19,6 +19,37 @@ public enum StageStyle
 	/// The sky colours are the surface behind: Fridge Door's brushed metal.
 	/// </summary>
 	TapedPage,
+
+	/// <summary>
+	/// Several sheets of paper held up on a steel door by fridge magnets
+	/// (<see cref="StageData.Pages"/>) - overlapping, each tilted a little, each its own kind of
+	/// paper - with the stage drawn across them. Fridge Door.
+	/// </summary>
+	PinnedPages,
+}
+
+/// <summary>What a pinned page is: the paper it is, which is what is printed on it.</summary>
+public enum PaperKind { Ruled, Grid, Plain }
+
+/// <summary>One sheet of paper on a <see cref="StageStyle.PinnedPages"/> stage.</summary>
+public sealed class PinnedPage
+{
+	public Rect2 Rect;
+	/// <summary>Degrees it hangs off straight. A degree or two: stuck up by hand, not printed.</summary>
+	public float Angle;
+	public PaperKind Paper;
+	/// <summary>How many magnets hold it up along its top edge: one in the middle, or two near the corners.</summary>
+	public int Magnets;
+	public int Seed;
+
+	public PinnedPage(Rect2 rect, float angle, PaperKind paper, int magnets, int seed)
+	{
+		Rect = rect;
+		Angle = angle;
+		Paper = paper;
+		Magnets = magnets;
+		Seed = seed;
+	}
 }
 
 /// <summary>How a platform is drawn. The collision rectangle is the same either way.</summary>
@@ -174,6 +205,9 @@ public partial class StageData : Resource
 
 	/// <summary>The sheet of paper the stage is drawn on, for a <see cref="StageStyle.TapedPage"/> stage.</summary>
 	public Rect2 PageRect;
+
+	/// <summary>The sheets on a <see cref="StageStyle.PinnedPages"/> stage, back to front.</summary>
+	public PinnedPage[] Pages = System.Array.Empty<PinnedPage>();
 
 	/// <summary>Where the drawn ground sits, for props that need to stand on it.</summary>
 	public float GroundLine = 0.0f;

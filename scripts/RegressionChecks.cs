@@ -20,7 +20,91 @@ public static class RegressionChecks
 		CheckWeightSpeedRule();
 		CheckNoMoveIsAlwaysCorrect();
 		CheckSounds();
+		CheckWeakerIsFaster();
 		PrintCalibrationTable();
+	}
+
+	/// <summary>The moves that are swung over and over, for the speed check: everything but the specials.</summary>
+	static readonly MoveSlot[] SpammedSlots =
+	{
+		MoveSlot.Jab, MoveSlot.ForwardTilt, MoveSlot.UpTilt, MoveSlot.DownTilt, MoveSlot.DashAttack,
+		MoveSlot.NeutralAir, MoveSlot.ForwardAir, MoveSlot.BackAir, MoveSlot.UpAir, MoveSlot.DownAir,
+		MoveSlot.ForwardSmash, MoveSlot.UpSmash, MoveSlot.DownSmash,
+	};
+
+	/// <summary>
+	/// All the damage a move does if every hit lands: a multi-hit's link hits count, and so does
+	/// every follow-up in a combo string (ComboNext), since the string is what the move is for.
+	/// </summary>
+	public static float TotalDamage(MoveData move)
+	{
+		float total = 0.0f;
+		for (MoveData m = move; m != null; m = m.ComboNext)
+		{
+			total += m.Damage;
+			if (m.RehitFrames > 0 && m.LinkHit != null)
+			{
+				int hits = Mathf.CeilToInt(m.ActiveFrames / (float)m.RehitFrames);
+				total += (hits - 1) * m.LinkHit.Damage;
+			}
+		}
+		return total;
+	}
+
+	/// <summary>
+	/// How long a move takes to throw again: its whole length, or for a combo string, every link
+	/// up to the end of its hit and then the last link's endlag - the follow-up comes out as soon
+	/// as each hit is done (see Fighter.TickAttacking).
+	/// </summary>
+	public static int TotalFrames(MoveData move)
+	{
+		int total = 0;
+		for (MoveData m = move; m != null; m = m.ComboNext)
+		{
+			total += m.StartupFrames + m.ActiveFrames;
+			if (m.ComboNext == null) total += m.EndlagFrames;
+		}
+		return total;
+	}
+
+	/// <summary>
+	/// A weaker move must be quicker to throw out again than a stronger one, within each fighter -
+	/// otherwise there is no reason to use it, and every fighter's moves blur into one speed. Each
+	/// move is measured by its whole length, startup to the last frame of endlag, since that is how
+	/// often it can be thrown. A pair is reported when one does clearly less damage (2 or more) yet
+	/// takes clearly longer (3 frames or more). Then the move list, slowest first, for reading.
+	/// </summary>
+	static void CheckWeakerIsFaster()
+	{
+		for (int i = 0; i < FighterCatalog.Count; i++)
+		{
+			FighterData fighter = FighterCatalog.Get(i);
+			var moves = new System.Collections.Generic.List<MoveData>();
+			foreach (MoveSlot slot in SpammedSlots)
+			{
+				MoveData move = fighter.Move(slot);
+				// A summon - the MiniBot - hits long after he has recovered from setting it down, so
+				// its length says nothing about how often it lands. One-out-at-a-time is its limit.
+				if (move != null && move.Special != SpecialKind.Walker) moves.Add(move);
+			}
+
+			foreach (MoveData weak in moves)
+			{
+				foreach (MoveData strong in moves)
+				{
+					if (TotalDamage(weak) + 2.0f > TotalDamage(strong)) continue;
+					if (TotalFrames(weak) < TotalFrames(strong) + 3) continue;
+					GD.PushWarning($"RegressionChecks: {fighter.DisplayName} '{weak.MoveName}' "
+						+ $"({TotalDamage(weak):0.0} dmg, {TotalFrames(weak)}f) is slower than the stronger "
+						+ $"'{strong.MoveName}' ({TotalDamage(strong):0.0} dmg, {TotalFrames(strong)}f)");
+				}
+			}
+
+			moves.Sort((a, b) => TotalFrames(b).CompareTo(TotalFrames(a)));
+			var line = new System.Text.StringBuilder($"RegressionChecks: speed {fighter.DisplayName,-9}");
+			foreach (MoveData move in moves) line.Append($" {move.MoveName}={TotalDamage(move):0}/{TotalFrames(move)}f");
+			GD.Print(line.ToString());
+		}
 	}
 
 	/// <summary>
@@ -137,7 +221,8 @@ public static class RegressionChecks
 			if (up.Flight)
 			{
 				float flown = up.SpecialRise * up.ActiveFrames / 60.0f;
-				float jumped = fighter.JumpForce * fighter.JumpForce / (2.0f * fighter.Gravity);
+				float jump = fighter.JumpForce * Tuning.JumpScale;
+				float jumped = jump * jump / (2.0f * fighter.Gravity * Tuning.GravityScale);
 				if (flown < jumped * 1.5f)
 				{
 					GD.PushError($"RegressionChecks: {fighter.DisplayName} flies {flown:0}px up, "
@@ -326,9 +411,9 @@ public static class RegressionChecks
 
 		for (int frame = 0; frame < 300; frame++)
 		{
-			float horizontalDrag = frame < hitstun ? Tuning.LaunchDecay : 320.0f;
+			float horizontalDrag = frame < hitstun ? Tuning.LaunchDecay * Tuning.GravityScale : 320.0f;
 			velocity.X = Mathf.MoveToward(velocity.X, 0.0f, horizontalDrag * Dt);
-			velocity.Y = Mathf.Min(victim.MaxFallSpeed, velocity.Y + victim.Gravity * Dt);
+			velocity.Y = Mathf.Min(victim.MaxFallSpeed, velocity.Y + victim.Gravity * Tuning.GravityScale * Dt);
 			position += velocity * Dt;
 
 			if (position.X > stage.BlastZone.End.X || position.X < stage.BlastZone.Position.X)

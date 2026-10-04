@@ -153,6 +153,35 @@ The flow:
 everything downstream - the manifest, the rig, the animation library - never learns which path a
 fighter came in on.
 
+## Feet, hands and empty hands
+
+- **Planted feet.** On the ground the rig moves the body so the lowest point of the **ink** of
+  either lower leg or forearm - a sole, a knee in a kneel, a hand hanging low in a crouch - sits
+  exactly on the floor
+  (`FighterRig.SetPlanted`, eased in and out). The ink, not the picture's corners: a boot turned
+  up on its toe otherwise hovered by the empty paper behind its heel. The outline is read from
+  the image once (`FighterRig.InkEdge`) and shared. Poses therefore never float a fighter, and a pose
+  with bent legs is genuinely lower. The parade plants its standing columns the same way, so
+  what it shows is what a match shows. `FighterRig.Sole` gives where a boot is right now - the
+  rocket jets come out of it.
+- **Hands that do not stretch.** A forearm part may carry `"hand": row` in rig.json: the texture
+  row where the hand starts. A stretched arm then stretches only the arm above that row and
+  draws the hand at its own size on the end. The cut script writes it from a pixel picked off
+  the photo, like the joints. (DoomBot's arms no longer stretch at all - stretching is Circy's -
+  they slide out on telescoping steel rods with the forearm unchanged on the end.)
+- **One leg stretched.** `FighterRig.SetFrontLegReach` stretches the front leg alone, the way
+  `SetLegStretch` stretches both, and `AimFrontLeg` points it at a spot over whatever the pose
+  is doing - Circy's kicks reach their hitbox. Only scaled along its length, like every stretch.
+- **Knees on the line.** A knee (or elbow) found by halving a limb goes where the drawn stroke
+  crosses halfway down, not on the straight line from hip to foot. Circy's front leg is bowed;
+  a knee on the straight line turned the lower half about empty paper and it came away from the
+  upper half whenever the knee bent (`knee_on_stroke` in `tools/art/cut_circy.py`).
+- **A second copy of a rig** is fine and cheap: DoomBot's MiniBot is his own rig, loaded again
+  and normalised small, playing the run clip.
+- **An empty hand.** A fighter with no weapon of its own can still have a `PropFront` part, marked
+  `"empty": true`: a blank, so a move can put a prop in his hand (Flambe's frying pan) the way Lug
+  swaps his tools.
+
 ## The rig is a Node2D tree, not a Skeleton2D
 
 An earlier draft of this document said `Skeleton2D` with `Bone2D`. That was wrong and the built

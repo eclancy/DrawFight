@@ -93,11 +93,12 @@ public partial class Stage : Node2D
 		if (Data == null) return;
 
 		CrayonBrush.SkyBands(this, Backdrop, Data.SkyTop, Data.SkyBottom);
-		if (Data.Style == StageStyle.TapedPage) DrawBrushedMetal();
+		if (Data.Style == StageStyle.TapedPage || Data.Style == StageStyle.PinnedPages) DrawBrushedMetal();
 		DrawPaperSubstrate();
 
 		foreach (StageProp prop in Data.Props) DrawProp(prop);
 		if (Data.Style == StageStyle.TapedPage) DrawTapedPage(Data.PageRect);
+		if (Data.Style == StageStyle.PinnedPages) foreach (PinnedPage page in Data.Pages) DrawPinnedPage(page);
 		foreach (StagePlatform platform in Data.Platforms) DrawPlatform(platform);
 
 		DrawBlastZoneHint();
@@ -197,6 +198,77 @@ public partial class Stage : Node2D
 			float angle = outward.Angle() + Mathf.Pi * 0.5f;
 			DrawTape(corner, angle, 170.0f, 54.0f, 700 + seed++);
 		}
+	}
+
+	/// <summary>
+	/// One sheet held up by magnets: a soft shadow lifting it off the door, the paper - ruled with
+	/// a margin, squared, or plain - a pencil edge, all turned a degree or two, then its magnets
+	/// along the top edge, which sit square on the door.
+	/// </summary>
+	void DrawPinnedPage(PinnedPage page)
+	{
+		Vector2 centre = page.Rect.GetCenter();
+		Vector2 half = page.Rect.Size * 0.5f;
+		float angle = Mathf.DegToRad(page.Angle);
+		var local = new Rect2(-half, page.Rect.Size);
+
+		DrawSetTransformMatrix(new Transform2D(angle, centre + new Vector2(10.0f, 12.0f)));
+		DrawRect(local, new Color(0.46f, 0.50f, 0.56f, 0.24f));
+		DrawSetTransformMatrix(new Transform2D(angle, centre));
+		DrawRect(local, new Color(0.985f, 0.978f, 0.955f));
+
+		switch (page.Paper)
+		{
+			case PaperKind.Ruled:
+				for (float y = local.Position.Y + 64.0f; y < local.End.Y - 16.0f; y += 52.0f)
+				{
+					CrayonBrush.InkLine(this, new Vector2(local.Position.X + 6.0f, y), new Vector2(local.End.X - 6.0f, y),
+						Data.RuleLine, 2.0f, page.Seed * 31 + Mathf.RoundToInt(y), 1.2f);
+				}
+				CrayonBrush.InkLine(this, new Vector2(local.Position.X + 70.0f, local.Position.Y + 4.0f),
+					new Vector2(local.Position.X + 70.0f, local.End.Y - 4.0f), Data.MarginLine, 3.0f, page.Seed * 7 + 991, 2.0f);
+				break;
+
+			case PaperKind.Grid:
+				var grid = new Color(Data.RuleLine.R, Data.RuleLine.G, Data.RuleLine.B, 0.75f);
+				for (float x = local.Position.X + 36.0f; x < local.End.X; x += 36.0f)
+				{
+					CrayonBrush.InkLine(this, new Vector2(x, local.Position.Y + 4.0f), new Vector2(x, local.End.Y - 4.0f),
+						grid, 1.5f, page.Seed * 13 + Mathf.RoundToInt(x), 0.8f);
+				}
+				for (float y = local.Position.Y + 36.0f; y < local.End.Y; y += 36.0f)
+				{
+					CrayonBrush.InkLine(this, new Vector2(local.Position.X + 4.0f, y), new Vector2(local.End.X - 4.0f, y),
+						grid, 1.5f, page.Seed * 17 + Mathf.RoundToInt(y), 0.8f);
+				}
+				break;
+		}
+		CrayonBrush.PencilRect(this, local, new Color(0.72f, 0.74f, 0.78f), 2.0f, page.Seed * 5 + 993);
+		DrawSetTransformMatrix(Transform2D.Identity);
+
+		// The magnets: on the top edge, where the page actually hangs from.
+		var pageToWorld = new Transform2D(angle, centre);
+		float[] spots = page.Magnets >= 2 ? new[] { 0.16f, 0.84f } : new[] { 0.5f };
+		for (int i = 0; i < spots.Length; i++)
+		{
+			Vector2 at = pageToWorld * new Vector2(local.Position.X + local.Size.X * spots[i], local.Position.Y + 18.0f);
+			DrawFridgeMagnet(at, 26.0f, page.Seed * 3 + i);
+		}
+	}
+
+	/// <summary>A round fridge magnet in one of four bright colours, picked by its seed.</summary>
+	void DrawFridgeMagnet(Vector2 centre, float radius, int seed)
+	{
+		Color[] colours =
+		{
+			new Color(0.93f, 0.38f, 0.36f), new Color(0.36f, 0.62f, 0.93f),
+			new Color(0.44f, 0.78f, 0.44f), new Color(0.98f, 0.80f, 0.30f),
+		};
+		Color c = colours[Mathf.PosMod(seed, colours.Length)];
+		DrawCircle(centre + new Vector2(3.0f, 5.0f), radius, new Color(0.46f, 0.50f, 0.56f, 0.25f));
+		DrawCircle(centre, radius, c);
+		DrawCircle(centre + new Vector2(-radius * 0.3f, -radius * 0.3f), radius * 0.28f, new Color(1.0f, 1.0f, 1.0f, 0.55f));
+		DrawArc(centre, radius, 0.0f, Mathf.Tau, 28, new Color(c.R * 0.6f, c.G * 0.6f, c.B * 0.6f), 3.0f);
 	}
 
 	/// <summary>A strip of sticky tape: pale, see-through, with torn ends.</summary>
@@ -734,21 +806,8 @@ public partial class Stage : Node2D
 			}
 
 			case PropKind.FridgeMagnet:
-			{
-				// A round fridge magnet in one of four bright colours, picked by its seed.
-				Color[] colours =
-				{
-					new Color(0.93f, 0.38f, 0.36f), new Color(0.36f, 0.62f, 0.93f),
-					new Color(0.44f, 0.78f, 0.44f), new Color(0.98f, 0.80f, 0.30f),
-				};
-				Color c = colours[Mathf.PosMod(prop.Seed, colours.Length)];
-				float radius = r.Size.X * 0.5f;
-				DrawCircle(centre + new Vector2(3.0f, 5.0f), radius, new Color(0.46f, 0.50f, 0.56f, 0.25f));
-				DrawCircle(centre, radius, c);
-				DrawCircle(centre + new Vector2(-radius * 0.3f, -radius * 0.3f), radius * 0.28f, new Color(1.0f, 1.0f, 1.0f, 0.55f));
-				DrawArc(centre, radius, 0.0f, Mathf.Tau, 28, new Color(c.R * 0.6f, c.G * 0.6f, c.B * 0.6f), 3.0f);
+				DrawFridgeMagnet(centre, r.Size.X * 0.5f, prop.Seed);
 				break;
-			}
 		}
 	}
 

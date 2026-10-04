@@ -27,14 +27,18 @@ not balanced against each other, and leaving them in the roster once there is re
 the one thing this project is not for.
 
 Swift is now a fire punk: a flame-coloured mohawk, a black leather jacket with silver shoulder
-spikes and flames up the hem, dark red jeans, and a pair of fire wings (`swift/poses/wings.png`)
-for his flying up special.
+spikes and flames up the hem, dark red jeans - and a French chef's moustache. He has two fire
+wings (`swift/poses/wings.png`, one each side of a gap, hinged at his back so each flaps on its
+own) for his flying up special, and a flaming frying pan (`swift/poses/tool_pan.png`) for his
+forward smash. He holds no weapon of his own, so his hand is an empty prop part (`"empty": true`)
+that a move can fill.
 
 Lug has grown past a plain stick figure while he waits: he is coloured (a hi-vis vest, a blue
 shirt, jeans and boots, a face) and he has a set of heavy tools in `lug/poses/tool_*.png` - a
 pipe wrench, shovel, pickaxe, crowbar, steel beam, stop sign, jackhammer and nail gun - that his
 attacks swap into his hand. His reach is built on how long those tools are, so if a tool is
-redrawn longer or shorter, re-check the hitboxes with `--parade --attacks --only=1`.
+redrawn longer or shorter, re-check the hitboxes with `--parade --attacks --only=1`. The traffic
+cone his down tilt kicks along the floor (`lug/poses/cone.png`) is drawn by the same script.
 
 Note that `tools/art/stickfigures.py` is **not a model for the real pipeline**. It draws each
 part directly in its canonical orientation, because it is generating the art in the first place.
@@ -70,8 +74,9 @@ Two things about Elim's art that the code works around rather than changes:
 
 ## `edgelord/` - drawn by Eric, with stand-in colour and move art
 
-EdgeLord ("stretchy arms, super speed, infinite swords") plays in the game now, but most of
-what you see is a **placeholder** until the finished drawings arrive:
+EdgeLord ("stretchy arms, super speed, infinite swords" - the stretchy arms became a dagger on
+a chain, since stretching is Circy's) plays in the game now, but most of what you see is a
+**placeholder** until the finished drawings arrive:
 
 - **`source/edgelord.webp`** is the photographed pencil drawing - the master copy, never edited.
 - **`source/edgelord_colored.png`** is our colouring of it (`tools/art/color_edgelord.py`),
@@ -114,7 +119,11 @@ swings it looks like it comes out of the hole.
 `eye`, which the eye laser comes out of, and the tips of his two antennae, which the up smash's
 lightning arcs from. They ride on the head bone, so they follow every pose.
 
-He is a heavy, built from Eric's own character sheet - `sheet.md` in this folder.
+He is a heavy, built from Eric's own character sheet - `sheet.md` in this folder. He plays at
+1.75 times the size of everyone else (`FighterData.DoomBot`): his body box grows with him, and
+every hitbox is grown to match (`MoveData.ScaleReach`), so the hit stays on the claw or boot.
+`rig.json` also marks where each claw starts on its forearm (`"hand"`), so the grab stretches his
+arms but not his claws.
 
 ## The canonical orientation contract
 

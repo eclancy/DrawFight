@@ -5,15 +5,21 @@ using Godot;
 /// fighters. Every person playing has a cursor, because they all just joined on the previous
 /// screen and a cursor that vanishes reads as "you are not playing any more". A CPU has none.
 ///
-/// Every stage shows a live preview built from its own <see cref="StageData"/>, so a stage
-/// added to <see cref="StageCatalog"/> appears here with no work: the preview is the same
-/// palette and the same rectangles the match will use.
+/// Every card shows the real stage: a <see cref="Stage"/> built from its own
+/// <see cref="StageData"/> and drawn live into a small viewport, framed on where the fighting
+/// happens. It is the very renderer the match uses, so what you pick is exactly what you get -
+/// paper, props, platforms and the traffic going past - and a stage added to
+/// <see cref="StageCatalog"/> appears here with no work.
 /// </summary>
 public partial class StageSelectScreen : Node2D
 {
 	MenuCursor[] cursors;
 	readonly StageData[] stages = new StageData[StageCatalog.Count];
 	readonly Rect2[] cards = new Rect2[StageCatalog.Count];
+	readonly SubViewport[] previews = new SubViewport[StageCatalog.Count];
+
+	/// <summary>Previews render at twice the card's size, so the crayon lines stay crisp.</summary>
+	const int PreviewResolution = 2;
 
 	Label nameLabel;
 	Label blurbLabel;
@@ -41,6 +47,8 @@ public partial class StageSelectScreen : Node2D
 		{
 			cards[i] = new Rect2(left + i * (CardWidth + CardGap), 262.0f, CardWidth, 440.0f);
 		}
+
+		for (int i = 0; i < stages.Length; i++) previews[i] = BuildPreview(stages[i], cards[i].Size);
 
 		// Humans keep their player number and colour; the CPU's seat is simply skipped.
 		for (int player = 0, next = 0; player < cpu.Length && next < cursors.Length; player++)
@@ -74,6 +82,49 @@ public partial class StageSelectScreen : Node2D
 		{
 			foreach (MenuCursor cursor in cursors) cursor.Draw(canvas);
 		});
+	}
+
+	/// <summary>
+	/// The real stage, in its own little world: built, given a camera framed on the play area -
+	/// every platform inside the blast zone and every spawn point, with room round them - and
+	/// rendered every frame, so anything that moves on it moves here too.
+	/// </summary>
+	SubViewport BuildPreview(StageData data, Vector2 cardSize)
+	{
+		var view = new SubViewport
+		{
+			Size = new Vector2I((int)cardSize.X * PreviewResolution, (int)cardSize.Y * PreviewResolution),
+			RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
+			Disable3D = true,
+		};
+		AddChild(view);
+
+		var stage = new Stage();
+		view.AddChild(stage);
+		stage.Build(data);
+
+		Rect2 frame = new Rect2(data.SpawnPoints[0], Vector2.Zero);
+		foreach (Vector2 spawn in data.SpawnPoints) frame = frame.Expand(spawn);
+		foreach (StagePlatform platform in data.Platforms)
+		{
+			Rect2 inside = platform.Rect.Intersection(data.BlastZone);
+			if (inside.Size.X > 0.0f && inside.Size.Y > 0.0f) frame = frame.Merge(inside);
+		}
+		frame = frame.Grow(70.0f);
+
+		// Widen or heighten the frame to the card's shape, keeping it centred.
+		float aspect = cardSize.X / cardSize.Y;
+		if (frame.Size.X / frame.Size.Y < aspect) frame = frame.GrowIndividual((frame.Size.Y * aspect - frame.Size.X) * 0.5f, 0.0f, (frame.Size.Y * aspect - frame.Size.X) * 0.5f, 0.0f);
+		else frame = frame.GrowIndividual(0.0f, (frame.Size.X / aspect - frame.Size.Y) * 0.5f, 0.0f, (frame.Size.X / aspect - frame.Size.Y) * 0.5f);
+
+		var camera = new Camera2D
+		{
+			Position = frame.GetCenter(),
+			Zoom = Vector2.One * (view.Size.X / frame.Size.X),
+		};
+		view.AddChild(camera);
+		camera.MakeCurrent();
+		return view;
 	}
 
 	int StageUnder(Vector2 point)
@@ -147,7 +198,8 @@ public partial class StageSelectScreen : Node2D
 
 		for (int i = 0; i < stages.Length; i++)
 		{
-			ControllerAssignment.DrawStagePreview(this, stages[i], cards[i]);
+			DrawTextureRect(previews[i].GetTexture(), cards[i], false);
+			CrayonBrush.InkRect(this, cards[i], MenuTheme.Ink, 4.0f, 17, 2.4f);
 
 			// A card under a cursor wears that player's colour. Every card stays the same size,
 			// so the captions sit on one baseline however the cursors move.

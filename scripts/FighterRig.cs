@@ -60,6 +60,7 @@ public partial class FighterRig : Node2D
 	public float DramaScale = 1.0f;
 	float bodyHalfHeight;
 	float legStretch = 1.0f;
+	float frontLegReach = 1.0f;
 
 	readonly Pose current = new Pose();
 	readonly Pose target = new Pose();
@@ -183,6 +184,8 @@ public partial class FighterRig : Node2D
 
 			node.AddChild(sprite);
 			sprites[(int)bone] = sprite;
+			handRows[(int)bone] = part.ContainsKey("hand") ? (float)part["hand"] : -1.0f;
+			if (bone == RigBone.PropFront) defaultPropEmpty = part.ContainsKey("empty") && (bool)part["empty"];
 		}
 
 		LoadExtras(root, parts, baseDir);
@@ -223,6 +226,130 @@ public partial class FighterRig : Node2D
 			bones[(int)bone].AddChild(sprite);
 			extras[(string)entry["name"]] = sprite;
 		}
+	}
+
+	/// <summary>
+	/// For a forearm: the texture row where the hand begins (rig.json "hand"), or -1. Below it is
+	/// hand, above it is arm - so an arm can be stretched without stretching the hand on its end.
+	/// </summary>
+	readonly float[] handRows = new float[(int)RigBone.Count];
+
+	public float HandRow(RigBone bone) => handRows[(int)bone];
+
+	/// <summary>
+	/// The bottom of a leg's drawing right now, in global coordinates, and the way the leg points
+	/// there - where a rocket jet comes out of a boot. Null if the drawing has no such leg.
+	/// </summary>
+	public (Vector2 sole, Vector2 down)? Sole(RigBone lowerLeg)
+	{
+		Sprite2D sprite = sprites[(int)lowerLeg];
+		if (sprite == null || sprite.Texture == null) return null;
+		Vector2 size = sprite.Texture.GetSize();
+		Transform2D t = sprite.GlobalTransform;
+		Vector2 sole = t * (new Vector2(-sprite.Offset.X, size.Y) + sprite.Offset);
+		return (sole, t.BasisXform(Vector2.Down).Normalized());
+	}
+
+	// --- Planted feet ------------------------------------------------------------------
+
+	bool planted;
+	float plantBlend;
+
+	/// <summary>
+	/// Standing on something: after every pose the body is moved up or down so the lowest point
+	/// of the legs - a sole, or a knee in a kneel - rests exactly on the floor. A pose then never
+	/// floats a fighter off the ground or sinks him into it, and a bent-legged pose - a crouch -
+	/// really is lower. Eased in and out over a few frames so taking off or landing never pops.
+	/// </summary>
+	public void SetPlanted(bool on) => planted = on;
+
+	/// <summary>
+	/// How far the hip has to move down (positive) for the lowest point of the legs to touch the
+	/// floor, in canonical units. The floor is where straight legs put the feet - PlaceHip puts the
+	/// rig so the hip is LegLength above it.
+	/// </summary>
+	float FloorGap()
+	{
+		float lowest = float.MinValue;
+		foreach (RigBone lower in FloorParts)
+		{
+			Sprite2D sprite = sprites[(int)lower];
+			// A hidden forearm - out on a tether, or swapped for a turning frame - is not here to touch anything.
+			if (sprite == null || sprite.Texture == null || !sprite.Visible) continue;
+			Transform2D t = InRig(sprite);
+			foreach (Vector2 point in InkEdge(sprite.Texture))
+			{
+				lowest = Mathf.Max(lowest, (t * (point + sprite.Offset)).Y);
+			}
+		}
+		return lowest == float.MinValue ? 0.0f : LegLength * legStretch - lowest;
+	}
+
+	/// <summary>
+	/// What can rest on the floor: the feet, and the hands too - a crouch that hangs an arm below
+	/// the feet puts the hand on the floor rather than through it.
+	/// </summary>
+	static readonly RigBone[] FloorParts =
+	{
+		RigBone.LegBackLower, RigBone.LegFrontLower, RigBone.ArmBackLower, RigBone.ArmFrontLower,
+	};
+
+	/// <summary>A node's transform in the rig's own space, through every bone above it.</summary>
+	Transform2D InRig(Node2D node)
+	{
+		Transform2D t = node.Transform;
+		for (Node parent = node.GetParent(); parent != this && parent is Node2D above; parent = above.GetParent())
+		{
+			t = above.Transform * t;
+		}
+		return t;
+	}
+
+	/// <summary>
+	/// Ink outlines already read, by the texture's file - shared, so a second copy of a rig reads
+	/// nothing. Keyed by path rather than by the texture itself, which a static would otherwise
+	/// keep alive past the end of the game.
+	/// </summary>
+	static readonly Dictionary<string, Vector2[]> inkEdges = new Dictionary<string, Vector2[]>();
+
+	/// <summary>
+	/// The outline of a part's ink - its leftmost and rightmost drawn pixel every couple of rows -
+	/// in texture pixels. What touches the floor is the drawing, not the corners of the picture it
+	/// sits in: a boot turned up on its toe would otherwise hover by the empty paper behind its
+	/// heel. Read from the image once and kept; the picture's corners if it cannot be read.
+	/// </summary>
+	static Vector2[] InkEdge(Texture2D texture)
+	{
+		string key = texture.ResourcePath;
+		if (inkEdges.TryGetValue(key, out Vector2[] known)) return known;
+
+		Vector2 size = texture.GetSize();
+		var points = new List<Vector2>();
+		Image image = texture.GetImage();
+		if (image != null)
+		{
+			if (image.IsCompressed()) image.Decompress();
+			int w = image.GetWidth();
+			int h = image.GetHeight();
+			var scale = new Vector2(size.X / Mathf.Max(1, w), size.Y / Mathf.Max(1, h));
+			for (int y = h - 1; y >= 0; y -= 2)
+			{
+				int left = 0;
+				while (left < w && image.GetPixel(left, y).A < 0.4f) left++;
+				if (left == w) continue;
+				int right = w - 1;
+				while (right > left && image.GetPixel(right, y).A < 0.4f) right--;
+				points.Add(new Vector2(left, y + 1) * scale);
+				points.Add(new Vector2(right + 1, y + 1) * scale);
+			}
+		}
+		if (points.Count == 0)
+		{
+			points.AddRange(new[] { Vector2.Zero, new Vector2(size.X, 0.0f), new Vector2(0.0f, size.Y), size });
+		}
+		known = points.ToArray();
+		inkEdges[key] = known;
+		return known;
 	}
 
 	/// <summary>Named spots on the drawing, each on a bone and in its canonical units from the joint.</summary>
@@ -330,6 +457,8 @@ public partial class FighterRig : Node2D
 	{
 		Sprite2D sprite = sprites[(int)RigBone.PropFront];
 		if (sprite == null || !sprite.Visible || sprite.Texture == null) return null;
+		// An empty hand - a prop slot that only exists so a move can fill it - holds nothing.
+		if (defaultPropEmpty && string.IsNullOrEmpty(shownProp)) return null;
 		Vector2 size = sprite.Texture.GetSize();
 		Vector2 grip = -sprite.Offset;
 		// Held weapons are stored tip-up and turned; the default prop is stored tip-down.
@@ -338,6 +467,9 @@ public partial class FighterRig : Node2D
 			: new Vector2(grip.X, size.Y * 0.14f);
 		return sprite.GlobalTransform * (head - grip);
 	}
+
+	/// <summary>The hand's own prop is a blank (rig.json "empty"): nothing there until a move puts something in it.</summary>
+	bool defaultPropEmpty;
 
 	/// <summary>Where a part's joint is in its texture, so it can be drawn stretched outside the rig.</summary>
 	public Vector2 PartPivot(RigBone bone)
@@ -419,22 +551,58 @@ public partial class FighterRig : Node2D
 		legStretch = stretch;
 		bodyHalfHeight = newBodyHalfHeight;
 
-		foreach (RigBone bone in new[]
-		{
-			RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower,
-		})
+		ApplyLegLengths();
+		PlaceHip();
+	}
+
+	/// <summary>
+	/// Stretches the front leg alone, on top of both legs' stretch - a kick shot out long to the
+	/// hit. Like <see cref="SetLegStretch"/>, the art is only scaled along its own length. The hip
+	/// does not move: the other leg is still the one standing.
+	/// </summary>
+	public void SetFrontLegReach(float reach)
+	{
+		if (!Loaded || Mathf.IsEqualApprox(reach, frontLegReach)) return;
+		frontLegReach = reach;
+		ApplyLegLengths();
+	}
+
+	/// <summary>
+	/// Points the front leg, hip to foot and straight, at a spot - blended in by
+	/// <paramref name="amount"/> over whatever the pose has it doing. A stretched kick goes where
+	/// its hit is, whichever way the shared kick pose happens to point. Call it after the pose is
+	/// applied; the next pose puts the leg back.
+	/// </summary>
+	public void AimFrontLeg(Vector2 targetGlobal, float amount)
+	{
+		int upper = (int)RigBone.LegFrontUpper;
+		int lower = (int)RigBone.LegFrontLower;
+		if (!present[upper] || amount <= 0.0f || bones[upper].GetParent() is not Node2D parent) return;
+		// A hanging limb points down its own +Y, so the turn that aims it is the target's angle
+		// less a quarter turn - worked out in the parent's space, which carries the mirroring.
+		Vector2 toward = parent.ToLocal(targetGlobal) - bones[upper].Position;
+		float aim = toward.Angle() - Mathf.Pi * 0.5f;
+		bones[upper].Rotation = Mathf.LerpAngle(bones[upper].Rotation, aim, amount);
+		if (present[lower]) bones[lower].Rotation = Mathf.Lerp(bones[lower].Rotation, 0.0f, amount);
+	}
+
+	static readonly RigBone[] LegParts = { RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower };
+
+	void ApplyLegLengths()
+	{
+		foreach (RigBone bone in LegParts)
 		{
 			int i = (int)bone;
-			if (sprites[i] != null) sprites[i].Scale = new Vector2(1.0f, stretch);
+			bool front = bone == RigBone.LegFrontUpper || bone == RigBone.LegFrontLower;
+			float k = legStretch * (front ? frontLegReach : 1.0f);
+			if (sprites[i] != null) sprites[i].Scale = new Vector2(1.0f, k);
+			// The knees move with it - down the leg only: a knee drawn off to one side (a bowed
+			// leg) stays on its side.
+			if ((bone == RigBone.LegBackLower || bone == RigBone.LegFrontLower) && present[i])
+			{
+				bones[i].Position = new Vector2(restOffsets[i].X, restOffsets[i].Y * k);
+			}
 		}
-
-		foreach (RigBone knee in new[] { RigBone.LegBackLower, RigBone.LegFrontLower })
-		{
-			int i = (int)knee;
-			if (present[i]) bones[i].Position = restOffsets[i] * stretch;
-		}
-
-		PlaceHip();
 	}
 
 	float roll;
@@ -544,6 +712,12 @@ public partial class FighterRig : Node2D
 			float degrees = current[bone];
 			if (bone == RigBone.Torso || bone == RigBone.Head) degrees = -degrees;
 			bones[i].Rotation = Mathf.DegToRad(degrees);
+		}
+
+		plantBlend = Mathf.MoveToward(plantBlend, planted ? 1.0f : 0.0f, 0.25f);
+		if (plantBlend > 0.0f && present[(int)RigBone.Hip])
+		{
+			bones[(int)RigBone.Hip].Position += new Vector2(0.0f, FloorGap() * plantBlend);
 		}
 	}
 

@@ -231,6 +231,12 @@ def cut_main(parts_dir):
         upper = canvas.crop((0, 0, side, int(mid + JOINT_OVERLAP)))
         lower = canvas.crop((0, int(mid - JOINT_OVERLAP), side, side))
 
+        # The knee (or elbow) goes ON his line, halfway down. A limb he drew bowed - his front
+        # leg curves out - is nowhere near the straight line from hip to foot by its middle, and a
+        # knee put on that line turns the lower half about empty paper, so it pulls away from the
+        # upper half the moment the knee bends. Find where the stroke actually crosses halfway.
+        knee_x = knee_on_stroke(canvas, int(mid), side / 2)
+
         upper, ubox = trim(upper)
         lower, lbox = trim(lower)
         upper.save(os.path.join(parts_dir, name_upper + '.png'))
@@ -240,15 +246,19 @@ def cut_main(parts_dir):
                              'pivot': [round(side / 2 - ubox[0], 2), round(side / 2 - ubox[1], 2)]}
         lower_top = int(mid - JOINT_OVERLAP)
         parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
-                             'pivot': [round(side / 2 - lbox[0], 2), round(mid - lower_top - lbox[1], 2)]}
-        return length
+                             'pivot': [round(knee_x - lbox[0], 2), round(mid - lower_top - lbox[1], 2)]}
+        return length, knee_x - side / 2
 
     back_arm, front_arm = arms
     back_leg, front_leg = legs
-    arm_len = [canonical_limb(back_arm, 'ArmBack_Upper', 'ArmBack_Lower'),
-               canonical_limb(front_arm, 'ArmFront_Upper', 'ArmFront_Lower')]
-    leg_len = [canonical_limb(back_leg, 'LegBack_Upper', 'LegBack_Lower'),
-               canonical_limb(front_leg, 'LegFront_Upper', 'LegFront_Lower')]
+    arms_cut = [canonical_limb(back_arm, 'ArmBack_Upper', 'ArmBack_Lower'),
+                canonical_limb(front_arm, 'ArmFront_Upper', 'ArmFront_Lower')]
+    legs_cut = [canonical_limb(back_leg, 'LegBack_Upper', 'LegBack_Lower'),
+                canonical_limb(front_leg, 'LegFront_Upper', 'LegFront_Lower')]
+    arm_len = [c[0] for c in arms_cut]
+    leg_len = [c[0] for c in legs_cut]
+    elbow_dx = [c[1] for c in arms_cut]
+    knee_dx = [c[1] for c in legs_cut]
 
     ball.save(os.path.join(parts_dir, 'Torso.png'))
     parts['Torso'] = {'texture': 'parts/Torso.png',
@@ -260,15 +270,15 @@ def cut_main(parts_dir):
     bones = [
         {'name': 'Hip', 'parent': None, 'offset': [0, 0], 'part': None},
         {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': rel(back_leg['joint']), 'part': 'LegBack_Upper'},
-        {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': [0, round(leg_len[0] / 2, 1)], 'part': 'LegBack_Lower'},
+        {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': [round(knee_dx[0], 1), round(leg_len[0] / 2, 1)], 'part': 'LegBack_Lower'},
         {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': rel(front_leg['joint']), 'part': 'LegFront_Upper'},
-        {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': [0, round(leg_len[1] / 2, 1)], 'part': 'LegFront_Lower'},
+        {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': [round(knee_dx[1], 1), round(leg_len[1] / 2, 1)], 'part': 'LegFront_Lower'},
         {'name': 'Torso', 'parent': 'Hip', 'offset': [0, 0], 'part': 'Torso'},
         {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': rel(back_arm['joint']), 'part': 'ArmBack_Upper'},
-        {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': [0, round(arm_len[0] / 2, 1)], 'part': 'ArmBack_Lower'},
+        {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': [round(elbow_dx[0], 1), round(arm_len[0] / 2, 1)], 'part': 'ArmBack_Lower'},
         {'name': 'Head', 'parent': 'Torso', 'offset': [0, round(-2 * ry, 1)], 'part': None},
         {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': rel(front_arm['joint']), 'part': 'ArmFront_Upper'},
-        {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': [0, round(arm_len[1] / 2, 1)], 'part': 'ArmFront_Lower'},
+        {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': [round(elbow_dx[1], 1), round(arm_len[1] / 2, 1)], 'part': 'ArmFront_Lower'},
     ]
 
     print('ball %dx%d  arms %d/%d  legs %d/%d' % (
@@ -328,6 +338,27 @@ def cut_poses(poses_dir):
 
     return poses
 
+
+
+def knee_on_stroke(canvas, row, centre_x):
+    """Where the drawn stroke crosses `row` of a limb hanging straight down: the middle of the
+    run of ink nearest the hip-to-foot line. Looks a few rows either side if that row happens
+    to fall in a gap in the line; falls back to the line itself if there is no ink at all."""
+    alpha = canvas.split()[3].load()
+    w = canvas.size[0]
+    for d in range(0, 24):
+        for r in (row - d, row + d):
+            xs = [x for x in range(w) if alpha[x, r] > 128]
+            if not xs:
+                continue
+            runs, start = [], xs[0]
+            for a, b in zip(xs, xs[1:] + [None]):
+                if b is None or b != a + 1:
+                    runs.append((start, a))
+                    start = b
+            best = min(runs, key=lambda run: abs((run[0] + run[1]) / 2.0 - centre_x))
+            return (best[0] + best[1]) / 2.0
+    return centre_x
 
 def main():
     parts_dir = os.path.join(ROOT, 'parts')

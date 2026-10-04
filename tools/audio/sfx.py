@@ -457,6 +457,24 @@ def creak():
     return S.env_mul(squeal, S.adsr(dur, 0.03, 0.05, 0.75, 0.12))
 
 
+def clang():
+    """A small hit bouncing off a hard hat: one bright ring of steel, short, with a tick on top."""
+    dur = 0.5
+    ring = metal(1180, dur, k=9.0)
+    tick = slap(0.05, cutoff=3500.0, k=60.0, seed=61)
+    return S.layer([(ring, 0.0, 1.0), (tick, 0.0, 0.5)])
+
+
+def minibot_pop():
+    """The MiniBot going off: a little boom, pitched up, with a clank of loose parts after it."""
+    dur = 0.45
+    n = S.n_samples(dur)
+    air = S.lowpass(S.osc("noise", 0, dur, seed=SEED + 63), S.sweep(dur, 5200, 600, 0.5))
+    pop = S.mix(S.gain(thump(dur, 220, 70, 7.0), 0.9), S.gain(S.env_mul(air, S.expdecay(n, 9.0)), 0.7))
+    return S.layer([(pop, 0.0, 1.0), (metal(880, 0.2, k=14.0), 0.07, 0.35),
+                    (metal(1240, 0.18, k=16.0), 0.13, 0.25)])
+
+
 # ---------------------------------------------------------------------------
 # REGISTRY - (name, category, peak target dBFS, builder, loops)
 #
@@ -516,4 +534,6 @@ REGISTRY = [
     ("furnace_blast", "special", -4.0, furnace_blast, False),
     ("burn", "hit", -20.0, burn, False),
     ("creak", "swing", -14.0, creak, False),
+    ("clang", "hit", -10.0, clang, False),
+    ("minibot_pop", "special", -9.0, minibot_pop, False),
 ]

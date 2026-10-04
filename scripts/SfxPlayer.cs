@@ -80,6 +80,12 @@ public partial class SfxPlayer : Node
 	public override void _ExitTree()
 	{
 		if (Instance == this) Instance = null;
+
+		// Let go of every sound now, while the engine is still running. Held until the process
+		// ends, they are cleaned up after Godot's C# side has already shut down - which crashed
+		// the game on the way out.
+		foreach (AudioStream stream in streams.Values) stream.Dispose();
+		streams.Clear();
 	}
 
 	/// <summary>

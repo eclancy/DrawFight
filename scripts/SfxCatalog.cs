@@ -23,6 +23,7 @@ public static class SfxCatalog
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
 		"ui_move", "ui_select", "ui_back", "ui_ready", "pause",
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
+		"clang", "minibot_pop",
 	};
 
 	/// <summary>Sounds that loop until stopped. Everything else is a one-shot.</summary>
@@ -82,6 +83,9 @@ public static class SfxCatalog
 				// The glint is 22 frames long and rises to a peak on the frame he goes. The sharp
 				// cut that follows is played by the blink itself. See .ai/fighting-design.md.
 				return new Cue("special_glint", active - 22);
+			case SpecialKind.Dash when move.Chargeable:
+				// The roll goes on release, so the whoosh does too.
+				return new Cue("special_fire", active);
 			case SpecialKind.Dash:
 				return new Cue("special_dash", 1);
 
@@ -101,6 +105,8 @@ public static class SfxCatalog
 			case SpecialKind.Bomb: return new Cue("bomb_fuse", 1);
 			case SpecialKind.Shockwave: return new Cue("special_quake", active);
 			case SpecialKind.BuildPlatform: return new Cue("special_build", active);
+			// Building a minion: the same clank-clank-clank as a girder going in.
+			case SpecialKind.Walker: return new Cue("special_build", active);
 
 			// Picking a sword starts the sword's own move, which makes its own sound.
 			case SpecialKind.Choice: return default;
@@ -110,6 +116,9 @@ public static class SfxCatalog
 
 			// Steam or flame depends on how hot he is when it goes, so the move plays it itself.
 			case SpecialKind.Vent: return default;
+
+			// The cloud forming: a roar of fire overhead.
+			case SpecialKind.Cloud: return new Cue("special_fire", active);
 		}
 
 		// Electricity crackles when it is live, with no whoosh leading in - nothing is swung.

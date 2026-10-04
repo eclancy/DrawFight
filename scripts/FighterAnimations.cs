@@ -50,6 +50,22 @@ public enum AttackAnim
 	/// travels the same arc (<see cref="MoveData.SweepDegrees"/>). EdgeLord's up smash.
 	/// </summary>
 	WideArc,
+
+	/// <summary>
+	/// Standing on one leg with the other knee raised high, then that foot stamped down hard in
+	/// front - one foot always on the floor. DoomBot's stomp quake.
+	/// </summary>
+	Stomp,
+
+	/// <summary>Crouched to launch, then dead straight - legs together and pointing down - riding rocket boots.</summary>
+	Rocket,
+
+	/// <summary>
+	/// Bending from the waist to set something down on the floor in front, both hands reaching
+	/// down to it and the knees only a little bent, so a big fighter stays on his feet rather than
+	/// kneeling. DoomBot's MiniBot.
+	/// </summary>
+	SetDown,
 }
 
 /// <summary>
@@ -166,22 +182,24 @@ public static class FighterAnimations
 			(LFU, -6), (LFL, 6), (LBU, 6), (LBL, 4))));
 
 	/// <summary>
-	/// Holding down on the ground: knees deep, body folded low, guard up. Low enough that it
-	/// visibly ducks under a high attack, because the hurtbox really does shrink.
+	/// Holding down on the ground: knees deep, body folded well forward, guard up. Low enough that
+	/// it visibly ducks under a high attack, because the hurtbox really does shrink - to just over
+	/// half the standing height (Fighter.CrouchHeight). The body only drops because the feet are
+	/// planted (FighterRig.SetPlanted): bent legs pull the hip down to keep the soles on the floor.
 	/// </summary>
 	public static readonly AnimationClip Crouch = new AnimationClip("crouch", true,
 		(0, new Pose(new Vector2(0, 40),
-			(Torso, -20), (Head, 10),
-			(AFU, -44), (AFL, -62), (ABU, 20), (ABL, -44),
-			(LFU, -60), (LFL, 110), (LBU, 30), (LBL, 108))),
+			(Torso, -34), (Head, 22),
+			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
+			(LFU, -84), (LFL, 136), (LBU, 56), (LBL, 118))),
 		(40, new Pose(new Vector2(0, 44),
-			(Torso, -22), (Head, 12),
-			(AFU, -40), (AFL, -66), (ABU, 22), (ABL, -48),
-			(LFU, -62), (LFL, 114), (LBU, 32), (LBL, 112))),
+			(Torso, -36), (Head, 24),
+			(AFU, -36), (AFL, -74), (ABU, 18), (ABL, -54),
+			(LFU, -86), (LFL, 140), (LBU, 58), (LBL, 122))),
 		(80, new Pose(new Vector2(0, 40),
-			(Torso, -20), (Head, 10),
-			(AFU, -44), (AFL, -62), (ABU, 20), (ABL, -44),
-			(LFU, -60), (LFL, 110), (LBU, 30), (LBL, 108))));
+			(Torso, -34), (Head, 22),
+			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
+			(LFU, -84), (LFL, 136), (LBU, 56), (LBL, 118))));
 
 	// --- Reacting ------------------------------------------------------------
 
@@ -639,11 +657,47 @@ public static class FighterAnimations
 	/// <summary>The point a sweeping hitbox turns round, in match units from the body centre: near the shoulders.</summary>
 	public static readonly Vector2 SweepPivot = new Vector2(0.0f, -30.0f);
 
+	// Stomp: weight on the back leg, the front knee pulled up high and the arms up for balance;
+	// then the front foot driven down into the floor a step ahead, body leaning in behind it.
+	static readonly Pose StompWindup = new Pose(Vector2.Zero,
+		(Torso, 8), (Head, -6),
+		(AFU, -110), (AFL, -30), (ABU, 70), (ABL, -20),
+		(LFU, -100), (LFL, 100), (LBU, 4), (LBL, 2));
+
+	static readonly Pose StompStrike = new Pose(Vector2.Zero,
+		(Torso, -18), (Head, 10),
+		(AFU, -30), (AFL, -10), (ABU, 36), (ABL, -10),
+		(LFU, -30), (LFL, 8), (LBU, 18), (LBL, 12));
+
+	// Rocket: crouched to push off, then straight as a rocket - legs together pointing down so the
+	// jets fire straight out of the soles, arms pressed down by his sides.
+	static readonly Pose RocketWindup = new Pose(Vector2.Zero,
+		(Torso, -10), (Head, 6),
+		(AFU, -20), (AFL, -30), (ABU, 20), (ABL, -30),
+		(LFU, -50), (LFL, 90), (LBU, 30), (LBL, 80));
+
+	static readonly Pose RocketStrike = new Pose(Vector2.Zero,
+		(Torso, 0), (Head, -8),
+		(AFU, 12), (AFL, -6), (ABU, -12), (ABL, -6),
+		(LFU, -3), (LFL, 0), (LBU, 3), (LBL, 0));
+
 	/// <summary>Curled up in a ball - knees to the chest, arms wrapped in - for a dodge roll.</summary>
 	public static readonly Pose Tuck = new Pose(new Vector2(0, 30),
 		(Torso, -36), (Head, 24),
 		(AFU, -70), (AFL, -110), (ABU, -50), (ABL, -110),
 		(LFU, -110), (LFL, 140), (LBU, -90), (LBL, 140));
+
+	// Holding it up to his chest, then a bow from the waist to put it down on the floor in
+	// front - the legs barely bend, so both feet stay planted.
+	static readonly Pose SetDownWindup = new Pose(new Vector2(0, 4),
+		(Torso, 8), (Head, -6),
+		(AFU, -70), (AFL, -60), (ABU, -60), (ABL, -60),
+		(LFU, -10), (LFL, 12), (LBU, 10), (LBL, 12));
+
+	static readonly Pose SetDownStrike = new Pose(new Vector2(4, 16),
+		(Torso, -40), (Head, 18),
+		(AFU, -44), (AFL, -8), (ABU, -36), (ABL, -8),
+		(LFU, -20), (LFL, 24), (LBU, 16), (LBL, 20));
 
 	/// <summary>The windup and strike for an animation. The recover pose is shared by all.</summary>
 	public static (Pose windup, Pose strike) PosesFor(AttackAnim anim)
@@ -681,6 +735,9 @@ public static class FighterAnimations
 			case AttackAnim.Soar: return (SoarWindup, SoarStrike);
 			case AttackAnim.Windmill: return (WindmillWindup, WindmillStrike);
 			case AttackAnim.WideArc: return (WideArcWindup, WideArcStrike);
+			case AttackAnim.Stomp: return (StompWindup, StompStrike);
+			case AttackAnim.Rocket: return (RocketWindup, RocketStrike);
+			case AttackAnim.SetDown: return (SetDownWindup, SetDownStrike);
 			default: return (AttackWindup, AttackStrike);
 		}
 	}

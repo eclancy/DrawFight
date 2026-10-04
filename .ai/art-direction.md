@@ -53,9 +53,15 @@ blue biro and filled with crayon. Used by City Rooftops.
 **`TapedPage`** puts that page *on something*. The stage is drawn on a sheet of ruled paper
 (`StageData.PageRect`) taped to a surface, and the surface is drawn round it - all in
 **coloured pencil**: fine close strokes that stay inside the lines, gone over twice for an
-outline (`CrayonBrush.PencilFill` / `PencilRect`). The sky colours become the surface. Used by
-Fridge Door, where the surface is a brushed-steel fridge door. Keep the sheet only a little
-bigger than the stage, so the thing it is taped to actually shows.
+outline (`CrayonBrush.PencilFill` / `PencilRect`). The sky colours become the surface. Keep the
+sheet only a little bigger than the stage, so the thing it is taped to actually shows. Nothing
+uses it at the moment.
+
+**`PinnedPages`** is several sheets instead of one: `StageData.Pages`, each a rectangle with its
+own paper (ruled with a margin, squared, or plain), a tilt of a degree or two, a soft shadow,
+and one or two round fridge magnets along its top edge. They overlap, back to front, the way a
+real fridge door does, and the stage is drawn across them - every platform sits on paper, with
+the door showing in the gaps. Used by Fridge Door.
 
 **`OutsideTheLines`** is for nature stages. Plain paper, no rules, indigo outlines, and crayon
 fill that deliberately **overshoots the line**. Used by Open Plains. The overshoot is the single
@@ -95,7 +101,7 @@ shimmers — which reads as a rendering bug rather than as hand-drawn.
 
 | stage | style | shape of it |
 |-------|-------|-------------|
-| **Fridge Door** *(default)* | TapedPage | Where kids' drawings actually end up. The stage is a pencil drawing on a sheet taped to a steel fridge door; other drawings held up by magnets are the scenery, which makes this the stage his non-fighter drawings move into. |
+| **Fridge Door** *(default)* | PinnedPages | Where kids' drawings actually end up. The stage is a pencil drawing across five sheets held up on a steel fridge door by magnets - a ruled page, a squared page, plain scraps under the side platforms; more drawings held up higher are the scenery, which makes this the stage his non-fighter drawings move into. |
 | **Open Plains** | OutsideTheLines | Flat, daytime, only trees and grass: the treetops are the platforms, and nothing on it is built. Ground runs past both blast zones, so **there is no bottom blast zone at all**. |
 | **City Rooftops** | ExerciseBook, evening | Six separate rooftops with real gaps, one tall tower, a hazy skyline behind. Every building has windows in a centred grid and a pair of doors at the foot. A building site fills two of the gaps: a tower crane whose jib you can stand on, a steel beam hanging from its hook, and two levels of scaffolding to climb out of the street (`CraneJib`, `HangingBeam`, `Scaffold`, all soft). The cement buildings stand on a street that runs the whole width, with the pavement drawn behind the road surface you stand on. Cars drive along it every few seconds at random (`StageData.Traffic`, `StreetTraffic`): fall into a gap and you are in the road, where a car smashes you up and away - a KO from about 60% - unless you jump it or get out. Headlights reach well ahead of each car, so it is seen coming. No bottom blast zone. |
 

@@ -166,6 +166,9 @@ public partial class MatchManager : Node2D
 		return platform;
 	}
 
+	/// <summary>Kicks up dust from the floor - see <see cref="HitFx.SpawnDust"/>.</summary>
+	public void Dust(Vector2 at, float size, float push) => fx?.SpawnDust(at, size, push);
+
 	/// <summary>Shakes the camera - a slam into the ground, say. Bigger numbers shake harder.</summary>
 	public void Shake(float amount) => camera?.AddShake(amount);
 

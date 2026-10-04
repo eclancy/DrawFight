@@ -80,6 +80,6 @@ public static class Knockback
 			dir = dir.Rotated(Mathf.DegToRad(Tuning.DiMaxAngleDegrees) * influence);
 		}
 
-		return dir.Normalized() * knockback * Tuning.LaunchSpeedPerKnockback;
+		return dir.Normalized() * knockback * Tuning.LaunchSpeedPerKnockback * Tuning.JumpScale;
 	}
 }

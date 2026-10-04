@@ -48,11 +48,11 @@ public static class FighterCatalog
 
 		switch (((index % Count) + Count) % Count)
 		{
-			case 1: return $"{weight}. A construction worker with a sledgehammer and site tools. Hits hard and slow; hard to launch.";
-			case 2: return $"{weight}. Stretches tall or short. Falls slowly, jumps badly, rolls when hit.";
-			case 3: return $"{weight}. Super fast, with endless swords and a stretchy arm. Easy to launch.";
-			case 4: return $"{weight}. A robot with claws for hands. His real moves are still on the way.";
-			default: return $"{weight}. A fire punk: charges up fireballs and flies on wings of flame. Quick, but easy to launch.";
+			case 1: return $"{weight}. A construction worker with site tools. Big swings shrug off small hits; hard to launch.";
+			case 2: return $"{weight}. Stretches tall for big slow hits, or short for small fast ones. Rolls when hit.";
+			case 3: return $"{weight}. Super fast, with endless swords. Air-dashes instead of a second jump. Easy to launch.";
+			case 4: return $"{weight}. A giant rogue factory robot. Heats up as he fights, then lets it all out.";
+			default: return $"{weight}. A fire-punk chef: fireballs, a fireball roll, wings of flame and fire rain. Quick, easy to launch.";
 		}
 	}
 }

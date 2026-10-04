@@ -83,6 +83,24 @@ public enum SpecialKind
 	/// DoomBot's Furnace Blast.
 	/// </summary>
 	Vent,
+
+	/// <summary>
+	/// Forms a cloud at <see cref="MoveData.HitboxOffset"/> - well above the fighter - that hangs
+	/// there for its lifetime dropping <see cref="MoveData.RainDrop"/> every
+	/// <see cref="MoveData.RainInterval"/> frames, scattered across its width. The cloud itself
+	/// never hits; the rain does. Flambe's fire cloud.
+	/// </summary>
+	Cloud,
+
+	/// <summary>
+	/// Sets down a little walker on the floor in front - a MiniBot - that marches the way the
+	/// fighter faced at <see cref="MoveData.SpecialSpeed"/>, falls if there is nothing under it,
+	/// and stops at an edge or a wall to wait. The moment it touches anyone, or when its lifetime
+	/// runs out, it goes off as <see cref="MoveData.Burst"/>. It never hits by itself. Drawn as a
+	/// small copy of the fighter's own rig, <see cref="MoveData.FxArtSize"/> tall. DoomBot's
+	/// down tilt.
+	/// </summary>
+	Walker,
 }
 
 /// <summary>
@@ -104,6 +122,9 @@ public enum ActiveFx
 
 	/// <summary>Twin flame jets out of the bottom of both feet - rocket boots.</summary>
 	Jets,
+
+	/// <summary>A burst of flame tongues round the hitbox - a kick or a punch on fire.</summary>
+	Flame,
 }
 
 [GlobalClass]
@@ -213,6 +234,8 @@ public partial class MoveData : Resource
 
 	/// <summary>Holding attack during the windup charges this move for more damage. Smash attacks.</summary>
 	[Export] public bool Chargeable { get; set; } = false;
+	// A chargeable Dash goes nowhere while it charges, then goes on release - faster and further
+	// the longer it was held, by up to ChargeSize times its SpecialSpeed (Flambe's fireball roll).
 
 	/// <summary>
 	/// The fighter tucks into a ball and spins for the whole move, drawn as its body part alone
@@ -330,6 +353,50 @@ public partial class MoveData : Resource
 	[Export] public bool StretchArm { get; set; } = false;
 
 	/// <summary>
+	/// A drawing from the fighter's rig (a pose name) on the end of a tether, pointing the way it
+	/// flies, with the tether drawn as a chain - EdgeLord's dagger on a chain. Empty keeps the
+	/// rope, the drawn rope-and-hook, or the stretched arm.
+	/// </summary>
+	[Export] public string TetherArt { get; set; } = "";
+
+	/// <summary>
+	/// The kicking leg - the front one - stretches out to the hitbox through the windup and back
+	/// after, on its own, at whatever size the fighter is. Circy's long kicks: stretching is his
+	/// thing.
+	/// </summary>
+	[Export] public bool StretchLeg { get; set; } = false;
+
+	/// <summary>
+	/// The hit turns its victim head over heels through their hitstun - flipped like a crepe, or
+	/// tripped over a cone. Only the drawing turns; the launch is the move's own.
+	/// </summary>
+	[Export] public bool SpinVictim { get; set; } = false;
+
+	/// <summary>
+	/// Through its windup and swing, the move shrugs off any hit doing this much damage or less:
+	/// the damage still counts, but there is no flinch and no knockback. Lug's hard hat. Bigger
+	/// hits get through, and so does a grab. Zero is no armour.
+	/// </summary>
+	[Export] public float Armor { get; set; } = 0.0f;
+
+	/// <summary>
+	/// A trap that is kicked rather than set down: it leaves along the floor at SpecialSpeed and
+	/// skids to a stop, losing this many pixels per second every second, and drops off any edge it
+	/// slides over. Lug's traffic cone. Zero is a trap that stays where it is put.
+	/// </summary>
+	[Export] public float SlideFriction { get; set; } = 0.0f;
+
+	/// <summary>What a <see cref="SpecialKind.Walker"/> goes off as - a hazard left where it stood.</summary>
+	[Export] public MoveData Burst { get; set; }
+
+	/// <summary>
+	/// A blink that goes to one of the fighter's own traps - a planted blade - when one is ahead
+	/// and close enough, instead of straight ahead, and pulls it out when it gets there.
+	/// EdgeLord's Blur Slash.
+	/// </summary>
+	[Export] public bool BlinkToTrap { get; set; } = false;
+
+	/// <summary>
 	/// How many of this move's hazards can be out at once. Making another removes the oldest.
 	/// Zero means no limit.
 	/// </summary>
@@ -412,6 +479,12 @@ public partial class MoveData : Resource
 	/// <summary>Draw a projectile with no art as a ball of fire with a flickering tail.</summary>
 	[Export] public bool FxFlame { get; set; } = false;
 
+	/// <summary>What a <see cref="SpecialKind.Cloud"/> drops. Not exported, like GrabThrow: built in code.</summary>
+	public MoveData RainDrop;
+
+	/// <summary>Frames between drops from a <see cref="SpecialKind.Cloud"/>.</summary>
+	[Export] public int RainInterval { get; set; } = 8;
+
 	/// <summary>Draw a projectile with no art as a little missile with fins and an exhaust flame.</summary>
 	[Export] public bool FxMissile { get; set; } = false;
 
@@ -475,6 +548,8 @@ public partial class MoveData : Resource
 			Sound = Sound,
 			ActiveFx = ActiveFx,
 			SweepDegrees = SweepDegrees,
+			RainDrop = RainDrop,
+			RainInterval = RainInterval,
 			BurnFrames = BurnFrames,
 			BurnDamage = BurnDamage * scale.Damage,
 			LaunchAway = LaunchAway,
@@ -512,6 +587,13 @@ public partial class MoveData : Resource
 			OncePerAirtime = OncePerAirtime,
 			GrabThrow = GrabThrow,
 			StretchArm = StretchArm,
+			TetherArt = TetherArt,
+			StretchLeg = StretchLeg,
+			SpinVictim = SpinVictim,
+			Armor = Armor,
+			SlideFriction = SlideFriction,
+			Burst = Burst?.Scaled(scale),
+			BlinkToTrap = BlinkToTrap,
 			MaxOut = MaxOut,
 			Spin = Spin,
 			RehitFrames = RehitFrames,
@@ -537,6 +619,21 @@ public partial class MoveData : Resource
 			FxRadius = FxRadius,
 			FxTexture = FxTexture,
 		};
+	}
+
+	/// <summary>
+	/// Grows this move's hitbox in place - where it is and how big - for a fighter drawn bigger
+	/// than everyone else, so the hit stays on the claw or boot that throws it. Follows the move's
+	/// combo, link hit and grab follow-up. Tether lengths and effect sizes are left to the
+	/// character: a long arm is a choice, not a consequence of being big.
+	/// </summary>
+	public void ScaleReach(float k)
+	{
+		HitboxOffset *= k;
+		HitboxRadius *= k;
+		ComboNext?.ScaleReach(k);
+		LinkHit?.ScaleReach(k);
+		GrabThrow?.ScaleReach(k);
 	}
 
 	/// <summary>

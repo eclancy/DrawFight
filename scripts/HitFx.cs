@@ -19,6 +19,46 @@ public partial class HitFx : Node2D
 	readonly List<Spark> sparks = new List<Spark>();
 
 	/// <summary>
+	/// A puff of dust off the floor - a landing, a footstep, a skid. Pale and warm, soft-edged,
+	/// drifting the way it was kicked and fading as it spreads. Light enough to stay off the dark
+	/// end of the value ladder (see .ai/art-direction.md).
+	/// </summary>
+	struct Dust
+	{
+		public Vector2 Position;
+		public Vector2 Velocity;
+		public float Age;
+		public float Life;
+		public float Radius;
+	}
+
+	readonly List<Dust> dust = new List<Dust>();
+	int dustCount;
+
+	/// <summary>
+	/// Kicks up dust at a point on the floor. <paramref name="size"/> 1 is a footstep, 3 a heavy
+	/// landing; <paramref name="push"/> is which way it is kicked along the floor (-1 to 1), 0 for
+	/// both ways at once.
+	/// </summary>
+	public void SpawnDust(Vector2 at, float size, float push)
+	{
+		int puffs = push == 0.0f ? 6 : 3;
+		for (int i = 0; i < puffs; i++)
+		{
+			int k = dustCount++;
+			float side = push != 0.0f ? push : (i % 2 == 0 ? -1.0f : 1.0f);
+			float spread = 0.6f + 0.4f * Mathf.Abs(CrayonBrush.Noise(k, 61));
+			dust.Add(new Dust
+			{
+				Position = at + new Vector2(CrayonBrush.Noise(k, 63) * 10.0f * size, -4.0f),
+				Velocity = new Vector2(side * (60.0f + 70.0f * spread) * size, -(30.0f + 40.0f * spread) * Mathf.Sqrt(size)),
+				Life = 0.30f + 0.12f * size,
+				Radius = (9.0f + 4.0f * spread) * Mathf.Sqrt(size),
+			});
+		}
+	}
+
+	/// <summary>
 	/// A KO: a huge burst at the edge of the screen where the fighter went out, in their own
 	/// colour, with rays blasting back in across the stage. It has to be unmistakable - the
 	/// most important thing that happens in a match should be the biggest thing on screen.
@@ -85,9 +125,19 @@ public partial class HitFx : Node2D
 
 	public override void _Process(double delta)
 	{
-		if (sparks.Count == 0 && blasts.Count == 0) return;
+		if (sparks.Count == 0 && blasts.Count == 0 && dust.Count == 0) return;
 
 		float dt = (float)delta;
+		for (int i = dust.Count - 1; i >= 0; i--)
+		{
+			Dust d = dust[i];
+			d.Age += dt;
+			d.Position += d.Velocity * dt;
+			d.Velocity *= 1.0f - 4.0f * dt;
+			if (d.Age >= d.Life) dust.RemoveAt(i);
+			else dust[i] = d;
+		}
+
 		for (int i = blasts.Count - 1; i >= 0; i--)
 		{
 			KoBlast b = blasts[i];
@@ -109,6 +159,12 @@ public partial class HitFx : Node2D
 
 	public override void _Draw()
 	{
+		foreach (Dust d in dust)
+		{
+			float t = d.Age / d.Life;
+			DrawCircle(d.Position, d.Radius * (0.7f + 0.9f * t), new Color(0.78f, 0.74f, 0.68f, 0.6f * (1.0f - t)));
+		}
+
 		foreach (KoBlast b in blasts) DrawKoBlast(b);
 
 		foreach (Spark s in sparks)

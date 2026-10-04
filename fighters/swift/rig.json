@@ -99,6 +99,15 @@
       ], 
       "parent": "ArmFront_Upper", 
       "part": "ArmFront_Lower"
+    }, 
+    {
+      "name": "PropFront", 
+      "offset": [
+        0, 
+        98
+      ], 
+      "parent": "ArmFront_Lower", 
+      "part": "PropFront"
     }
   ], 
   "canonicalHeight": 355, 
@@ -169,6 +178,14 @@
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
+    "PropFront": {
+      "empty": true, 
+      "pivot": [
+        12.0, 
+        10.0
+      ], 
+      "texture": "parts/PropFront.png"
+    }, 
     "Torso": {
       "pivot": [
         53.5, 
@@ -178,10 +195,17 @@
     }
   }, 
   "poses": {
+    "tool_pan": {
+      "anchor": [
+        95.0, 
+        270.0
+      ], 
+      "texture": "poses/tool_pan.png"
+    }, 
     "wings": {
       "anchor": [
-        210.0, 
-        130.0
+        430.0, 
+        240.0
       ], 
       "texture": "poses/wings.png"
     }

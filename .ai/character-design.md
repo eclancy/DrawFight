@@ -40,12 +40,12 @@ follows weight — light fighters get quick multi-hit strings, heavies get two s
 
 | | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, construction) |
 |---|---|---|---|
-| theme | a fire punk: mohawk, spiked leather jacket, flames everywhere; charged fireball, fire-wing flight | ball on long stretchy legs | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); hard hat when blocking |
-| jab | punch, punch, kick | kick, low kick, ball bonk | two slow pipe-wrench bashes |
-| tilts | roundhouse, flip kick, pop-up sweep | long-reach kicks all round | shovel jab, pickaxe arc, crowbar sweep (low, from a crouch) |
-| dash | flying knee | rolls into them as a ball | hard-hat barge |
-| smashes | blaze palm, rising flame, split | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
-| aerials | flame spin, axe kick, back kick, bicycle, drill kick (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | stop sign spin, sledge chop, shovel back swing, pick swipe, jackhammer (spike) |
+| theme | a fire-punk French chef: mohawk, spiked leather jacket, flames on everything; a slow charged fireball, a charged fireball roll, two flapping fire wings, a cloud that rains fire; every normal has its own trick | ball on long stretchy legs: tall for big, slow hits, short for small, quick ones | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); hard hat when blocking, and as armour through his smashes and barge |
+| jab | two flicker jabs, then "Flambe!" - a burning palm | kick, low kick, ball bonk | two slow pipe-wrench bashes |
+| tilts | roundhouse (press again: heel hook), torch flip (a flurry that pops them up), crêpe flip (the pan slid under them flips them head over heels) | kicks that stretch the kicking leg out to the hit | shovel jab, pickaxe arc, cone kick (a traffic cone booted along the floor; whoever runs into it trips) |
+| dash | comet knee (press again: a heel chop) | rolls into them as a ball | hard-hat barge |
+| smashes | flambe pan (a flaming frying pan, slow, burns), fire pillar (four climbing hits), fire geysers (out of the floor both sides) | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
+| aerials | fire wheel (a quick flurry all round), double axe kick, backdraft (burns), bicycle flurry, fire drill (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | stop sign spin, sledge chop, shovel back swing, pick swipe, jackhammer (spike) |
 
 This is why the normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
 scaled per weight by `WeightProfiles`. A balance change to a tilt then lands on all three
@@ -126,9 +126,10 @@ the signal to build one.
 | `Bomb`          | a counter that explodes: hit it or wait out the fuse, it hits everyone near, user takes `SelfDamage` | down |
 | `Choice`        | a stance showing moves round the fighter; the stick picks one (`Choices`: up, forward, back, down). A null slot is a cancel, drawn as a cross: EdgeLord's back puts the swords away | neutral |
 | `Vent`          | lets a fighter's heat out at once: a burst all round them, sized by how hot they were (`Heat.VentAt`) | down |
+| `Cloud`         | forms a cloud high above that hangs there raining `RainDrop` every `RainInterval` frames; the cloud never hits, the rain does | down |
 
 Built so far: `Projectile`, `Dash`, `Recovery`, `Trap`, `Drop` (as `SpecialKind.Drop`, a falling
-spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform`, `Choice`, `CommandGrab` and `Vent`.
+spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform`, `Choice`, `CommandGrab`, `Vent` and `Cloud`.
 `CommandGrab` exists twice: as its own kind (DoomBot's Claw Grab - arms stretch out along the
 ground, catch, reel in, then `GrabThrow` plays as a follow-up move) and as a flag on a tether
 recovery (`GrabThrow`, below). The rest are designs, not code.
@@ -151,7 +152,9 @@ any of them:
   a fighter far must have it, or chaining it becomes a second recovery.
 - `GrabThrow` - on a `DelayedLaunch` recovery, the tether catches the first fighter it touches,
   reels them in, and throws them with this move as the launch fires. The recovery happens
-  either way. **This is the roster's one command grab** (EdgeLord's Grapple Arm).
+  either way. One of the roster's two command grabs (EdgeLord's Chain Blade); see below.
+- `TetherArt` - a tether drawn as a chain with one of the fighter's drawings on the end, pointing
+  the way it flies, instead of a rope or a stretched arm. EdgeLord's dagger on a chain.
 - `MaxOut` - how many of a move's hazards can exist at once; another removes the oldest.
 - `Spin` + `RehitFrames` + `LinkHit` - a spin on the spot drawn with the fighter's turning
   frames, hitting repeatedly with a weak link hit and launching on the last window. Built for
@@ -170,9 +173,17 @@ any of them:
   furnace.
 - `LaunchAway` - launches away from the attacker on whichever side the victim is, for a blast
   in every direction.
+- `Chargeable` on a **Dash** - it charges in place (with `ChargeWithSpecial`, while special is
+  held) and only goes on release, up to `ChargeSize` times as fast. With `BallForm` and `FxFlame`
+  he is curled up inside a fireball that swells with the charge and trails fire as it rolls -
+  Flambe's Fireball Roll.
+- `ComboNext` on **any** normal, not just the jab: press attack again during the move and the
+  follow-up comes out as soon as the first hit is done. Flambe's tilts, dash attack and forward
+  air are two-part this way. The speed check counts a combo string as one move.
 - `ActiveFx` - what a hit is drawn as while live: `Sparks` (steel), `Electric` (bolts from the
-  antennae to a hitbox overhead, or a crackling ring round one anywhere else) and `Jets` (rocket
-  flames out of both feet). Electric also picks the `zap` sound.
+  antennae to a hitbox overhead, or a crackling ring round one anywhere else), `Jets` (rocket
+  flames out of both soles, wherever the feet are in the pose) and `Flame` (a burst of flame
+  tongues round the hit). Electric also picks the `zap` sound.
 - `BeamFrom` - a beam that comes out of a named spot on the drawing rather than the hands
   (`"points"` in rig.json - see `.ai/art-pipeline.md`). DoomBot's eye laser.
 - `StretchArm` on a **normal** - the front arm shoots out to the hitbox for its active frames, a
@@ -194,6 +205,21 @@ any of them:
   the fighter (only the part above the floor is drawn or hits). These work on **normals** too:
   EdgeLord's ring of daggers, the sword he sends up from behind him, and the axes of his down
   smash are all projectiles in normal-attack slots.
+- `StretchLeg` - the front leg alone stretches out to the hitbox and points at it through the
+  windup, then comes back. Circy's long kicks.
+- `SpinVictim` - whoever it hits turns one somersault through their hitstun. Only the drawing
+  turns. Flambe's crepe flip and Lug's traffic cone.
+- `Armor` - through the windup and swing, a hit doing this much damage or less still counts but
+  does not flinch: no knockback, no hitstun, a clang. Bigger hits and grabs get through. Lug's
+  hard hat (8%, on his smashes and barge), which he wears for exactly as long as it is on.
+- `SlideFriction` - a `Trap` that is kicked along the floor instead of set down, skidding to a
+  stop and dropping off any edge it slides over. Lug's traffic cone.
+- `Walker` + `Burst` - a summon: a small copy of the fighter's own rig that walks along the floor,
+  stops at an edge, and goes off as `Burst` when it touches someone or runs out of time. It never
+  hits by itself. DoomBot's MiniBot.
+- `BlinkToTrap` - a blink that goes exactly to one of the fighter's own traps when one is ahead
+  and within about 700 pixels, up or down, and pulls it out. EdgeLord's planted blades are
+  anchors for his Blur Slash.
 
 Some are **traits on `FighterData`**, because they are about the fighter rather than one move:
 
@@ -209,6 +235,13 @@ Some are **traits on `FighterData`**, because they are about the fighter rather 
 - `WhiffLagFrames` - extra frames stuck at the end of any swing or grab that met nobody, with a
   creak and a rusty tint. A hit, even a blocked one, costs nothing extra. DoomBot's "rusty
   joints": a heavy with long reach is only fair if missing with it is a real risk.
+- `HotHitsFrom` - past this much heat, every normal the fighter lands also burns a little
+  (`Heat.HotBurnFrames`), every swing bursts into flame, and the claws glow. DoomBot's glowing
+  claws: a reason to sit at high heat other than the vent.
+- `TelescopingArms` - an arm that reaches out (a piston punch, a command grab) slides out on
+  steel rods with the forearm at its own size on the end, instead of stretching. DoomBot.
+- `AirDashSpeed` - the air jump becomes an eight-way dash: 14 frames, no gravity, then a glide.
+  EdgeLord's super speed. The CPU aims it up and in when it recovers.
 
 ### Worked example: Circy
 
@@ -227,9 +260,20 @@ need again:
   short jump already cost him a lot. Floaty fighters still die early off the side and top - the
   calibration table has him dying to Lug about as early as Swift does - so watch his KO
   percents first if he plays too weak.
+- **Two sizes should feel like two fighters.** At first tall and short only changed his beam and
+  his speed a little, and nobody could tell. Now (`SizeLevels`) tall is 2.4 times the leg, slow
+  to move and to swing, with big, hard normals; short is a ball on stubs, nearly half again as
+  fast, with small, weak, quick ones. Normals are resized from the feet, so a low kick stays
+  low at any height.
+- **Stretching is his.** EdgeLord's sheet said "stretchy arms" too. A power two fighters share
+  stops being either one's, so on 2026-10-04 EdgeLord's arm became a dagger on a chain and
+  DoomBot's long arms telescope instead. Give a new fighter a different way to reach.
+- **A ball bounces.** Knocked into a ball and dropped hard on the floor - or spiked into it - he
+  bounces nearly half as high, squashing as he lands. While he is rolling, the stick leans on the
+  roll a little either way but never stops it.
 
 `CommandGrab` is the one archetype with a standing restriction: **a few, and rare.** There are
-two: EdgeLord's Grapple Arm and DoomBot's Claw Grab. The rule was "at most one" until Eric chose
+two: EdgeLord's Chain Blade and DoomBot's Claw Grab. The rule was "at most one" until Eric chose
 a real grab for DoomBot over a blockable hook (2026-10-02). Universal grabs are still out of
 scope (see `.ai/fighting-design.md`). A command grab is fine while it reads as that character's
 identity rather than a mechanic everyone must learn, so each one has to look and play
@@ -270,6 +314,16 @@ Retuning means adjusting damage, frame counts, knockback and reach to match the 
 heavy fighter's jab is slower and hits harder — and swapping the animation for one that suits
 the character. It does not mean designing eleven moves from scratch, which is how a character
 takes a month instead of an afternoon.
+
+**A big fighter's hitboxes have to come down to everyone else.** DoomBot is drawn 1.75 times
+everyone's size and his moves grow with him, which put his piston punch and his grab at his own
+chest height - clean over the head of anyone normal-sized. Aim a giant's mid-height moves at the
+middle of an ordinary fighter (a command grab's hands go out and down to 70 pixels off the
+floor), and check with the attack parade and a match, not the KO table, which ignores height.
+
+**A taunt never does anything.** It is a pose and a line, nothing else: no hit, no summon, no
+buff, no heat. When a fun idea needs a home, it goes in a move slot - DoomBot's MiniBot is his
+down tilt and Lug's traffic cone is his, not their taunts.
 
 ## Working with him on this
 

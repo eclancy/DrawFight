@@ -19,14 +19,15 @@ public static class Specials
 
 	public static MoveData[] Fire()
 	{
-		return new[] { Fireball(), FlameDash(), FlareJump(), EmberTrap() };
+		return new[] { Fireball(), FireballRoll(), FlareJump(), FireCloud() };
 	}
 
 	/// <summary>
 	/// Neutral: the signature. Hold special and a fireball grows in his hands; let go and it
-	/// flies straight ahead. A tap throws a small quick one; a full second of charge throws one
-	/// more than twice the size that hits more than twice as hard. It charges in the air too -
-	/// he keeps falling while he holds it, so a big one costs height.
+	/// flies straight ahead - slowly, so it hangs in the air as something to move around or
+	/// follow in behind. A tap throws a small one; a full second of charge throws one more than
+	/// twice the size that hits more than twice as hard. It charges in the air too - he keeps
+	/// falling while he holds it, so a big one costs height.
 	/// </summary>
 	static MoveData Fireball() => new MoveData
 	{
@@ -38,29 +39,37 @@ public static class Specials
 		LaunchAngleDegrees = 40.0f,
 		HitboxOffset = new Vector2(64.0f, -24.0f), HitboxRadius = 0.0f,
 		Special = SpecialKind.Projectile,
-		SpecialSpeed = 1150.0f, SpecialGravity = 0.0f, SpecialLifetime = 70,
+		SpecialSpeed = 640.0f, SpecialGravity = 0.0f, SpecialLifetime = 120,
 		FxColor = new Color(0.97f, 0.52f, 0.20f), FxRadius = 26.0f, FxFlame = true,
 	};
 
-	/// <summary>Side: closes distance wrapped in flame. Approach tool.</summary>
-	static MoveData FlameDash() => new MoveData
+	/// <summary>
+	/// Side: he curls up into a ball of fire, spinning on the spot while special is held - the
+	/// fireball swells with the charge - then lets go and rolls across the stage, burning whoever
+	/// he runs over. A tap rolls a short way; a full charge rolls nearly twice as fast and hits
+	/// nearly twice as hard. Started on the ground it stops at the edge rather than rolling off.
+	/// </summary>
+	static MoveData FireballRoll() => new MoveData
 	{
-		MoveName = "Flame Dash",
+		MoveName = "Fireball Roll",
 		Anim = AttackAnim.Lunge,
-		StartupFrames = 10, ActiveFrames = 8, EndlagFrames = 24,
-		Damage = 10.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.95f,
-		LaunchAngleDegrees = 48.0f,
-		HitboxOffset = new Vector2(44.0f, -16.0f), HitboxRadius = 56.0f,
-		CarriesMomentum = true,
+		StartupFrames = 12, ActiveFrames = 18, EndlagFrames = 22,
+		Chargeable = true, ChargeWithSpecial = true, ChargeDamage = 1.8f, ChargeSize = 1.9f,
+		Damage = 9.0f, BaseKnockback = 34.0f, KnockbackGrowth = 0.9f,
+		LaunchAngleDegrees = 42.0f,
+		HitboxOffset = new Vector2(10.0f, 22.0f), HitboxRadius = 52.0f,
+		CarriesMomentum = true, BallForm = true, FxFlame = true,
 		Special = SpecialKind.Dash,
-		SpecialSpeed = 1450.0f,
-		FxColor = new Color(0.99f, 0.66f, 0.24f), FxRadius = 40.0f,
+		SpecialSpeed = 1100.0f,
+		BurnFrames = 60, BurnDamage = 3.0f,
+		FxColor = new Color(0.99f, 0.56f, 0.20f), FxRadius = 40.0f,
 	};
 
 	/// <summary>
-	/// Up: the recovery. Wings of fire burst out of his back and he flies, rising slowly and
-	/// steadily for over a second while he steers left and right - slower than a jump, but it
-	/// goes much higher and can be aimed back at the stage. Anyone he flies into is singed.
+	/// Up: the recovery. Two wings of fire burst out of his back, each beating on its own hinge,
+	/// and he flies, rising slowly and steadily for over a second while he steers left and right
+	/// - slower than a jump, but it goes much higher and can be aimed back at the stage. Anyone he
+	/// flies into is singed.
 	/// </summary>
 	static MoveData FlareJump() => new MoveData
 	{
@@ -72,22 +81,38 @@ public static class Specials
 		HitboxOffset = new Vector2(0.0f, -30.0f), HitboxRadius = 54.0f,
 		Special = SpecialKind.Recovery,
 		Flight = true, SpecialRise = 560.0f,
-		HeldArt = "wings", HeldArtOffset = new Vector2(-10.0f, -72.0f), HeldArtSize = 340.0f,
+		HeldArt = "wings", HeldArtOffset = new Vector2(-12.0f, -50.0f), HeldArtSize = 400.0f,
+		BurnFrames = 45, BurnDamage = 2.0f,
 		FxColor = new Color(0.99f, 0.62f, 0.24f), FxRadius = 42.0f,
 	};
 
-	/// <summary>Down: leaves a patch of fire burning on the ground. Zoning and ledge control.</summary>
-	static MoveData EmberTrap() => new MoveData
+	/// <summary>
+	/// Down: he throws a hand up and a cloud of fire forms high above him and a little ahead,
+	/// then rains burning drops on whoever is underneath for nearly three seconds. Weak a drop at
+	/// a time, but it denies the ground under it - and the platforms over it - while he fights
+	/// somewhere else. One cloud at a time; a new one replaces the old.
+	/// </summary>
+	static MoveData FireCloud() => new MoveData
 	{
-		MoveName = "Ember Trap",
-		Anim = AttackAnim.LowKick,
-		StartupFrames = 14, ActiveFrames = 2, EndlagFrames = 26,
-		Damage = 6.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.6f,
-		LaunchAngleDegrees = 70.0f,
-		HitboxOffset = new Vector2(48.0f, 20.0f), HitboxRadius = 44.0f,
-		Special = SpecialKind.Trap,
-		SpecialLifetime = 260,
-		FxColor = new Color(0.95f, 0.42f, 0.22f), FxRadius = 46.0f,
+		MoveName = "Fire Cloud",
+		Anim = AttackAnim.PointUp,
+		StartupFrames = 16, ActiveFrames = 2, EndlagFrames = 24,
+		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
+		HitboxOffset = new Vector2(60.0f, -340.0f), HitboxRadius = 0.0f,
+		Special = SpecialKind.Cloud,
+		SpecialLifetime = 170, MaxOut = 1,
+		RainInterval = 7,
+		RainDrop = new MoveData
+		{
+			MoveName = "Fire Rain",
+			Damage = 2.0f, BaseKnockback = 14.0f, KnockbackGrowth = 0.2f,
+			LaunchAngleDegrees = 75.0f,
+			Special = SpecialKind.Drop,
+			SpecialSpeed = 260.0f, SpecialGravity = 2400.0f, SpecialLifetime = 70,
+			BurnFrames = 30, BurnDamage = 1.0f,
+			FxFlame = true, FxColor = new Color(0.98f, 0.52f, 0.20f), FxRadius = 11.0f,
+		},
+		FxColor = new Color(0.97f, 0.50f, 0.20f), FxRadius = 150.0f,
 	};
 
 	// =========================================================================
@@ -245,7 +270,7 @@ public static class Specials
 		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
 		HitboxRadius = 0.0f,
 		Special = SpecialKind.CommandGrab,
-		TetherLength = 330.0f,
+		TetherLength = 440.0f,
 		GrabThrow = new MoveData
 		{
 			MoveName = "Claw Grab Kick",
@@ -268,7 +293,7 @@ public static class Specials
 	static MoveData RocketBoots() => new MoveData
 	{
 		MoveName = "Rocket Boots",
-		Anim = AttackAnim.Soar,
+		Anim = AttackAnim.Rocket,
 		StartupFrames = 10, ActiveFrames = 50, EndlagFrames = 18,
 		Damage = 7.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.6f,
 		LaunchAngleDegrees = 20.0f, LaunchAway = true,
@@ -300,11 +325,14 @@ public static class Specials
 		SpecialLifetime = 16,
 		BurnFrames = 150, BurnDamage = 9.0f,
 		FxFlame = true,
-		FxColor = new Color(0.97f, 0.50f, 0.20f), FxRadius = 230.0f,
+		// Sized for him at 1.75 times everyone else: it still reaches well past his own body.
+		FxColor = new Color(0.97f, 0.50f, 0.20f), FxRadius = 290.0f,
 	};
 
 	// =========================================================================
-	// EDGELORD - light, swords. "Stretchy arms, super speed, infinite swords."
+	// EDGELORD - light, swords. Eric's sheet said "stretchy arms, super speed, infinite swords";
+	// the stretchy arms went on 2026-10-04 - stretching is Circy's thing - and his grapple became a
+	// chain blade.
 	//
 	// His art here is a placeholder: every sword and effect is ours, standing in until his own
 	// drawings of the moves arrive (see tools/art/cut_edgelord.py).
@@ -402,6 +430,9 @@ public static class Specials
 	///
 	/// This is the move that most needs its sound: a ring rising through the glint that peaks on
 	/// the frame he goes (special_glint), then a sharp cut (special_blink).
+	///
+	/// With one of his planted blades up ahead and within about 700 pixels, he goes to it instead
+	/// - however far, up or down - and pulls it out of the ground: his blades are anchors.
 	/// </summary>
 	static MoveData BlurSlash() => new MoveData
 	{
@@ -412,21 +443,21 @@ public static class Specials
 		LaunchAngleDegrees = 40.0f,
 		HitboxOffset = new Vector2(24.0f, -10.0f), HitboxRadius = 60.0f,
 		Special = SpecialKind.Dash,
-		Blink = true, OncePerAirtime = true,
+		Blink = true, OncePerAirtime = true, BlinkToTrap = true,
 		// About 350px in five frames.
 		SpecialSpeed = 4200.0f,
 		FxColor = new Color(0.97f, 0.93f, 0.70f), FxRadius = 40.0f,
 	};
 
 	/// <summary>
-	/// Up: the recovery. His arm stretches up and forward and yanks him after it. If it catches
-	/// someone on the way out, he reels them in and throws them down as he goes up - one pull
-	/// that sends them down and him up. Grabbing never costs the recovery: he rises either way.
-	/// This is the roster's one command grab (see .ai/character-design.md).
+	/// Up: the recovery. He flings a dagger on a chain up and forward and hauls himself after it.
+	/// If it catches someone on the way out, he reels them in and throws them down as he goes up -
+	/// one pull that sends them down and him up. Grabbing never costs the recovery: he rises
+	/// either way. One of the roster's two command grabs (see .ai/character-design.md).
 	/// </summary>
 	static MoveData GrappleArm() => new MoveData
 	{
-		MoveName = "Grapple Arm",
+		MoveName = "Chain Blade",
 		Anim = AttackAnim.Uppercut,
 		StartupFrames = 14, ActiveFrames = 14, EndlagFrames = 18,
 		Damage = 7.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.85f,
@@ -434,7 +465,7 @@ public static class Specials
 		HitboxOffset = new Vector2(18.0f, -20.0f), HitboxRadius = 54.0f,
 		Special = SpecialKind.Recovery,
 		// Launches him a long way: his arm reaches further than a jump does.
-		DelayedLaunch = true, TetherLength = 480.0f, StretchArm = true,
+		DelayedLaunch = true, TetherLength = 480.0f, TetherArt = "sword_dagger",
 		SpecialRise = 1920.0f, SpecialSpeed = 780.0f,
 		GrabThrow = new MoveData
 		{

@@ -61,11 +61,8 @@ public partial class RigParade : Node2D
 	/// </summary>
 	static Node2D HitboxMarker(FighterData data, MoveData move)
 	{
-		float matchHeight = data.BodySize.Y * 1.18f * data.VisualScale;
-		float k = 300.0f / matchHeight;
-		float halfBody = data.BodySize.Y * 0.5f;
-		var centre = new Vector2(move.HitboxOffset.X * k, (move.HitboxOffset.Y - halfBody) * k + 150.0f);
-		float radius = move.HitboxRadius * k;
+		Vector2 centre = HitboxInView(data, move);
+		float radius = move.HitboxRadius * 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
 
 		var marker = new Node2D { ZIndex = 5 };
 		marker.Draw += () =>
@@ -74,6 +71,14 @@ public partial class RigParade : Node2D
 			marker.DrawArc(centre, radius, 0.0f, Mathf.Tau, 32, new Color(0.85f, 0.20f, 0.22f, 0.8f), 3.0f);
 		};
 		return marker;
+	}
+
+	/// <summary>Where a move's hitbox is in this view, in its holder's space.</summary>
+	static Vector2 HitboxInView(FighterData data, MoveData move)
+	{
+		float k = 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
+		float halfBody = data.BodySize.Y * 0.5f;
+		return new Vector2(move.HitboxOffset.X * k, (move.HitboxOffset.Y - halfBody) * k + 150.0f);
 	}
 
 	/// <summary>The move an attack column shows, so its weapon can be put in the fighter's hand.</summary>
@@ -139,26 +144,32 @@ public partial class RigParade : Node2D
 				("dash", null, d => FighterAnimations.LungeStrike),
 			};
 
-		const float ColumnWidth = 238.0f;
+		// One fighter on its own gets room: wider columns, wrapped onto two rows, so a long reach
+		// - a stretched leg, a greatsword - is not lost in the next column's fighter.
+		float ColumnWidth = Only >= 0 ? 330.0f : 238.0f;
 		const float RowHeight = 420.0f;
+		int perRow = Only >= 0 ? (columns.Length + 1) / 2 : columns.Length;
+		int rowsEach = (columns.Length + perRow - 1) / perRow;
 
 		for (int row = 0; row < fighters.Length; row++)
 		{
 			FighterData data = fighters[row];
 
-			for (int col = 0; col < columns.Length; col++)
+			for (int index = 0; index < columns.Length; index++)
 			{
-				Pose direct = columns[col].direct?.Invoke(data);
+				int col = index % perRow;
+				int line = row * rowsEach + index / perRow;
+				Pose direct = columns[index].direct?.Invoke(data);
 
 				// A heavy's jab combo is two hits, so its third column is empty.
-				if (columns[col].clip == null && direct == null) continue;
+				if (columns[index].clip == null && direct == null) continue;
 
 				// The rig positions ITSELF inside its parent (Normalise places the hip so the
 				// feet land on the body box), so layout has to live on a holder above it
 				// rather than on the rig's own transform.
 				var holder = new Node2D
 				{
-					Position = new Vector2(col * ColumnWidth, row * RowHeight),
+					Position = new Vector2(col * ColumnWidth, line * RowHeight),
 				};
 				AddChild(holder);
 
@@ -174,9 +185,12 @@ public partial class RigParade : Node2D
 				// Much larger than in a match, which is the entire point of this view.
 				rig.Normalise(300.0f, 150.0f, 1.0f);
 				rig.DramaScale = data.AnimationDrama;
+				// Feet on the floor for everything done standing, exactly as in a match.
+				string columnLabel = columns[index].label;
+				rig.SetPlanted(columnLabel != "jump" && columnLabel != "fall" && !columnLabel.EndsWith("air"));
 
 				// Each attack shows the weapon it puts in his hand, or an empty hand, as in a match.
-				MoveData shown = Attacks ? MoveFor(data, columns[col].label) : null;
+				MoveData shown = Attacks ? MoveFor(data, columns[index].label) : null;
 				if (shown != null)
 				{
 					rig.ShowProp(shown.PropArt);
@@ -184,7 +198,7 @@ public partial class RigParade : Node2D
 				}
 
 				// Blocking puts on any block-only extra (Lug's hard hat), exactly as in a match.
-				if (columns[col].clip == FighterAnimations.Block) rig.SetExtraVisible("hardhat", true);
+				if (columns[index].clip == FighterAnimations.Block) rig.SetExtraVisible("hardhat", true);
 				if (shown != null && !string.IsNullOrEmpty(shown.ShowExtra)) rig.SetExtraVisible(shown.ShowExtra, true);
 
 				// Where the attack actually hits, drawn over the pose. A weapon that reaches past
@@ -194,11 +208,11 @@ public partial class RigParade : Node2D
 				slots.Add(new Slot
 				{
 					Rig = rig,
-					Clip = columns[col].clip,
+					Clip = columns[index].clip,
 					Direct = direct,
 					Data = data,
 					Move = shown,
-					Label = columns[col].label,
+					Label = columns[index].label,
 					Holder = holder,
 				});
 
@@ -206,8 +220,8 @@ public partial class RigParade : Node2D
 
 				var label = new Label
 				{
-					Text = columns[col].label,
-					Position = new Vector2(col * ColumnWidth - 40.0f, -230.0f),
+					Text = columns[index].label,
+					Position = new Vector2(col * ColumnWidth - 40.0f, line * RowHeight - 230.0f),
 				};
 				label.AddThemeFontSizeOverride("font_size", 30);
 				label.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
@@ -215,14 +229,15 @@ public partial class RigParade : Node2D
 			}
 		}
 
+		int lines = fighters.Length * rowsEach;
 		var camera = new Camera2D
 		{
-			Position = new Vector2(ColumnWidth * (columns.Length - 1) * 0.5f,
-				RowHeight * (fighters.Length - 1) * 0.5f - 60.0f),
+			Position = new Vector2(ColumnWidth * (perRow - 1) * 0.5f,
+				RowHeight * (lines - 1) * 0.5f - 60.0f),
 			// Zoomed out as the roster grows, so every fighter stays on one screen.
 			Zoom = Vector2.One * Mathf.Min(0.78f, Mathf.Min(
-				1000.0f / (fighters.Length * RowHeight + 120.0f),
-				1880.0f / (columns.Length * ColumnWidth + 60.0f))),
+				1000.0f / (lines * RowHeight + 120.0f),
+				1880.0f / (perRow * ColumnWidth + 60.0f))),
 		};
 		AddChild(camera);
 		camera.MakeCurrent();
@@ -274,6 +289,21 @@ public partial class RigParade : Node2D
 			else if (slot.Direct != null)
 			{
 				slot.Rig.ApplyDirect(slot.Direct, 0.3f);
+			}
+
+			// A kick with a stretching leg reaches out to its hitbox, as it does in a match (see
+			// Fighter.LegReachNow) - so a hitbox off the line the leg points along shows here.
+			if (slot.Move != null && slot.Move.StretchLeg)
+			{
+				Vector2? hip = slot.Rig.JointGlobal(RigBone.LegFrontUpper);
+				float leg = slot.Rig.LegLength * slot.Rig.PuppetScale;
+				if (hip.HasValue && leg > 1.0f)
+				{
+					Vector2 hit = HitboxInView(slot.Data, slot.Move);
+					Vector2 reach = hit - slot.Holder.ToLocal(hip.Value);
+					slot.Rig.SetFrontLegReach(Mathf.Max(1.0f, reach.Length() / leg));
+					slot.Rig.AimFrontLeg(slot.Holder.ToGlobal(hit), 1.0f);
+				}
 			}
 		}
 	}

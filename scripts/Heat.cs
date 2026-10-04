@@ -39,6 +39,13 @@ public static class Heat
 	/// <summary>An overheat lets some heat out as steam, but not all - he is still warm after.</summary>
 	public const float AfterOverheat = 35.0f;
 
+	/// <summary>
+	/// A normal landed while he is past <see cref="FighterData.HotHitsFrom"/> burns for this long,
+	/// for this much in all - a touch of glowing steel, not a fire.
+	/// </summary>
+	public const int HotBurnFrames = 30;
+	public const float HotBurnDamage = 1.5f;
+
 	/// <summary>Below this much heat a vent is only a puff of steam, not flame.</summary>
 	public const float FlameFrom = 0.25f;
 
@@ -64,7 +71,7 @@ public static class Heat
 			vent.BaseKnockback = 30.0f;
 			vent.KnockbackGrowth = 0.3f;
 			vent.LaunchAngleDegrees = 30.0f;
-			vent.FxRadius = 90.0f;
+			vent.FxRadius = full.FxRadius * 0.4f;
 			vent.FxFlame = false;
 			vent.FxColor = new Color(0.92f, 0.93f, 0.95f);
 			vent.BurnFrames = 0;
@@ -76,7 +83,7 @@ public static class Heat
 		vent.MoveName = $"{full.MoveName} ({Mathf.RoundToInt(heat * 100.0f)}% heat)";
 		vent.Damage = Mathf.Lerp(7.0f, full.Damage, t);
 		vent.KnockbackGrowth = Mathf.Lerp(0.55f, full.KnockbackGrowth, t);
-		vent.FxRadius = Mathf.Lerp(110.0f, full.FxRadius, t);
+		vent.FxRadius = Mathf.Lerp(full.FxRadius * 0.48f, full.FxRadius, t);
 		vent.BurnFrames = Mathf.RoundToInt(Mathf.Lerp(60.0f, full.BurnFrames, t));
 		vent.BurnDamage = Mathf.Lerp(2.0f, full.BurnDamage, t);
 		return vent;

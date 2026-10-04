@@ -35,17 +35,19 @@ public static class StageCatalog
 	// =========================================================================
 
 	/// <summary>
-	/// Where kids' drawings actually end up. The stage is a drawing on a sheet of paper taped to
-	/// a steel fridge door, and the door round it - brushed metal, the handle, magnets holding up
-	/// other drawings - is the backdrop. All of it in coloured pencil. The other pages are where
-	/// his non-fighter art has somewhere to live.
+	/// Where kids' drawings actually end up. The stage is drawn across several sheets of paper
+	/// stuck to a steel fridge door with magnets - a ruled page, a squared page, plain scraps
+	/// under the little side platforms - overlapping and a little crooked, the way a fridge door
+	/// really looks. The door round them - brushed metal, the handle, more drawings held up
+	/// higher - is the backdrop. All of it in coloured pencil. The other pages are where his
+	/// non-fighter art has somewhere to live.
 	/// </summary>
 	public static StageData FridgeDoor()
 	{
 		var data = new StageData
 		{
 			DisplayName = "Fridge Door",
-			Style = StageStyle.TapedPage,
+			Style = StageStyle.PinnedPages,
 
 			// The door: pale brushed steel, a little cooler at the bottom. Light, like every
 			// backdrop - the fighters own the dark end of the value ladder.
@@ -79,8 +81,16 @@ public static class StageCatalog
 			new StagePlatform(new Rect2(700.0f, -170.0f, 170.0f, 26.0f), true, PlatformLook.PencilLedge),
 		};
 
-		// Only just bigger than the stage, so the door shows round it.
-		data.PageRect = new Rect2(-960.0f, -640.0f, 1920.0f, 840.0f);
+		// The pages, back to front: the top one is tucked behind the two big ones it overlaps,
+		// and each little side platform has a scrap of its own. Every platform sits on paper.
+		data.Pages = new[]
+		{
+			new PinnedPage(new Rect2(-270.0f, -650.0f, 540.0f, 280.0f), 0.8f, PaperKind.Plain, 1, 3),
+			new PinnedPage(new Rect2(-700.0f, -420.0f, 720.0f, 560.0f), -1.4f, PaperKind.Ruled, 2, 1),
+			new PinnedPage(new Rect2(-40.0f, -450.0f, 740.0f, 590.0f), 1.2f, PaperKind.Grid, 2, 2),
+			new PinnedPage(new Rect2(-940.0f, -300.0f, 300.0f, 230.0f), 2.5f, PaperKind.Plain, 1, 4),
+			new PinnedPage(new Rect2(650.0f, -290.0f, 300.0f, 220.0f), -2.2f, PaperKind.Ruled, 1, 5),
+		};
 
 		data.Props = new[]
 		{

@@ -26,9 +26,18 @@ tilt), a boot sweep (down tilt), a hydraulic press (forward smash), a stomp that
 both ways (down smash), a boot kick (back air), a claw clap (up air) and a boots-first spike
 (down air).
 
+Added on 2026-10-04, at Eric's call:
+
+- **MiniBot** replaced the boot sweep as his down tilt: he sets down a little copy of himself
+  that walks at the other fighter and goes off in a small furnace burst.
+- **Glowing claws:** past half heat, his normals burn a little and his claws glow.
+- **Telescoping arms:** his piston punch and grab slide out on steel rods instead of stretching,
+  because stretching is Circy's thing.
+
 Two calls made along the way:
 
 - **"Rusty joints"** means he is stuck for a moment after any swing that misses
   (`WhiffLagFrames`), not that he blocks badly.
-- **The grab is a real command grab**, the second in the roster after EdgeLord's Grapple Arm.
+- **The grab is a real command grab**, the second in the roster after EdgeLord's grapple (now
+  his Chain Blade).
   Eric chose that over making it a blockable hook. See `.ai/character-design.md`.

@@ -16,7 +16,12 @@ using Godot;
 public sealed class CpuInputSource : IInputSource
 {
 	readonly MatchManager match;
-	readonly RandomNumberGenerator rng = new RandomNumberGenerator();
+	/// <summary>
+	/// System.Random rather than Godot's RandomNumberGenerator. This is not a node, so it has no
+	/// moment to let go of a Godot object, and one still held when the game quits is cleaned up
+	/// after the engine's C# side has shut down - which crashed the game on the way out.
+	/// </summary>
+	readonly System.Random rng;
 
 	Fighter self;
 	int frame;
@@ -54,11 +59,15 @@ public sealed class CpuInputSource : IInputSource
 	public CpuInputSource(MatchManager match, int seed)
 	{
 		this.match = match;
-		rng.Seed = (ulong)(seed * 7919 + 17);
+		rng = new System.Random(seed * 7919 + 17);
 	}
 
 	/// <summary>The fighter this CPU drives. Set once the fighter exists.</summary>
 	public void Drive(Fighter fighter) => self = fighter;
+
+	float Randf() => (float)rng.NextDouble();
+	int RandiRange(int from, int to) => rng.Next(from, to + 1);
+	float RandfRange(float from, float to) => from + (to - from) * (float)rng.NextDouble();
 
 	public InputState Poll()
 	{
@@ -68,7 +77,7 @@ public sealed class CpuInputSource : IInputSource
 		if (frame >= nextDecision)
 		{
 			Decide();
-			nextDecision = frame + ReactionFrames + rng.RandiRange(-ReactionJitter, ReactionJitter);
+			nextDecision = frame + ReactionFrames + RandiRange(-ReactionJitter, ReactionJitter);
 		}
 		if (jumpCooldown > 0) jumpCooldown--;
 
@@ -131,7 +140,7 @@ public sealed class CpuInputSource : IInputSource
 			return;
 		}
 
-		if (rng.Randf() < IdleChance) return;
+		if (Randf() < IdleChance) return;
 
 		Vector2 toTarget = target.GlobalPosition - self.GlobalPosition;
 		float dx = toTarget.X;
@@ -140,16 +149,16 @@ public sealed class CpuInputSource : IInputSource
 		int toward = dx >= 0.0f ? 1 : -1;
 
 		// Something is coming: sometimes block it.
-		if (self.IsOnFloor() && target.CurrentMove != null && distance < 170.0f && rng.Randf() < BlockChance)
+		if (self.IsOnFloor() && target.CurrentMove != null && distance < 170.0f && Randf() < BlockChance)
 		{
-			blockUntil = frame + rng.RandiRange(12, 22);
+			blockUntil = frame + RandiRange(12, 22);
 			return;
 		}
 
 		// Close enough to hit.
 		if (distance < CloseRange && Mathf.Abs(dy) < 110.0f)
 		{
-			if (rng.Randf() < AttackChance) Attack(toward, dy);
+			if (Randf() < AttackChance) Attack(toward, dy);
 			return;
 		}
 
@@ -163,7 +172,7 @@ public sealed class CpuInputSource : IInputSource
 		}
 
 		// A long way off: sometimes use a side special - a projectile or a dash closes the gap.
-		if (distance > 380.0f && rng.Randf() < SideSpecialChance)
+		if (distance > 380.0f && Randf() < SideSpecialChance)
 		{
 			heldStick = new Vector2(toward, 0.0f);
 			pressSpecial = true;
@@ -173,7 +182,7 @@ public sealed class CpuInputSource : IInputSource
 		// Otherwise walk or run at them - but never off the edge after someone already off it.
 		if (!(self.IsOnFloor() && NearEdge(toward) && !target.IsOnFloor()))
 		{
-			heldStick = new Vector2(toward * rng.RandfRange(0.65f, 1.0f), 0.0f);
+			heldStick = new Vector2(toward * RandfRange(0.65f, 1.0f), 0.0f);
 		}
 	}
 
@@ -191,7 +200,7 @@ public sealed class CpuInputSource : IInputSource
 
 		// The stick decides tilt or smash. At 0.7 it is a tilt; snapped to full on the same frame as
 		// the button it reads as a flick, which is a smash - exactly as it would for a person.
-		float push = rng.Randf() < 0.2f ? 1.0f : 0.7f;
+		float push = Randf() < 0.2f ? 1.0f : 0.7f;
 
 		if (dy < -70.0f)
 		{
@@ -205,11 +214,11 @@ public sealed class CpuInputSource : IInputSource
 		else
 		{
 			// Mostly forward attacks facing them, sometimes a jab combo.
-			heldStick = rng.Randf() < 0.6f ? new Vector2(toward * push, 0.0f) : Vector2.Zero;
+			heldStick = Randf() < 0.6f ? new Vector2(toward * push, 0.0f) : Vector2.Zero;
 		}
 
 		// A down special now and then, close in - Circy's bomb, Swift's fire trap, Lug's anvil.
-		if (rng.Randf() < 0.08f)
+		if (Randf() < 0.08f)
 		{
 			heldStick = new Vector2(0.0f, 1.0f);
 			pressSpecial = true;
@@ -237,6 +246,12 @@ public sealed class CpuInputSource : IInputSource
 		{
 			pressJump = true;
 			jumpCooldown = 20;
+			// An air dash goes where the stick points, so aim it: up and in, or straight up with
+			// the ledge overhead. Sideways alone would carry him in without any height.
+			if (self.Data.AirDashSpeed > 0.0f)
+			{
+				heldStick = Mathf.Abs(dx) < 160.0f ? new Vector2(0.0f, -1.0f) : new Vector2(toward, -1.0f).Normalized();
+			}
 			return;
 		}
 

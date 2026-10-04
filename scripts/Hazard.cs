@@ -82,6 +82,13 @@ public partial class Hazard : Node2D
 		return fit * size.Y / Mathf.Max(size.X, size.Y) * 0.5f;
 	}
 
+	/// <summary>
+	/// A walker - the MiniBot - is a small copy of its owner's own puppet, marching along the
+	/// floor, and whether it has floor under it this frame.
+	/// </summary>
+	FighterRig miniRig;
+	bool walkerGrounded;
+
 	/// <summary>Hazards do not hit the fighter who made them for this many frames.</summary>
 	const int OwnerGraceFrames = 8;
 
@@ -97,6 +104,94 @@ public partial class Hazard : Node2D
 
 		GlobalPosition = position;
 		if (move.Beam) beamDir = velocity.X < 0.0f ? -1 : 1;
+		if (move.Special == SpecialKind.Walker) BuildMiniRig();
+	}
+
+	/// <summary>
+	/// The walker is drawn as its owner, small: a second copy of the same rig, played at a
+	/// fraction of the size. Nothing new is drawn - it is his own drawing, only smaller.
+	/// </summary>
+	void BuildMiniRig()
+	{
+		string path = owner?.Data?.RigPath;
+		if (string.IsNullOrEmpty(path)) return;
+		miniRig = new FighterRig();
+		AddChild(miniRig);
+		if (!miniRig.Load(path))
+		{
+			miniRig.QueueFree();
+			miniRig = null;
+			return;
+		}
+		miniRig.Normalise(move.FxArtSize, move.FxArtSize * 0.5f, 1.0f);
+		miniRig.SetFacing(velocity.X < 0.0f ? -1 : 1);
+		miniRig.SetPlanted(true);
+	}
+
+	/// <summary>
+	/// Walks along whatever it is standing on and falls if there is nothing. At an edge or a wall
+	/// it stops dead rather than walking off - and waits there for someone to come to it.
+	/// </summary>
+	void TickWalker(float dt)
+	{
+		float half = move.FxArtSize * 0.5f;
+		velocity = new Vector2(velocity.X, velocity.Y + gravity * dt);
+		Vector2 next = GlobalPosition + velocity * dt;
+
+		walkerGrounded = false;
+		if (velocity.Y >= 0.0f)
+		{
+			var ray = PhysicsRayQueryParameters2D.Create(GlobalPosition + new Vector2(0.0f, half - 6.0f),
+				next + new Vector2(0.0f, half + 2.0f), 0b11);
+			Godot.Collections.Dictionary hit = GetWorld2D().DirectSpaceState.IntersectRay(ray);
+			if (hit.Count > 0)
+			{
+				next.Y = ((Vector2)hit["position"]).Y - half;
+				velocity = new Vector2(velocity.X, 0.0f);
+				walkerGrounded = true;
+			}
+		}
+
+		if (walkerGrounded && velocity.X != 0.0f)
+		{
+			float dir = Mathf.Sign(velocity.X);
+			bool floorAhead = PointSolid(new Vector2(next.X + dir * half * 0.5f, next.Y + half + 6.0f), 0b11);
+			bool wallAhead = PointSolid(new Vector2(next.X + dir * half * 0.6f, next.Y), 0b01);
+			if (!floorAhead || wallAhead)
+			{
+				velocity = new Vector2(0.0f, velocity.Y);
+				next.X = GlobalPosition.X;
+			}
+		}
+		GlobalPosition = next;
+
+		if (miniRig == null) return;
+		bool walking = walkerGrounded && velocity.X != 0.0f;
+		miniRig.Play(walking ? FighterAnimations.Run : walkerGrounded ? FighterAnimations.Idle : FighterAnimations.Fall);
+		miniRig.Advance();
+		// Nearly out of time: flashing hot, faster at the end.
+		int left = lifeFrames - ageFrames;
+		bool flash = left < 50 && (ageFrames / (left < 20 ? 2 : 4)) % 2 == 0;
+		miniRig.Modulate = flash ? new Color(1.7f, 0.8f, 0.6f) : Colors.White;
+	}
+
+	bool PointSolid(Vector2 at, uint mask)
+	{
+		var query = new PhysicsPointQueryParameters2D { Position = at, CollisionMask = mask };
+		return GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count > 0;
+	}
+
+	/// <summary>The walker going off: its Burst left where it stood, and the walker gone.</summary>
+	void Detonate()
+	{
+		if (expiring) return;
+		if (move.Burst != null && match != null)
+		{
+			match.SpawnHazard(owner, move.Burst, GlobalPosition, Vector2.Zero);
+			match.Shake(18.0f);
+		}
+		SfxPlayer.At("minibot_pop", GlobalPosition, 0.04f);
+		Expire();
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -128,10 +223,21 @@ public partial class Hazard : Node2D
 			GlobalPosition = owner.BeamOrigin();
 			if (!beamStopped) beamLength = Mathf.Min(move.Reach, beamLength + Mathf.Abs(velocity.X) * dt);
 		}
+		else if (move.Special == SpecialKind.Walker)
+		{
+			TickWalker(dt);
+		}
 		else
 		{
 			velocity = new Vector2(velocity.X, velocity.Y + gravity * dt);
 			GlobalPosition += velocity * dt;
+
+			// A kicked trap skids to a stop along the floor - and drops off an edge it slides over.
+			if (move.SlideFriction > 0.0f && gravity == 0.0f)
+			{
+				velocity = new Vector2(Mathf.MoveToward(velocity.X, 0.0f, move.SlideFriction * dt), 0.0f);
+				if (!LandsOnGround()) gravity = 3000.0f;
+			}
 		}
 
 		// Risen and fallen back into the floor: gone.
@@ -172,6 +278,11 @@ public partial class Hazard : Node2D
 		// Hazards die of old age or by leaving the stage. Without the second check a fireball
 		// fired off the side would live out its full lifetime somewhere nobody can see.
 		bool offStage = match?.StageBounds.Grow(400.0f).HasPoint(GlobalPosition) == false;
+		if (move.Special == SpecialKind.Walker && ageFrames >= lifeFrames && !offStage)
+		{
+			Detonate();
+			return;
+		}
 		if (ageFrames >= lifeFrames || offStage) Expire();
 	}
 
@@ -213,9 +324,50 @@ public partial class Hazard : Node2D
 	/// <summary>Takes this hazard away early - the oldest planted blade, when a new one goes in.</summary>
 	public void Remove() => Expire();
 
+	/// <summary>
+	/// A cloud forms over its first frames, then drops its rain - scattered across its width,
+	/// each drop's spot hashed from the count so the pattern never repeats exactly but is never
+	/// random either.
+	/// </summary>
+	const int CloudFormFrames = 12;
+	int dropsMade;
+
+	void Rain()
+	{
+		if (move.RainDrop == null || match == null || ageFrames < CloudFormFrames) return;
+		if ((ageFrames - CloudFormFrames) % Mathf.Max(1, move.RainInterval) != 0) return;
+		if (ageFrames > lifeFrames - 10) return;
+		float x = CrayonBrush.Noise(dropsMade * 7 + 3, 91) * move.FxRadius * 0.85f;
+		dropsMade++;
+		var at = GlobalPosition + new Vector2(x, move.FxRadius * 0.3f);
+		Hazard drop = match.SpawnHazard(owner, move.RainDrop, at, new Vector2(0.0f, move.RainDrop.SpecialSpeed));
+		drop.FlipArt = false;
+	}
+
 	void QueryHits()
 	{
 		if (match == null || expiring) return;
+		if (move.Special == SpecialKind.Cloud)
+		{
+			// The cloud itself is only weather; what it drops does the hitting.
+			Rain();
+			return;
+		}
+
+		if (move.Special == SpecialKind.Walker)
+		{
+			// The MiniBot never hits anyone: it goes off, and the blast does.
+			foreach (Fighter other in match.Fighters)
+			{
+				if (other == owner || !other.CanBeHitByHazard) continue;
+				if (Touches(other.BodyRect(), out _))
+				{
+					Detonate();
+					return;
+				}
+			}
+			return;
+		}
 
 		foreach (Fighter other in match.Fighters)
 		{
@@ -474,6 +626,28 @@ public partial class Hazard : Node2D
 		DrawCircle(Vector2.Zero, r * 0.38f * (1.0f - 0.4f * t), new Color(1.0f, 0.95f, 0.75f, alpha));
 	}
 
+	/// <summary>
+	/// A fire cloud: lumpy smoke, warm grey on top and glowing orange underneath where the fire is
+	/// coming from. It swells into being and fades as it runs out. Pale enough to stay off the
+	/// dark end of the value ladder - only fighters own that (see .ai/art-direction.md).
+	/// </summary>
+	void DrawCloud()
+	{
+		float grow = Mathf.Min(1.0f, ageFrames / (float)CloudFormFrames);
+		float fade = Mathf.Min(1.0f, (lifeFrames - ageFrames) / 20.0f);
+		float w = move.FxRadius * (0.5f + 0.5f * grow);
+		const int Puffs = 7;
+		for (int i = 0; i < Puffs; i++)
+		{
+			float x = (i / (float)(Puffs - 1) - 0.5f) * w * 1.7f;
+			float bob = CrayonBrush.Noise(ageFrames / 6 + i, 29) * 6.0f;
+			float r = w * (0.36f + 0.12f * Mathf.Abs(CrayonBrush.Noise(i, 31))) * (1.0f - 0.35f * Mathf.Abs(x) / w);
+			DrawCircle(new Vector2(x, bob + r * 0.25f), r * 1.05f, new Color(0.97f, 0.52f, 0.22f, 0.55f * fade));
+			DrawCircle(new Vector2(x, bob - r * 0.15f), r, new Color(0.70f, 0.60f, 0.58f, 0.92f * fade));
+			DrawCircle(new Vector2(x - r * 0.25f, bob - r * 0.4f), r * 0.55f, new Color(0.80f, 0.72f, 0.70f, 0.85f * fade));
+		}
+	}
+
 	/// <summary>A little missile pointing the way it flies: a red-tipped grey body, fins, and an exhaust flame.</summary>
 	void DrawMissile(float radius)
 	{
@@ -503,6 +677,9 @@ public partial class Hazard : Node2D
 	public override void _Draw()
 	{
 		if (move == null) return;
+
+		// A walker is its owner's own puppet, which draws itself.
+		if (move.Special == SpecialKind.Walker && miniRig != null) return;
 
 		float t = ageFrames / (float)Mathf.Max(1, lifeFrames);
 
@@ -551,6 +728,12 @@ public partial class Hazard : Node2D
 		if (move.Special == SpecialKind.Vent)
 		{
 			DrawVent(body.A);
+			return;
+		}
+
+		if (move.Special == SpecialKind.Cloud)
+		{
+			DrawCloud();
 			return;
 		}
 

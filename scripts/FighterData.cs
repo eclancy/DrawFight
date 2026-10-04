@@ -87,6 +87,26 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public int WhiffLagFrames { get; set; } = 0;
 
+	/// <summary>
+	/// Arms that reach out as machinery rather than stretching: steel rods slide out of the
+	/// shoulder and the forearm rides out on the end at its own size. Stretching belongs to Circy;
+	/// a robot's arm telescopes. DoomBot.
+	/// </summary>
+	[Export] public bool TelescopingArms { get; set; } = false;
+
+	/// <summary>
+	/// Past this much heat (0 to 1), every normal attack he lands also sets them burning a little,
+	/// and his claws glow to say so. Zero never. DoomBot's glowing claws; needs HasHeat.
+	/// </summary>
+	[Export] public float HotHitsFrom { get; set; } = 0.0f;
+
+	/// <summary>
+	/// The air jump becomes a dash: this fast, for a fixed few frames, along one of eight
+	/// directions - the way the stick points, or straight ahead with it centred - with no gravity
+	/// while it lasts. Zero keeps an ordinary air jump. EdgeLord's super speed.
+	/// </summary>
+	[Export] public float AirDashSpeed { get; set; } = 0.0f;
+
 	// --- Moveset -------------------------------------------------------------
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
@@ -178,9 +198,10 @@ public partial class FighterData : Resource
 	}
 
 	/// <summary>
-	/// EdgeLord, drawn by Eric: "stretchy arms, super speed, infinite swords." Light and the fastest runner in the
-	/// game, which is also his weakness - light is easy to launch, and his normals are ordinary
-	/// sword swings, so his range comes from his specials. The art is a placeholder until his
+	/// EdgeLord, drawn by Eric: "stretchy arms, super speed, infinite swords." The stretchy arms
+	/// went to Circy, whose thing stretching is; the super speed is the fastest run in the game
+	/// and an air dash in place of a second jump. Light, which is also his weakness - easy to
+	/// launch - and his normals are ordinary sword swings, so his range comes from his specials. The art is a placeholder until his
 	/// own coloured drawing arrives (see tools/art/cut_edgelord.py).
 	/// </summary>
 	public static FighterData EdgeLord()
@@ -201,6 +222,7 @@ public partial class FighterData : Resource
 			VisualScale = 1.08f,
 			// Wild and fast: every pose played further than the library's default.
 			AnimationDrama = 1.35f,
+			AirDashSpeed = 1500.0f,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.EdgeLord(),
 			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());
@@ -222,6 +244,7 @@ public partial class FighterData : Resource
 	/// </summary>
 	public static FighterData DoomBot()
 	{
+		const float Size = 1.75f;
 		var data = new FighterData
 		{
 			DisplayName = "DoomBot",
@@ -233,7 +256,9 @@ public partial class FighterData : Resource
 			JumpForce = 1494.0f,
 			AirJumpForce = 1554.0f,
 			Gravity = 4840.0f,
-			BodySize = new Vector2(84.0f, 146.0f),
+			// 1.75 times the size he was drawn at against everyone else - a factory machine, not a
+			// person - and the box you have to hit grows with him.
+			BodySize = new Vector2(84.0f, 146.0f) * Size,
 			RigPath = "res://fighters/doombot/rig.json",
 			// Long legs and a narrow body read small at the standard height; a little bigger.
 			VisualScale = 1.1f,
@@ -241,9 +266,13 @@ public partial class FighterData : Resource
 			TrailColor = new Color(0.95f, 0.30f, 0.28f),
 			HasHeat = true,
 			WhiffLagFrames = 10,
+			TelescopingArms = true,
+			HotHitsFrom = 0.5f,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBot(),
 			CharacterNormals.DoomBot, CharacterNormals.DoomBotJab());
+		// His moves are authored at the size he used to be; every hitbox grows with him.
+		foreach (MoveData move in data.Moves) move?.ScaleReach(Size);
 		data.Taunt = Taunts.Make(AttackAnim.Spread);
 		return data;
 	}

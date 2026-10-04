@@ -108,15 +108,21 @@ A correct knockback formula with none of the following feels like a physics demo
 polish, they are the feature:
 
 - **Hitlag (freeze frames).** On a connecting hit, *both* fighters freeze for
-  `3 + damage * 0.5` frames while everything else keeps moving. This is the single largest
-  contributor to a hit feeling like it has weight. Do not skip it, do not make it subtle.
+  `2 + damage * 0.3` frames while everything else keeps moving. This is the single largest
+  contributor to a hit feeling like it has weight. Do not skip it. It was `3 + damage * 0.5`,
+  which made every exchange stop dead; shorter lets people throw out an attack and keep moving.
+- **Weaker moves are quicker.** Within a fighter, a move that does clearly less damage must be
+  quicker to throw again (startup to the end of endlag) than one that does more, or nothing
+  separates a poke from a finisher. `RegressionChecks.CheckWeakerIsFaster` warns on any pair that
+  breaks it and prints every fighter's moves by length.
 - **Screen shake** proportional to knockback, capped so that a big hit is dramatic and a jab
   is not nauseating.
 - **Hit sparks** drawn at the exact contact point, scaled by damage.
 - **Launch trails** on high-knockback hits, and a **KO blast** when someone crosses a blast
   zone: a huge burst in their colour at the edge of the screen where they went out, with rays
-  firing back in across the stage. It is pinned to the screen, not the world, because the
-  camera swings back to whoever is left the moment someone is KO'd. The KO'd fighter then
+  firing back in across the stage. It is pinned to the world where they went out, not to the
+  screen. It used to ride with the camera as the camera swung back to whoever was left, and
+  that read as the explosion chasing the action rather than happening somewhere. The KO'd fighter then
   stays gone for 80 frames (`Tuning.RespawnDelayFrames`) before reappearing, so the blast has
   the screen to itself and everyone takes in what happened.
 - **Dodges roll.** A roll or a directional air dodge curls the fighter up and turns a full
@@ -149,12 +155,28 @@ that takes half a second to reach it never gets there in a fight.
   Coming down, gravity starts at 45% and builds to full over 26 frames, and the top fall speed
   is 80% of each fighter's `MaxFallSpeed` (`Tuning.FallSpeedScale` and friends). The top of a
   jump hangs a moment, then speeds up, so falling never feels like being yanked down.
+- **Gravity is 80% of every fighter's own number** (`Tuning.GravityScale`), so everyone hangs in
+  the air a little longer and a fighter knocked off the stage has more time to get back. Jumps
+  and launches are slowed by its square root (`Tuning.JumpScale`) and launch slowdown by the
+  scale itself, so every jump reaches the same height and every launch flies the same path as
+  before - the same KO percents, give or take 5% - only about 12% more slowly.
+- **Feet stay on the floor.** On the ground, after every pose, the body is moved so the lowest
+  point of the legs rests exactly on the floor (`FighterRig.SetPlanted`): a pose never floats a
+  fighter or sinks him, and bending the legs really lowers him. The floor answers back with dust:
+  a puff on landing (bigger the harder he came down), a little kicked back off each running step,
+  and a cloud skidded out in front when he turns hard at speed.
 - Ground: accelerate to a run speed, with a distinct initial-dash speed.
 - **Two jumps** for everyone: the ground jump and one air jump. The air jump is refreshed on
   landing, on grabbing a ledge, and **on being hit** - a fighter knocked off the stage always
   has a jump to get back with once hitstun ends, even if they had spent it before the hit. A
   buffered jump press fires on the first actionable frame, so mashing jump during a launch works.
   The air jump goes about 10% higher than the ground jump.
+- **EdgeLord air-dashes instead** (`FighterData.AirDashSpeed`): his air jump is a burst of 1500
+  pixels a second for 14 frames, along whichever of eight directions the stick points (straight
+  ahead if it is centred), with no gravity until it ends and a third of the speed carried after.
+  It is still the one air jump - the same refreshes, the same once per trip - and attacking out
+  of it keeps half the speed. Straight up it gains about what a jump does; diagonally it trades
+  height for distance, which is the point.
 - **A built platform** (Lug's girder, `SpecialKind.BuildPlatform`) is a soft platform you can
   stand on and jump off, but it is not the ground: standing on it gives back no air jump, no up
   special and no second build. Only real ground or a ledge does - otherwise build, jump, build
@@ -289,8 +311,12 @@ between the hits. Stopping after one jab is still a quick poke.
 ## Crouching
 
 Holding down on the ground crouches: no walking (the stick still turns you round), and the
-hurtbox shrinks to the lower ~60% of the body, so high attacks pass over. Attacking from a
-crouch is the down tilt, and **every fighter's down tilt is a sweep** - low, along the floor.
+hurtbox shrinks to the lower 55% of the body, so a jab or a tilt aimed at the chest passes over.
+The crouch pose folds the body well forward over deeply bent knees, and with planted feet that is
+what drops the body: a crouching fighter is visibly about half height, matching the hurtbox. Attacking from a
+crouch is the down tilt, and **every fighter's down tilt works along the floor**: a sweep, or
+something sent along it - Lug's traffic cone, kicked out to trip people, and DoomBot's MiniBot,
+set down to walk at them. Never a move that hits high.
 Down plus jump on a soft platform is still a drop-through, checked before crouching.
 
 ## Tilts and smashes
@@ -364,6 +390,13 @@ deliberate concession to the audience. A kid under pressure wants something to h
 
 `MoveData` keeps a per-move `Unblockable` flag for the rare special that should ignore all of
 this. Use it sparingly; it is the kind of thing one character has.
+
+**Armour is the other one-character thing** (`MoveData.Armor`). Through a move's windup and
+swing, any hit of that much damage or less still adds its percent but does not flinch him - no
+knockback, no hitstun, just a short freeze and a clang - so a jab cannot stop Lug's
+sledgehammer. It is not a shield: the damage counts, a real hit (more than 8%) still stops him,
+a grab still takes him, and the hard hat that shows it is on comes off in the endlag, where he
+is as open as anyone.
 
 ## Moves are data, not code
 

@@ -58,8 +58,11 @@ SWIFT = {
     'upper_leg': 132,
     'lower_leg': 126,
     'hip_split': 9,
-    'prop': None,
+    # No weapon of his own, but a hand to put one in: an empty prop part, so a move can put the
+    # flaming frying pan in his hand (a French chef, after all) the way Lug swaps his tools.
+    'prop': {'name': 'PropFront', 'style': 'empty', 'length': 4, 'head': 2},
     'tools': ['wings'],
+    'held_tools': ['pan'],
     'colours': {
         'jacket': (52, 48, 58, 255),
         'shirt': (52, 48, 58, 255),
@@ -89,7 +92,7 @@ LUG = {
     'hard_hat': True,
     # Drawings for his construction-site specials, emitted as poses (whole pictures, not rig
     # parts) the way Circy's effect drawings are.
-    'tools': ['wheelbarrow', 'wreckingball', 'girder'],
+    'tools': ['wheelbarrow', 'wreckingball', 'girder', 'cone'],
     # The heavy tools he swaps into his hand for different attacks, tip up and anchored at the
     # grip like any held weapon (see MoveData.PropArt).
     'held_tools': ['sledgehammer', 'pickaxe', 'shovel', 'pipewrench', 'crowbar', 'jackhammer',
@@ -343,6 +346,9 @@ def prop_part(cfg):
 
     cx = w / 2.0
     grip_y = h - PAD
+    if spec.get('style') == 'empty':
+        # Nothing in the hand: a blank part, only there so a move has a hand to put a prop in.
+        return new_part(w, h), (cx, PAD)
     if spec.get('style') == 'sledgehammer':
         # A long yellow fibreglass handle, and a solid steel block set across its end.
         thick_line(draw, (cx, grip_y), (cx, PAD + head * 0.5), stroke * 0.8, ink)
@@ -469,6 +475,16 @@ def held_tool(name, ink, stroke):
                  for i in range(8)]
         d.line(inner + [inner[0]], fill=(250, 240, 230, 255), width=int(s * 0.4))
         d.rectangle([cx - 34, 58, cx + 34, 70], fill=(250, 240, 230, 255))
+    elif name == 'pan':
+        # A frying pan held up by its handle, flambe flames roaring up off it: a black pan with a
+        # steel rim, a wooden handle down to the grip, and fire leaping from the pan's face.
+        handle(150, TOOL_WOOD, 1.0)
+        d.ellipse([cx - 62, 92, cx + 62, 160], fill=(70, 70, 78, 255), outline=ink, width=int(s * 0.7))
+        d.ellipse([cx - 50, 100, cx + 50, 150], fill=(112, 114, 124, 255))
+        for i, (dx, top, wide) in enumerate([(-34, 30, 20), (0, 4, 26), (34, 26, 20), (-16, 50, 16), (18, 46, 16)]):
+            d.polygon([(cx + dx - wide, 118), (cx + dx + wide, 118), (cx + dx + wide * 0.2, top)], fill=(226, 64, 36, 235))
+            d.polygon([(cx + dx - wide * 0.6, 118), (cx + dx + wide * 0.6, 118), (cx + dx, top + 24)], fill=(248, 150, 40, 240))
+            d.polygon([(cx + dx - wide * 0.3, 118), (cx + dx + wide * 0.3, 118), (cx + dx, top + 46)], fill=(252, 218, 90, 245))
     elif name == 'nailgun':
         # A nail gun, muzzle up: an orange body along the top and a grip sticking out to the
         # side at the bottom, so held in the hand the barrel points the way the arm does.
@@ -503,26 +519,50 @@ def tool_art(name, ink, stroke):
         thick_line(d, (150, 110), (140, 160), stroke * 0.5, ink)
         return img
     if name == 'wings':
-        # A pair of wings made of fire, spread wide: each a fan of flame feathers, red at the
-        # root, orange, then yellow at the tips. The middle, where they meet his back, is the anchor.
+        # Two wings made of fire, one each side of his back with a gap between them: each a
+        # bird's wing - a curved leading edge sweeping up and out to a point, with long flame
+        # feathers hanging off it, red outside, orange, then yellow at the heart. The middle of
+        # the picture, where the wings meet his back, is the anchor; the game hinges each wing
+        # there and flaps them separately.
         import math
-        img = new_part(420, 260)
+        img = new_part(860, 330)
         d = ImageDraw.Draw(img)
-        cx, cy = 210, 170
+        cx, cy = 430, 240
+        layers = [((226, 64, 36, 235), 1.0), ((248, 142, 40, 240), 0.78), ((252, 214, 84, 245), 0.5)]
         for side in (-1, 1):
-            for k in range(5):
-                a = math.radians(-160 + k * 22) if side < 0 else math.radians(-20 - k * 22)
-                length = 190 - k * 18
-                tip = (cx + math.cos(a) * length, cy + math.sin(a) * length)
-                side_a = a + math.pi / 2
-                wbase = 26
-                pts = [(cx + math.cos(side_a) * wbase * 0.5, cy + math.sin(side_a) * wbase * 0.5), tip,
-                       (cx - math.cos(side_a) * wbase * 0.5, cy - math.sin(side_a) * wbase * 0.5)]
-                d.polygon(pts, fill=(226, 64, 36, 230))
-                mid = (cx + math.cos(a) * length * 0.8, cy + math.sin(a) * length * 0.8)
-                d.polygon([pts[0], mid, pts[2]], fill=(248, 142, 40, 235))
-                inner = (cx + math.cos(a) * length * 0.5, cy + math.sin(a) * length * 0.5)
-                d.polygon([pts[0], inner, pts[2]], fill=(252, 214, 84, 240))
+            root = (cx + side * 18, cy)
+
+            def edge(t):
+                # The leading edge: up and out from the root to the wingtip.
+                x = root[0] + side * (250 * t)
+                y = root[1] - 190 * math.sin(t * math.pi * 0.5) + 40 * t * t
+                return (x, y)
+
+            for colour, scale in layers:
+                pts = [root]
+                feathers = 7
+                for k in range(feathers + 1):
+                    t = k / float(feathers)
+                    ex, ey = edge(t)
+                    pts.append((root[0] + (ex - root[0]) * (0.55 + 0.45 * scale), root[1] + (ey - root[1]) * (0.55 + 0.45 * scale)))
+                # Back along the trailing edge: a flame feather hanging down and out from each
+                # point, longest out at the tip.
+                for k in range(feathers, -1, -1):
+                    t = k / float(feathers)
+                    ex, ey = edge(t)
+                    ang = math.radians(90 + side * (-10 - 60 * t))
+                    length = (60 + 90 * t) * scale
+                    fx = ex + math.cos(ang) * length
+                    fy = ey + math.sin(ang) * length * 0.8
+                    bx = root[0] + (fx - root[0]) * (0.55 + 0.45 * scale)
+                    by = root[1] + (fy - root[1]) * (0.55 + 0.45 * scale)
+                    pts.append((bx, by))
+                    if k > 0:
+                        # The notch between this feather and the next one in.
+                        nx, ny = edge((k - 0.5) / float(feathers))
+                        pts.append((root[0] + (nx - root[0]) * (0.55 + 0.45 * scale),
+                                    root[1] + (ny - root[1] + 40 * scale) * (0.55 + 0.45 * scale)))
+                d.polygon(pts, fill=colour)
         return img
     if name == 'wreckingball':
         img = new_part(170, 170)
@@ -532,6 +572,27 @@ def tool_art(name, ink, stroke):
         d.chord([12, 12, 158, 158], 150, 210, fill=TOOL_YELLOW)
         d.chord([12, 12, 158, 158], 330, 30, fill=TOOL_YELLOW)
         d.ellipse([40, 34, 74, 62], fill=(186, 192, 206, 255))
+        return img
+    if name == 'cone':
+        # A traffic cone, standing on its square foot: orange, with two white reflective bands.
+        # His down tilt kicks one along the floor for people to trip over.
+        img = new_part(130, 150)
+        d = ImageDraw.Draw(img)
+        top, foot, mid = 10, 124, 65
+
+        def half(y):
+            return 12 + 31 * (y - top) / float(foot - top)
+
+        d.polygon([(mid - half(top), top), (mid + half(top), top), (mid + half(foot), foot), (mid - half(foot), foot)],
+                  fill=TOOL_ORANGE)
+        for y0, y1 in ((42, 60), (82, 100)):
+            d.polygon([(mid - half(y0), y0), (mid + half(y0), y0), (mid + half(y1), y1), (mid - half(y1), y1)],
+                      fill=(250, 248, 240, 255))
+        w = stroke * 0.5
+        thick_line(d, (mid - half(top), top), (mid - half(foot), foot), w, ink)
+        thick_line(d, (mid + half(top), top), (mid + half(foot), foot), w, ink)
+        thick_line(d, (mid - half(top), top), (mid + half(top), top), w, ink)
+        d.rectangle([8, foot, 122, 142], fill=TOOL_ORANGE, outline=ink, width=int(w))
         return img
     if name == 'girder':
         # A steel I-beam seen side on: two flanges and a web with rivet holes.
@@ -625,7 +686,7 @@ def composite_drawing(cfg):
                 (int(neck[0] - head_pivot[0]), int(neck[1] - head_pivot[1])),
                 head_img)
 
-    if cfg['prop']:
+    if cfg['prop'] and cfg['prop'].get('style') != 'empty':
         club, grip = prop_part(cfg)
         # Held up in the photo, so turn the stored (grip-up) club back head-up first.
         club = club.transpose(Image.FLIP_TOP_BOTTOM)
@@ -676,6 +737,8 @@ def build(cfg):
                                             fill=c.get('jeans'), end_fill=c.get('boots'), end_from=0.72))
     if cfg['prop']:
         emit(cfg['prop']['name'], prop_part(cfg))
+        if cfg['prop'].get('style') == 'empty':
+            parts[cfg['prop']['name']]['empty'] = True
 
     torso_len = cfg['torso_len']
     shoulder_y = -torso_len * 0.90
@@ -743,8 +806,10 @@ def build(cfg):
         for tool in cfg['tools']:
             img = tool_art(tool, ink, stroke)
             img.save(os.path.join(poses_dir, tool + '.png'))
-            poses[tool] = {'texture': 'poses/%s.png' % tool,
-                           'anchor': [img.size[0] / 2.0, img.size[1] / 2.0]}
+            # Wings hinge where they meet his back - between their roots - not at the middle of
+            # the picture, so each one flaps about the right point.
+            anchor = [430.0, 240.0] if tool == 'wings' else [img.size[0] / 2.0, img.size[1] / 2.0]
+            poses[tool] = {'texture': 'poses/%s.png' % tool, 'anchor': anchor}
         for tool in cfg.get('held_tools', []):
             img, grip = held_tool(tool, ink, stroke)
             name_ = 'tool_' + tool

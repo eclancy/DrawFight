@@ -211,6 +211,13 @@
     }
   }, 
   "poses": {
+    "cone": {
+      "anchor": [
+        65.0, 
+        75.0
+      ], 
+      "texture": "poses/cone.png"
+    }, 
     "girder": {
       "anchor": [
         180.0, 

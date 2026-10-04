@@ -55,30 +55,4 @@ public static class ControllerAssignment
 		foreach (IInputSource source in sources) labels.Add(Describe(source));
 		return labels;
 	}
-
-	/// <summary>A small preview of a stage, for the select screen. Palette plus platform shapes.</summary>
-	public static void DrawStagePreview(CanvasItem canvas, StageData stage, Rect2 box)
-	{
-		CrayonBrush.SkyBands(canvas, box, stage.SkyTop, stage.SkyBottom, 22);
-
-		// Fit the interesting part of the stage - the blast zone - into the preview box.
-		Rect2 world = stage.BlastZone;
-		float scale = Mathf.Min(box.Size.X / world.Size.X, box.Size.Y / world.Size.Y);
-		Vector2 origin = box.Position + box.Size * 0.5f - world.GetCenter() * scale;
-
-		foreach (StagePlatform platform in stage.Platforms)
-		{
-			var r = new Rect2(origin + platform.Rect.Position * scale, platform.Rect.Size * scale);
-
-			// Clip to the preview box so a full-width floor or a very tall tower cannot bleed
-			// out over the rest of the screen.
-			Rect2 clipped = r.Intersection(box);
-			if (clipped.Size.X < 1.0f || clipped.Size.Y < 1.0f) continue;
-
-			canvas.DrawRect(clipped, platform.OneWay ? stage.PlatformCrayon : stage.GroundCrayon);
-			canvas.DrawRect(clipped, stage.Ink, false, platform.OneWay ? 1.5f : 2.5f);
-		}
-
-		CrayonBrush.InkRect(canvas, box, MenuTheme.Ink, 4.0f, 17, 2.4f);
-	}
 }

@@ -50,11 +50,15 @@ fighter:
 | a hit drawn as electricity (`ActiveFx.Electric`) | `zap` | when the hit goes live - nothing is swung, so no whoosh leads in |
 | a missile (`FxMissile`) / rocket boots (`ActiveFx.Jets`) | `missile` / `jets` | as it leaves / as the flames light |
 | a command grab | `special_hook` | as the arms shoot out; the kick that follows is a swing like any other |
+| a charged dash (the fireball roll) / a fire cloud | `special_fire` | on release, when the roll goes / as the cloud forms; the rain makes no sound of its own, it would be a drumroll |
 | a vent | `steam` or `furnace_blast` | played by the vent itself, because which one depends on his heat |
+| a walker (the MiniBot) | `special_build` as he sets it down; `minibot_pop` when it goes off | the pop is played by the walker, since it goes off long after the move |
 
 Some sounds belong to a fighter's state, not a move, and are played where that state changes:
 `overheat` when a fighter with heat stalls, `burn` on every tick of a burn (quiet, at -20 dBFS,
-because it repeats), and `creak` when rusty joints seize after a miss.
+because it repeats), `creak` when rusty joints seize after a miss, and `clang` when a small hit
+bounces off armour (Lug's hard hat), over the muffled blocked-hit thud. EdgeLord's air dash is a
+quiet `special_dash`.
 
 The whoosh starts 4 frames early on purpose. A whoosh is loudest about a third of the way through,
 so starting early puts the rush of air on the hit, not after it.
