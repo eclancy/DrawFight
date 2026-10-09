@@ -59,6 +59,18 @@ public partial class Hazard : Node2D
 	float riseGround;
 	bool rising;
 
+	// Something that topples (MoveData.Topple): standing on the floor and falling over, how far
+	// it has turned and how fast, and which way - always away from whoever summoned it.
+	bool toppling;
+	float toppleAngle;
+	float toppleSpin;
+	int toppleDir = 1;
+
+	/// <summary>How hard a toppling drawing falls over, in radians a second squared.</summary>
+	const float ToppleAcceleration = 26.0f;
+	/// <summary>The little push it starts falling with, in radians a second.</summary>
+	const float ToppleStart = 1.2f;
+
 	/// <summary>
 	/// Starts this hazard buried in the floor at <paramref name="groundY"/>, to rise out of it.
 	/// Only the part above the floor is drawn or can hit.
@@ -88,6 +100,19 @@ public partial class Hazard : Node2D
 	/// </summary>
 	FighterRig miniRig;
 	bool walkerGrounded;
+
+	// A puddle lies on the floor - its position is the floor's surface - spreading out each way
+	// until it reaches its full size or the floor ends; then it sends spikes up out of the water.
+	float puddleLeft;
+	float puddleRight;
+	bool puddleLeftDone;
+	bool puddleRightDone;
+	bool puddleLanded;
+	int puddleFrames;
+	int spikesSent;
+
+	/// <summary>How fast a puddle spreads along the floor each way, in pixels a second.</summary>
+	const float PuddleSpread = 700.0f;
 
 	/// <summary>Hazards do not hit the fighter who made them for this many frames.</summary>
 	const int OwnerGraceFrames = 8;
@@ -175,6 +200,102 @@ public partial class Hazard : Node2D
 		miniRig.Modulate = flash ? new Color(1.7f, 0.8f, 0.6f) : Colors.White;
 	}
 
+	/// <summary>
+	/// Falls to the floor if it was made in the air, then spreads along it both ways, each side
+	/// stopping at its full size or where the floor ends - it never hangs out over a drop.
+	/// </summary>
+	void TickPuddle(float dt)
+	{
+		if (!puddleLanded)
+		{
+			velocity = new Vector2(0.0f, velocity.Y + gravity * dt);
+			Vector2 next = GlobalPosition + velocity * dt;
+			var ray = PhysicsRayQueryParameters2D.Create(GlobalPosition + new Vector2(0.0f, -4.0f),
+				next + new Vector2(0.0f, 2.0f), 0b11);
+			Godot.Collections.Dictionary hit = GetWorld2D().DirectSpaceState.IntersectRay(ray);
+			if (hit.Count == 0)
+			{
+				GlobalPosition = next;
+				return;
+			}
+			GlobalPosition = new Vector2(GlobalPosition.X, ((Vector2)hit["position"]).Y);
+			velocity = Vector2.Zero;
+			puddleLanded = true;
+		}
+
+		puddleFrames++;
+		float grow = PuddleSpread * dt;
+		if (!puddleLeftDone)
+		{
+			puddleLeft = Mathf.Min(move.FxRadius, puddleLeft + grow);
+			puddleLeftDone = puddleLeft >= move.FxRadius || !PointSolid(new Vector2(GlobalPosition.X - puddleLeft, GlobalPosition.Y + 6.0f), 0b11);
+		}
+		if (!puddleRightDone)
+		{
+			puddleRight = Mathf.Min(move.FxRadius, puddleRight + grow);
+			puddleRightDone = puddleRight >= move.FxRadius || !PointSolid(new Vector2(GlobalPosition.X + puddleRight, GlobalPosition.Y + 6.0f), 0b11);
+		}
+	}
+
+	/// <summary>
+	/// Everyone but its owner standing in the puddle slips; and every RainInterval frames a spike
+	/// comes up out of it - every other one right under someone standing in it, the rest anywhere
+	/// along it, the spot hashed so it is never random.
+	/// </summary>
+	void PuddleHits()
+	{
+		if (!puddleLanded) return;
+		Fighter wading = null;
+		foreach (Fighter other in match.Fighters)
+		{
+			if (other == owner || !other.IsInPlay || !other.IsOnFloor()) continue;
+			Rect2 body = other.BodyRect();
+			if (Mathf.Abs(body.End.Y - GlobalPosition.Y) > 14.0f) continue;
+			if (body.End.X < GlobalPosition.X - puddleLeft || body.Position.X > GlobalPosition.X + puddleRight) continue;
+			other.Slip();
+			wading ??= other;
+		}
+
+		int interval = Mathf.Max(1, move.RainInterval);
+		if (move.RainDrop == null || puddleFrames % interval != interval / 2 || ageFrames > lifeFrames - 20) return;
+		float x = spikesSent % 2 == 1 && wading != null
+			? wading.GlobalPosition.X
+			: GlobalPosition.X + Mathf.Lerp(-puddleLeft, puddleRight, (CrayonBrush.Noise(spikesSent * 7 + 5, 61) + 1.0f) * 0.5f);
+		x = Mathf.Clamp(x, GlobalPosition.X - puddleLeft, GlobalPosition.X + puddleRight);
+		spikesSent++;
+		Hazard spike = match.SpawnHazard(owner, move.RainDrop, new Vector2(x, GlobalPosition.Y),
+			new Vector2(0.0f, -move.RainDrop.SpecialSpeed));
+		spike.RiseFrom(GlobalPosition.Y);
+	}
+
+	/// <summary>
+	/// The puddle: a flat pool of the blue Elim drew his tears in, rippling a little and drying
+	/// away at the end. Edged in a deep blue rather than black - only fighters own black (see
+	/// .ai/art-direction.md). The ripple is hashed, never random.
+	/// </summary>
+	void DrawPuddle()
+	{
+		if (!puddleLanded || puddleLeft + puddleRight < 4.0f) return;
+		// Like every trap, a puddle never fades: it is there, then gone (Eric, 2026-10-04).
+		const float fade = 1.0f;
+		const int Steps = 28;
+		const float Depth = 11.0f;
+		var outline = new Vector2[Steps * 2 + 1];
+		for (int i = 0; i <= Steps; i++)
+		{
+			float t = i / (float)Steps;
+			float x = Mathf.Lerp(-puddleLeft, puddleRight, t);
+			float ripple = 1.0f + 0.25f * CrayonBrush.Noise(ageFrames / 5 + i, 71);
+			outline[i] = new Vector2(x, -Depth * Mathf.Sin(Mathf.Pi * t) * ripple);
+			outline[Steps * 2 - i] = new Vector2(x, Depth * 0.3f * Mathf.Sin(Mathf.Pi * t));
+		}
+		var fill = new Vector2[Steps * 2];
+		System.Array.Copy(outline, fill, Steps * 2);
+		DrawColoredPolygon(fill, new Color(0.10f, 0.40f, 1.0f, 0.9f * fade));
+		outline[Steps * 2] = outline[0];
+		DrawPolyline(outline, new Color(0.05f, 0.20f, 0.55f, fade), 3.0f);
+	}
+
 	bool PointSolid(Vector2 at, uint mask)
 	{
 		var query = new PhysicsPointQueryParameters2D { Position = at, CollisionMask = mask };
@@ -226,6 +347,14 @@ public partial class Hazard : Node2D
 		else if (move.Special == SpecialKind.Walker)
 		{
 			TickWalker(dt);
+		}
+		else if (move.Special == SpecialKind.Puddle)
+		{
+			TickPuddle(dt);
+		}
+		else if (rising && move.Topple)
+		{
+			if (TickTopple(dt)) return;
 		}
 		else
 		{
@@ -284,6 +413,56 @@ public partial class Hazard : Node2D
 			return;
 		}
 		if (ageFrames >= lifeFrames || offStage) Expire();
+	}
+
+	/// <summary>
+	/// Up out of the floor, dead stop standing on it, then over: the axe falls outward faster and
+	/// faster until it lies on the floor - and there it is gone, in a smash. True once it is gone.
+	/// </summary>
+	bool TickTopple(float dt)
+	{
+		float half = ArtHalfHeight();
+		if (!toppling)
+		{
+			GlobalPosition += new Vector2(0.0f, -Mathf.Abs(move.SpecialSpeed) * dt);
+			float standing = riseGround - half;
+			if (GlobalPosition.Y > standing) return false;
+
+			GlobalPosition = new Vector2(GlobalPosition.X, standing);
+			velocity = Vector2.Zero;
+			toppling = true;
+			toppleSpin = ToppleStart;
+			float away = owner != null && IsInstanceValid(owner) ? GlobalPosition.X - owner.GlobalPosition.X : 0.0f;
+			toppleDir = Mathf.Abs(away) > 1.0f ? (away > 0.0f ? 1 : -1) : (FlipArt ? -1 : 1);
+			return false;
+		}
+
+		toppleSpin += ToppleAcceleration * dt;
+		toppleAngle += toppleSpin * dt;
+		if (toppleAngle < Mathf.Pi * 0.5f) return false;
+
+		// Down: the head hits the floor a full length out from where it stood. A smash of dust
+		// and a jolt, and it is simply gone - nothing fades.
+		toppleAngle = Mathf.Pi * 0.5f;
+		Vector2 landed = new Vector2(GlobalPosition.X + toppleDir * half * 1.6f, riseGround);
+		match?.Dust(landed, half * 1.1f, toppleDir * 260.0f);
+		match?.Shake(22.0f);
+		SfxPlayer.At("special_quake", landed, 0.06f);
+		QueryHits();
+		Expire();
+		return true;
+	}
+
+	/// <summary>
+	/// The part of a drawing up out of the floor that hits: the top of it - the axe head - and,
+	/// once it is toppling, wherever that head has swung to.
+	/// </summary>
+	Vector2 RisenHead(float radius)
+	{
+		float half = ArtHalfHeight();
+		if (!toppling) return GlobalPosition + new Vector2(0.0f, -half + radius);
+		var foot = new Vector2(GlobalPosition.X, riseGround);
+		return foot + new Vector2(0.0f, -(half * 2.0f - radius)).Rotated(toppleDir * toppleAngle);
 	}
 
 	/// <summary>Whether there is floor just under this hazard's height at <paramref name="x"/>.</summary>
@@ -354,6 +533,13 @@ public partial class Hazard : Node2D
 			return;
 		}
 
+		if (move.Special == SpecialKind.Puddle)
+		{
+			// The puddle never hits anyone: it trips them up, and what comes out of it hits.
+			PuddleHits();
+			return;
+		}
+
 		if (move.Special == SpecialKind.Walker)
 		{
 			// The MiniBot never hits anyone: it goes off, and the blast does.
@@ -419,7 +605,7 @@ public partial class Hazard : Node2D
 		{
 			// What hits is the top of the drawing - the axe head - and only once it is up out
 			// of the floor.
-			Vector2 top = GlobalPosition + new Vector2(0.0f, -ArtHalfHeight() + radius);
+			Vector2 top = RisenHead(radius);
 			nearest = new Vector2(
 				Mathf.Clamp(top.X, body.Position.X, body.End.X),
 				Mathf.Clamp(top.Y, body.Position.Y, body.End.Y));
@@ -480,7 +666,15 @@ public partial class Hazard : Node2D
 			if (move.FxAlongFlight && velocity.LengthSquared() > 1.0f) angle = velocity.Angle() + Mathf.Pi * 0.5f;
 			else if (move.FxSpin != 0.0f) angle = Mathf.DegToRad(move.FxSpin * ageFrames) * (velocity.X < 0.0f ? -1.0f : 1.0f);
 
-			DrawSetTransformMatrix(new Transform2D(angle, new Vector2(FlipArt ? -s : s, s), 0.0f, Vector2.Zero));
+			Vector2 origin = Vector2.Zero;
+			if (toppling)
+			{
+				// Falling over about its foot, where it stands on the floor.
+				angle = toppleDir * toppleAngle;
+				var foot = new Vector2(0.0f, ArtHalfHeight());
+				origin = foot - foot.Rotated(angle);
+			}
+			DrawSetTransformMatrix(new Transform2D(angle, new Vector2(FlipArt ? -s : s, s), 0.0f, origin));
 			if (rising)
 			{
 				// Only what has come up through the floor is drawn; the rest is still underground.
@@ -681,11 +875,19 @@ public partial class Hazard : Node2D
 		// A walker is its owner's own puppet, which draws itself.
 		if (move.Special == SpecialKind.Walker && miniRig != null) return;
 
+		if (move.Special == SpecialKind.Puddle)
+		{
+			DrawPuddle();
+			return;
+		}
+
 		float t = ageFrames / (float)Mathf.Max(1, lifeFrames);
 
-		// A trap fades as it burns out, so "this is about to stop hurting" is visible.
+		// A lingering effect - a quake, a vent, a patch of fire - fades as it burns out, so "this is
+		// about to stop hurting" is visible. A trap or a drawing never does (a planted sword, a
+		// traffic cone, a risen axe): it is there and then simply gone. Eric's calls, 2026-10-04.
 		Color body = move.FxColor;
-		if (Lingers) body.A = Mathf.Lerp(1.0f, 0.35f, t);
+		if (Lingers && move.FxTexture == null && move.Special != SpecialKind.Trap) body.A = Mathf.Lerp(1.0f, 0.35f, t);
 
 		float wobble = 1.0f + CrayonBrush.Noise(ageFrames / 4, 3) * 0.10f;
 		float radius = move.FxRadius * wobble;

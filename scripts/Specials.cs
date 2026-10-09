@@ -81,6 +81,8 @@ public static class Specials
 		HitboxOffset = new Vector2(0.0f, -30.0f), HitboxRadius = 54.0f,
 		Special = SpecialKind.Recovery,
 		Flight = true, SpecialRise = 560.0f,
+		// Attack or special out of it at any point, or press down to drop out of it.
+		CancelIntoAttacks = true,
 		HeldArt = "wings", HeldArtOffset = new Vector2(-12.0f, -50.0f), HeldArtSize = 400.0f,
 		BurnFrames = 45, BurnDamage = 2.0f,
 		FxColor = new Color(0.99f, 0.62f, 0.24f), FxRadius = 42.0f,
@@ -431,21 +433,24 @@ public static class Specials
 	/// This is the move that most needs its sound: a ring rising through the glint that peaks on
 	/// the frame he goes (special_glint), then a sharp cut (special_blink).
 	///
-	/// With one of his planted blades up ahead and within about 700 pixels, he goes to it instead
-	/// - however far, up or down - and pulls it out of the ground: his blades are anchors.
+	/// With one of his planted blades up ahead and no further than the blink itself goes, he goes
+	/// to it instead - up or down - and pulls it out of the ground: his blades are anchors. The
+	/// blink was doubled to about 660 pixels, and the search for a blade with it (Eric's call,
+	/// 2026-10-04).
 	/// </summary>
 	static MoveData BlurSlash() => new MoveData
 	{
 		MoveName = "Blur Slash",
 		Anim = AttackAnim.Lunge,
-		StartupFrames = 22, ActiveFrames = 5, EndlagFrames = 22,
+		StartupFrames = 22, EndlagFrames = 22,
 		Damage = 11.0f, BaseKnockback = 36.0f, KnockbackGrowth = 0.85f,
 		LaunchAngleDegrees = 40.0f,
 		HitboxOffset = new Vector2(24.0f, -10.0f), HitboxRadius = 60.0f,
 		Special = SpecialKind.Dash,
 		Blink = true, OncePerAirtime = true, BlinkToTrap = true,
-		// About 350px in five frames.
-		SpecialSpeed = 4200.0f,
+		// About 660px in six frames.
+		ActiveFrames = 6,
+		SpecialSpeed = 6600.0f,
 		FxColor = new Color(0.97f, 0.93f, 0.70f), FxRadius = 40.0f,
 	};
 
@@ -466,6 +471,8 @@ public static class Specials
 		Special = SpecialKind.Recovery,
 		// Launches him a long way: his arm reaches further than a jump does.
 		DelayedLaunch = true, TetherLength = 480.0f, TetherArt = "sword_dagger",
+		// Thrown wherever the stick points, up and forward when it is left alone.
+		StickAimed = true,
 		SpecialRise = 1920.0f, SpecialSpeed = 780.0f,
 		GrabThrow = new MoveData
 		{
@@ -539,14 +546,21 @@ public static class Specials
 	};
 
 	/// <summary>
-	/// Side: charges forward behind a wheelbarrow that scoops up whoever is in the way and
-	/// dumps them up and forward. Slow to get going, hard to stop once it is.
+	/// Side: he pulls out a wheelbarrow, gets behind it, and only then charges forward with it -
+	/// scooping up whoever is in the way and dumping them up and forward. The wind-up is the
+	/// warning, and it means someone standing right in front of him is in the barrow's path, not
+	/// behind it (MoveData.DashAfterStartup; Eric's call, 2026-10-04). Hard to stop once going.
 	/// </summary>
 	static MoveData WheelbarrowCharge() => new MoveData
 	{
 		MoveName = "Wheelbarrow Charge",
-		Anim = AttackAnim.Lunge,
-		StartupFrames = 14, ActiveFrames = 12, EndlagFrames = 30,
+		Anim = AttackAnim.PushBarrow,
+		StartupFrames = 18, ActiveFrames = 16, EndlagFrames = 30,
+		DashAfterStartup = true,
+		// Both hands on the barrow's handles, not on his sledgehammer, and his legs running
+		// under him while he drives it.
+		PropArt = "-",
+		RunningLegs = true,
 		Damage = 14.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.95f,
 		LaunchAngleDegrees = 68.0f,
 		HitboxOffset = new Vector2(96.0f, 10.0f), HitboxRadius = 60.0f,
@@ -610,5 +624,122 @@ public static class Specials
 		PlatformHoldFrames = 80, PlatformWidth = 200.0f,
 		FxColor = new Color(0.70f, 0.26f, 0.22f), FxRadius = 40.0f,
 		FxTexture = LugFx("girder"),
+	};
+
+	// =========================================================================
+	// TRIGUY - drawn and designed by Elim (fighters/triguy/sheet.md). "A triangle with limbs, a
+	// face, and a top hat." Amazing at being "reeeaaaaally fast"; terrible at standing still.
+	// Every special is one of Elim's own drawings: his three taunt poses, his crying (and the
+	// spikes that come up out of the puddle), his trampoline, and the jagged outline he goes
+	// invincible inside.
+	// =========================================================================
+
+	// The crying is his down special and the point attack his side special - the other way round
+	// from his sheet, on Eric's call (2026-10-04).
+	public static MoveData[] Triguy() => new[] { ShowOff(), PointPoke(), Trampoline(), Crybaby() };
+
+	/// <summary>His three taunt poses: the Sonic Adventure pose, the surprised face, and the POG face.</summary>
+	public static readonly string[] TriguyPoses = { "taunt_pose", "taunt_surprised", "taunt_pog" };
+
+	/// <summary>One of Elim's Triguy drawings as effect art - his normals use them too.</summary>
+	public static Texture2D TriguyFx(string name)
+	{
+		string path = $"res://fighters/triguy/poses/{name}.png";
+		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
+	}
+
+	/// <summary>
+	/// Neutral: the coolest move. "If he taunts he gets a couple seconds of invincibility. He has 3
+	/// taunts and they play randomly." He strikes one of his three poses, picked at random, inside
+	/// his jagged outline, and nothing can touch him for most of a second - and the outline pops
+	/// out as it appears, knocking back anyone right on top of him. Then the pose holds a moment
+	/// longer with the outline gone, which is when he can be hit: wait it out and punish that.
+	/// Not on the taunt button, which never does anything; there, the poses are only for show.
+	/// "A couple of seconds" became a little under one - a fighter who cannot be hit for two
+	/// whole seconds whenever he likes cannot lose.
+	/// </summary>
+	static MoveData ShowOff() => new MoveData
+	{
+		MoveName = "Show Off",
+		Anim = AttackAnim.Spread,
+		StartupFrames = 4, ActiveFrames = 4, EndlagFrames = 62,
+		Damage = 3.0f, BaseKnockback = 55.0f, KnockbackGrowth = 0.25f,
+		LaunchAngleDegrees = 45.0f, LaunchAway = true,
+		HitboxOffset = new Vector2(0.0f, -10.0f), HitboxRadius = 80.0f,
+		PoseArts = TriguyPoses,
+		InvincibleFrames = 52, AuraArt = "outline",
+		Sound = "special_glint",
+		FxColor = new Color(0.97f, 0.97f, 0.95f), FxRadius = 0.0f,
+	};
+
+	/// <summary>
+	/// Down: "He starts crying and then a giant puddle of water forms around him, which makes the
+	/// floor slippery, and spikes occasionally come out of the water." He stands and cries (Elim's
+	/// drawing of it) while the puddle spreads out along the floor both ways; it lies there for
+	/// five seconds. Anyone else in it can barely stop or turn, and every two-thirds of a second a
+	/// spike comes up out of it - every other one right under whoever is standing in it. One
+	/// puddle at a time.
+	/// </summary>
+	static MoveData Crybaby() => new MoveData
+	{
+		MoveName = "Crybaby",
+		Anim = AttackAnim.Spread,
+		StartupFrames = 16, ActiveFrames = 2, EndlagFrames = 24,
+		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
+		HitboxRadius = 0.0f,
+		PoseArts = new[] { "crying" },
+		Special = SpecialKind.Puddle,
+		SpecialLifetime = 300, SpecialGravity = 3000.0f, MaxOut = 1,
+		RainDrop = PuddleSpike(), RainInterval = 40,
+		FxColor = new Color(0.10f, 0.40f, 1.0f), FxRadius = 260.0f,
+	};
+
+	/// <summary>One of the spikes that come up out of his puddle: Elim's grey spike, rising and sinking back.</summary>
+	static MoveData PuddleSpike() => new MoveData
+	{
+		MoveName = "Puddle Spike",
+		StartupFrames = 1, ActiveFrames = 1, EndlagFrames = 1,
+		Damage = 7.0f, BaseKnockback = 42.0f, KnockbackGrowth = 0.55f,
+		LaunchAngleDegrees = 84.0f,
+		Special = SpecialKind.Projectile, FromGround = true,
+		SpecialSpeed = 1500.0f, SpecialGravity = 7000.0f, SpecialLifetime = 40,
+		FxColor = new Color(0.31f, 0.31f, 0.31f), FxRadius = 26.0f,
+		FxTexture = TriguyFx("spike"), FxArtSize = 110.0f,
+	};
+
+	/// <summary>
+	/// Up: the recovery. "He has a trampoline he can place whenever he wants, midair or not. It
+	/// bounces him up and he can move while bouncing." Elim's trampoline appears under him, his
+	/// fall stops on the mat, and it throws him high - higher than a jump - with the stick
+	/// steering him all the way. Anyone standing on the trampoline when it springs is bounced up
+	/// too.
+	/// </summary>
+	static MoveData Trampoline() => new MoveData
+	{
+		MoveName = "Trampoline",
+		Anim = AttackAnim.Uair,
+		StartupFrames = 7, ActiveFrames = 3, EndlagFrames = 12,
+		Damage = 5.0f, BaseKnockback = 50.0f, KnockbackGrowth = 0.4f,
+		LaunchAngleDegrees = 88.0f,
+		HitboxOffset = new Vector2(0.0f, 64.0f), HitboxRadius = 50.0f,
+		Special = SpecialKind.Recovery,
+		Bounce = true, SpecialRise = 1850.0f,
+		FxColor = new Color(0.10f, 0.40f, 1.0f), FxRadius = 0.0f,
+	};
+
+	/// <summary>
+	/// Side: "a point attack where he sticks the top of his triangle out and can hit someone. It is
+	/// a short-ranged attack." He lunges forward point first - quick, and it knocks them away,
+	/// which is how it protects him.
+	/// </summary>
+	static MoveData PointPoke() => new MoveData
+	{
+		MoveName = "Point",
+		Anim = AttackAnim.PointThrust,
+		StartupFrames = 5, ActiveFrames = 4, EndlagFrames = 18,
+		Damage = 9.0f, BaseKnockback = 44.0f, KnockbackGrowth = 0.75f,
+		LaunchAngleDegrees = 38.0f,
+		HitboxOffset = new Vector2(96.0f, -6.0f), HitboxRadius = 36.0f,
+		FxColor = new Color(0.97f, 0.97f, 0.95f), FxRadius = 0.0f,
 	};
 }

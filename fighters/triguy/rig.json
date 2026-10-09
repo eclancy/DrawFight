@@ -1,0 +1,229 @@
+{
+  "artist": "Elim", 
+  "backLimbDarken": 1.0, 
+  "bones": [
+    {
+      "name": "Hip", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": null, 
+      "part": null
+    }, 
+    {
+      "name": "LegBack_Upper", 
+      "offset": [
+        -288.0, 
+        42.5
+      ], 
+      "parent": "Hip", 
+      "part": "LegBack_Upper"
+    }, 
+    {
+      "name": "LegBack_Lower", 
+      "offset": [
+        30.5, 
+        448.7
+      ], 
+      "parent": "LegBack_Upper", 
+      "part": "LegBack_Lower"
+    }, 
+    {
+      "name": "LegFront_Upper", 
+      "offset": [
+        288.0, 
+        -42.5
+      ], 
+      "parent": "Hip", 
+      "part": "LegFront_Upper"
+    }, 
+    {
+      "name": "LegFront_Lower", 
+      "offset": [
+        -89.5, 
+        510.2
+      ], 
+      "parent": "LegFront_Upper", 
+      "part": "LegFront_Lower"
+    }, 
+    {
+      "name": "Torso", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "parent": "Hip", 
+      "part": "Torso"
+    }, 
+    {
+      "name": "ArmBack_Upper", 
+      "offset": [
+        -444.0, 
+        78.5
+      ], 
+      "parent": "Torso", 
+      "part": "ArmBack_Upper"
+    }, 
+    {
+      "name": "ArmBack_Lower", 
+      "offset": [
+        0.5, 
+        338.9
+      ], 
+      "parent": "ArmBack_Upper", 
+      "part": "ArmBack_Lower"
+    }, 
+    {
+      "name": "Head", 
+      "offset": [
+        0, 
+        -1252.5
+      ], 
+      "parent": "Torso", 
+      "part": null
+    }, 
+    {
+      "name": "ArmFront_Upper", 
+      "offset": [
+        830.0, 
+        -133.5
+      ], 
+      "parent": "Torso", 
+      "part": "ArmFront_Upper"
+    }, 
+    {
+      "name": "ArmFront_Lower", 
+      "offset": [
+        19.5, 
+        399.4
+      ], 
+      "parent": "ArmFront_Upper", 
+      "part": "ArmFront_Lower"
+    }
+  ], 
+  "canonicalHeight": 1252.5, 
+  "figureHeight": 2185, 
+  "legLength": 958.9, 
+  "name": "Triguy", 
+  "parts": {
+    "ArmBack_Lower": {
+      "pivot": [
+        48.0, 
+        24.39
+      ], 
+      "texture": "parts/ArmBack_Lower.png"
+    }, 
+    "ArmBack_Upper": {
+      "pivot": [
+        29.5, 
+        15.5
+      ], 
+      "texture": "parts/ArmBack_Upper.png"
+    }, 
+    "ArmFront_Lower": {
+      "pivot": [
+        52.0, 
+        24.86
+      ], 
+      "texture": "parts/ArmFront_Lower.png"
+    }, 
+    "ArmFront_Upper": {
+      "pivot": [
+        32.5, 
+        17.5
+      ], 
+      "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "LegBack_Lower": {
+      "pivot": [
+        69.5, 
+        24.7
+      ], 
+      "texture": "parts/LegBack_Lower.png"
+    }, 
+    "LegBack_Upper": {
+      "pivot": [
+        25.0, 
+        17.0
+      ], 
+      "texture": "parts/LegBack_Upper.png"
+    }, 
+    "LegFront_Lower": {
+      "pivot": [
+        93.5, 
+        24.19
+      ], 
+      "texture": "parts/LegFront_Lower.png"
+    }, 
+    "LegFront_Upper": {
+      "pivot": [
+        117.0, 
+        17.0
+      ], 
+      "texture": "parts/LegFront_Upper.png"
+    }, 
+    "Torso": {
+      "pivot": [
+        719.0, 
+        1266.5
+      ], 
+      "texture": "parts/Torso.png"
+    }
+  }, 
+  "poses": {
+    "crying": {
+      "anchor": [
+        1054.0, 
+        2487
+      ], 
+      "figureHeight": 2473, 
+      "texture": "poses/crying.png"
+    }, 
+    "outline": {
+      "anchor": [
+        1005.5, 
+        1059.5
+      ], 
+      "texture": "poses/outline.png"
+    }, 
+    "spike": {
+      "anchor": [
+        402.5, 
+        592.5
+      ], 
+      "texture": "poses/spike.png"
+    }, 
+    "taunt_pog": {
+      "anchor": [
+        1051.5, 
+        2611
+      ], 
+      "figureHeight": 2597, 
+      "texture": "poses/taunt_pog.png"
+    }, 
+    "taunt_pose": {
+      "anchor": [
+        821.0, 
+        1594
+      ], 
+      "figureHeight": 1580, 
+      "texture": "poses/taunt_pose.png"
+    }, 
+    "taunt_surprised": {
+      "anchor": [
+        581.5, 
+        2354
+      ], 
+      "figureHeight": 2340, 
+      "texture": "poses/taunt_surprised.png"
+    }, 
+    "trampoline": {
+      "anchor": [
+        566.5, 
+        32
+      ], 
+      "texture": "poses/trampoline.png"
+    }
+  }
+}

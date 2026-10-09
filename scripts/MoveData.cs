@@ -85,6 +85,12 @@ public enum SpecialKind
 	Vent,
 
 	/// <summary>
+	/// Everyone's grab (Grabs.Grab): a short reach that catches whoever is right in front, blocking
+	/// or not. Held, the stick picks one of the fighter's four throws (FighterData.Throws).
+	/// </summary>
+	Grab,
+
+	/// <summary>
 	/// Forms a cloud at <see cref="MoveData.HitboxOffset"/> - well above the fighter - that hangs
 	/// there for its lifetime dropping <see cref="MoveData.RainDrop"/> every
 	/// <see cref="MoveData.RainInterval"/> frames, scattered across its width. The cloud itself
@@ -101,6 +107,16 @@ public enum SpecialKind
 	/// down tilt.
 	/// </summary>
 	Walker,
+
+	/// <summary>
+	/// Leaves a puddle on the floor under the fighter, falling to it if made in the air, which
+	/// spreads out both ways to <see cref="MoveData.FxRadius"/> - stopping where the floor does -
+	/// and lies there for its lifetime. Anyone else standing in it slips: their feet barely grip.
+	/// Every <see cref="MoveData.RainInterval"/> frames it sends <see cref="MoveData.RainDrop"/> up
+	/// out of the water somewhere along it, half the time under someone standing in it. The
+	/// puddle never hits; what comes up out of it does. Triguy's crying.
+	/// </summary>
+	Puddle,
 }
 
 /// <summary>
@@ -380,7 +396,7 @@ public partial class MoveData : Resource
 	[Export] public float Armor { get; set; } = 0.0f;
 
 	/// <summary>
-	/// A trap that is kicked rather than set down: it leaves along the floor at SpecialSpeed and
+	/// A trap that is shoved rather than set down: it leaves along the floor at SpecialSpeed and
 	/// skids to a stop, losing this many pixels per second every second, and drops off any edge it
 	/// slides over. Lug's traffic cone. Zero is a trap that stays where it is put.
 	/// </summary>
@@ -395,6 +411,30 @@ public partial class MoveData : Resource
 	/// EdgeLord's Blur Slash.
 	/// </summary>
 	[Export] public bool BlinkToTrap { get; set; } = false;
+
+	/// <summary>
+	/// Whole drawings from the fighter's rig, one picked at random each time the move is used and
+	/// shown in place of the puppet from start to end - a pose struck. Triguy's three taunts,
+	/// which are his taunt and his neutral special both. Empty plays the move on the puppet.
+	/// </summary>
+	[Export] public string[] PoseArts { get; set; } = System.Array.Empty<string>();
+
+	/// <summary>
+	/// Frames, from the end of the startup, that nothing can hit or catch the fighter, and a drawing
+	/// (<see cref="AuraArt"/>) stands behind him to say so. Zero is never. Triguy's neutral special.
+	/// </summary>
+	[Export] public int InvincibleFrames { get; set; } = 0;
+
+	/// <summary>A drawing from the fighter's rig shown behind him while the move makes him invincible.</summary>
+	[Export] public string AuraArt { get; set; } = "";
+
+	/// <summary>
+	/// A recovery that bounces: through the startup a trampoline appears under the fighter and his
+	/// fall stops on it; on the first active frame it throws him up at <see cref="SpecialRise"/>,
+	/// and the stick steers him through the rest. The hitbox, under his feet, bounces anyone on
+	/// the trampoline up too. Triguy's trampoline.
+	/// </summary>
+	[Export] public bool Bounce { get; set; } = false;
 
 	/// <summary>
 	/// How many of this move's hazards can be out at once. Making another removes the oldest.
@@ -453,6 +493,57 @@ public partial class MoveData : Resource
 	/// </summary>
 	[Export] public bool FromGround { get; set; } = false;
 
+	/// <summary>
+	/// With <see cref="FromGround"/> and drawn art: it comes up fast at SpecialSpeed, stops dead
+	/// the moment it stands on the floor, then topples outward like a felled tree - and is gone
+	/// where it lands, with a smash of dust and a shake, never fading. It hits on the way up and
+	/// with its head as it comes down. EdgeLord's axes. Eric's call, 2026-10-04.
+	/// </summary>
+	[Export] public bool Topple { get; set; } = false;
+
+	/// <summary>
+	/// The fighter dives: through the startup the whole puppet tips over until it lies flat,
+	/// head first, and through the active frames it spins along its length like a corkscrew,
+	/// then rights itself through the endlag. With <see cref="ActiveFx"/> Flame he is wrapped
+	/// in fire the whole way. Flambe's Swan Dive.
+	/// </summary>
+	[Export] public bool Corkscrew { get; set; } = false;
+
+	/// <summary>
+	/// A dash that waits: he stops and gets set through the startup, and only sets off on the
+	/// first active frame - so it is seen coming, and someone standing right next to him is in
+	/// front of it rather than already behind it. Lug's wheelbarrow. Eric's call, 2026-10-04.
+	/// </summary>
+	[Export] public bool DashAfterStartup { get; set; } = false;
+
+	/// <summary>
+	/// An up special he can get out of: once it is going, pressing attack or special does that
+	/// attack straight out of it, and pressing down just stops it. Using it never leaves him spent
+	/// (Fighter.IsHelpless) - only the up special itself is gone until he lands. Flambe's wings.
+	/// Eric's call, 2026-10-04.
+	/// </summary>
+	[Export] public bool CancelIntoAttacks { get; set; } = false;
+
+	/// <summary>
+	/// The legs run while the rest of the body holds the move's pose - pushing something along at
+	/// a run. The run cycle plays on the legs at his speed. Lug's wheelbarrow.
+	/// </summary>
+	[Export] public bool RunningLegs { get; set; } = false;
+
+	/// <summary>
+	/// A fighter who carries his weapon on his shoulder (FighterData.ShouldersProp) keeps it there
+	/// through this move. Lug's head-first barge.
+	/// </summary>
+	[Export] public bool CarryOnShoulder { get; set; } = false;
+
+	/// <summary>
+	/// A tether recovery thrown wherever the stick points (anywhere in the upper half), steerable
+	/// right up to the moment it pulls him - turning him round if it points behind him. With the
+	/// stick left alone it goes up and forward as authored. EdgeLord's Chain Blade (Eric's call,
+	/// 2026-10-04).
+	/// </summary>
+	[Export] public bool StickAimed { get; set; } = false;
+
 	/// <summary>A lingering hazard that is used up by its first hit - a planted blade.</summary>
 	[Export] public bool SpentOnHit { get; set; } = false;
 
@@ -482,6 +573,12 @@ public partial class MoveData : Resource
 	/// <summary>What a <see cref="SpecialKind.Cloud"/> drops. Not exported, like GrabThrow: built in code.</summary>
 	public MoveData RainDrop;
 
+	/// <summary>
+	/// On a throw: a projectile fired from his hand after whoever he throws, along the throw - so
+	/// a throw can be a two-hit combo. EdgeLord's up throw sends a sword up after them.
+	/// </summary>
+	public MoveData FollowShot;
+
 	/// <summary>Frames between drops from a <see cref="SpecialKind.Cloud"/>.</summary>
 	[Export] public int RainInterval { get; set; } = 8;
 
@@ -493,9 +590,10 @@ public partial class MoveData : Resource
 	/// <see cref="Beam"/> comes out of and stays attached to. Empty, or a drawing without that
 	/// spot, means the hands. DoomBot's eye laser comes out of his "eye".
 	/// </summary>
+	/// <remarks>Works for a plain projectile too: it is fired from that spot (DoomBot's missile).</remarks>
 	[Export] public string BeamFrom { get; set; } = "";
 
-	/// <summary>An extra drawing from the rig shown for this move - Lug's hard hat on a barge.</summary>
+	/// <summary>An extra drawing from the rig shown for this move - the glint on Lug's hard hat through a barge.</summary>
 	[Export] public string ShowExtra { get; set; } = "";
 
 	/// <summary>
@@ -594,6 +692,10 @@ public partial class MoveData : Resource
 			SlideFriction = SlideFriction,
 			Burst = Burst?.Scaled(scale),
 			BlinkToTrap = BlinkToTrap,
+			PoseArts = PoseArts,
+			InvincibleFrames = InvincibleFrames,
+			AuraArt = AuraArt,
+			Bounce = Bounce,
 			MaxOut = MaxOut,
 			Spin = Spin,
 			RehitFrames = RehitFrames,
@@ -606,6 +708,13 @@ public partial class MoveData : Resource
 			ShotAngles = ShotAngles,
 			Mirrored = Mirrored,
 			FromGround = FromGround,
+			Topple = Topple,
+			Corkscrew = Corkscrew,
+			DashAfterStartup = DashAfterStartup,
+			CancelIntoAttacks = CancelIntoAttacks,
+			RunningLegs = RunningLegs,
+			CarryOnShoulder = CarryOnShoulder,
+			StickAimed = StickAimed,
 			SpentOnHit = SpentOnHit,
 			ShowExtra = ShowExtra,
 			ChargeWithSpecial = ChargeWithSpecial,

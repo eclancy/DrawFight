@@ -40,12 +40,12 @@ follows weight — light fighters get quick multi-hit strings, heavies get two s
 
 | | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, construction) |
 |---|---|---|---|
-| theme | a fire-punk French chef: mohawk, spiked leather jacket, flames on everything; a slow charged fireball, a charged fireball roll, two flapping fire wings, a cloud that rains fire; every normal has its own trick | ball on long stretchy legs: tall for big, slow hits, short for small, quick ones | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); hard hat when blocking, and as armour through his smashes and barge |
+| theme | a hotshot punk rocker who is also a French chef: flame mohawk, spiked and studded leather jacket, wallet chain, chef's neckerchief, a defiant smirk, flames on everything; lean and long in the leg, so nearly every normal is a kick; a slow charged fireball, a charged fireball roll, two flapping fire wings, a cloud that rains fire; every normal has its own trick | ball on long stretchy legs: tall for big, slow hits, short for small, quick ones | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); his hard hat glints while he blocks, and while it is armour through his smashes and barge; huge up top and short in the leg, so almost nothing he does uses his feet |
 | jab | two flicker jabs, then "Flambe!" - a burning palm | kick, low kick, ball bonk | two slow pipe-wrench bashes |
-| tilts | roundhouse (press again: heel hook), torch flip (a flurry that pops them up), crêpe flip (the pan slid under them flips them head over heels) | kicks that stretch the kicking leg out to the hit | shovel jab, pickaxe arc, cone kick (a traffic cone booted along the floor; whoever runs into it trips) |
-| dash | comet knee (press again: a heel chop) | rolls into them as a ball | hard-hat barge |
+| tilts | roundhouse (press again: heel hook), torch flip (a flurry that pops them up), crêpe flip (the pan slid under them flips them head over heels) | kicks that stretch the kicking leg out to the hit | shovel jab, pickaxe arc, cone shove (a traffic cone shoved along the floor with both hands; whoever runs into it trips) |
+| dash | swan dive (flat out, corkscrewing, wrapped in fire) | rolls into them as a ball | hard-hat barge |
 | smashes | flambe pan (a flaming frying pan, slow, burns), fire pillar (four climbing hits), fire geysers (out of the floor both sides) | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
-| aerials | fire wheel (a quick flurry all round), double axe kick, backdraft (burns), bicycle flurry, fire drill (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | stop sign spin, sledge chop, shovel back swing, pick swipe, jackhammer (spike) |
+| aerials | fire wheel (a quick flurry all round), double axe kick, backdraft (burns), bicycle flurry, fire drill (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | stop sign spin, sledge chop, shovel back swing, pick swipe, jackhammer (ridden down, many hits, a spike) |
 
 This is why the normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
 scaled per weight by `WeightProfiles`. A balance change to a tilt then lands on all three
@@ -160,7 +160,7 @@ any of them:
   frames, hitting repeatedly with a weak link hit and launching on the last window. Built for
   EdgeLord's first down smash; nothing uses it now, but his turning frames are still cut.
 - `SpentOnHit` - a lingering trap that is used up by the first hit it lands.
-- `ShowExtra` - shows one of the rig's extras for the move (Lug's hard hat on a barge).
+- `ShowExtra` - shows one of the rig's extras for the move (the glint on Lug's hard hat through a barge).
 - `ChargeWithSpecial` + `ChargeDamage` + `ChargeSize` - a chargeable special: hold the special
   button and it charges (in the air too), then fires bigger and harder. Swift's fireball.
 - `Flight` - a recovery that flies: a steady slow rise through a long active window, steered
@@ -211,12 +211,42 @@ any of them:
   turns. Flambe's crepe flip and Lug's traffic cone.
 - `Armor` - through the windup and swing, a hit doing this much damage or less still counts but
   does not flinch: no knockback, no hitstun, a clang. Bigger hits and grabs get through. Lug's
-  hard hat (8%, on his smashes and barge), which he wears for exactly as long as it is on.
-- `SlideFriction` - a `Trap` that is kicked along the floor instead of set down, skidding to a
+  hard hat (8%, on his smashes and barge), which glints for exactly as long as it is on.
+- `SlideFriction` - a `Trap` that is shoved along the floor instead of set down, skidding to a
   stop and dropping off any edge it slides over. Lug's traffic cone.
 - `Walker` + `Burst` - a summon: a small copy of the fighter's own rig that walks along the floor,
   stops at an edge, and goes off as `Burst` when it touches someone or runs out of time. It never
   hits by itself. DoomBot's MiniBot.
+- `PoseArts` - whole drawings of the fighter, one picked at random each time, shown in place of
+  the puppet for the whole move. Triguy's three taunts (his taunt and his neutral special) and
+  his crying.
+- `InvincibleFrames` + `AuraArt` - nothing can hit or catch him for that many frames from the end
+  of the startup, with that drawing standing behind him. Triguy's Show Off: keep the window short
+  and the recovery after it long enough to punish - the counterplay is waiting it out.
+- `Bounce` - a recovery on a trampoline: it appears under him (on the floor he hops up onto it),
+  stops his fall through the startup, throws him up on the first active frame, and he steers
+  after. Its hitbox bounces up anyone on it.
+- `Topple` on a `FromGround` drawing - it comes up fast, stops dead standing on the floor,
+  then falls over outward like a felled tree and is gone where it lands, in a smash of dust and a
+  shake. Hits rising and with its head coming down. EdgeLord's axes. A drawing never fades out
+  (traps included): it is there, then gone.
+- `Corkscrew` - a dive: the whole puppet tips flat, head first, through the startup and spins
+  along its length while live (`FighterRig.SetSpinWidth` narrowing the drawing to an edge and
+  back, mirrored). With `ActiveFx.Flame` he is wrapped in fire. Flambe's Swan Dive dash attack.
+- `DashAfterStartup` on a `Dash` - he stops and gets set through the startup and only goes on
+  the first active frame, so it is telegraphed and does not run straight past someone standing
+  next to him. Lug's wheelbarrow.
+- `BeamFrom` on a plain projectile - it is fired from that named spot on the drawing, as a beam
+  is. DoomBot's pocket missile, out of the socket in his chest.
+- `CancelIntoAttacks` on a recovery - attack or special straight out of it once it is going, or
+  down to drop out; it never leaves him spent. Flambe's wings.
+- `RunningLegs` - the legs run the run cycle under the move's pose. Lug driving his wheelbarrow.
+- **Throws** (`Grabs.cs`, `FighterData.Throws`): four per fighter, forward, back, up, down, each
+  built from the same things as the rest of that fighter's kit. Link hits hold the victim
+  (`RehitFrames` + `LinkHit`); `FollowShot` fires a projectile after them.
+- `SpecialKind.Puddle` - a puddle that falls to the floor, spreads both ways to its size or the
+  floor's end, makes everyone else slip (`Fighter.Slip`), and sends `RainDrop` up out of it every
+  `RainInterval` frames. Triguy's crying.
 - `BlinkToTrap` - a blink that goes exactly to one of the fighter's own traps when one is ahead
   and within about 700 pixels, up or down, and pulls it out. EdgeLord's planted blades are
   anchors for his Blur Slash.
@@ -240,6 +270,22 @@ Some are **traits on `FighterData`**, because they are about the fighter rather 
   claws: a reason to sit at high heat other than the vent.
 - `TelescopingArms` - an arm that reaches out (a piston punch, a command grab) slides out on
   steel rods with the forearm at its own size on the end, instead of stretching. DoomBot.
+- `Robotic` - animated like a machine: every animation plays in beats - a smooth, eased move,
+  then a complete stop, then the next move (`FighterRig.RobotTime`) - attacks in shorter beats,
+  and the walk stopping on each key pose, so every footfall is a stomp: dust, a jolt and a thud.
+  No jitter. DoomBot, "a factory robot that went rogue" (Eric's calls, 2026-10-04).
+- `StickAimed` on a tether recovery - thrown wherever the stick points, from about 30 degrees
+  above level on either side over the top, steerable through the startup. EdgeLord's Chain Blade.
+- `ShouldersProp` - the weapon in his hand rides on his shoulder whenever he is on the ground
+  and not swinging - standing, running, crouching, blocking, landing - and through any move
+  marked `MoveData.CarryOnShoulder` (Lug's barge). `FighterAnimations.CarryOnShoulder` lays the
+  arm and the weapon over whatever pose is playing; it is the one pose that turns the prop bone.
+  Lug's sledgehammer (Eric's calls, 2026-10-08).
+- `CanRoll` - false and block plus a direction on the ground does not roll; he stays in his
+  block (and block at a ledge just climbs). DoomBot: a factory robot does not tumble across the
+  floor (Eric's call, 2026-10-05). Spot dodge and air dodge are unchanged.
+- `BlockLeak` - how much more than usual a block lets through. Triguy's 1.8: blocking is standing
+  still, which he is terrible at.
 - `AirDashSpeed` - the air jump becomes an eight-way dash: 14 frames, no gravity, then a glide.
   EdgeLord's super speed. The CPU aims it up and in when it recovers.
 

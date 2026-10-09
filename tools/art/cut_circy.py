@@ -40,6 +40,8 @@ from collections import deque
 
 from PIL import Image, ImageFilter
 
+import linework
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
 ROOT = os.path.join(REPO, 'fighters', 'circy')
@@ -51,10 +53,10 @@ MAIN = 'circytcircle.png'
 # matches the rig's ball, so nothing pops when the game swaps between the two. A pose with
 # "scale_like" keeps the size Elim drew it at RELATIVE to another pose - the shrinking frame is
 # meant to be tiny next to the one before it.
+#
+# His drawings of himself standing, tall and small are not cut: he stretches as the puppet now,
+# in a T-pose, so the change is in his own legs (Eric's call, 2026-10-04). They stay in source/.
 BODY_POSES = [
-    ('stand', 'circytcircle.png', {}),
-    ('tall', 'circytcircletall.png', {}),
-    ('small', 'circytcirclesmall.png', {}),
     ('lookout', 'circytcirclebombframe1.png', {}),
     ('shrinking', 'bombpart2shrinking.png', {'scale_like': 'lookout'}),
     ('bomb', 'circytcirclebombframe3.png', {}),
@@ -73,6 +75,11 @@ HOOK_SHEET = 'grapplinghook.png'
 OUTLINE_GROW = 16      # px added around the yellow to take in the ball's outline
 STRAY_PIXELS = 400     # a stroke smaller than this is a stray mark, given to the nearest limb
 JOINT_OVERLAP = 10     # px each half of a split limb extends past the joint
+
+# How many pixels each side every line of ink is widened by in the generated parts and poses
+# (tools/art/linework.py), so his ~9px line comes out about 2.5px wide at match size instead of
+# under one. Eric's call, 2026-10-04. 0 gives Elim's line exactly as drawn.
+LINE_BOOST = 8
 
 
 # --------------------------------------------------------------------------- helpers
@@ -239,14 +246,16 @@ def cut_main(parts_dir):
 
         upper, ubox = trim(upper)
         lower, lbox = trim(lower)
+        upper, upad = linework.thicken(upper, LINE_BOOST)
+        lower, lpad = linework.thicken(lower, LINE_BOOST)
         upper.save(os.path.join(parts_dir, name_upper + '.png'))
         lower.save(os.path.join(parts_dir, name_lower + '.png'))
 
         parts[name_upper] = {'texture': 'parts/%s.png' % name_upper,
-                             'pivot': [round(side / 2 - ubox[0], 2), round(side / 2 - ubox[1], 2)]}
+                             'pivot': [round(side / 2 - ubox[0] + upad, 2), round(side / 2 - ubox[1] + upad, 2)]}
         lower_top = int(mid - JOINT_OVERLAP)
         parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
-                             'pivot': [round(knee_x - lbox[0], 2), round(mid - lower_top - lbox[1], 2)]}
+                             'pivot': [round(knee_x - lbox[0] + lpad, 2), round(mid - lower_top - lbox[1] + lpad, 2)]}
         return length, knee_x - side / 2
 
     back_arm, front_arm = arms
@@ -260,9 +269,10 @@ def cut_main(parts_dir):
     elbow_dx = [c[1] for c in arms_cut]
     knee_dx = [c[1] for c in legs_cut]
 
+    ball, bpad = linework.thicken(ball, LINE_BOOST)
     ball.save(os.path.join(parts_dir, 'Torso.png'))
     parts['Torso'] = {'texture': 'parts/Torso.png',
-                      'pivot': [round(hip[0] - ball_origin[0], 2), round(hip[1] - ball_origin[1], 2)]}
+                      'pivot': [round(hip[0] - ball_origin[0] + bpad, 2), round(hip[1] - ball_origin[1] + bpad, 2)]}
 
     def rel(point):
         return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
@@ -296,11 +306,13 @@ def cut_poses(poses_dir):
         img = Image.open(os.path.join(SOURCE, filename)).convert('RGBA')
         trimmed, box = trim(img)
         yb = yellow_box(img)
+        drawn_height = trimmed.size[1]
+        trimmed, pad = linework.thicken(trimmed, LINE_BOOST)
         trimmed.save(os.path.join(poses_dir, name + '.png'))
         entry = {
             'texture': 'poses/%s.png' % name,
             # Stands on its lowest pixel, centred under the ball.
-            'anchor': [round((yb[0] + yb[2]) / 2.0 - box[0], 1), trimmed.size[1]],
+            'anchor': [round((yb[0] + yb[2]) / 2.0 - box[0] + pad, 1), drawn_height + pad],
             'ballWidth': yb[2] - yb[0],
         }
         entry.update({('scaleLike' if k == 'scale_like' else k): v for k, v in extra.items()})
@@ -310,6 +322,7 @@ def cut_poses(poses_dir):
     for name, filename in EFFECTS:
         img = Image.open(os.path.join(SOURCE, filename)).convert('RGBA')
         trimmed, _ = trim(img)
+        trimmed, _ = linework.thicken(trimmed, LINE_BOOST)
         trimmed.save(os.path.join(poses_dir, name + '.png'))
         poses[name] = {'texture': 'poses/%s.png' % name,
                        'anchor': [trimmed.size[0] / 2.0, trimmed.size[1] / 2.0]}
@@ -331,6 +344,7 @@ def cut_poses(poses_dir):
     rest = sorted([c for c in big if c is not rope], key=lambda c: bbox(c)[0])
     for name, points in (('rope', rope), ('gun', rest[0]), ('hook', rest[1])):
         piece, _ = extract(sheet, points)
+        piece, _ = linework.thicken(piece, LINE_BOOST)
         piece.save(os.path.join(poses_dir, name + '.png'))
         poses[name] = {'texture': 'poses/%s.png' % name,
                        'anchor': [piece.size[0] / 2.0, piece.size[1] / 2.0]}

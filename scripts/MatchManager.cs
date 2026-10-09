@@ -92,8 +92,20 @@ public partial class MatchManager : Node2D
 		var fighter = new Fighter();
 		fighter.Configure(data, null, index, this);
 		fighter.GlobalPosition = stage.SpawnPoints[index % stage.SpawnPoints.Length];
+		FaceInward(fighter);
 		AddChild(fighter);
 		Fighters.Add(fighter);
+	}
+
+	/// <summary>
+	/// Someone who appears on the right of the screen faces left, into the stage and at the
+	/// other player, instead of everyone starting the match facing the same way. Eric's call,
+	/// 2026-10-04. A spawn in the dead centre keeps whichever way they were facing.
+	/// </summary>
+	void FaceInward(Fighter fighter)
+	{
+		float side = fighter.GlobalPosition.X - stage.BlastZone.GetCenter().X;
+		if (Mathf.Abs(side) > 1.0f) fighter.Face(side > 0.0f ? -1 : 1);
 	}
 
 	// --- Controllers ---------------------------------------------------------
@@ -193,7 +205,12 @@ public partial class MatchManager : Node2D
 			if (fighter.State == FighterState.Eliminated) continue;
 			if (fighter.State == FighterState.Respawning) continue;
 
-			if (stage.IsOutOfBounds(fighter.GlobalPosition))
+			// The bottom always KOs. The side and the top only KO someone still flying helplessly
+			// from a hit: jumping or recovering high on purpose, or running along a walk-off floor,
+			// just meets the edge of the world (Fighter.StayInsideBlastZone). Eric's call,
+			// 2026-10-04.
+			if (stage.IsOutOfBounds(fighter.GlobalPosition)
+				&& (fighter.IsLaunched || stage.IsBelowBottom(fighter.GlobalPosition)))
 			{
 				KillOffStage(fighter);
 			}
@@ -220,6 +237,7 @@ public partial class MatchManager : Node2D
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 
 		fighter.LoseStock(stage.RespawnPoint);
+		FaceInward(fighter);
 	}
 
 	void CheckForWinner()

@@ -19,6 +19,9 @@ public partial class TitleScreen : Node2D
 	FighterRig victim;
 	MoveData loopMove;
 
+	/// <summary>Whether each one carries his weapon on his shoulder when he is not swinging or reeling.</summary>
+	bool attackerCarries, victimCarries;
+
 	int frame;
 	bool leaving;
 
@@ -38,6 +41,8 @@ public partial class TitleScreen : Node2D
 		// is the top-left corner of the window.
 		attacker = BuildFighter(FighterCatalog.Get(0), new Vector2(1150.0f, 560.0f), 1);
 		victim = BuildFighter(FighterCatalog.Get(1), new Vector2(1570.0f, 560.0f), -1);
+		attackerCarries = FighterCatalog.Get(0).ShouldersProp;
+		victimCarries = FighterCatalog.Get(1).ShouldersProp;
 
 		var layer = new CanvasLayer();
 		AddChild(layer);
@@ -114,10 +119,12 @@ public partial class TitleScreen : Node2D
 		if (t < moveLength)
 		{
 			FighterAnimations.SampleAttack(loopMove, t, attackPose, lunging: true);
+			attacker.CarryOnShoulder = false;
 			attacker.ApplyDirect(attackPose, FighterAnimations.AttackBlend(loopMove, t));
 		}
 		else
 		{
+			attacker.CarryOnShoulder = attackerCarries;
 			attacker.Play(FighterAnimations.Idle);
 			attacker.Advance();
 		}
@@ -129,12 +136,14 @@ public partial class TitleScreen : Node2D
 		int contact = loopMove.StartupFrames + 1;
 		if (t >= contact && t < contact + 46)
 		{
+			victim.CarryOnShoulder = false;
 			victim.Play(FighterAnimations.Hurt);
 			victim.Advance();
 			victim.Modulate = new Color(1.0f, 0.68f, 0.68f);
 		}
 		else
 		{
+			victim.CarryOnShoulder = victimCarries;
 			victim.Play(FighterAnimations.Idle);
 			victim.Advance();
 			victim.Modulate = Colors.White;

@@ -23,6 +23,15 @@ public static class SizeLevels
 	/// <summary>Run and air speed multiplier.</summary>
 	public static float Speed(int level) => level < 0 ? 1.45f : level > 0 ? 0.72f : 1.0f;
 
+	/// <summary>
+	/// How fast the run cycle plays, against the same speed at normal size. Tall, his legs are
+	/// over twice as long and he is slower, so each stride covers far more ground and comes far
+	/// less often - speed over leg length, 0.72 / 2.4 - and the long legs swing slow and heavy
+	/// instead of pedalling. Eric's call, 2026-10-04. Short, the little legs patter a bit
+	/// quicker, but not the full 1.45 / 0.35, which would be a blur.
+	/// </summary>
+	public static float StrideRate(int level) => level < 0 ? 1.5f : level > 0 ? 0.3f : 1.0f;
+
 	/// <summary>Projectile radius multiplier.</summary>
 	public static float ProjectileSize(int level) => level < 0 ? 0.6f : level > 0 ? 1.9f : 1.0f;
 

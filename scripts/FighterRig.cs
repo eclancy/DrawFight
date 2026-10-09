@@ -32,16 +32,26 @@ public partial class FighterRig : Node2D
 
 		/// <summary>Size this pose the same as another one, keeping the size the kid drew it relative to that.</summary>
 		public string ScaleLike;
+
+		/// <summary>
+		/// How tall the whole figure stands in this drawing, so it can be matched to the puppet's
+		/// height - for a drawing of the fighter at a different angle, where there is no single
+		/// body part to match the width of. Triguy's front-on taunts.
+		/// </summary>
+		public float FigureHeight;
 	}
 
 	readonly Dictionary<string, PoseArt> poses = new Dictionary<string, PoseArt>();
 
 	/// <summary>
-	/// Drawings hung on an existing bone and shown only at certain moments - Lug's hard hat,
-	/// which goes on when he blocks. They add no bones, so the shared skeleton never changes.
+	/// Drawings hung on an existing bone, some shown only at certain moments - the glint on Lug's
+	/// hard hat while it is armour. They add no bones, so the shared skeleton never changes.
 	/// </summary>
 	readonly Dictionary<string, Sprite2D> extras = new Dictionary<string, Sprite2D>();
 	float ballWidth;
+
+	/// <summary>How tall the figure stands in the main drawing, crown to feet (rig.json "figureHeight").</summary>
+	float figureHeight;
 
 	float puppetScale = 1.0f;
 	float squash = 1.0f;
@@ -58,6 +68,13 @@ public partial class FighterRig : Node2D
 
 	/// <summary>A fighter's own multiplier on top of <see cref="Drama"/> - see FighterData.AnimationDrama.</summary>
 	public float DramaScale = 1.0f;
+
+	/// <summary>
+	/// The weapon in his hand rides on his shoulder over whatever pose is shown
+	/// (FighterAnimations.CarryOnShoulder). Whoever drives the rig sets it each frame.
+	/// </summary>
+	public bool CarryOnShoulder;
+	readonly Pose carried = new Pose();
 	float bodyHalfHeight;
 	float legStretch = 1.0f;
 	float frontLegReach = 1.0f;
@@ -102,7 +119,9 @@ public partial class FighterRig : Node2D
 		CanonicalHeight = (float)root["canonicalHeight"];
 		LegLength = (float)root["legLength"];
 		float darken = root.ContainsKey("backLimbDarken") ? (float)root["backLimbDarken"] : 0.7f;
+		limbDarken = darken;
 		ballWidth = root.ContainsKey("ballWidth") ? (float)root["ballWidth"] : 0.0f;
+		figureHeight = root.ContainsKey("figureHeight") ? (float)root["figureHeight"] : 0.0f;
 		LoadPoses(root, baseDir);
 
 		var parts = (Godot.Collections.Dictionary)root["parts"];
@@ -139,11 +158,15 @@ public partial class FighterRig : Node2D
 			// A far arm hangs from the torso bone, and children draw after their parent's own
 			// sprite - which put it in FRONT of the body. Moving it ahead of that sprite puts
 			// it behind, so it comes from the far side of the body the way a far arm should.
-			// A drawing can say a far limb stays in front ("inFront" in the manifest) - DoomBot's
-			// arm comes out of a hole in the FRONT of his chest.
+			// A drawing can say a far limb stays in front ("inFront" in the manifest), for a limb
+			// drawn coming out of the front of the body. DoomBot's did, and read as a second front
+			// arm in a fight, so think twice before using it.
 			bool inFront = entry.ContainsKey("inFront") && (bool)entry["inFront"];
-			if (RigBones.IsBackLimb(bone) && !inFront && parent != this && parent.GetChildCount() > 1
-				&& parent.GetChild(0) is Sprite2D)
+			// Any part can also be put under the drawing it hangs from ("behindParent"): a weapon
+			// held in a fist, so the fingers close over the grip. Lug's tools (Eric, 2026-10-08).
+			bool behindParent = entry.ContainsKey("behindParent") && (bool)entry["behindParent"];
+			if (((RigBones.IsBackLimb(bone) && !inFront) || behindParent) && parent != this
+				&& parent.GetChildCount() > 1 && parent.GetChild(0) is Sprite2D)
 			{
 				parent.MoveChild(node, 0);
 			}
@@ -176,10 +199,13 @@ public partial class FighterRig : Node2D
 			};
 
 			// Darkening the far limbs is how flat cutout animation has always faked depth. It
-			// costs nothing and it is why a drawing with only one arm still reads correctly.
+			// costs nothing and it is why a drawing with only one arm still reads correctly. A limb
+			// can set its own ("darken": 1 is none) - Lug's far arm, which comes from behind his
+			// chest and needs no shade to read as behind it (Eric, 2026-10-08).
 			if (RigBones.IsBackLimb(bone) && !inFront)
 			{
-				sprite.Modulate = new Color(darken, darken, darken);
+				float shade = entry.ContainsKey("darken") ? (float)entry["darken"] : darken;
+				sprite.Modulate = new Color(shade, shade, shade);
 			}
 
 			node.AddChild(sprite);
@@ -219,12 +245,41 @@ public partial class FighterRig : Node2D
 				Centered = false,
 				Offset = new Vector2(-(float)pivot[0], -(float)pivot[1]),
 				Position = new Vector2((float)offset[0], (float)offset[1]),
-				// Most extras only appear for a moment (a hard hat); "always" ones are part of the
-				// drawing that has to sit over another part, like the socket DoomBot's arm comes out of.
+				// Most extras only appear for a moment (a hard hat's glint); "always" ones are part of the
+				// drawing that has to sit over another part, like a socket an "inFront" limb comes out of.
 				Visible = entry.ContainsKey("always") && (bool)entry["always"],
 			};
 			bones[(int)bone].AddChild(sprite);
 			extras[(string)entry["name"]] = sprite;
+
+			// A foot: a drawing hung on the end of a shin at the ankle, which the rig keeps level
+			// on the floor (LevelFeet) and stands on (StandOnFeet). Far ones darken like their leg.
+			if (entry.ContainsKey("foot") && (bool)entry["foot"])
+			{
+				feet[(int)bone] = sprite;
+				if (RigBones.IsBackLimb(bone)) sprite.Modulate = new Color(limbDarken, limbDarken, limbDarken);
+			}
+		}
+	}
+
+	float limbDarken = 0.7f;
+
+	/// <summary>The foot hung on each lower leg, if the drawing has its feet cut separately.</summary>
+	readonly Sprite2D[] feet = new Sprite2D[(int)RigBone.Count];
+
+	bool HasFeet => feet[(int)RigBone.LegBackLower] != null && feet[(int)RigBone.LegFrontLower] != null;
+
+	/// <summary>
+	/// Feet kept level on the ground, as an ankle would: each foot turned back by however much its
+	/// shin is turned, as far as he is planted - so in the air a kick still points its boot.
+	/// </summary>
+	void LevelFeet()
+	{
+		foreach ((RigBone upper, RigBone lower) in new[] { (RigBone.LegBackUpper, RigBone.LegBackLower), (RigBone.LegFrontUpper, RigBone.LegFrontLower) })
+		{
+			Sprite2D foot = feet[(int)lower];
+			if (foot == null) continue;
+			foot.Rotation = -(bones[(int)upper].Rotation + bones[(int)lower].Rotation) * plantBlend;
 		}
 	}
 
@@ -242,7 +297,7 @@ public partial class FighterRig : Node2D
 	/// </summary>
 	public (Vector2 sole, Vector2 down)? Sole(RigBone lowerLeg)
 	{
-		Sprite2D sprite = sprites[(int)lowerLeg];
+		Sprite2D sprite = feet[(int)lowerLeg] ?? sprites[(int)lowerLeg];
 		if (sprite == null || sprite.Texture == null) return null;
 		Vector2 size = sprite.Texture.GetSize();
 		Transform2D t = sprite.GlobalTransform;
@@ -271,18 +326,326 @@ public partial class FighterRig : Node2D
 	float FloorGap()
 	{
 		float lowest = float.MinValue;
-		foreach (RigBone lower in FloorParts)
+		foreach (RigBone lower in FloorParts) lowest = Mathf.Max(lowest, LowestInk(lower));
+		foreach (Sprite2D foot in feet) if (foot != null) lowest = Mathf.Max(lowest, LowestInk(foot));
+		return lowest == float.MinValue ? 0.0f : LegLength * legStretch - lowest;
+	}
+
+	/// <summary>
+	/// The lowest drawn point of one part, in the rig's own space; float.MinValue if it is not
+	/// showing. A hidden forearm - out on a tether, or swapped for a turning frame - is not here
+	/// to touch anything.
+	/// </summary>
+	float LowestInk(RigBone bone) => LowestInk(sprites[(int)bone]);
+
+	float LowestInk(Sprite2D sprite)
+	{
+		if (sprite == null || sprite.Texture == null || !sprite.Visible) return float.MinValue;
+		Transform2D t = InRig(sprite);
+		float lowest = float.MinValue;
+		foreach (Vector2 point in InkEdge(sprite.Texture))
 		{
-			Sprite2D sprite = sprites[(int)lower];
-			// A hidden forearm - out on a tether, or swapped for a turning frame - is not here to touch anything.
-			if (sprite == null || sprite.Texture == null || !sprite.Visible) continue;
-			Transform2D t = InRig(sprite);
-			foreach (Vector2 point in InkEdge(sprite.Texture))
+			lowest = Mathf.Max(lowest, (t * (point + sprite.Offset)).Y);
+		}
+		return lowest;
+	}
+
+	// --- Standing on flat feet -----------------------------------------------------------
+
+	bool standing;
+	float standBlend;
+
+	/// <summary>
+	/// Standing still - idle, blocking, a stance. Each foot is put flat on the floor and kept
+	/// where it is, and the knees bend to make that so, however the body above moves; the pose
+	/// only says how low the hips are. See <see cref="StandOnFeet"/>.
+	/// </summary>
+	public void SetStanding(bool on) => standing = on;
+
+	/// <summary>
+	/// No fighter has an ankle - a foot is drawn on the end of its shin - so a foot is flat at
+	/// exactly one angle of its shin, and that angle is read off the drawing (<see cref="SoleOf"/>).
+	/// So, standing: each shin is turned until its sole is level, and the thigh is turned until
+	/// that sole sits on the floor - the knee bending forward as far as the hips are low. Legs of
+	/// two lengths both reach the floor, and lowering the hips bends the knees instead of sinking
+	/// the feet. Then the body is slid so the feet, between them, stay exactly where standing up
+	/// straight puts them: the body moves over the feet, never the feet under the body. Eric's
+	/// call, 2026-10-04, after DoomBot stood on the toe of a tilted boot.
+	///
+	/// The hips' height comes from the pose, read here as a percentage of leg length, so one
+	/// standing pose bobs every fighter alike.
+	///
+	/// One exception. A leg drawn much longer than the other with no foot on the end - EdgeLord's
+	/// back leg, which ends in a point - would have to fold right up at the knee to match; with
+	/// no foot to keep level it is angled back, straight, instead.
+	/// </summary>
+	void StandOnFeet(float blend)
+	{
+		int hip = (int)RigBone.Hip;
+		if (!present[hip]) return;
+		Vector2 at = bones[hip].Position;
+		at.Y = current.HipOffset.Y * 0.01f * LegLength * legStretch;
+
+		if (HasFeet)
+		{
+			StandOnAnkles(at, blend);
+			return;
+		}
+
+		// The floor, for now, is as far down as the shorter leg reaches standing straight with its
+		// foot level: that leg straight, the longer one's knee bent to match. Planting then moves
+		// the whole of him onto the real floor.
+		float? backReach = Reach(RigBone.LegBackUpper, RigBone.LegBackLower);
+		float? frontReach = Reach(RigBone.LegFrontUpper, RigBone.LegFrontLower);
+		if (backReach == null || frontReach == null) return;
+		float floor = Mathf.Min(backReach.Value, frontReach.Value);
+		float spare = LegLength * legStretch * 0.03f;
+		bool backLong = backReach.Value > floor + spare;
+		bool frontLong = frontReach.Value > floor + spare;
+
+		var back = SolveLeg(RigBone.LegBackUpper, RigBone.LegBackLower, at, floor, -1, backLong);
+		var front = SolveLeg(RigBone.LegFrontUpper, RigBone.LegFrontLower, at, floor, 1, frontLong);
+		if (back == null || front == null) return;
+
+		// Where the feet are, between them, standing straight: the body is slid to keep them there.
+		var backRest = SolveLeg(RigBone.LegBackUpper, RigBone.LegBackLower, Vector2.Zero, floor, -1, backLong);
+		var frontRest = SolveLeg(RigBone.LegFrontUpper, RigBone.LegFrontLower, Vector2.Zero, floor, 1, frontLong);
+		float slide = (backRest.Value.footX + frontRest.Value.footX - back.Value.footX - front.Value.footX) * 0.5f;
+		at.X += slide;
+
+		bones[hip].Position = bones[hip].Position.Lerp(at, blend);
+		foreach ((RigBone upper, RigBone lower, (float thigh, float shin, float footX)? leg) in new[]
+		{
+			(RigBone.LegBackUpper, RigBone.LegBackLower, back),
+			(RigBone.LegFrontUpper, RigBone.LegFrontLower, front),
+		})
+		{
+			bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, leg.Value.thigh, blend);
+			bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, leg.Value.shin - leg.Value.thigh, blend);
+		}
+	}
+
+	/// <summary>
+	/// Standing for a drawing whose feet are cut separately (DoomBot's boots): each ankle stays
+	/// exactly where it is when he stands straight - under its hip - with its foot level on the
+	/// floor (LevelFeet), and the thigh and shin bend between hip and ankle, knee forward, as low as
+	/// the pose puts the hips. With an ankle the shins can lean, so he stays balanced over his feet
+	/// instead of leaning back on upright shins. A longer leg reaches the same floor by bending.
+	/// Eric's call, 2026-10-04.
+	/// </summary>
+	void StandOnAnkles(Vector2 at, float blend)
+	{
+		int hip = (int)RigBone.Hip;
+		var legs = new[] { (RigBone.LegBackUpper, RigBone.LegBackLower), (RigBone.LegFrontUpper, RigBone.LegFrontLower) };
+
+		// Where each ankle is standing straight, and how far below it its foot reaches: the floor
+		// is as low as the shorter leg's foot comes.
+		float floor = float.MaxValue;
+		foreach ((RigBone upper, RigBone lower) in legs)
+		{
+			Vector2 ankle = bones[(int)upper].Position + bones[(int)lower].Position + feet[(int)lower].Position;
+			floor = Mathf.Min(floor, ankle.Y + FootDepth(feet[(int)lower]));
+		}
+
+		at.X = 0.0f;
+		bones[hip].Position = bones[hip].Position.Lerp(at, blend);
+		foreach ((RigBone upper, RigBone lower) in legs)
+		{
+			Sprite2D foot = feet[(int)lower];
+			Vector2 knee = bones[(int)lower].Position;
+			Vector2 shin = foot.Position;
+			Vector2 joint = at + bones[(int)upper].Position;
+			Vector2 rest = bones[(int)upper].Position + knee + shin;
+			var target = new Vector2(rest.X, floor - FootDepth(foot));
+
+			float l1 = knee.Length(), l2 = shin.Length();
+			Vector2 d = target - joint;
+			float reach = Mathf.Clamp(d.Length(), Mathf.Abs(l1 - l2) + 0.5f, l1 + l2 - 0.01f);
+			float bend = Mathf.Acos(Mathf.Clamp((l1 * l1 + reach * reach - l2 * l2) / (2.0f * l1 * reach), -1.0f, 1.0f));
+			float toward = d.Angle();
+			// Knee forward: of the two ways the leg can bend, the one with the knee further ahead.
+			float thighDir = toward - bend;
+			if (Mathf.Cos(toward + bend) > Mathf.Cos(toward - bend)) thighDir = toward + bend;
+			Vector2 kneeAt = joint + Vector2.Right.Rotated(thighDir) * l1;
+			float thigh = thighDir - knee.Angle();
+			float shinTurn = (target - kneeAt).Angle() - shin.Angle();
+			bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, thigh, blend);
+			bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, shinTurn - thigh, blend);
+		}
+	}
+
+	/// <summary>How far below its ankle a level foot's drawing reaches.</summary>
+	float FootDepth(Sprite2D foot)
+	{
+		float lowest = 0.0f;
+		foreach (Vector2 point in InkEdge(foot.Texture)) lowest = Mathf.Max(lowest, (point + foot.Offset).Y);
+		return lowest;
+	}
+
+	/// <summary>
+	/// One leg standing with its hips at <paramref name="hipAt"/>: the thigh's turn, the shin's
+	/// turn in the rig's space, and where the foot comes down across the floor. <paramref name="way"/>
+	/// is the way the leg leans if it has to be angled straight: -1 back, 1 forward.
+	/// </summary>
+	(float thigh, float shin, float footX)? SolveLeg(RigBone upper, RigBone lower, Vector2 hipAt, float floor, int way, bool longer)
+	{
+		(float shin, Vector2 soleTurned, Vector2 sole, bool foot)? flat = LevelSole(lower);
+		if (flat == null || !present[(int)upper]) return null;
+		float shin = flat.Value.shin;
+		Vector2 soleTurned = flat.Value.soleTurned;
+		Vector2 joint = hipAt + bones[(int)upper].Position;
+		Vector2 knee = bones[(int)lower].Position;
+
+		if (longer && !flat.Value.foot)
+		{
+			// Straight, and leaning the given way until the end of it touches the floor.
+			Vector2 leg = knee + flat.Value.sole;
+			float reach = Mathf.Acos(Mathf.Clamp((floor - joint.Y) / Mathf.Max(1.0f, leg.Length()), -1.0f, 1.0f));
+			float tilt = Mathf.Atan2(leg.X, leg.Y);
+			float a = tilt - reach, b = tilt + reach;
+			float angle = (leg.Rotated(a).X - leg.Rotated(b).X) * way > 0.0f ? a : b;
+			return (angle, angle, joint.X + leg.Rotated(angle).X);
+		}
+
+		// The knee, straight up from a sole on the floor; the thigh turned to reach it, knee forward.
+		float length = knee.Length();
+		if (length < 1.0f) return null;
+		float drop = floor - soleTurned.Y - joint.Y;
+		float spread = Mathf.Acos(Mathf.Clamp(drop / length, -1.0f, 1.0f));
+		float lean = Mathf.Atan2(knee.X, knee.Y);
+		float thigh = lean - spread;
+		float other = lean + spread;
+		if (knee.Rotated(other).X > knee.Rotated(thigh).X) thigh = other;
+
+		float footX = joint.X + knee.Rotated(thigh).X + soleTurned.X;
+		return (thigh, shin, footX);
+	}
+
+	/// <summary>
+	/// The shin's turn that lays its sole level, the sole from the knee once turned and as drawn,
+	/// and whether there is a foot at all.
+	/// </summary>
+	(float shin, Vector2 soleTurned, Vector2 sole, bool foot)? LevelSole(RigBone lower)
+	{
+		Sprite2D sprite = sprites[(int)lower];
+		if (!present[(int)lower] || sprite == null || sprite.Texture == null) return null;
+		(Vector2 point, float slope, bool foot) = SoleOf(sprite.Texture);
+		Transform2D t = sprite.Transform;
+		Vector2 sole = t * (point + sprite.Offset);
+		Vector2 along = t.BasisXform(new Vector2(1.0f, slope));
+		float shin = -Mathf.Atan2(along.Y, along.X);
+		return (shin, sole.Rotated(shin), sole, foot);
+	}
+
+	/// <summary>How far below the hips a leg's level sole comes with the leg straight.</summary>
+	float? Reach(RigBone upper, RigBone lower)
+	{
+		(float shin, Vector2 soleTurned, Vector2 sole, bool foot)? flat = LevelSole(lower);
+		if (flat == null || !present[(int)upper]) return null;
+		return bones[(int)upper].Position.Y + bones[(int)lower].Position.Length() + flat.Value.soleTurned.Y;
+	}
+
+	/// <summary>Soles already read, by the texture's file - see <see cref="InkEdge"/> for why by path.</summary>
+	static readonly Dictionary<string, (Vector2 point, float slope, bool foot)> soles = new Dictionary<string, (Vector2, float, bool)>();
+
+	/// <summary>
+	/// The bottom of a foot: a point on it, and how steeply it slopes (down per pixel across), in
+	/// texture pixels - read off the lowest drawn pixel of each column in the bottom fifth or so
+	/// of a shin drawing, which takes in a whole drawn foot: a boot, an L, or Circy's diagonal
+	/// stroke with a tick on the end. A boot's flat bottom slopes 0; a foot drawn pointing down at
+	/// the toe slopes positive. A leg that simply ends - in a point, like EdgeLord's, or a round
+	/// stick end - has no foot to lay flat: anything less than twice as wide as the leg itself
+	/// counts as level. And it is kept within 40 degrees either way.
+	/// </summary>
+	static (Vector2 point, float slope, bool foot) SoleOf(Texture2D texture)
+	{
+		string key = texture.ResourcePath;
+		if (soles.TryGetValue(key, out var known)) return known;
+
+		Vector2 size = texture.GetSize();
+		known = (new Vector2(size.X * 0.5f, size.Y), 0.0f, false);
+		Image image = texture.GetImage();
+		if (image != null)
+		{
+			if (image.IsCompressed()) image.Decompress();
+			int w = image.GetWidth();
+			int h = image.GetHeight();
+			// How wide the leg itself is: the middle width of the drawing's rows through its top half.
+			var widths = new List<float>();
+			for (int y = 0; y < h / 2; y += 2)
 			{
-				lowest = Mathf.Max(lowest, (t * (point + sprite.Offset)).Y);
+				int left = 0;
+				while (left < w && image.GetPixel(left, y).A < 0.4f) left++;
+				if (left == w) continue;
+				int right = w - 1;
+				while (right > left && image.GetPixel(right, y).A < 0.4f) right--;
+				widths.Add(right - left + 1);
+			}
+			widths.Sort();
+			float legWidth = widths.Count > 0 ? widths[widths.Count / 2] : 0.0f;
+
+			var bottoms = new List<Vector2>();
+			float lowest = 0.0f;
+			for (int x = 0; x < w; x++)
+			{
+				int y = h - 1;
+				while (y >= 0 && image.GetPixel(x, y).A < 0.4f) y--;
+				if (y < 0) continue;
+				bottoms.Add(new Vector2(x, y + 1));
+				lowest = Mathf.Max(lowest, y + 1);
+			}
+			// Only the foot: the columns that come down within the bottom fifth of the drawing.
+			float band = Mathf.Max(6.0f, h * 0.22f);
+			bottoms.RemoveAll(p => p.Y < lowest - band);
+			if (bottoms.Count >= 3)
+			{
+				Vector2 mean = Vector2.Zero;
+				foreach (Vector2 p in bottoms) mean += p;
+				mean /= bottoms.Count;
+				float sxx = 0.0f, sxy = 0.0f;
+				foreach (Vector2 p in bottoms)
+				{
+					sxx += (p.X - mean.X) * (p.X - mean.X);
+					sxy += (p.X - mean.X) * (p.Y - mean.Y);
+				}
+				float left = float.MaxValue, right = float.MinValue;
+				foreach (Vector2 p in bottoms) { left = Mathf.Min(left, p.X); right = Mathf.Max(right, p.X); }
+				bool foot = right - left >= legWidth * 2.0f;
+				float slope = foot && sxx > 1.0f ? Mathf.Clamp(sxy / sxx, -0.84f, 0.84f) : 0.0f;
+				var scale = new Vector2(size.X / Mathf.Max(1, w), size.Y / Mathf.Max(1, h));
+				known = (mean * scale, slope * scale.Y / scale.X, foot);
 			}
 		}
-		return lowest == float.MinValue ? 0.0f : LegLength * legStretch - lowest;
+		soles[key] = known;
+		return known;
+	}
+
+	/// <summary>
+	/// Squashed short, a fighter's legs can end up shorter than his arms - Circy at his smallest -
+	/// and a hand hanging below his feet would be what the floor holds up, leaving the feet in the
+	/// air. So, standing with short legs, each arm is swung out from the body, a few degrees at a
+	/// time, until its hand clears his feet: arms out for balance, feet on the floor. Eric's call,
+	/// 2026-10-04.
+	/// </summary>
+	void KeepHandsAboveFeet()
+	{
+		float soles = Mathf.Max(Mathf.Max(LowestInk(RigBone.LegBackLower), LowestInk(RigBone.LegFrontLower)),
+			Mathf.Max(LowestInk(feet[(int)RigBone.LegBackLower]), LowestInk(feet[(int)RigBone.LegFrontLower])));
+		if (soles == float.MinValue) return;
+		float clear = soles - LegLength * 0.04f;
+		// The front arm swings out forward (negative), the back arm back (positive).
+		foreach ((RigBone upper, RigBone lower, float outward) in new[]
+		{
+			(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, -1.0f),
+			(RigBone.ArmBackUpper, RigBone.ArmBackLower, 1.0f),
+		})
+		{
+			if (!present[(int)upper]) continue;
+			for (int step = 0; step < 20 && LowestInk(lower) > clear; step++)
+			{
+				bones[(int)upper].Rotation += Mathf.DegToRad(5.0f) * outward;
+			}
+		}
 	}
 
 	/// <summary>
@@ -293,6 +656,64 @@ public partial class FighterRig : Node2D
 	{
 		RigBone.LegBackLower, RigBone.LegFrontLower, RigBone.ArmBackLower, RigBone.ArmFrontLower,
 	};
+
+	/// <summary>
+	/// The box round every part of the body that is showing - not a held weapon, a hat or any
+	/// other extra - in <paramref name="space"/>'s coordinates. How big a fighter is, for framing
+	/// a portrait.
+	/// </summary>
+	public Rect2 BodyBounds(Node2D space)
+	{
+		Transform2D toSpace = space.GetGlobalTransform().AffineInverse();
+		Rect2? bounds = null;
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			Sprite2D sprite = sprites[i];
+			if (sprite == null || sprite.Texture == null || !sprite.IsVisibleInTree() || (RigBone)i == RigBone.PropFront) continue;
+			Transform2D t = toSpace * sprite.GetGlobalTransform();
+			Rect2 rect = sprite.GetRect();
+			foreach (Vector2 corner in new[] { rect.Position, new Vector2(rect.End.X, rect.Position.Y), new Vector2(rect.Position.X, rect.End.Y), rect.End })
+			{
+				Vector2 p = t * corner;
+				bounds = bounds == null ? new Rect2(p, Vector2.Zero) : bounds.Value.Expand(p);
+			}
+		}
+		foreach (Sprite2D foot in feet)
+		{
+			if (foot == null || !foot.IsVisibleInTree()) continue;
+			Transform2D t = toSpace * foot.GetGlobalTransform();
+			Rect2 rect = foot.GetRect();
+			foreach (Vector2 corner in new[] { rect.Position, new Vector2(rect.End.X, rect.Position.Y), new Vector2(rect.Position.X, rect.End.Y), rect.End })
+			{
+				Vector2 p = t * corner;
+				bounds = bounds == null ? new Rect2(p, Vector2.Zero) : bounds.Value.Expand(p);
+			}
+		}
+		return bounds ?? new Rect2();
+	}
+
+	/// <summary>
+	/// How wide the feet stand, in world pixels: from the back of one foot to the front of the
+	/// other, as the legs hang at rest. What the fighter's collision shape stands on.
+	/// </summary>
+	public float StanceWidth()
+	{
+		float left = float.MaxValue, right = float.MinValue;
+		foreach (Sprite2D sprite in new[] { sprites[(int)RigBone.LegBackLower], sprites[(int)RigBone.LegFrontLower],
+			feet[(int)RigBone.LegBackLower], feet[(int)RigBone.LegFrontLower] })
+		{
+			if (sprite == null || sprite.Texture == null) continue;
+			Transform2D t = InRig(sprite);
+			Rect2 rect = sprite.GetRect();
+			foreach (Vector2 corner in new[] { rect.Position, new Vector2(rect.End.X, rect.Position.Y), new Vector2(rect.Position.X, rect.End.Y), rect.End })
+			{
+				float x = (t * corner).X;
+				left = Mathf.Min(left, x);
+				right = Mathf.Max(right, x);
+			}
+		}
+		return left == float.MaxValue ? 0.0f : (right - left) * puppetScale;
+	}
 
 	/// <summary>A node's transform in the rig's own space, through every bone above it.</summary>
 	Transform2D InRig(Node2D node)
@@ -496,6 +917,7 @@ public partial class FighterRig : Node2D
 				Anchor = new Vector2((float)anchor[0], (float)anchor[1]),
 				BallWidth = entry.ContainsKey("ballWidth") ? (float)entry["ballWidth"] : 0.0f,
 				ScaleLike = entry.ContainsKey("scaleLike") ? (string)entry["scaleLike"] : null,
+				FigureHeight = entry.ContainsKey("figureHeight") ? (float)entry["figureHeight"] : 0.0f,
 			};
 		}
 	}
@@ -511,6 +933,8 @@ public partial class FighterRig : Node2D
 		PoseArt art = PoseArtFor(name);
 		if (art == null) return 0.0f;
 		if (art.ScaleLike != null && art.ScaleLike != name) return PoseScale(art.ScaleLike);
+		// A whole figure drawn from another angle stands as tall as the puppet does.
+		if (art.FigureHeight > 0.0f && figureHeight > 0.0f) return puppetScale * figureHeight / art.FigureHeight;
 		if (art.BallWidth <= 0.0f || ballWidth <= 0.0f) return puppetScale;
 		return puppetScale * ballWidth / art.BallWidth;
 	}
@@ -586,6 +1010,40 @@ public partial class FighterRig : Node2D
 		if (present[lower]) bones[lower].Rotation = Mathf.Lerp(bones[lower].Rotation, 0.0f, amount);
 	}
 
+	/// <summary>
+	/// Puts an arm's hand on a spot - the shoulder, elbow and hand solved as two bones, the elbow
+	/// bending down and out - blended in by <paramref name="amount"/> over the pose. How hands
+	/// hold a ledge: on the corner, whatever the pose and however big the fighter. Call it after
+	/// the pose is applied. Out of reach, the arm points straight at it.
+	/// </summary>
+	public void ReachArm(RigBone upper, RigBone lower, Vector2 targetGlobal, float amount)
+	{
+		if (!present[(int)upper] || !present[(int)lower] || amount <= 0.0f) return;
+		if (bones[(int)upper].GetParent() is not Node2D parent) return;
+		Sprite2D forearm = sprites[(int)lower];
+		if (forearm == null || forearm.Texture == null) return;
+
+		Vector2 shoulder = bones[(int)upper].Position;
+		Vector2 target = parent.ToLocal(targetGlobal);
+		Vector2 elbowRest = bones[(int)lower].Position;
+		float l1 = elbowRest.Length();
+		// The hand: the far end of the forearm drawing, down its length from the elbow.
+		float l2 = (forearm.Texture.GetSize().Y + forearm.Offset.Y) * forearm.Scale.Y;
+		if (l1 < 1.0f || l2 < 1.0f) return;
+
+		Vector2 d = target - shoulder;
+		float reach = Mathf.Clamp(d.Length(), Mathf.Abs(l1 - l2) + 0.5f, l1 + l2 - 0.01f);
+		float bend = Mathf.Acos(Mathf.Clamp((l1 * l1 + reach * reach - l2 * l2) / (2.0f * l1 * reach), -1.0f, 1.0f));
+		float toward = d.Angle();
+		// Elbow down: of the two ways the arm can bend, the one with the elbow lower.
+		float armDir = Mathf.Sin(toward + bend) > Mathf.Sin(toward - bend) ? toward + bend : toward - bend;
+		Vector2 elbow = shoulder + Vector2.Right.Rotated(armDir) * l1;
+		float upperTurn = armDir - elbowRest.Angle();
+		float lowerTurn = (target - elbow).Angle() - Mathf.Pi * 0.5f - upperTurn;
+		bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, upperTurn, amount);
+		bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, lowerTurn, amount);
+	}
+
 	static readonly RigBone[] LegParts = { RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower };
 
 	void ApplyLegLengths()
@@ -629,7 +1087,22 @@ public partial class FighterRig : Node2D
 	{
 		// Squash keeps the area: taller is thinner, shorter is wider.
 		float width = puppetScale / Mathf.Sqrt(Mathf.Max(0.2f, squash));
-		Scale = new Vector2(width * facingSign, puppetScale * squash);
+		Scale = new Vector2(width * facingSign * spinWidth, puppetScale * squash);
+	}
+
+	float spinWidth = 1.0f;
+
+	/// <summary>
+	/// Turning about the long axis of the body, as a cutout can: the drawing narrows to an edge
+	/// and opens out again mirrored, which reads as rolling over. 1 is face on, -1 is the back.
+	/// Laid flat by a roll, this is a corkscrew. Never quite zero, so it never vanishes.
+	/// </summary>
+	public void SetSpinWidth(float width)
+	{
+		float w = Mathf.Abs(width) < 0.12f ? 0.12f * (width < 0.0f ? -1.0f : 1.0f) : width;
+		if (Mathf.IsEqualApprox(w, spinWidth)) return;
+		spinWidth = w;
+		ApplyScale();
 	}
 
 	/// <summary>
@@ -663,8 +1136,50 @@ public partial class FighterRig : Node2D
 	{
 		if (!Loaded || clip == null) return;
 		clipFrame += rate;
-		clip.Sample(clipFrame, target);
-		ApplyPose(target, 0.45f);
+		// A robot moves in bursts: smooth, then a dead stop, then smooth again.
+		clip.Sample(ShownClipFrame, target);
+		ApplyPose(target, Robotic ? 0.8f : 0.45f);
+	}
+
+	/// <summary>
+	/// Where the current clip is showing, in frames - for a robot, after its bursts and stops. The
+	/// stomping walk beats every 6 frames, so it stops on each key pose: the knee up, then the foot
+	/// down - which is when the stomp lands (Fighter's footfalls watch this).
+	/// </summary>
+	public float ShownClipFrame
+	{
+		get
+		{
+			if (!Robotic) return clipFrame;
+			float step = clip == FighterAnimations.StompWalk ? 6.0f : RobotStep;
+			return RobotTime(clipFrame, step, step * RobotMove / RobotStep);
+		}
+	}
+	public AnimationClip CurrentClip => clip;
+
+	// --- Moving like a machine ----------------------------------------------------------
+
+	/// <summary>
+	/// Animated like a robot (FighterData.Robotic): every animation plays in beats of
+	/// <see cref="RobotStep"/> frames - a smooth, eased move through the first
+	/// <see cref="RobotMove"/> frames of the beat, then a complete stop for the rest, then the next
+	/// move. The animation keeps its overall pace; it just gets there in bursts. Smooth motion and
+	/// dead stops, never jitter (Eric's call, 2026-10-04, replacing a stepped, juddering first try).
+	/// </summary>
+	public bool Robotic;
+	public const float RobotStep = 10.0f;
+	public const float RobotMove = 6.0f;
+
+	/// <summary>
+	/// Where an animation is at <paramref name="frame"/> when it moves in beats of
+	/// <paramref name="step"/> frames: eased from one beat's pose to the next over the first
+	/// <paramref name="move"/> frames, then held.
+	/// </summary>
+	public static float RobotTime(float frame, float step, float move)
+	{
+		float beat = Mathf.Floor(frame / step);
+		float t = Mathf.Clamp((frame - beat * step) / move, 0.0f, 1.0f);
+		return (beat + t * t * (3.0f - 2.0f * t)) * step;
 	}
 
 	/// <summary>
@@ -689,6 +1204,13 @@ public partial class FighterRig : Node2D
 
 	void ApplyPose(Pose pose, float blend)
 	{
+		if (CarryOnShoulder)
+		{
+			carried.CopyFrom(pose);
+			FighterAnimations.CarryOnShoulder(carried);
+			pose = carried;
+		}
+
 		// Blending toward the target rather than snapping to it smooths the joins between
 		// states, so a fighter landing out of a launch does not pop from tumbling to standing.
 		Pose.Exaggerate(pose, Drama, HipDrama * DramaScale, exaggerated, DramaScale);
@@ -714,7 +1236,12 @@ public partial class FighterRig : Node2D
 			bones[i].Rotation = Mathf.DegToRad(degrees);
 		}
 
+		standBlend = Mathf.MoveToward(standBlend, standing && planted ? 1.0f : 0.0f, 0.2f);
+		if (standBlend > 0.0f) StandOnFeet(standBlend);
+
 		plantBlend = Mathf.MoveToward(plantBlend, planted ? 1.0f : 0.0f, 0.25f);
+		LevelFeet();
+		if (planted && legStretch < 1.0f) KeepHandsAboveFeet();
 		if (plantBlend > 0.0f && present[(int)RigBone.Hip])
 		{
 			bones[(int)RigBone.Hip].Position += new Vector2(0.0f, FloorGap() * plantBlend);

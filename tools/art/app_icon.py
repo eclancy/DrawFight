@@ -29,9 +29,9 @@ SHOT = os.path.join(ROOT, ".shots", "latest.png")
 OUT_PNG = os.path.join(ROOT, "icon.png")
 
 # Lug's head on the 1920x1080 title screen: centre x, centre y, square side. Wide enough to keep
-# the whole cap and the nose with a margin of paper, tight enough that the face still reads when
-# the project manager shows it at 64px.
-FACE = (1557, 431, 184)
+# the whole hard hat and the nose with a margin of paper, tight enough that the face still reads
+# when the project manager shows it at 64px.
+FACE = (1562, 404, 184)
 
 SIZE = 256
 

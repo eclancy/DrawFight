@@ -22,7 +22,7 @@
     {
       "name": "LegBack_Lower", 
       "offset": [
-        0, 
+        -5.0, 
         159.6
       ], 
       "parent": "LegBack_Upper", 
@@ -40,7 +40,7 @@
     {
       "name": "LegFront_Lower", 
       "offset": [
-        0, 
+        23.0, 
         123.4
       ], 
       "parent": "LegFront_Upper", 
@@ -67,7 +67,7 @@
     {
       "name": "ArmBack_Lower", 
       "offset": [
-        0, 
+        -62.5, 
         89.0
       ], 
       "parent": "ArmBack_Upper", 
@@ -94,7 +94,7 @@
     {
       "name": "ArmFront_Lower", 
       "offset": [
-        0, 
+        48.5, 
         158.4
       ], 
       "parent": "ArmFront_Upper", 
@@ -103,7 +103,7 @@
     {
       "name": "PropFront", 
       "offset": [
-        0, 
+        -48.5, 
         158.4
       ], 
       "parent": "ArmFront_Lower", 
@@ -163,7 +163,7 @@
   "parts": {
     "ArmBack_Lower": {
       "pivot": [
-        95.0, 
+        32.5, 
         10.01
       ], 
       "texture": "parts/ArmBack_Lower.png"
@@ -177,7 +177,7 @@
     }, 
     "ArmFront_Lower": {
       "pivot": [
-        53.5, 
+        102.0, 
         10.91
       ], 
       "texture": "parts/ArmFront_Lower.png"
@@ -191,7 +191,7 @@
     }, 
     "LegBack_Lower": {
       "pivot": [
-        30.0, 
+        25.0, 
         10.61
       ], 
       "texture": "parts/LegBack_Lower.png"
@@ -205,7 +205,7 @@
     }, 
     "LegFront_Lower": {
       "pivot": [
-        27.5, 
+        50.5, 
         10.86
       ], 
       "texture": "parts/LegFront_Lower.png"

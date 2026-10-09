@@ -56,21 +56,19 @@
       "part": "Torso"
     }, 
     {
-      "inFront": true, 
       "name": "ArmBack_Upper", 
       "offset": [
-        -100, 
-        -596
+        206, 
+        -594
       ], 
       "parent": "Torso", 
       "part": "ArmBack_Upper"
     }, 
     {
-      "inFront": true, 
       "name": "ArmBack_Lower", 
       "offset": [
         0, 
-        326.0
+        254.0
       ], 
       "parent": "ArmBack_Upper", 
       "part": "ArmBack_Lower"
@@ -87,8 +85,8 @@
     {
       "name": "ArmFront_Upper", 
       "offset": [
-        206, 
-        -594
+        -100, 
+        -596
       ], 
       "parent": "Torso", 
       "part": "ArmFront_Upper"
@@ -97,13 +95,13 @@
       "name": "ArmFront_Lower", 
       "offset": [
         0, 
-        254.0
+        326.0
       ], 
       "parent": "ArmFront_Upper", 
       "part": "ArmFront_Lower"
     }
   ], 
-  "canonicalHeight": 1171, 
+  "canonicalHeight": 1152, 
   "extras": [
     {
       "always": true, 
@@ -114,73 +112,109 @@
         0
       ], 
       "part": "Socket"
+    }, 
+    {
+      "always": true, 
+      "bone": "LegBack_Lower", 
+      "foot": true, 
+      "name": "footBack", 
+      "offset": [
+        0, 
+        265.3
+      ], 
+      "part": "FootBack"
+    }, 
+    {
+      "always": true, 
+      "bone": "LegFront_Lower", 
+      "foot": true, 
+      "name": "footFront", 
+      "offset": [
+        0, 
+        256.0
+      ], 
+      "part": "FootFront"
     }
   ], 
-  "legLength": 658, 
+  "legLength": 660, 
   "name": "DoomBot", 
   "parts": {
     "ArmBack_Lower": {
-      "hand": 250.0, 
+      "hand": 251.1, 
       "pivot": [
-        166.5, 
-        58.5
+        131.0, 
+        77.0
       ], 
       "texture": "parts/ArmBack_Lower.png"
     }, 
     "ArmBack_Upper": {
       "pivot": [
-        65.5, 
-        -11.5
+        73.0, 
+        29.0
       ], 
       "texture": "parts/ArmBack_Upper.png"
     }, 
     "ArmFront_Lower": {
-      "hand": 238.1, 
+      "hand": 261.5, 
       "pivot": [
-        118.0, 
-        64.0
+        178.0, 
+        70.0
       ], 
       "texture": "parts/ArmFront_Lower.png"
     }, 
     "ArmFront_Upper": {
       "pivot": [
-        60.5, 
-        17.5
+        77.0, 
+        1.0
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
+    "FootBack": {
+      "pivot": [
+        140, 
+        17
+      ], 
+      "texture": "parts/FootBack.png"
+    }, 
+    "FootFront": {
+      "pivot": [
+        103, 
+        20
+      ], 
+      "texture": "parts/FootFront.png"
+    }, 
     "Head": {
       "pivot": [
-        184, 
-        459
+        185, 
+        440
       ], 
       "texture": "parts/Head.png"
     }, 
     "LegBack_Lower": {
       "pivot": [
-        127.0, 
-        12.3
+        93.0, 
+        79.3
       ], 
       "texture": "parts/LegBack_Lower.png"
     }, 
     "LegBack_Upper": {
       "pivot": [
-        79.0, 
-        21.0
+        80.0, 
+        92.0
       ], 
       "texture": "parts/LegBack_Upper.png"
     }, 
     "LegFront_Lower": {
       "pivot": [
-        75.5, 
-        12.5
+        87.0, 
+        69.0
       ], 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        70.5, 
-        19.5
+        74.0, 
+        82.0
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
@@ -194,12 +228,20 @@
     "Torso": {
       "pivot": [
         277, 
-        739
+        743
       ], 
       "texture": "parts/Torso.png"
     }
   }, 
   "points": [
+    {
+      "bone": "Torso", 
+      "name": "socket", 
+      "offset": [
+        -92, 
+        -583
+      ]
+    }, 
     {
       "bone": "Head", 
       "name": "eye", 

@@ -21,4 +21,12 @@ public static class Taunts
 		PropArt = propArt,
 		ShowExtra = extra,
 	};
+
+	/// <summary>A taunt that strikes one of the fighter's own posed drawings, picked at random.</summary>
+	public static MoveData Posed(string[] poses)
+	{
+		MoveData taunt = Make(AttackAnim.Spread);
+		taunt.PoseArts = poses;
+		return taunt;
+	}
 }

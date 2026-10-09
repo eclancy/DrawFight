@@ -27,6 +27,7 @@ public partial class CharacterSelectScreen : Node2D
 		public bool Joined;
 		public int Index = -1;
 		public Label Name;
+		public Label Credit;
 		public Label Blurb;
 		public Label State;
 		public Color Tint;
@@ -78,20 +79,41 @@ public partial class CharacterSelectScreen : Node2D
 		float rowWidth = cards.Length * CardWidth + (cards.Length - 1) * CardGap;
 		float rowLeft = (viewport.X - rowWidth) * 0.5f;
 
+		// Each portrait faces whichever way it likes, picked afresh every time the screen opens -
+		// a row all facing the same way looked like a lineup (Eric, 2026-10-04). Never all one way.
+		var facing = new int[cards.Length];
+		var rng = new System.Random();
+		for (int i = 0; i < facing.Length; i++) facing[i] = rng.Next(2) == 0 ? -1 : 1;
+		if (System.Array.TrueForAll(facing, f => f == facing[0])) facing[rng.Next(facing.Length)] *= -1;
+
 		for (int i = 0; i < cards.Length; i++)
 		{
 			var box = new Rect2(rowLeft + i * (CardWidth + CardGap), CardTop, CardWidth, CardHeight);
 			FighterData data = FighterCatalog.Get(i);
 
-			// The rig positions itself inside its parent, so layout lives on a holder above it.
-			var holder = new Node2D { Position = new Vector2(box.GetCenter().X, box.Position.Y + 160.0f) };
-			AddChild(holder);
+			// The portrait lives in a window the size of the card above its name, and never draws
+			// outside it. The rig positions itself inside its parent, so layout lives on a holder.
+			var window = new Control
+			{
+				Position = box.Position + new Vector2(PortraitInset, PortraitInset),
+				Size = new Vector2(box.Size.X - PortraitInset * 2.0f, box.Size.Y - NameHeight - PortraitInset),
+				ClipContents = true,
+				MouseFilter = Control.MouseFilterEnum.Ignore,
+			};
+			AddChild(window);
+			var holder = new Node2D();
+			window.AddChild(holder);
 			var rig = new FighterRig();
 			holder.AddChild(rig);
 			if (rig.Load(data.RigPath))
 			{
 				rig.Normalise(230.0f, 115.0f, data.VisualScale);
-				rig.SetFacing(1);
+				rig.SetFacing(facing[i]);
+				rig.Robotic = data.Robotic;
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.SetPlanted(true);
+				rig.SetStanding(true);
+				FitPortrait(holder, rig, window.Size);
 			}
 
 			var name = MenuTheme.MakeLabel(data.DisplayName, new Vector2(box.Position.X, box.End.Y - 62.0f), 40, MenuTheme.Text);
@@ -133,9 +155,20 @@ public partial class CharacterSelectScreen : Node2D
 			root.AddChild(column);
 
 			slot.Name = MenuTheme.MakeLabel("", Vector2.Zero, 52, MenuTheme.Text);
+			slot.Credit = MenuTheme.MakeLabel("", Vector2.Zero, 28, MenuTheme.Soft);
 			slot.Blurb = MenuTheme.MakeLabel("", Vector2.Zero, 25, MenuTheme.Soft);
 			slot.State = MenuTheme.MakeLabel("", Vector2.Zero, 30, tint);
-			foreach (Label label in new[] { slot.Name, slot.Blurb, slot.State })
+
+			// Who drew it sits on the name's own line, so crediting the artist costs no room the
+			// description needs.
+			var heading = new HBoxContainer();
+			heading.AddThemeConstantOverride("separation", 18);
+			slot.Name.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
+			slot.Credit.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
+			heading.AddChild(slot.Name);
+			heading.AddChild(slot.Credit);
+			column.AddChild(heading);
+			foreach (Label label in new[] { slot.Blurb, slot.State })
 			{
 				label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
 				column.AddChild(label);
@@ -166,6 +199,30 @@ public partial class CharacterSelectScreen : Node2D
 		});
 
 		RefreshPanels();
+	}
+
+	/// <summary>How far inside the card's border its portrait window starts.</summary>
+	const float PortraitInset = 6.0f;
+	/// <summary>The strip along the bottom of a card that holds the fighter's name.</summary>
+	const float NameHeight = 66.0f;
+
+	/// <summary>
+	/// Scales and places a portrait so the fighter fills its card window, standing on the bottom of
+	/// it: as big as it goes before the body - not a held weapon - would touch the sides or the
+	/// top. A sword or a hammer held out wider than the card is cropped by the window, like a photo
+	/// framed close; the fighter is never shrunk to fit his weapon in. Eric's call, 2026-10-04:
+	/// closer, and inside the box.
+	/// </summary>
+	static void FitPortrait(Node2D holder, FighterRig rig, Vector2 window)
+	{
+		// Settle into the standing pose first, so it is the pose that is measured.
+		for (int i = 0; i < 12; i++) rig.PoseAt(FighterAnimations.Idle, 0.0f, 1.0f);
+		Rect2 body = rig.BodyBounds(holder);
+		if (body.Size.X < 1.0f || body.Size.Y < 1.0f) return;
+
+		float scale = Mathf.Min(window.X * 0.92f / body.Size.X, window.Y * 0.95f / body.Size.Y);
+		holder.Scale = Vector2.One * scale;
+		holder.Position = new Vector2(window.X * 0.5f - body.GetCenter().X * scale, window.Y - 4.0f - body.End.Y * scale);
 	}
 
 	static Rect2 PanelRect(int player, Vector2 viewport)
@@ -377,6 +434,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (!slot.Joined)
 			{
 				slot.Name.Text = "";
+				slot.Credit.Text = "";
 				slot.Blurb.Text = "";
 				slot.State.Text = "Press A to join";
 				continue;
@@ -385,6 +443,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (slot.IsCpu)
 			{
 				slot.Name.Text = FighterCatalog.NameOf(slot.Index);
+				slot.Credit.Text = FighterCatalog.CreditOf(slot.Index);
 				slot.Blurb.Text = FighterCatalog.BlurbOf(slot.Index);
 				slot.State.Text = "CPU";
 				continue;
@@ -394,6 +453,7 @@ public partial class CharacterSelectScreen : Node2D
 			// fighter's description before committing to it.
 			int shown = slot.Locked ? slot.Index : CardUnder(slot.Cursor.Position);
 			slot.Name.Text = shown >= 0 ? FighterCatalog.NameOf(shown) : "";
+			slot.Credit.Text = shown >= 0 ? FighterCatalog.CreditOf(shown) : "";
 			slot.Blurb.Text = shown >= 0 ? FighterCatalog.BlurbOf(shown) : "";
 			slot.State.Text = slot.Locked ? "READY" : "";
 		}

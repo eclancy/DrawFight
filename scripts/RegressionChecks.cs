@@ -339,6 +339,12 @@ public static class RegressionChecks
 				// A choice of moves is only as strong as what is on offer, so list each one.
 				if (move != null) foreach (MoveData choice in move.Choices) if (choice != null) Report("  " + choice.MoveName, choice, victim);
 
+				// Everyone's throws, after their specials.
+				if (slot == MoveSlot.DownSpecial)
+				{
+					foreach (MoveData throwMove in attacker.Throws) Report("  " + throwMove.MoveName, throwMove, victim);
+				}
+
 				// A command grab hits with what follows it, and a vent with however hot he is.
 				if (move?.Special == SpecialKind.CommandGrab && move.GrabThrow != null)
 				{
@@ -416,6 +422,9 @@ public static class RegressionChecks
 			velocity.Y = Mathf.Min(victim.MaxFallSpeed, velocity.Y + victim.Gravity * Tuning.GravityScale * Dt);
 			position += velocity * Dt;
 
+			// The side and top only KO a fighter still in hitstun (see MatchManager), so a
+			// launch that is still flying when hitstun ends has been survived.
+			if (frame >= hitstun) break;
 			if (position.X > stage.BlastZone.End.X || position.X < stage.BlastZone.Position.X)
 			{
 				edge = "side";

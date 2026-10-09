@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://btb3a812trxrd"
-path="res://.godot/imported/tall.png-4bd09631a303266a87ada6483e13580e.ctex"
+uid="uid://blfnru7bo2mb6"
+path="res://.godot/imported/ArmFront_Upper.png-af1864e5a2af59cd3d85efbeed295d34.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://fighters/circy/poses/tall.png"
-dest_files=["res://.godot/imported/tall.png-4bd09631a303266a87ada6483e13580e.ctex"]
+source_file="res://fighters/triguy/parts/ArmFront_Upper.png"
+dest_files=["res://.godot/imported/ArmFront_Upper.png-af1864e5a2af59cd3d85efbeed295d34.ctex"]
 
 [params]
 

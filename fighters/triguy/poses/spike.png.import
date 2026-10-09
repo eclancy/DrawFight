@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c3itp2350kpv1"
-path="res://.godot/imported/HardHat.png-43b2c4eef40d1f66565822f22d66c519.ctex"
+uid="uid://dtlm4r8wj6nf2"
+path="res://.godot/imported/spike.png-399553b403550ef60ae9038ed7cdaa54.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://fighters/lug/parts/HardHat.png"
-dest_files=["res://.godot/imported/HardHat.png-43b2c4eef40d1f66565822f22d66c519.ctex"]
+source_file="res://fighters/triguy/poses/spike.png"
+dest_files=["res://.godot/imported/spike.png-399553b403550ef60ae9038ed7cdaa54.ctex"]
 
 [params]
 

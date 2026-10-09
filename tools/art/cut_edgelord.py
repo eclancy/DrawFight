@@ -63,8 +63,35 @@ def pixels(mask):
     return [(x, y) for y in range(0, h) for x in range(0, w) if px[x, y]]
 
 
+def ink_crossing(canvas, row, centre):
+    """The middle of the run of drawn pixels on one row nearest `centre` - where a curved limb
+    actually crosses the row it is split on, rather than the straight line from joint to tip."""
+    px = canvas.load()
+    w = canvas.size[0]
+    runs, start = [], None
+    for x in range(w):
+        on = px[x, row][3] > 40
+        if on and start is None:
+            start = x
+        if not on and start is not None:
+            runs.append((start, x - 1))
+            start = None
+    if start is not None:
+        runs.append((start, w - 1))
+    if not runs:
+        return centre
+    best = min(runs, key=lambda r: 0 if r[0] <= centre <= r[1] else min(abs(r[0] - centre), abs(r[1] - centre)))
+    return (best[0] + best[1]) / 2.0
+
+
 def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, parts):
-    """Rotates a limb about its joint until its far end hangs straight down, then halves it."""
+    """Rotates a limb about its joint until its far end hangs straight down, then halves it.
+
+    The elbow or knee goes where the drawn limb crosses the halfway line, not on the straight
+    line from joint to tip. His arms curl, and a joint put on that straight line sat in empty
+    paper beside the arm: the forearm turned about a point off to one side of it and came away
+    from the upper arm - his far hand floated loose (Eric, 2026-10-04). Returns the joint, the
+    length, and how far across the elbow is from the joint (zero for a straight limb)."""
     pts = pixels(mask)
     joint = min(pts, key=lambda p: (p[0] - reference[0]) ** 2 + (p[1] - reference[1]) ** 2)
     tip = max(pts, key=lambda p: (p[0] - joint[0]) ** 2 + (p[1] - joint[1]) ** 2)
@@ -80,6 +107,7 @@ def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, pa
     canvas = canvas.rotate(angle - 90.0, resample=Image.BICUBIC, center=(side / 2, side / 2))
 
     mid = side / 2 + length / 2.0
+    knee_x = ink_crossing(canvas, int(mid), side / 2.0)
     upper = canvas.crop((0, 0, side, int(mid + JOINT_OVERLAP)))
     lower = canvas.crop((0, int(mid - JOINT_OVERLAP), side, side))
     ubox, lbox = upper.getbbox(), lower.getbbox()
@@ -90,8 +118,8 @@ def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, pa
                          'pivot': [round(side / 2 - ubox[0], 2), round(side / 2 - ubox[1], 2)]}
     lower_top = int(mid - JOINT_OVERLAP)
     parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
-                         'pivot': [round(side / 2 - lbox[0], 2), round(mid - lower_top - lbox[1], 2)]}
-    return joint, length
+                         'pivot': [round(knee_x - lbox[0], 2), round(mid - lower_top - lbox[1], 2)]}
+    return joint, length, knee_x - side / 2.0
 
 
 def mirrored(point, width):
@@ -141,6 +169,7 @@ def main():
     parts = {}
     lengths = {}
     joints = {}
+    knees = {}
     for key, upper, lower, ref in (
         ('leg_right', 'LegBack_Upper', 'LegBack_Lower', hip),
         ('leg_left', 'LegFront_Upper', 'LegFront_Lower', hip),
@@ -148,7 +177,8 @@ def main():
         ('arm_left', 'ArmFront_Upper', 'ArmFront_Lower', centre),
     ):
         piece = masked(full, limb_masks[key])
-        joints[upper], lengths[upper] = canonical_limb(piece, limb_masks[key], ref, upper, lower, parts_dir, parts)
+        joints[upper], lengths[upper], knees[upper] = canonical_limb(
+            piece, limb_masks[key], ref, upper, lower, parts_dir, parts)
 
     # The body: everything that is not a limb - but only on or above the V, so a stray bit of
     # leg outline left over from the cut does not ride along with the body.
@@ -204,7 +234,12 @@ def main():
         return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
 
     def half(bone):
-        return [0, round(lengths[bone] / 2, 1)]
+        """From the joint to the elbow or knee, which sits where the drawn limb crosses halfway."""
+        return [round(knees[bone], 1), round(lengths[bone] / 2, 1)]
+
+    def rest(bone):
+        """From the elbow on to the end of the limb: the hand, straight below the shoulder."""
+        return [round(-knees[bone], 1), round(lengths[bone] / 2, 1)]
 
     bones = [
         {'name': 'Hip', 'parent': None, 'offset': [0, 0], 'part': None},
@@ -218,7 +253,7 @@ def main():
         {'name': 'Head', 'parent': 'Torso', 'offset': [0, -(hip[1] - tbox[1])], 'part': None},
         {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': rel(joints['ArmFront_Upper']), 'part': 'ArmFront_Upper'},
         {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': half('ArmFront_Upper'), 'part': 'ArmFront_Lower'},
-        {'name': 'PropFront', 'parent': 'ArmFront_Lower', 'offset': half('ArmFront_Upper'), 'part': 'PropFront'},
+        {'name': 'PropFront', 'parent': 'ArmFront_Lower', 'offset': rest('ArmFront_Upper'), 'part': 'PropFront'},
     ]
 
     rig = {

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ee525kmupdkn"
-path="res://.godot/imported/stand.png-e0671b8af8c12da4d94cbd50ec40f962.ctex"
+uid="uid://bu1wvq3ahebs7"
+path="res://.godot/imported/taunt_pog.png-f90fd4adb027ba190e4628592ca12393.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://fighters/circy/poses/stand.png"
-dest_files=["res://.godot/imported/stand.png-e0671b8af8c12da4d94cbd50ec40f962.ctex"]
+source_file="res://fighters/triguy/poses/taunt_pog.png"
+dest_files=["res://.godot/imported/taunt_pog.png-f90fd4adb027ba190e4628592ca12393.ctex"]
 
 [params]
 

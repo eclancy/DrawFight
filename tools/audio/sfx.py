@@ -465,6 +465,14 @@ def clang():
     return S.layer([(ring, 0.0, 1.0), (tick, 0.0, 0.5)])
 
 
+def stomp():
+    """A robot's footfall: a heavy, low thud with a dull clank of steel on top - every step of
+    DoomBot's walk. Short and low, because it plays twice a stride."""
+    dur = 0.32
+    return S.layer([(thump(dur, 120, 42, 9.0), 0.0, 1.0), (metal(520, 0.16, k=22.0), 0.0, 0.3),
+                    (slap(0.04, cutoff=1800.0, k=70.0, seed=SEED + 71), 0.0, 0.35)])
+
+
 def minibot_pop():
     """The MiniBot going off: a little boom, pitched up, with a clank of loose parts after it."""
     dur = 0.45
@@ -473,6 +481,27 @@ def minibot_pop():
     pop = S.mix(S.gain(thump(dur, 220, 70, 7.0), 0.9), S.gain(S.env_mul(air, S.expdecay(n, 9.0)), 0.7))
     return S.layer([(pop, 0.0, 1.0), (metal(880, 0.2, k=14.0), 0.07, 0.35),
                     (metal(1240, 0.18, k=16.0), 0.13, 0.25)])
+
+
+def splash():
+    """Water slapping down and spreading: a soft noise burst, darkening, with a few bubbly blips."""
+    dur = 0.55
+    n = S.n_samples(dur)
+    water = S.lowpass(S.osc("noise", 0, dur, seed=SEED + 71), S.sweep(dur, 3600, 500, 0.6))
+    water = S.env_mul(water, S.expdecay(n, 6.0))
+    blips = S.layer([(tone("sine", f, 0.07, cutoff=4000.0), t, 0.25) for f, t in
+                     ((620, 0.08), (840, 0.15), (700, 0.23), (980, 0.31))])
+    return S.layer([(water, 0.0, 1.0), (blips, 0.0, 1.0)])
+
+
+def boing():
+    """A trampoline throwing someone up: a springy sine that wobbles and rises."""
+    dur = 0.5
+    n = S.n_samples(dur)
+    spring = S.osc("sine", S.sweep(dur, 160, 520, 0.7), dur)
+    wobble = S.osc("sine", 22.0, dur)
+    spring = [a * (0.75 + 0.25 * b) for a, b in zip(spring, wobble)]
+    return S.env_mul(spring, S.ad(dur, 0.005, 2.5))
 
 
 # ---------------------------------------------------------------------------
@@ -535,5 +564,9 @@ REGISTRY = [
     ("burn", "hit", -20.0, burn, False),
     ("creak", "swing", -14.0, creak, False),
     ("clang", "hit", -10.0, clang, False),
+    # Twice a stride: well down in the mix.
+    ("stomp", "move", -16.0, stomp, False),
     ("minibot_pop", "special", -9.0, minibot_pop, False),
+    ("splash", "special", -11.0, splash, False),
+    ("boing", "special", -11.0, boing, False),
 ]

@@ -11,8 +11,11 @@ and rigged cutout puppets play the shared animation library. M2's last piece, a 
 a **real drawing**, is **Circy**: designed and drawn by Elim, cut from Elim's drawings by
 `tools/art/cut_circy.py`. **EdgeLord** and **DoomBot** are drawn by Eric (the kids' uncle and
 the project owner); EdgeLord plays with our placeholder colouring and sword art until the
-finished drawings arrive. DoomBot's moves come from Eric's own sheet (`fighters/doombot/sheet.md`). `fighters/` also holds two generated stick
-figures (Swift, Lug); `fighters/README.md` says when they go. M3 is the import tool.
+finished drawings arrive. DoomBot's moves come from Eric's own sheet (`fighters/doombot/sheet.md`).
+**Triguy** is Elim's second, the first fighter sent in through the ecec.dev/draw form, cut by
+`tools/art/cut_triguy.py`. `fighters/` also holds two stand-ins we drew ourselves, in code -
+Swift (Flambé), a punk rocker, and Lug (Lugnut), a muscle-bound construction worker Eric will
+draw himself; `fighters/README.md` says when they go. M3 is the import tool.
 
 Every rule about "his" linework below applies to every kid who sends a fighter, Elim included.
 
@@ -62,7 +65,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 ## The three rules that are not negotiable
 
 1. **Never redraw, clean up, smooth, or "fix" his linework.** Fill in what is missing; never
-   replace what is there. This is the entire point of the project.
+   replace what is there. This is the entire point of the project. (The allowed exceptions, for
+   readability at match size: widening every line uniformly, in place, when it is too thin to
+   see - Circy's and Triguy's `LINE_BOOST` - and, on Eric's own DoomBot at his request, a dark
+   ring round the outside edge. See `.ai/art-pipeline.md`.)
 2. **Every fighter rigs to the same skeleton**, so the animation library is authored once and
    inherited by everyone. Do not generalise the bone hierarchy — see the non-humanoid escape
    hatch in `.ai/art-pipeline.md` instead.
@@ -74,21 +80,30 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`dotnet build DrawFight.sln`** — the default verification loop. Catches essentially all C#
   errors, no Godot needed.
 - **`"$GODOT_BIN" --path .`** — run the game. `$GODOT_BIN` is set in `.claude/settings.json`;
-  if it is unset or missing, stop and say so rather than guessing a path.
+  if it is unset or missing, stop and say so rather than guessing a path. It launches fullscreen
+  (F11 toggles) except for a `--shot` run, which stays a 1920x1080 window; pass `-- --windowed`
+  to play in a window.
 - **`"$GODOT_BIN" --path . -- --parade --shot=70`** — lay out every fighter in every animation,
   side by side and large, and write a screenshot to `.shots/`. **This is how rig and animation
   changes get verified.** A wrong pivot or a flipped rotation sign is obvious here and invisible
   in a match. Add **`--attacks`** to see every fighter's own attacks at the frame they hit,
   holding the weapon each one draws, and **`--only=N`** to show one fighter by catalog index
-  (wrapped onto two rows, so a long reach does not run into the next column).
-  The attack parade rings each hitbox and prints where the weapon head is against it - put a
-  hitbox where the weapon actually is, not where it seems like it should be. A move with a
+  (wrapped onto two rows, so a long reach does not run into the next column). **`--size=-1`**
+  or **`--size=1`** shows a fighter who changes size (Circy) short or tall.
+  The attack parade rings each hitbox (a faint band runs back to the body: a hit reaches from
+  inside the body out to the ring) and prints where the weapon head is against it - put the ring
+  on the business end of the weapon or limb, not where it seems like it should be. Poses are
+  sampled with the fighter's own AnimationDrama, exactly as in a match. A move with a
   stretching leg reaches and points at its ring there exactly as it does in a match.
   `--shot=N` works on the match too; `F12` grabs a frame while playing.
-- **`python tools/art/stickfigures.py [name]`** — regenerate the two generated test fighters.
-  A name builds just that one.
+- **`python tools/art/flambe.py`** and **`python tools/art/lugnut.py`** — redraw and re-rig
+  the two stand-ins we drew ourselves, Flambé and Lugnut, with their tools and props. Their parts
+  are SVG coloured in pencil (`tools/art/drawn.py`), so they need `$GODOT_BIN` to rasterise them
+  (`tools/art/svg_raster.gd`). A few seconds each.
 - **`python tools/art/cut_circy.py`** — re-cut Circy's parts and poses from Elim's drawings in
   `fighters/circy/source/`. Takes about 20 seconds; Python 2.7 without numpy is slow per pixel.
+- **`python tools/art/cut_triguy.py`** — re-cut Triguy's parts, poses and effects from Elim's
+  drawings in `fighters/triguy/source/`. About 45 seconds.
 - **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's placeholder rig: colours his
   drawing, cuts it, and draws the swords and turning frames. About a minute. Replaced
   wholesale when his own coloured art arrives - see `fighters/README.md`.
@@ -183,8 +198,9 @@ something is unstated here, default to however that project does it.
 - Build a new roster entry by calling a catalog in a loop. `FighterCatalog` and `StageCatalog`
   cache their entries because each one now owns seventeen `MoveData` Resources.
 - Ship a move with both high base knockback and high knockback growth.
-- Add universal grabs or throws, or leave hooks for them. **Settled and out**, not deferred —
-  see `.ai/fighting-design.md`.
+- Give a fighter throws that are not themed on the rest of their kit. Everyone grabs (block +
+  attack) and has four throws, in `Grabs.cs` - see `.ai/fighting-design.md`. Grabs went in on
+  Eric's call (2026-10-04), reversing the old "no grabs" rule.
 - Build a Smash-style shield. Blocking **reduces** damage and knockback; it never negates them.
   There is no shield health, no shield break, and no shield poking, and the cost of blocking is
   paid in chip damage raising your percent.

@@ -108,9 +108,21 @@ with a handicap.
 
 **Status: a basic CPU is built** — `CpuInputSource`, an `IInputSource` like a pad, so it plays
 by exactly the same frame windows as a person. It decides every ~20 frames, idles 35% of the
-time, swings at only 60% of openings, approaches, attacks by where the target is, blocks some attacks, and recovers with its
-air jump then its up special. Added from the CPU button on fighter select, or `--cpu`. Still
-owed: the difficulty setting (the constants at the top of the class are the knobs).
+time, swings at only 60% of openings, blocks some attacks, and recovers with its air jump then
+its up special (aiming EdgeLord's air dash up and in). It swings only with a move that would
+land - each move's hitbox, or the flight of what it throws, tested against the target's body the
+way a real hit is - and otherwise keeps to the gap its own forward tilt reaches, walking the last
+stretch so it can tilt, backing off slowly when a long weapon is too close, and using the air jump
+to reach someone on a platform. It jumps a wall in its way (City Rooftops' buildings), jumps a
+drop to someone standing across it rather than walking off, drops through or off a platform to
+someone below it, never chases or dash-attacks toward a side blast zone (Open Plains' floor runs
+on past them), and recovers out from under the stage before going up - with its whole body clear
+of the corner first. Braking is a reflex, checked every frame rather than at a decision: sliding
+at a drop or the side of the screen faster than it can stop, it pushes back at once - which is
+what keeps Triguy, whose feet barely grip, from skidding off by himself. Against a standing target, every fighter now lands most of what it
+throws; when it attacked anything within a fixed 115 pixels, Lugnut landed about one swing in
+twenty. Added from the CPU button on fighter select, or `--cpu`. Still owed: the difficulty
+setting (the constants at the top of the class are the knobs).
 
 ## M8 — More
 

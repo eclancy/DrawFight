@@ -265,3 +265,25 @@ small path rather than bending the rig.
   replace what is present. This is pillar 1 of the project and it is the whole point.
 - Colour correction is limited to what makes the art readable on the stage background — a
   levels nudge so pencil is visible, never a restyle.
+- **Line weight is the one other readability step**, and only for a drawing whose line vanishes
+  at match size (Elim's: under a pixel). The cut script widens every line of ink by the same
+  amount, in place, with a round pen (`tools/art/linework.py`, `LINE_BOOST` in the cut script) -
+  aiming for about 2.5px at match size. It keeps every line's path and touches only the generated
+  parts and poses, never `source/`. Never use it to tidy, smooth or join anything. Eric's call,
+  2026-10-04.
+- **Feet cut separately** (DoomBot's boots): a foot is an extra on its lower leg pinned at the
+  ankle, marked `"foot": true` in rig.json. The rig keeps it level as far as the fighter is
+  planted (`FighterRig.LevelFeet`) - an ankle, without a new bone - and, standing, solves thigh
+  and shin between hip and a fixed ankle (`StandOnAnkles`), so he balances over his feet. In the
+  air a foot follows its shin, so a kick still points its boot. Floor contact, the sole a jet
+  comes out of, stance width and portrait framing all count the feet.
+- **Round joint caps** (DoomBot's legs): each half of a limb keeps a disc of the limb round the
+  joint, and the thigh's disc round the hip is filled with leg cloned from just below it (hidden
+  behind the body at rest) - so a leg swung far out turns one round end over another instead of
+  opening a notch. A cut-script job (`canonical(..., cap=)` in `tools/art/cut_doombot.py`).
+  Eric's call, 2026-10-04: his legs came visibly away from his body on his kicks.
+- **An outer outline** - a dark ring round each piece's outside edge, drawn behind it - is the
+  same kind of step for a drawing whose edge is faint pencil. DoomBot only, on his artist's own
+  request (`ringed` in `tools/art/cut_doombot.py`): ring each whole shape before cutting it at a
+  joint, so no line crosses an elbow or knee, and leave thin details (his antennae) out. Ask the
+  artist before giving anyone else's drawing one.

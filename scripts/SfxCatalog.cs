@@ -23,7 +23,7 @@ public static class SfxCatalog
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
 		"ui_move", "ui_select", "ui_back", "ui_ready", "pause",
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
-		"clang", "minibot_pop",
+		"clang", "minibot_pop", "splash", "boing", "stomp",
 	};
 
 	/// <summary>Sounds that loop until stopped. Everything else is a one-shot.</summary>
@@ -94,6 +94,9 @@ public static class SfxCatalog
 				return new Cue("jets", move.StartupFrames / 2 + 1);
 			case SpecialKind.Recovery when move.Flight:
 				return new Cue("special_wings", 1);
+			// The trampoline: a boing on the frame it throws him.
+			case SpecialKind.Recovery when move.Bounce:
+				return new Cue("boing", active);
 			case SpecialKind.Recovery when move.DelayedLaunch:
 				return new Cue("special_hook", active);
 			case SpecialKind.Recovery:
@@ -107,6 +110,8 @@ public static class SfxCatalog
 			case SpecialKind.BuildPlatform: return new Cue("special_build", active);
 			// Building a minion: the same clank-clank-clank as a girder going in.
 			case SpecialKind.Walker: return new Cue("special_build", active);
+			// Crying a puddle: the splash as it hits the floor.
+			case SpecialKind.Puddle: return new Cue("splash", active);
 
 			// Picking a sword starts the sword's own move, which makes its own sound.
 			case SpecialKind.Choice: return default;

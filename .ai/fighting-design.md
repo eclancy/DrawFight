@@ -11,6 +11,13 @@ Smash rules, not health bars.
   farther you fly from the same hit.**
 - You lose a **stock** (a life) by crossing a **blast zone** — the boundary past the top,
   bottom, left, or right of the stage. Not by running out of HP; there is no HP.
+- **The side and the top only KO someone still flying helplessly from a hit** — in hitstun, or
+  knocked over and tumbling (`Fighter.IsLaunched`). A fighter in control of themselves meets
+  them as a wall and a ceiling (`Fighter.StayInsideBlastZone`): a big jump, a long recovery or
+  a walk-off floor never costs a stock. The bottom KOs anyone, any time. Eric's call,
+  2026-10-04. It moved most KO percents up by 15 to 35 points, since a launch has to be past the
+  line before hitstun runs out.
+- Each fighter starts facing into the stage: whoever spawns on the right faces left.
 - Losing a stock resets your percent to 0 and respawns you on a platform above the stage,
   briefly invulnerable.
 - Default match: 3 stocks, no time limit. Last fighter standing wins.
@@ -81,7 +88,8 @@ distance.
 
 It flies the victim from the edge of the stage under the real numbers: launch velocity decays
 horizontally during hitstun, gravity pulls the whole time, air drag takes over afterwards. A
-launch counts as a KO only if it carries the victim clean off the **side or the top**. Landing
+launch counts as a KO only if it carries the victim clean off the **side or the top** before
+their hitstun ends - after that they are back in control, and the edge just stops them. Landing
 back on the stage counts as survived, and so does falling below it — every hit eventually
 pushes someone off the bottom if you simulate long enough and never let them recover, so
 counting that made every move read as a 0% kill and told us nothing.
@@ -165,6 +173,18 @@ that takes half a second to reach it never gets there in a fight.
   fighter or sinks him, and bending the legs really lowers him. The floor answers back with dust:
   a puff on landing (bigger the harder he came down), a little kicked back off each running step,
   and a cloud skidded out in front when he turns hard at speed.
+- **Standing, the feet are flat and still, and the knees do the moving** (`FighterRig.StandOnFeet`,
+  for idle, blocking and the stances). No fighter has an ankle - the foot is drawn on the end of
+  the shin - so a foot is flat at exactly one angle of its shin, read off the drawing
+  (`FighterRig.SoleOf`: the slope of the bottom of the drawn foot; a leg that just ends, in a
+  point or a stick end, counts as flat). Standing, each shin is turned to that angle and each
+  thigh until the sole sits on the floor, knee forward; the pose only sets how low the hips are,
+  as a percentage of leg length, so the idle bobs at the knees. The body slides to keep the feet
+  where standing straight puts them. Legs drawn two lengths both reach the floor - the longer one
+  bends, or, with no foot to keep level, angles back straight (EdgeLord). A fighter squashed
+  short (Circy at his smallest) swings his arms out until his hands clear his feet, so the floor
+  holds up his feet and not a hand. Eric's calls, 2026-10-04: DoomBot was standing on the toe of
+  a tilted boot.
 - Ground: accelerate to a run speed, with a distinct initial-dash speed.
 - **Two jumps** for everyone: the ground jump and one air jump. The air jump is refreshed on
   landing, on grabbing a ledge, and **on being hit** - a fighter knocked off the stage always
@@ -181,11 +201,32 @@ that takes half a second to reach it never gets there in a fight.
   stand on and jump off, but it is not the ground: standing on it gives back no air jump, no up
   special and no second build. Only real ground or a ledge does - otherwise build, jump, build
   would be a recovery that never ends.
-- **Up special once per trip into the air.** Landing or grabbing a ledge gives it back; being
-  hit does not. A second press in the air does nothing — it is discarded, not buffered, so it
+- **Up special once per trip into the air.** Landing, grabbing a ledge or being hit gives it
+  back (Eric's call, 2026-10-04: a fighter knocked away always has a recovery). A second press in the air does nothing — it is discarded, not buffered, so it
   cannot come out as a neutral special when the stick leaves up.
-- **Fast-fall**: tapping down while falling increases fall speed. Free expressiveness.
-- **Air control** is strong — you can meaningfully steer your own trajectory mid-launch.
+- **After an up special he is spent** (`Fighter.IsHelpless`): until he lands, catches a ledge or
+  is hit, nothing works but drifting left and right - no attack, special, jump or air dodge -
+  and he is drawn a little grey. The recovery is the last thing he gets on the way home. Eric's
+  call, 2026-10-04. The exception is a recovery marked `CancelIntoAttacks` (Flambe's wings):
+  attack or special straight out of it, or press down to drop out of it; he is never spent by it,
+  only his up special is gone until he lands.
+- **Fast-fall**: holding down while falling pulls him down harder - another 60% of his gravity -
+  up to his fast-fall speed. It used to snap straight to that speed, which flung him at the floor
+  (Eric, 2026-10-04).
+- **Air control** is strong — you can meaningfully steer your own trajectory mid-launch - but
+  **drifting never turns him round.** Back plus attack in the air is always a back air; the
+  only way to face the other way in the air is the second jump, which goes the way the stick is
+  held (EdgeLord's air dash too). Eric's call, 2026-10-04.
+- **Hits reach from the body.** A melee hitbox is a capsule from inside the attacker's body out
+  to the hitbox centre (`Fighter.HitboxRoot`), the radius its thickness - so a hammer catches
+  someone standing right against him, not only at the end of its head. And what can be hit is
+  the whole drawing: the hurtbox reaches up to the top of the drawn figure, which stands taller
+  than the body box. Eric's call, 2026-10-04: hits that looked like they landed went through.
+- **He stands on his feet.** The collision shape is the body box narrowed at the bottom to how
+  wide his feet stand (`Fighter.ShapeBody`, `FighterRig.StanceWidth`), with sides too steep to
+  stand on - so at a ledge he stays up only while his feet are over it, and slides off once
+  they are not. Hits still use the plain box. Lug used to stand on the stage with both feet
+  drawn off the end of it.
 - **Directional influence (DI)**: holding a direction while in hitstun slightly angles your
   launch trajectory. This is how a good player survives a hit that should have killed them, and
   it rewards him for learning something real.
@@ -278,8 +319,17 @@ there. **Open Plains therefore has no ledges at all without anything having to s
 floor runs past both blast zones, so both corners fall outside and there is simply nothing to
 grab. A stage gets ledges by having edges.
 
-From a hang: up or toward the stage climbs back on, jump climbs on with height, and down or away
-lets go. A short re-grab cooldown stops a fighter bouncing back onto the same ledge forever.
+What reaches a ledge is the fighter's hands, up at the front of the shoulders, and the reach
+grows with the body - DoomBot, 1.75 times everyone's size, used never to get his middle near
+enough to catch anything. Hanging, both hands are on the corner (`FighterRig.ReachArm`) and the
+legs dangle.
+
+From a hang, after a short settle (`LedgeSettleFrames`, so the stick still held from drifting back
+does not climb straight up): up or toward the stage **climbs** on; **jump** goes up off it; **block**
+climbs and rolls on past the edge; **attack** or special climbs and swings a low sweep at whoever is
+waiting (the same weak ledge attack for everyone); down or away **lets go**. Climbing cannot be
+hit. A short re-grab cooldown stops a fighter bouncing back onto the same ledge forever. Eric's
+call, 2026-10-04.
 
 ## Dash attacks
 
@@ -293,9 +343,12 @@ selects the lunging attack pose so the move looks like a committed charge rather
 happens to be moving. A dash attack that stops on contact is just a slow jab.
 
 **Nothing started on the ground slides you off it.** Any move begun on the ground - a dash
-attack, a charge, a wheelbarrow - stops dead at the edge rather than carrying the fighter off
-(`Fighter.StopAtLedge`). Sliding off the stage mid-attack is the game killing you, not the other
-player. The one exception is a blink (EdgeLord's Blur Slash), whose whole point is crossing a gap.
+attack, a charge, a wheelbarrow, a side special, EdgeLord's Blur Slash - stops dead at the edge
+rather than carrying the fighter off (`Fighter.StopAtLedge`), and so does the slide left over when
+the move ends (Triguy's skid), until he steers or stops. Sliding off the stage mid-attack is the
+game killing you, not the other player. The one exception is a Blur Slash to one of EdgeLord's
+planted blades, which can cross a gap. Eric's call, 2026-10-04; every dash attack and side special
+was checked running at the edge.
 
 ## Jab combos
 
@@ -324,8 +377,12 @@ Down plus jump on a soft platform is still a drop-through, checked before crouch
 One attack button, told apart by the stick, as in Smash:
 
 - **Tilt**: a direction already held, then attack.
-- **Smash**: the stick **flicked** from centre to full within 4 frames of pressing attack. On a
-  keyboard, pressing the arrow and attack together is a flick.
+- **Smash**: the stick **flicked** - from the centre to the edge in 4 frames or fewer - with
+  attack pressed within 7 frames of it reaching the edge. On a keyboard, pressing the arrow and
+  attack together is a flick. Both windows were tighter (a flick in a single frame, attack within
+  4), and up smashes kept coming out as up tilts (Eric, 2026-10-04).
+- **The right stick is a smash stick**: push it any way for that smash (hold it out to charge),
+  or that aerial in the air - smashes without flicking at all.
 
 Smashes are the grounded finishers — slow to start, long to recover, so a miss is punished.
 **Holding attack charges** one: it freezes 3 frames before the hit for up to 60 frames, for up to
@@ -338,19 +395,29 @@ That is roughly **19 moves per fighter**: a 3-hit jab combo, 3 tilts, 3 smashes,
 block and dodge. It sounds like a lot, but most of them are shared behaviour driven by data —
 see `.ai/character-design.md`.
 
-**Grabs and throws are out of scope. This is settled, not deferred** — do not design around
-them or leave hooks for them. They would add a whole mechanic layer (grab, pummel, four
-directional throws, grab release, throw-based combos) for every fighter, and the block-grab
-interaction they exist to create is not worth that cost here.
+## Grabs and throws
 
-The `CommandGrab` special archetype is a separate matter and stays available — a single
-fighter whose signature move is a grab is fine, because it is that character's identity rather
-than a universal mechanic.
+**Everyone grabs.** Block plus attack on the ground reaches just past the front of the body at
+about the middle of an ordinary fighter (so a giant's grab finds people too) and catches whoever
+is there - **blocking or not**. That is what grabs are for: the answer to someone who just holds
+block. While he holds them, the stick picks one of four throws - forward, back, up, down - and
+with no choice for about two-thirds of a second he throws forward. Back turns him round to throw.
+A missed grab has a long recovery, which is how a grab is beaten. No pummel and no mashing out.
+Eric's call, 2026-10-04, reversing the earlier "grabs are out" decision.
+
+Each fighter's throws use the same things as the rest of their kit (`Grabs.cs`): DoomBot's down
+throw pins them to the floor and burns them with his rocket jets before blasting them off;
+EdgeLord's up throw sends a sword up after them for a second hit. A throw cannot be blocked. One
+with link hits holds them through them (`Fighter.PinHit`); `MoveData.FollowShot` fires something
+after them. Throws are not weight-scaled, like specials, and are in the KO table.
+
+The `CommandGrab` special archetype still exists alongside: a fighter whose signature special is
+a grab (DoomBot's claw).
 
 ## Blocking reduces; it does not negate
 
-Removing grabs removes Smash's answer to a turtle, so blocking cannot work the way Smash's
-shield works. **A block reduces damage and knockback rather than cancelling them.** A blocked
+A block reduces rather than negates, and grabs beat it outright - so blocking cannot work the way
+Smash's shield works. **A block reduces damage and knockback rather than cancelling them.** A blocked
 hit still lands:
 
 ```
@@ -375,6 +442,11 @@ twice, which is the good kind of learning.
 
 Supporting rules, each a single number rather than a system:
 
+- **A block shows as a shield**: a bubble round him in his player's colour, which flashes when
+  a hit lands on it and stays up through blockstun (`Fighter.DrawShield`). It is only how a
+  block looks - nothing above changes, and the bubble never shrinks or breaks, because there is
+  no shield health. Drawn without a hard outline: an outline means something you can stand on or
+  be hit by. Eric's call, 2026-10-04, in place of blocking with crossed arms.
 - You cannot attack or move while blocking.
 - **Block-release lag**: ~5 frames after releasing block before you can act, so block-hit-block
   is not free.
@@ -395,8 +467,8 @@ this. Use it sparingly; it is the kind of thing one character has.
 swing, any hit of that much damage or less still adds its percent but does not flinch him - no
 knockback, no hitstun, just a short freeze and a clang - so a jab cannot stop Lug's
 sledgehammer. It is not a shield: the damage counts, a real hit (more than 8%) still stops him,
-a grab still takes him, and the hard hat that shows it is on comes off in the endlag, where he
-is as open as anyone.
+a grab still takes him, and the glint on his hard hat that shows it is on goes out in the endlag,
+where he is as open as anyone.
 
 ## Moves are data, not code
 

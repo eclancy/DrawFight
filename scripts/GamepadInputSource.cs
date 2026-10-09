@@ -113,6 +113,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 	readonly GamepadLayout layout;
 
 	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown;
+	bool smashStickWasOut;
 
 	bool Pressed(JoyButton button) => button != JoyButton.Invalid && Input.IsJoyButtonPressed(device, button);
 
@@ -151,6 +152,14 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 				&& Input.GetJoyAxis(device, JoyAxis.TriggerLeft) > TriggerThreshold);
 		bool tauntDown = Pressed(layout.Taunt) || Pressed(layout.AltTaunt);
 
+		// The right stick is a smash stick, as in Smash: pushed out, it is a smash attack that way
+		// - held out, it charges - or an aerial that way in the air. Eric's call, 2026-10-04:
+		// smashes should be easy, not a test of flicking.
+		var smash = new Vector2(Input.GetJoyAxis(device, JoyAxis.RightX), Input.GetJoyAxis(device, JoyAxis.RightY));
+		bool smashOut = smash.Length() > (smashStickWasOut ? 0.4f : 0.65f);
+		Vector2 smashWay = Mathf.Abs(smash.X) >= Mathf.Abs(smash.Y)
+			? new Vector2(Mathf.Sign(smash.X), 0.0f) : new Vector2(0.0f, Mathf.Sign(smash.Y));
+
 		var state = new InputState
 		{
 			Move = ReadDirection(out bool fromDpad),
@@ -164,6 +173,15 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			StartPressed = startDown && !startWasDown,
 			TauntPressed = tauntDown && !tauntWasDown,
 		};
+
+		if (smashOut && !smashStickWasOut)
+		{
+			state.Move = smashWay;
+			state.MoveFromDpad = true;
+			state.AttackPressed = true;
+		}
+		if (smashOut) state.AttackHeld = true;
+		smashStickWasOut = smashOut;
 
 		tauntWasDown = tauntDown;
 		jumpWasDown = jumpDown;

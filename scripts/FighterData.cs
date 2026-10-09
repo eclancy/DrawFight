@@ -59,6 +59,11 @@ public partial class FighterData : Resource
 	[Export] public float AnimationDrama { get; set; } = 1.0f;
 
 	/// <summary>
+	/// Who drew this fighter, credited on the select screen. Empty for the computer-drawn stand-ins.
+	/// </summary>
+	[Export] public string Artist { get; set; } = "";
+
+	/// <summary>
 	/// The colour of this fighter's swing trails. Transparent means use PlaceholderColor, the
 	/// fighter's own colour.
 	/// </summary>
@@ -107,6 +112,35 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public float AirDashSpeed { get; set; } = 0.0f;
 
+	/// <summary>
+	/// How much of a hit a block lets through, as a multiple of what a block usually lets through
+	/// (Tuning.BlockDamageMultiplier and BlockKnockbackMultiplier). 1 is an ordinary block.
+	/// Triguy's is weak: blocking is standing still, and he is terrible at that.
+	/// </summary>
+	[Export] public float BlockLeak { get; set; } = 1.0f;
+
+	/// <summary>
+	/// Moves like a machine: every animation held and snapped from pose to pose instead of
+	/// flowing, joints settling on whole steps of angle, a faint servo judder, and a stomping walk
+	/// that shakes the floor. DoomBot. See FighterRig.Robotic.
+	/// </summary>
+	[Export] public bool Robotic { get; set; } = false;
+
+	/// <summary>
+	/// Whether block plus a direction on the ground rolls. False for DoomBot: a factory robot does
+	/// not tumble across the floor - he blocks, spot-dodges and air-dodges, but to get out of a
+	/// corner he has to walk, jump or fight. Eric's call, 2026-10-05.
+	/// </summary>
+	[Export] public bool CanRoll { get; set; } = true;
+
+	/// <summary>
+	/// Carries the weapon in his hand on his shoulder (FighterAnimations.CarryOnShoulder) whenever
+	/// he is on the ground and not attacking - standing, running, crouching, blocking, landing -
+	/// and through any move marked MoveData.CarryOnShoulder. Lug and his sledgehammer: Eric's
+	/// calls, 2026-10-08.
+	/// </summary>
+	[Export] public bool ShouldersProp { get; set; } = false;
+
 	// --- Moveset -------------------------------------------------------------
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
@@ -129,6 +163,12 @@ public partial class FighterData : Resource
 	/// <see cref="Taunts"/>. Null means no taunt.
 	/// </summary>
 	public MoveData Taunt;
+
+	/// <summary>The grab (block plus attack on the ground) - see <see cref="Grabs"/>.</summary>
+	public MoveData Grab = Grabs.Grab();
+
+	/// <summary>The four throws a grab leads to: forward, back, up, down. Built by <see cref="Grabs"/>.</summary>
+	public MoveData[] Throws = System.Array.Empty<MoveData>();
 
 	/// <summary>What the fighter says in a speech bubble while taunting. Empty says nothing.</summary>
 	public string TauntLine = "";
@@ -169,6 +209,7 @@ public partial class FighterData : Resource
 			CharacterNormals.Swift, CharacterNormals.SwiftJab());
 		data.Taunt = Taunts.Make(AttackAnim.HangUp, propArt: "");
 		data.TauntLine = "Too hot for you!";
+		data.Throws = Grabs.Flambe();
 		return data;
 	}
 
@@ -189,11 +230,14 @@ public partial class FighterData : Resource
 			VisualScale = 1.12f,
 			// Hi-vis yellow, like his tools and vest: every swing leaves a bright streak.
 			TrailColor = new Color(1.0f, 0.74f, 0.12f),
+			// On the ground, the sledgehammer rests on his shoulder.
+			ShouldersProp = true,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Construction(),
 			CharacterNormals.Lug, CharacterNormals.LugJab());
 		data.Taunt = Taunts.Make(AttackAnim.OverheadArc, propArt: "tool_sledgehammer", extra: "hardhat");
 		data.TauntLine = "Break's over!";
+		data.Throws = Grabs.Construction();
 		return data;
 	}
 
@@ -209,6 +253,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "EdgeLord",
+			Artist = "Eric",
 			PlaceholderColor = new Color(0.81f, 0.15f, 0.15f),
 			Weight = WeightClass.Light,
 			RunSpeed = 1060.0f,
@@ -228,6 +273,7 @@ public partial class FighterData : Resource
 			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());
 		data.Taunt = Taunts.Make(AttackAnim.PointUp, propArt: "sword_claymore");
 		data.TauntLine = "Try to keep up.";
+		data.Throws = Grabs.EdgeLord();
 		return data;
 	}
 
@@ -248,6 +294,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "DoomBot",
+			Artist = "Eric",
 			PlaceholderColor = new Color(0.86f, 0.28f, 0.26f),
 			Weight = WeightClass.Heavy,
 			// Heavy movement, like Lugnut's: slower on the ground and in the air, falls harder.
@@ -268,12 +315,17 @@ public partial class FighterData : Resource
 			WhiffLagFrames = 10,
 			TelescopingArms = true,
 			HotHitsFrom = 0.5f,
+			// "A factory robot that went rogue": he moves like one (Eric's call, 2026-10-04).
+			Robotic = true,
+			// No rolling: he stays in his block instead.
+			CanRoll = false,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBot(),
 			CharacterNormals.DoomBot, CharacterNormals.DoomBotJab());
 		// His moves are authored at the size he used to be; every hitbox grows with him.
 		foreach (MoveData move in data.Moves) move?.ScaleReach(Size);
 		data.Taunt = Taunts.Make(AttackAnim.Spread);
+		data.Throws = Grabs.DoomBot();
 		return data;
 	}
 
@@ -292,6 +344,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "Circy",
+			Artist = "Elim",
 			PlaceholderColor = new Color(0.98f, 0.86f, 0.30f),
 			Weight = WeightClass.Medium,
 			RunSpeed = 860.0f,
@@ -314,6 +367,51 @@ public partial class FighterData : Resource
 			CharacterNormals.Circy, CharacterNormals.CircyJab());
 		// Circy is Elim's: he does a star jump, and says nothing Elim did not give him to say.
 		data.Taunt = Taunts.Make(AttackAnim.Spread, propArt: "");
+		data.Throws = Grabs.Circy();
+		return data;
+	}
+
+	/// <summary>
+	/// Triguy, drawn and designed by Elim - his second fighter, after Circy - and cut from Elim's
+	/// drawings by tools/art/cut_triguy.py. His sheet is fighters/triguy/sheet.md. "A triangle with
+	/// limbs, a face, and a top hat." What he asked for, in stats:
+	///   - "he is reeeaaaaally fast": Light, and the fastest runner in the game
+	///   - "terrible at standing still": slippery feet - he skids a long way every time he stops
+	///     (a very low GroundFriction) - and a weak block (BlockLeak), because blocking is
+	///     standing still
+	/// </summary>
+	public static FighterData Triguy()
+	{
+		var data = new FighterData
+		{
+			DisplayName = "Triguy",
+			Artist = "Elim",
+			// The blue Elim drew his tears and his trampoline in.
+			PlaceholderColor = new Color(0.10f, 0.40f, 1.0f),
+			Weight = WeightClass.Light,
+			RunSpeed = 1180.0f,
+			AirSpeed = 820.0f,
+			// Gets going as fast as anyone - it is the stopping he cannot do. Ordinary feet stop
+			// in a few frames; his take most of a second and slide about a body length and a half.
+			GroundFriction = 2600.0f,
+			JumpForce = 1557.0f,
+			AirJumpForce = 1633.0f,
+			Gravity = 4100.0f,
+			// The triangle is wide - its point sticks out a long way in front - so the box is too.
+			BodySize = new Vector2(92.0f, 120.0f),
+			RigPath = "res://fighters/triguy/rig.json",
+			VisualScale = 1.0f,
+			AnimationDrama = 1.2f,
+			TrailColor = new Color(0.10f, 0.40f, 1.0f),
+			BlockLeak = 1.8f,
+		};
+		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Triguy(),
+			CharacterNormals.Triguy, CharacterNormals.TriguyJab());
+		// His three taunts, picked at random, exactly as Elim asked - only for show here. The same
+		// three poses with invincibility are his neutral special (Specials.ShowOff).
+		data.Taunt = Taunts.Posed(Specials.TriguyPoses);
+		data.TauntLine = "That's, really kewl";
+		data.Throws = Grabs.Triguy();
 		return data;
 	}
 }

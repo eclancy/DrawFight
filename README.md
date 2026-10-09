@@ -35,7 +35,7 @@ played it.
 |---|---|
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
-| **Fighters** | 5 — **Circy**, the first fighter designed by a kid (Elim); **EdgeLord**, a sword fighter drawn by Eric, with placeholder colouring; **DoomBot**, a rogue factory robot drawn and designed by Eric, with a furnace that heats up as he fights; and two generated stick figures (Flambé and Lugnut) |
+| **Fighters** | 6 — **Circy**, the first fighter designed by a kid (Elim), and **Triguy**, his second, sent in through the submission form; **EdgeLord**, a sword fighter drawn by Eric, with placeholder colouring; **DoomBot**, a rogue factory robot drawn and designed by Eric, with a furnace that heats up as he fights; and two stand-ins we drew in code: **Flambé**, a punk rocker, and **Lugnut**, a muscle-bound construction worker |
 | **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
 | **Screens** | title, character select, stage select, match |
 | **Input** | Xbox pads (hot-pluggable) and keyboard |
@@ -45,8 +45,8 @@ played it.
 
 Flambé (Swift) and Lugnut are **scaffolding, not content** — see [`fighters/README.md`](fighters/README.md).
 They exist so the engine could be built and played before any real drawing existed, and they get
-deleted when real ones land. Circy is the real thing: designed and drawn by Elim, and cut
-straight from Elim's drawings without a line redrawn. EdgeLord and DoomBot are drawn by Eric;
+deleted when real ones land. Circy and Triguy are the real thing: designed and drawn by Elim,
+and cut straight from Elim's drawings without a line redrawn. EdgeLord and DoomBot are drawn by Eric;
 EdgeLord plays with stand-in colours and move art until the finished drawings arrive.
 
 ---
@@ -79,15 +79,19 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | Xbox pad | |
 |---|---|
 | left stick | move — **the harder you push, the faster you run** |
-| A or Y | jump, double jump |
+| A or Y | jump, double jump - the double jump is also the only way to turn round in the air |
 | X | attack — tap repeatedly for a jab combo; hold a direction for tilts and aerials; **flick** the stick with it for a smash (hold X to charge); while running, a dash attack |
 | d-pad + X | a smash attack in that direction, every time — hold X to charge it |
-| B | special (+ a direction for all four) |
-| LT or RT | block — reduces damage and knockback, never negates it |
+| right stick | a smash attack that way (hold it out to charge); an aerial that way in the air |
+| B | special (+ a direction for all four). After an up special you can only drift until you land |
+| LT or RT | block, behind a shield — reduces damage and knockback, never negates it |
+| LT/RT + X | grab — catches someone even while they block; then the stick picks a throw |
 | LT/RT + stick | roll, spot dodge, air dodge |
 | LB or RB | taunt — a pose and a line; does nothing but show off, and leaves you open |
 | hold ↓ | crouch (ducks high attacks); attack from it for a low sweep |
 | hold ↓ + A | drop through a soft platform |
+| hold ↓ in the air | fall faster |
+| F11 | the game starts fullscreen; F11 switches to a window and back |
 
 Keyboard: P1 arrow keys to move, `A` jump, `Q` attack, `W` special, `S` block. With no second
 pad, P2 is the number pad: `8`/`4`/`5`/`6` move, `1` jump, `2` attack, `3` special, `0` block.
@@ -147,7 +151,7 @@ frames of hitstun.
 scripts/        all the code, flat — engine, rig, stages, screens, tools
 scenes/         one 2-line .tscn that attaches GameRoot; everything else is built in code
 fighters/       one folder per fighter: source art, sliced parts, rig.json
-tools/art/      the generator that made the placeholder stick figures (Python 2.7 + PIL)
+tools/art/      the cut scripts for every drawn fighter, and the generators for the two stand-ins (Python 2.7 + PIL)
 tools/audio/    the generators for every sound effect and both music loops (Python 2.7)
 assets/         generated sound (assets/sfx/) and music (assets/music/) - never hand-edited
 .ai/            design docs — the source of truth for anything design-shaped
@@ -187,9 +191,9 @@ as the fun one.
 
 This repository is public, but the drawings in it are not up for grabs.
 
-Any real child's artwork in `fighters/` belongs to the child who drew it. **Circy is Elim's** —
-the character, the name, the moves, and every drawing under `fighters/circy/` — and is shared
-here so people can see the game, not for reuse. Please don't copy the drawings into anything
+Any real child's artwork in `fighters/` belongs to the child who drew it. **Circy and Triguy are
+Elim's** — the characters, the names, the moves, and every drawing under `fighters/circy/` and
+`fighters/triguy/` — and are shared here so people can see the game, not for reuse. Please don't copy the drawings into anything
 else.
 
 The same goes for **EdgeLord and DoomBot, which are Eric's** - the drawings under

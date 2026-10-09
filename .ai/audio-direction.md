@@ -52,6 +52,7 @@ fighter:
 | a command grab | `special_hook` | as the arms shoot out; the kick that follows is a swing like any other |
 | a charged dash (the fireball roll) / a fire cloud | `special_fire` | on release, when the roll goes / as the cloud forms; the rain makes no sound of its own, it would be a drumroll |
 | a vent | `steam` or `furnace_blast` | played by the vent itself, because which one depends on his heat |
+| a puddle (Triguy's crying) / a bouncing recovery (his trampoline) | `splash` / `boing` | as the puddle hits the floor / on the frame it throws him |
 | a walker (the MiniBot) | `special_build` as he sets it down; `minibot_pop` when it goes off | the pop is played by the walker, since it goes off long after the move |
 
 Some sounds belong to a fighter's state, not a move, and are played where that state changes:
@@ -92,21 +93,42 @@ drops a further 12 dB.
 
 ## Music
 
-`tools/audio/music.py` writes two loops, each about 38 seconds, mono, at 22050 Hz (about 1.6 MB
-each, in a repo with no LFS):
+`tools/audio/music.py` writes two loops, mono, at 22050 Hz: the menu about 33 seconds (1.4 MB), the
+battle about 41 (1.7 MB), in a repo with no LFS.
 
-- **menu** — 100 BPM; marimba, a little bell tune, finger snaps; chords I–vi–ii–V. It plays
-  unbroken from the title through fighter and stage select, because `MusicPlayer` lives on
-  `GameRoot` and not on any one screen.
-- **battle** — 152 BPM; driving bass, power chords, a square-wave lead that comes in on the second
-  time round. It starts on the frame FIGHT! appears, and fades out when the match ends, under the
-  win fanfare.
+Both are cartoon music. That was Eric's call on 2026-10-04 ("something more fun"), and it replaced
+a relaxed marimba loop and a driving rock one. The harmony leans on secondary dominants (C♯7, F♯7,
+B7, E7): a chord that wants to fall to the next one is most of what makes music sound like a
+cartoon.
+
+- **menu** — 116 BPM, swung. A strummed ukulele, a walking bass, finger snaps and a shaker, a
+  whistled tune, and a toy piano answering in the whistler's gaps. Sixteen bars: first
+  A–C♯7–D–Dm–A–F♯7–Bm7 E7–A, then a bridge that ends on E7, which pulls straight into the A at the
+  top. It plays unbroken from the title through fighter and stage select, because `MusicPlayer`
+  lives on `GameRoot` and not on any one screen. Since it can run for minutes, it stays light: no
+  kick drum, and nothing near the front but the tune.
+- **battle** — 164 BPM, a bouncy ska romp rather than rock. Offbeat chops, a bass that bounces
+  between octaves and sags at the end of each phrase, claps on two and four, a woodblock clave, a
+  handheld-console lead and a cartoon brass section. The hook is a call and answer: the lead calls
+  for a bar, the horns answer for a bar. Then the cartoon circle A–F♯7–B7–E7 with a chase over it,
+  the hook again with each voice doubling the other, a two-bar stop-time breakdown on E, and G–D
+  lifting home to A, with a slide whistle into the top of the loop. It starts on the frame FIGHT!
+  appears, on the same A chord, and fades out when the match ends, under the win fanfare. The hit
+  sounds are louder than it and own the top end, so its lead sits mid-range with the edge filtered
+  off, and the loop has no more energy above 4 kHz than the rock one it replaced.
+
+Nobody on the project can hear them, so the parts are written to rules that can be checked on
+paper: chord tones on the strong beats, passing notes only on the weak ones, and no semitone rub
+between a tune and the chord under it. Each track's balance is one table in `music.py`
+(`MENU_MIX`, `BATTLE_MIX`), like the registry is for effects. It was set by measuring each part,
+A-weighted, against the whole while that part plays.
 
 Both loop with no gap or click. Notes and reverb that ring past the end are wrapped round onto the
-start, so nothing gets cut off at the loop point. A `smpl` chunk marks each file as a loop, and
-Godot's importer reads it (`edit/loop_mode=0`, Detect From WAV). `SfxPlayer.Load` also sets the
-loop in code, in case an import setting ever overrides the chunk. `RegressionChecks` warns if one
-imported without it.
+start, so nothing gets cut off at the loop point, and so is the filter that halves the sample
+rate: started cold, it put a one-sample tick at the seam of any loop that ends loud. A `smpl`
+chunk marks each file as a loop, and Godot's importer reads it (`edit/loop_mode=0`, Detect From
+WAV). `SfxPlayer.Load` also sets the loop in code, in case an import setting ever overrides the
+chunk. `RegressionChecks` warns if one imported without it.
 
 ## Godot side
 

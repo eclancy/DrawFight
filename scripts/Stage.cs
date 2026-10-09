@@ -25,6 +25,7 @@ public partial class Stage : Node2D
 	public Vector2 RespawnPoint => Data.RespawnPoint;
 	public Rect2 BlastZone => Data.BlastZone;
 	public bool IsOutOfBounds(Vector2 point) => Data.IsOutOfBounds(point);
+	public bool IsBelowBottom(Vector2 point) => Data.HasBottomBlastZone && point.Y > Data.BlastZone.End.Y;
 
 	/// <summary>
 	/// Grabbable corners: the top-left and top-right of every SOLID platform that sits inside

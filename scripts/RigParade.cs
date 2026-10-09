@@ -38,12 +38,24 @@ public partial class RigParade : Node2D
 	/// <summary>One fighter by catalog index (--only=N), shown big, instead of the whole roster.</summary>
 	public int Only = -1;
 
+	/// <summary>
+	/// A size step (--size=-1 or --size=1) for any fighter who can change size - so Circy short
+	/// or tall can be checked standing, running and attacking without a match. See SizeLevels.
+	/// </summary>
+	public int Size;
+
+	static bool Stretches(FighterData d) => d.Move(MoveSlot.NeutralSpecial)?.Special == SpecialKind.Resize;
+
 	/// <summary>A move's strike pose - what is on screen the frame its hitbox goes live.</summary>
-	static Pose StrikeOf(MoveData move)
+	/// <remarks>
+	/// Sampled with the fighter's own AnimationDrama, exactly as a match samples it - without it a
+	/// dramatic fighter's blade showed here up to 30 degrees from where it is in a fight.
+	/// </remarks>
+	static Pose StrikeOf(FighterData data, MoveData move)
 	{
 		if (move == null) return null;
 		var pose = new Pose();
-		FighterAnimations.SampleAttack(move, FighterAnimations.ShowFrame(move), pose);
+		FighterAnimations.SampleAttack(move, FighterAnimations.ShowFrame(move), pose, drama: data.AnimationDrama);
 		return pose;
 	}
 
@@ -63,14 +75,29 @@ public partial class RigParade : Node2D
 	{
 		Vector2 centre = HitboxInView(data, move);
 		float radius = move.HitboxRadius * 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
+		// The hit reaches from inside the body out to the ring (Fighter.HitboxRoot): drawn as a
+		// faint band, so the whole of what can hit shows, not only its far end.
+		Vector2 offset = move.HitboxOffset;
+		float side = Mathf.Abs(offset.X) < 1.0f ? 0.0f : Mathf.Sign(offset.X);
+		bool reaches = string.IsNullOrEmpty(move.SwingArt) && move.SweepDegrees == 0.0f;
+		Vector2 root = InView(data, new Vector2(side * data.BodySize.X * 0.15f,
+			Mathf.Clamp(offset.Y, -data.BodySize.Y * 0.35f, data.BodySize.Y * 0.35f)));
 
 		var marker = new Node2D { ZIndex = 5 };
 		marker.Draw += () =>
 		{
+			if (reaches) marker.DrawLine(root, centre, new Color(0.95f, 0.30f, 0.30f, 0.12f), radius * 2.0f);
 			marker.DrawCircle(centre, radius, new Color(0.95f, 0.30f, 0.30f, 0.18f));
 			marker.DrawArc(centre, radius, 0.0f, Mathf.Tau, 32, new Color(0.85f, 0.20f, 0.22f, 0.8f), 3.0f);
 		};
 		return marker;
+	}
+
+	/// <summary>A point given as an offset from the fighter's middle in a match, in this view.</summary>
+	static Vector2 InView(FighterData data, Vector2 matchOffset)
+	{
+		float k = 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
+		return new Vector2(matchOffset.X * k, (matchOffset.Y - data.BodySize.Y * 0.5f) * k + 150.0f);
 	}
 
 	/// <summary>Where a move's hitbox is in this view, in its holder's space.</summary>
@@ -113,21 +140,21 @@ public partial class RigParade : Node2D
 		var columns = Attacks
 			? new (string label, AnimationClip clip, System.Func<FighterData, Pose> direct)[]
 			{
-				("jab 1", null, d => StrikeOf(ComboHit(d, 0))),
-				("jab 2", null, d => StrikeOf(ComboHit(d, 1))),
-				("jab 3", null, d => StrikeOf(ComboHit(d, 2))),
-				("f tilt", null, d => StrikeOf(d.Move(MoveSlot.ForwardTilt))),
-				("u tilt", null, d => StrikeOf(d.Move(MoveSlot.UpTilt))),
-				("d tilt", null, d => StrikeOf(d.Move(MoveSlot.DownTilt))),
-				("dash", null, d => StrikeOf(d.Move(MoveSlot.DashAttack))),
-				("f smash", null, d => StrikeOf(d.Move(MoveSlot.ForwardSmash))),
-				("u smash", null, d => StrikeOf(d.Move(MoveSlot.UpSmash))),
-				("d smash", null, d => StrikeOf(d.Move(MoveSlot.DownSmash))),
-				("n air", null, d => StrikeOf(d.Move(MoveSlot.NeutralAir))),
-				("f air", null, d => StrikeOf(d.Move(MoveSlot.ForwardAir))),
-				("b air", null, d => StrikeOf(d.Move(MoveSlot.BackAir))),
-				("u air", null, d => StrikeOf(d.Move(MoveSlot.UpAir))),
-				("d air", null, d => StrikeOf(d.Move(MoveSlot.DownAir))),
+				("jab 1", null, d => StrikeOf(d, ComboHit(d, 0))),
+				("jab 2", null, d => StrikeOf(d, ComboHit(d, 1))),
+				("jab 3", null, d => StrikeOf(d, ComboHit(d, 2))),
+				("f tilt", null, d => StrikeOf(d, d.Move(MoveSlot.ForwardTilt))),
+				("u tilt", null, d => StrikeOf(d, d.Move(MoveSlot.UpTilt))),
+				("d tilt", null, d => StrikeOf(d, d.Move(MoveSlot.DownTilt))),
+				("dash", null, d => StrikeOf(d, d.Move(MoveSlot.DashAttack))),
+				("f smash", null, d => StrikeOf(d, d.Move(MoveSlot.ForwardSmash))),
+				("u smash", null, d => StrikeOf(d, d.Move(MoveSlot.UpSmash))),
+				("d smash", null, d => StrikeOf(d, d.Move(MoveSlot.DownSmash))),
+				("n air", null, d => StrikeOf(d, d.Move(MoveSlot.NeutralAir))),
+				("f air", null, d => StrikeOf(d, d.Move(MoveSlot.ForwardAir))),
+				("b air", null, d => StrikeOf(d, d.Move(MoveSlot.BackAir))),
+				("u air", null, d => StrikeOf(d, d.Move(MoveSlot.UpAir))),
+				("d air", null, d => StrikeOf(d, d.Move(MoveSlot.DownAir))),
 			}
 			: new (string label, AnimationClip clip, System.Func<FighterData, Pose> direct)[]
 			{
@@ -142,6 +169,7 @@ public partial class RigParade : Node2D
 				("windup", null, d => FighterAnimations.AttackWindup),
 				("strike", null, d => FighterAnimations.AttackStrike),
 				("dash", null, d => FighterAnimations.LungeStrike),
+				("stretch", null, d => Stretches(d) ? FighterAnimations.TPose : null),
 			};
 
 		// One fighter on its own gets room: wider columns, wrapped onto two rows, so a long reach
@@ -185,19 +213,28 @@ public partial class RigParade : Node2D
 				// Much larger than in a match, which is the entire point of this view.
 				rig.Normalise(300.0f, 150.0f, 1.0f);
 				rig.DramaScale = data.AnimationDrama;
+				rig.Robotic = data.Robotic;
+				if (Size != 0 && Stretches(data)) rig.SetLegStretch(SizeLevels.LegStretch(Size), 150.0f);
 				// Feet on the floor for everything done standing, exactly as in a match.
 				string columnLabel = columns[index].label;
 				rig.SetPlanted(columnLabel != "jump" && columnLabel != "fall" && !columnLabel.EndsWith("air"));
+				// Standing on flat feet, as in a match (FighterRig.StandOnFeet).
+				rig.SetStanding(columnLabel == "idle" || columnLabel == "block" || columnLabel == "stretch");
 
 				// Each attack shows the weapon it puts in his hand, or an empty hand, as in a match.
 				MoveData shown = Attacks ? MoveFor(data, columns[index].label) : null;
+				// A hammer carried on the shoulder stays there for what is done on the ground without
+				// a swing - and the dash, a head-first barge - as in a match.
+				bool carrying = Attacks ? shown != null && shown.CarryOnShoulder
+					: columnLabel is "idle" or "run" or "crouch" or "block" or "land" or "dash";
+				rig.CarryOnShoulder = data.ShouldersProp && carrying;
 				if (shown != null)
 				{
 					rig.ShowProp(shown.PropArt);
 					if (shown.PropArt == "-") rig.SetPartVisible(RigBone.PropFront, false);
 				}
 
-				// Blocking puts on any block-only extra (Lug's hard hat), exactly as in a match.
+				// Blocking shows any block-only extra (the glint on Lug's hard hat), exactly as in a match.
 				if (columns[index].clip == FighterAnimations.Block) rig.SetExtraVisible("hardhat", true);
 				if (shown != null && !string.IsNullOrEmpty(shown.ShowExtra)) rig.SetExtraVisible(shown.ShowExtra, true);
 
