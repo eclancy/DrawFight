@@ -111,6 +111,7 @@ public partial class CharacterSelectScreen : Node2D
 				rig.SetFacing(facing[i]);
 				rig.Robotic = data.Robotic;
 				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.HandOnHip = data.HandOnHip;
 				rig.SetPlanted(true);
 				rig.SetStanding(true);
 				FitPortrait(holder, rig, window.Size);

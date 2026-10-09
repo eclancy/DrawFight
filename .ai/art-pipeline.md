@@ -275,7 +275,14 @@ small path rather than bending the rig.
   ankle, marked `"foot": true` in rig.json. The rig keeps it level as far as the fighter is
   planted (`FighterRig.LevelFeet`) - an ankle, without a new bone - and, standing, solves thigh
   and shin between hip and a fixed ankle (`StandOnAnkles`), so he balances over his feet. In the
-  air a foot follows its shin, so a kick still points its boot. Floor contact, the sole a jet
+  air a foot follows its shin, so a kick still points its boot. And an ankle only bends 25
+  degrees: a shin swung further takes its foot with it, so a leg stretched back in a lunge
+  stands on its toe and a kick leads with its heel, rather than a level boot meeting a nearly
+  flat shin side-on (Eric, 2026-10-09). A tall boot shaft belongs on the shin, not the foot, so
+  it leans with it - Flambe's.
+- **A shin with no flat sole**: a leg whose bottom is not a foot laid flat - Circy's front leg, a
+  diagonal with a tick on the end - says so with `"soleSlope": 0` on its part, and stands as
+  drawn. Without it the diagonal was read as a sole and laid flat on the floor. Floor contact, the sole a jet
   comes out of, stance width and portrait framing all count the feet.
 - **Round joint caps** (DoomBot's legs): each half of a limb keeps a disc of the limb round the
   joint, and the thigh's disc round the hip is filled with leg cloned from just below it (hidden

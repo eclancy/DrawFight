@@ -75,6 +75,12 @@ public partial class FighterRig : Node2D
 	/// </summary>
 	public bool CarryOnShoulder;
 	readonly Pose carried = new Pose();
+
+	/// <summary>
+	/// Standing about with a hand on his hip, over the idle (FighterAnimations.HandOnHip). Whoever
+	/// drives the rig sets it each frame.
+	/// </summary>
+	public bool HandOnHip;
 	float bodyHalfHeight;
 	float legStretch = 1.0f;
 	float frontLegReach = 1.0f;
@@ -122,6 +128,7 @@ public partial class FighterRig : Node2D
 		limbDarken = darken;
 		ballWidth = root.ContainsKey("ballWidth") ? (float)root["ballWidth"] : 0.0f;
 		figureHeight = root.ContainsKey("figureHeight") ? (float)root["figureHeight"] : 0.0f;
+		stanceSpread = root.ContainsKey("stance") ? (float)root["stance"] : 0.0f;
 		LoadPoses(root, baseDir);
 
 		var parts = (Godot.Collections.Dictionary)root["parts"];
@@ -211,6 +218,7 @@ public partial class FighterRig : Node2D
 			node.AddChild(sprite);
 			sprites[(int)bone] = sprite;
 			handRows[(int)bone] = part.ContainsKey("hand") ? (float)part["hand"] : -1.0f;
+			if (part.ContainsKey("soleSlope")) soleSlopes[(int)bone] = (float)part["soleSlope"];
 			if (bone == RigBone.PropFront) defaultPropEmpty = part.ContainsKey("empty") && (bool)part["empty"];
 		}
 
@@ -271,17 +279,26 @@ public partial class FighterRig : Node2D
 
 	/// <summary>
 	/// Feet kept level on the ground, as an ankle would: each foot turned back by however much its
-	/// shin is turned, as far as he is planted - so in the air a kick still points its boot.
+	/// shin is turned, as far as he is planted - so in the air a kick still points its boot. And
+	/// only as far as an ankle bends: a shin swung further than <see cref="AnkleBend"/> takes its
+	/// foot with it, so a leg stretched back in a lunge stands on its toe and a kick leads with its
+	/// heel, instead of a level boot meeting a nearly flat shin side-on (Eric, 2026-10-09, on
+	/// DoomBot's slab boots).
 	/// </summary>
 	void LevelFeet()
 	{
+		float limit = Mathf.DegToRad(AnkleBend);
 		foreach ((RigBone upper, RigBone lower) in new[] { (RigBone.LegBackUpper, RigBone.LegBackLower), (RigBone.LegFrontUpper, RigBone.LegFrontLower) })
 		{
 			Sprite2D foot = feet[(int)lower];
 			if (foot == null) continue;
-			foot.Rotation = -(bones[(int)upper].Rotation + bones[(int)lower].Rotation) * plantBlend;
+			float level = -(bones[(int)upper].Rotation + bones[(int)lower].Rotation);
+			foot.Rotation = Mathf.Clamp(level, -limit, limit) * plantBlend;
 		}
 	}
+
+	/// <summary>How far, in degrees, a foot turns against its shin to stay flat on the floor.</summary>
+	const float AnkleBend = 25.0f;
 
 	/// <summary>
 	/// For a forearm: the texture row where the hand begins (rig.json "hand"), or -1. Below it is
@@ -456,7 +473,8 @@ public partial class FighterRig : Node2D
 			Vector2 shin = foot.Position;
 			Vector2 joint = at + bones[(int)upper].Position;
 			Vector2 rest = bones[(int)upper].Position + knee + shin;
-			var target = new Vector2(rest.X, floor - FootDepth(foot));
+			float spread = lower == RigBone.LegBackLower ? stanceSpread : -stanceSpread;
+			var target = new Vector2(rest.X + spread, floor - FootDepth(foot));
 
 			float l1 = knee.Length(), l2 = shin.Length();
 			Vector2 d = target - joint;
@@ -473,6 +491,13 @@ public partial class FighterRig : Node2D
 			bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, shinTurn - thigh, blend);
 		}
 	}
+
+	/// <summary>
+	/// How much further apart than his hips a fighter with feet stands (rig.json "stance", canonical
+	/// units each way): the far foot that much ahead, the near one that much behind. Zero stands each
+	/// ankle under its hip. Flambe stands with his feet apart, a hotshot (Eric, 2026-10-08).
+	/// </summary>
+	float stanceSpread;
 
 	/// <summary>How far below its ankle a level foot's drawing reaches.</summary>
 	float FootDepth(Sprite2D foot)
@@ -530,9 +555,14 @@ public partial class FighterRig : Node2D
 		Sprite2D sprite = sprites[(int)lower];
 		if (!present[(int)lower] || sprite == null || sprite.Texture == null) return null;
 		(Vector2 point, float slope, bool foot) = SoleOf(sprite.Texture);
+		if (soleSlopes[(int)lower] is float drawn) slope = drawn;
 		Transform2D t = sprite.Transform;
 		Vector2 sole = t * (point + sprite.Offset);
-		Vector2 along = t.BasisXform(new Vector2(1.0f, slope));
+		// Levelled as drawn, not as stretched: a leg stretched long is scaled along its length,
+		// which tips its foot steeper - and turning the shin far enough to level that laid it on the
+		// floor (Circy standing tall; Eric, 2026-10-08). So the shin turns as far as the foot needs
+		// at its drawn size, and a stretched foot sits a little off level instead.
+		Vector2 along = new Vector2(1.0f, slope).Rotated(sprite.Rotation);
 		float shin = -Mathf.Atan2(along.Y, along.X);
 		return (shin, sole.Rotated(shin), sole, foot);
 	}
@@ -544,6 +574,13 @@ public partial class FighterRig : Node2D
 		if (flat == null || !present[(int)upper]) return null;
 		return bones[(int)upper].Position.Y + bones[(int)lower].Position.Length() + flat.Value.soleTurned.Y;
 	}
+
+	/// <summary>
+	/// A shin's sole slope given by its drawing (rig.json "soleSlope") instead of read off it, for
+	/// a leg whose bottom looks like a foot and is not - Circy's front leg, a diagonal with a tick
+	/// on the end. Zero stands the shin as drawn.
+	/// </summary>
+	readonly float?[] soleSlopes = new float?[(int)RigBone.Count];
 
 	/// <summary>Soles already read, by the texture's file - see <see cref="InkEdge"/> for why by path.</summary>
 	static readonly Dictionary<string, (Vector2 point, float slope, bool foot)> soles = new Dictionary<string, (Vector2, float, bool)>();
@@ -1136,50 +1173,118 @@ public partial class FighterRig : Node2D
 	{
 		if (!Loaded || clip == null) return;
 		clipFrame += rate;
-		// A robot moves in bursts: smooth, then a dead stop, then smooth again.
-		clip.Sample(ShownClipFrame, target);
-		ApplyPose(target, Robotic ? 0.8f : 0.45f);
+		if (Robotic)
+		{
+			AdvanceRobot();
+			return;
+		}
+		clip.Sample(clipFrame, target);
+		ApplyPose(target, 0.45f);
 	}
 
 	/// <summary>
-	/// Where the current clip is showing, in frames - for a robot, after its bursts and stops. The
-	/// stomping walk beats every 6 frames, so it stops on each key pose: the knee up, then the foot
-	/// down - which is when the stomp lands (Fighter's footfalls watch this).
+	/// Where the current clip is showing, in frames - for a robot, the key pose he has stopped on
+	/// (or is snapping away from). Fighter's stomps watch this, so one lands as a foot comes down.
 	/// </summary>
-	public float ShownClipFrame
-	{
-		get
-		{
-			if (!Robotic) return clipFrame;
-			float step = clip == FighterAnimations.StompWalk ? 6.0f : RobotStep;
-			return RobotTime(clipFrame, step, step * RobotMove / RobotStep);
-		}
-	}
+	public float ShownClipFrame => Robotic ? (robotFrames >= robotSnap ? robotToFrame : robotFromFrame) : clipFrame;
 	public AnimationClip CurrentClip => clip;
 
 	// --- Moving like a machine ----------------------------------------------------------
 
 	/// <summary>
-	/// Animated like a robot (FighterData.Robotic): every animation plays in beats of
-	/// <see cref="RobotStep"/> frames - a smooth, eased move through the first
-	/// <see cref="RobotMove"/> frames of the beat, then a complete stop for the rest, then the next
-	/// move. The animation keeps its overall pace; it just gets there in bursts. Smooth motion and
-	/// dead stops, never jitter (Eric's call, 2026-10-04, replacing a stepped, juddering first try).
+	/// Animated like a robot (FighterData.Robotic): every animation is a run of key poses, and he
+	/// snaps from one to the next - a few frames at one constant speed, so the move starts and
+	/// stops dead, with no easing in or out - and then holds it, perfectly still, until the next.
+	/// His idle and the like stop on a new pose every <see cref="RobotBeat"/> frames, each joint
+	/// set to a whole <see cref="RobotAngle"/> degrees, so his poses are sharp angles rather than
+	/// curves, and a small sway is a held pose and then one clean click. His attacks snap to the
+	/// coil, hold it, snap to the strike as it lands, hold, and snap back (Fighter.RobotAttackKey).
+	/// Eric's calls, 2026-10-04 and 2026-10-09: quick moves, sudden stops, sharp angles - never
+	/// jitter. An eased bob every few frames, and beats that shortened as he walked faster, both
+	/// read as shaking.
 	/// </summary>
 	public bool Robotic;
-	public const float RobotStep = 10.0f;
-	public const float RobotMove = 6.0f;
+
+	/// <summary>Frames between a robot's key poses in a clip.</summary>
+	const int RobotBeat = 12;
+
+	/// <summary>Frames a robot takes to snap from one key pose to the next.</summary>
+	const int RobotSnap = 3;
+
+	/// <summary>The steps his joints stop on, as written (played a quarter bigger: 15 on screen).</summary>
+	const float RobotAngle = 12.0f;
+
+	/// <summary>The stomping walk's key poses: knee up, foot down, every 6 frames of its cycle.</summary>
+	const float StompKey = 6.0f;
+
+	readonly Pose robotFrom = new Pose();
+	readonly Pose robotTo = new Pose();
+	readonly Pose robotShown = new Pose();
+	object robotOwner;
+	int robotKey = int.MinValue;
+	int robotFrames;
+	int robotSnap = RobotSnap;
+	float robotFromFrame, robotToFrame;
+
+	void AdvanceRobot()
+	{
+		bool walk = clip == FighterAnimations.StompWalk;
+		float length = walk ? StompKey : RobotBeat;
+		int key = Mathf.FloorToInt(clipFrame / length);
+		if (!ReferenceEquals(robotOwner, clip) || key != robotKey)
+		{
+			// The pose one beat ahead is the one he snaps to now and holds.
+			clip.Sample((key + 1) * length, target);
+			// The walk keeps its own angles - its feet have to land - and so does anything held still.
+			if (!walk) Snapped(target);
+			robotFromFrame = robotToFrame;
+			robotToFrame = (key + 1) * length;
+			StartSnap(target, clip, key, walk ? 2 : RobotSnap);
+		}
+		ShowSnap();
+	}
 
 	/// <summary>
-	/// Where an animation is at <paramref name="frame"/> when it moves in beats of
-	/// <paramref name="step"/> frames: eased from one beat's pose to the next over the first
-	/// <paramref name="move"/> frames, then held.
+	/// Shows a robot's attack: <paramref name="key"/> is the pose, and <paramref name="keyId"/> which
+	/// key of the move it is. A new key starts a snap to it from wherever he is; the same key again
+	/// carries the snap on, then holds.
 	/// </summary>
-	public static float RobotTime(float frame, float step, float move)
+	public void RobotApply(Pose key, object owner, int keyId, int snapFrames)
 	{
-		float beat = Mathf.Floor(frame / step);
-		float t = Mathf.Clamp((frame - beat * step) / move, 0.0f, 1.0f);
-		return (beat + t * t * (3.0f - 2.0f * t)) * step;
+		if (!Loaded) return;
+		clip = null;
+		if (!ReferenceEquals(robotOwner, owner) || keyId != robotKey) StartSnap(key, owner, keyId, snapFrames);
+		ShowSnap();
+	}
+
+	void StartSnap(Pose key, object owner, int keyId, int snapFrames)
+	{
+		robotFrom.CopyFrom(robotShown);
+		robotTo.CopyFrom(key);
+		robotOwner = owner;
+		robotKey = keyId;
+		robotFrames = 0;
+		robotSnap = Mathf.Max(1, snapFrames);
+	}
+
+	void ShowSnap()
+	{
+		robotFrames++;
+		// One constant speed the whole way, and a dead stop.
+		float t = Mathf.Min(1.0f, robotFrames / (float)robotSnap);
+		Pose.Blend(robotFrom, robotTo, t, robotShown);
+		ApplyPose(robotShown, 1.0f);
+	}
+
+	/// <summary>Every joint stopped on a whole step: a robot's poses are sharp angles.</summary>
+	static void Snapped(Pose pose)
+	{
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			var bone = (RigBone)i;
+			if (bone == RigBone.Hip) continue;
+			pose.Set(bone, Mathf.Round(pose[bone] / RobotAngle) * RobotAngle);
+		}
 	}
 
 	/// <summary>
@@ -1204,10 +1309,11 @@ public partial class FighterRig : Node2D
 
 	void ApplyPose(Pose pose, float blend)
 	{
-		if (CarryOnShoulder)
+		if (CarryOnShoulder || HandOnHip)
 		{
 			carried.CopyFrom(pose);
-			FighterAnimations.CarryOnShoulder(carried);
+			if (HandOnHip) FighterAnimations.HandOnHip(carried);
+			if (CarryOnShoulder) FighterAnimations.CarryOnShoulder(carried);
 			pose = carried;
 		}
 

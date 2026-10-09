@@ -171,7 +171,10 @@ public partial class MoveData : Resource
 	/// <summary>How hard it scales with percent. High growth = a finisher.</summary>
 	[Export] public float KnockbackGrowth { get; set; } = 1.0f;
 
-	/// <summary>Degrees from +X, counter-clockwise. 45 is a standard diagonal launch.</summary>
+	/// <summary>
+	/// Degrees from the way the attacker faces, counter-clockwise. 45 is a standard diagonal launch;
+	/// past 90 sends them behind him - a back air, which hits behind without turning him round.
+	/// </summary>
 	[Export] public float LaunchAngleDegrees { get; set; } = 45.0f;
 
 	// --- Hitbox --------------------------------------------------------------

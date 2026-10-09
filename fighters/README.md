@@ -42,7 +42,11 @@ pencil, nothing finer than a brow or a stripe. He has two fire wings (`swift/pos
 one each side of a gap, hinged at his back so each flaps on its own) for his flying up special,
 and a flaming frying pan (`swift/poses/tool_pan.png`) for his forward smash. He holds no weapon
 of his own, so his hand is an empty prop part (`"empty": true`) that a move can fill - under his
-fist, like Lugnut's tools.
+fist, like Lugnut's tools. His boot shafts are drawn on his shins, so they lean with them, and
+only the foot is cut as a foot - a tall shaft kept upright on a leaning shin had the shin going
+into it off-centre. Standing about, he has a hand on his hip and a fist up
+(`FighterData.HandOnHip`), feet a stride apart (`"stance"` in `rig.json`: how much further apart
+than his hips his feet stand). Eric's calls, 2026-10-08.
 
 Lug (Lugnut in game) is drawn by `tools/art/lugnut.py`, from an
 example drawing Eric picked (2026-10-08) - `lug/source/drawing.png` is that drawing, flexing: a
@@ -188,9 +192,11 @@ and he stands balanced over his feet. **His legs have round caps** at the hip an
 hip cap filled with leg cloned from just below it, hidden behind his body at rest - so a leg
 swung out on a kick never shows a gap at the joint. Eric's call, 2026-10-04.
 
-**He moves like a machine** (`FighterData.Robotic`): every animation plays in beats - smooth
-motion, a complete stop, smooth motion again - and he walks with a stomp, the walk stopping on
-each step: dust, a thud and a jolt with every footfall. Eric's calls, 2026-10-04.
+**He moves like a machine** (`FighterData.Robotic`): he snaps quickly from pose to pose, stops
+dead and holds, his joints on sharp angles, and he walks with a stomp - dust and a thud with
+every footfall, but no camera jolt, which shook the screen on every step. Eric's calls,
+2026-10-04 and 2026-10-09. His boots tilt with his shins past 25 degrees, so a lunge stands on
+its toe and a kick leads with the boot.
 
 **He cannot roll** (`FighterData.CanRoll`): block plus a direction keeps him blocking. Eric's
 call, 2026-10-05.

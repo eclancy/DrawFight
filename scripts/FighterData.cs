@@ -141,6 +141,13 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public bool ShouldersProp { get; set; } = false;
 
+	/// <summary>
+	/// Stands about with a hand on his hip and a fist up (FighterAnimations.HandOnHip) rather than
+	/// with his arms hanging - when he is just standing, nothing else. Flambe, a hotshot: Eric's
+	/// call, 2026-10-08.
+	/// </summary>
+	[Export] public bool HandOnHip { get; set; } = false;
+
 	// --- Moveset -------------------------------------------------------------
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
@@ -204,6 +211,8 @@ public partial class FighterData : Resource
 			VisualScale = 1.06f,
 			// Fire: every swing leaves a streak of flame.
 			TrailColor = new Color(1.0f, 0.44f, 0.16f),
+			// Standing about, a hand on his hip.
+			HandOnHip = true,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire(),
 			CharacterNormals.Swift, CharacterNormals.SwiftJab());

@@ -222,6 +222,23 @@ public static class FighterAnimations
 	}
 
 	/// <summary>
+	/// A hotshot standing about, laid over the idle (FighterRig.HandOnHip): the near hand planted on
+	/// his hip with the elbow stuck out behind, the far fist up in front of his chest, leaning back
+	/// with his chin up. The arms are set against the torso and the lean added to the idle's, so he
+	/// still breathes. Flambe (FighterData.HandOnHip; Eric's call, 2026-10-08). Written a quarter
+	/// smaller than shown, like every pose (FighterRig.Drama).
+	/// </summary>
+	public static void HandOnHip(Pose pose)
+	{
+		pose.Set(AFU, 44.0f);
+		pose.Set(AFL, -80.0f);
+		pose.Set(ABU, -24.0f);
+		pose.Set(ABL, -72.0f);
+		pose.Set(Torso, pose[Torso] + 5.0f);
+		pose.Set(Head, pose[Head] + 7.0f);
+	}
+
+	/// <summary>
 	/// Holding special to stretch or shrink: arms straight out level, legs straight down, so the
 	/// change in his legs is the only thing moving. Circy's Stretch. The arms are written at 72
 	/// degrees because every pose is played a quarter bigger (FighterRig.Drama), which takes

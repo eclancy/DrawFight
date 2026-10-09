@@ -228,6 +228,8 @@ public partial class RigParade : Node2D
 				bool carrying = Attacks ? shown != null && shown.CarryOnShoulder
 					: columnLabel is "idle" or "run" or "crouch" or "block" or "land" or "dash";
 				rig.CarryOnShoulder = data.ShouldersProp && carrying;
+				// And a hand on his hip, standing about.
+				rig.HandOnHip = data.HandOnHip && !Attacks && columnLabel == "idle";
 				if (shown != null)
 				{
 					rig.ShowProp(shown.PropArt);

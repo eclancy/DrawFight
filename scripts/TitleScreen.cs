@@ -22,6 +22,9 @@ public partial class TitleScreen : Node2D
 	/// <summary>Whether each one carries his weapon on his shoulder when he is not swinging or reeling.</summary>
 	bool attackerCarries, victimCarries;
 
+	/// <summary>Whether each one stands about with a hand on his hip.</summary>
+	bool attackerHipped, victimHipped;
+
 	int frame;
 	bool leaving;
 
@@ -43,6 +46,8 @@ public partial class TitleScreen : Node2D
 		victim = BuildFighter(FighterCatalog.Get(1), new Vector2(1570.0f, 560.0f), -1);
 		attackerCarries = FighterCatalog.Get(0).ShouldersProp;
 		victimCarries = FighterCatalog.Get(1).ShouldersProp;
+		attackerHipped = FighterCatalog.Get(0).HandOnHip;
+		victimHipped = FighterCatalog.Get(1).HandOnHip;
 
 		var layer = new CanvasLayer();
 		AddChild(layer);
@@ -80,6 +85,8 @@ public partial class TitleScreen : Node2D
 
 		rig.Normalise(380.0f, 190.0f, 1.0f);
 		rig.SetFacing(facing);
+		// Feet on the floor, as in a match - and flat on it while standing about (set each frame).
+		rig.SetPlanted(true);
 		return rig;
 	}
 
@@ -120,11 +127,15 @@ public partial class TitleScreen : Node2D
 		{
 			FighterAnimations.SampleAttack(loopMove, t, attackPose, lunging: true);
 			attacker.CarryOnShoulder = false;
+			attacker.HandOnHip = false;
+			attacker.SetStanding(false);
 			attacker.ApplyDirect(attackPose, FighterAnimations.AttackBlend(loopMove, t));
 		}
 		else
 		{
 			attacker.CarryOnShoulder = attackerCarries;
+			attacker.HandOnHip = attackerHipped;
+			attacker.SetStanding(true);
 			attacker.Play(FighterAnimations.Idle);
 			attacker.Advance();
 		}
@@ -137,6 +148,8 @@ public partial class TitleScreen : Node2D
 		if (t >= contact && t < contact + 46)
 		{
 			victim.CarryOnShoulder = false;
+			victim.HandOnHip = false;
+			victim.SetStanding(false);
 			victim.Play(FighterAnimations.Hurt);
 			victim.Advance();
 			victim.Modulate = new Color(1.0f, 0.68f, 0.68f);
@@ -144,6 +157,8 @@ public partial class TitleScreen : Node2D
 		else
 		{
 			victim.CarryOnShoulder = victimCarries;
+			victim.HandOnHip = victimHipped;
+			victim.SetStanding(true);
 			victim.Play(FighterAnimations.Idle);
 			victim.Advance();
 			victim.Modulate = Colors.White;

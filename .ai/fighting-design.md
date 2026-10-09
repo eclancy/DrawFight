@@ -216,7 +216,10 @@ that takes half a second to reach it never gets there in a fight.
 - **Air control** is strong — you can meaningfully steer your own trajectory mid-launch - but
   **drifting never turns him round.** Back plus attack in the air is always a back air; the
   only way to face the other way in the air is the second jump, which goes the way the stick is
-  held (EdgeLord's air dash too). Eric's call, 2026-10-04.
+  held (EdgeLord's air dash too). Eric's call, 2026-10-04. A back air hits behind him and
+  launches behind him: its angle is measured from the way he faces, so it is past 90 (144, the
+  usual 36 pointed back). At 36 every back air threw people forward, through him (Eric,
+  2026-10-09).
 - **Hits reach from the body.** A melee hitbox is a capsule from inside the attacker's body out
   to the hitbox centre (`Fighter.HitboxRoot`), the radius its thickness - so a hammer catches
   someone standing right against him, not only at the end of its head. And what can be hit is

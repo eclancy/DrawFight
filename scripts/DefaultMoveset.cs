@@ -280,14 +280,19 @@ public static class DefaultMoveset
 		HitboxOffset = new Vector2(82.0f, -18.0f), HitboxRadius = 48.0f,
 	};
 
-	/// <summary>The reliable finisher. Low base, high growth - does nothing until it kills.</summary>
+	/// <summary>
+	/// The reliable finisher. Low base, high growth - does nothing until it kills. It hits behind
+	/// him without turning him round, so it launches behind him too: 144 degrees is the usual 36
+	/// up and away, pointed back. At 36 every back air threw people forward, through the one who
+	/// hit them (Eric, 2026-10-09).
+	/// </summary>
 	static MoveData BackAir() => new MoveData
 	{
 		MoveName = "Back Air",
 		Anim = AttackAnim.Bair,
 		StartupFrames = 8, ActiveFrames = 3, EndlagFrames = 18,
 		Damage = 12.0f, BaseKnockback = 20.0f, KnockbackGrowth = 1.22f,
-		LaunchAngleDegrees = 36.0f,
+		LaunchAngleDegrees = 144.0f,
 		HitboxOffset = new Vector2(-78.0f, -18.0f), HitboxRadius = 48.0f,
 	};
 

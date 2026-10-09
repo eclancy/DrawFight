@@ -55,6 +55,7 @@ HAND_TOP = 120.0       # elbow to the top of the hand: below it is hand, above i
 THIGH_LEN = 170.0
 SHIN_LEN = 165.0
 SOLE = 68.0            # ankle to the bottom of the boot
+STANCE = 48.0          # how much further apart than his hips his feet stand, each way
 
 
 def spike(angle, radius=36.0, y0=-6.0, half=11.0, length=36.0):
@@ -96,16 +97,20 @@ THIGH = '''
          C 24,194 -24,194 -26,170 C -32,120 -34,50 -32,-6 Z" fill="{jeans}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
 '''
 
+# The jeans tucked into the shaft of his boot, which is drawn on the shin so it leans with it:
+# a boot standing upright on a leaning shin had the shin going into it off-centre (Eric,
+# 2026-10-08). Two silver buckles round the shaft.
 SHIN = '''
-<path d="M -26,-6 C -26,-30 26,-30 26,-6 C 28,50 26,120 24,165 L -24,165
-         C -26,120 -28,50 -26,-6 Z" fill="{jeans}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
+<path d="M -26,-6 C -26,-30 26,-30 26,-6 C 28,50 26,100 25,128 L -25,128
+         C -26,100 -28,50 -26,-6 Z" fill="{jeans}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
+<path d="M -31,114 L 31,114 L 32,166 C 32,180 -32,180 -32,166 Z" fill="{boot}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
+<path d="M -33,124 L 33,124 L 33,136 L -33,136 Z M -33,146 L 33,146 L 33,158 L -33,158 Z" fill="{metal}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
 '''
 
-# A chunky combat boot from the ankle at (0, 0), sole flat, toe forward, two silver buckles. Cut as
-# a foot, so the game keeps it flat on the floor.
+# The foot of a chunky combat boot, from the ankle at (0, 0): rounded over the ankle, where it
+# meets the shaft, sole flat, toe forward. Cut as a foot, so the game keeps it flat on the floor.
 BOOT = '''
-<path d="M -32,-48 L 30,-48 L 32,20 C 54,22 76,30 84,44 L 86,54 L -38,54 L -36,20 Z" fill="{boot}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
-<path d="M -34,-34 L 31,-34 L 31,-22 L -34,-22 Z M -35,-6 L 32,-6 L 32,6 L -35,6 Z" fill="{metal}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
+<path d="M -32,-6 C -32,-22 32,-22 32,-6 L 33,20 C 54,22 76,30 84,44 L 86,54 L -38,54 L -36,20 Z" fill="{boot}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
 <path d="M -42,50 L 90,50 L 90,68 L -42,68 Z" fill="{ink}" stroke="{ink}" stroke-width="4" stroke-linejoin="round"/>
 '''
 
@@ -114,7 +119,7 @@ BOOT = '''
 HIP = (412.0, 572.0)
 NECK = (437.0, 332.0)
 SHOULDER_NEAR, SHOULDER_FAR = (342.0, 374.0), (512.0, 370.0)
-HIP_NEAR, HIP_FAR = (390.0, 574.0), (436.0, 574.0)
+HIP_NEAR, HIP_FAR = (384.0, 574.0), (444.0, 574.0)
 CROWN_Y = 152.0
 
 TORSO_PATH = ('M 404,334 C 380,338 350,342 330,350 C 312,358 306,378 310,400 '
@@ -374,6 +379,8 @@ def build():
         # Hip to crown (the mohawk stands above it), and hip to sole with the legs straight.
         'canonicalHeight': unit(HIP[1] - CROWN_Y),
         'legLength': unit(THIGH_LEN + SHIN_LEN + SOLE),
+        # Standing, his feet go a stride apart, not each under its hip: a hotshot's stance.
+        'stance': unit(STANCE),
         'backLimbDarken': 0.7,
         'bones': bones,
         'extras': extras,

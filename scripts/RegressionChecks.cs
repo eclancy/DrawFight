@@ -409,6 +409,9 @@ public static class RegressionChecks
 
 		Vector2 velocity = Knockback.LaunchVelocity(
 			knockback, move.LaunchAngleDegrees, 1, Vector2.Zero);
+		// Toward the edge, whichever way the move sends people: a back air is thrown with his back
+		// to the edge, and launches behind him.
+		velocity.X = Mathf.Abs(velocity.X);
 		Vector2 position = new Vector2(stageEdge, 0.0f);
 
 		int hitstun = Knockback.HitstunFrames(knockback);

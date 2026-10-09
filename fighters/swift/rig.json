@@ -13,7 +13,7 @@
     {
       "name": "LegBack_Upper", 
       "offset": [
-        17.8, 
+        23.7, 
         1.5
       ], 
       "parent": "Hip", 
@@ -31,7 +31,7 @@
     {
       "name": "LegFront_Upper", 
       "offset": [
-        -16.3, 
+        -20.7, 
         1.5
       ], 
       "parent": "Hip", 
@@ -174,14 +174,14 @@
     "FootBack": {
       "pivot": [
         39.4, 
-        45.4
+        22.4
       ], 
       "texture": "parts/FootBack.png"
     }, 
     "FootFront": {
       "pivot": [
         39.4, 
-        45.4
+        22.4
       ], 
       "texture": "parts/FootFront.png"
     }, 
@@ -194,7 +194,7 @@
     }, 
     "LegBack_Lower": {
       "pivot": [
-        29.4, 
+        33.4, 
         27.4
       ], 
       "texture": "parts/LegBack_Lower.png"
@@ -208,7 +208,7 @@
     }, 
     "LegFront_Lower": {
       "pivot": [
-        29.4, 
+        33.4, 
         27.4
       ], 
       "texture": "parts/LegFront_Lower.png"
@@ -251,5 +251,6 @@
       ], 
       "texture": "poses/wings.png"
     }
-  }
+  }, 
+  "stance": 35.5
 }

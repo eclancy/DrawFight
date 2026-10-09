@@ -618,7 +618,7 @@ public partial class Fighter : CharacterBody2D
 				stepFrames = 0;
 			}
 			// A robot's footfalls land with the walk: a stomp each time a foot comes down, a
-			// puff of dust both ways, a sound and a jolt of the camera. Eric's call, 2026-10-04.
+			// puff of dust both ways and a sound. Eric's call, 2026-10-04.
 			else if (Data.Robotic && rig != null && rig.CurrentClip != null)
 			{
 				float half = rig.CurrentClip.LengthFrames * 0.5f;
@@ -626,8 +626,8 @@ public partial class Fighter : CharacterBody2D
 				if (step != lastStompStep)
 				{
 					lastStompStep = step;
+					// No camera jolt: on every step, it shook the whole screen (Eric, 2026-10-09).
 					Match.Dust(feet, size * 0.9f, 0.0f);
-					Match.Shake(5.0f * size);
 					SfxPlayer.At("stomp", feet, 0.06f);
 				}
 			}
@@ -756,6 +756,8 @@ public partial class Fighter : CharacterBody2D
 		// a swing - and through a move that keeps it there, like a barge.
 		rig.CarryOnShoulder = Data.ShouldersProp && (State == FighterState.Grounded
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
+		// A hand on his hip only while he is just standing; turned on below.
+		rig.HandOnHip = false;
 
 		switch (State)
 		{
@@ -790,9 +792,17 @@ public partial class Fighter : CharacterBody2D
 				// the exact frame the hitbox does.
 				// A robot's attacks click from pose to pose too - rounded up, so the strike still
 				// shows by the frame the hitbox does.
-				FighterAnimations.SampleAttack(currentMove, Data.Robotic ? RobotFrame(moveFrame) : moveFrame, attackPose, drama: Data.AnimationDrama);
+				if (Data.Robotic)
+				{
+					// A robot snaps between the key poses of the move and holds each one.
+					(float keyFrame, int key) = RobotAttackKey(moveFrame);
+					FighterAnimations.SampleAttack(currentMove, keyFrame, attackPose, drama: Data.AnimationDrama);
+					rig.RobotApply(attackPose, currentMove, key, RobotAttackSnap);
+					break;
+				}
+				FighterAnimations.SampleAttack(currentMove, moveFrame, attackPose, drama: Data.AnimationDrama);
 				if (currentMove.RunningLegs && Mathf.Abs(Velocity.X) > 45.0f) RunTheLegs(attackPose);
-				rig.ApplyDirect(attackPose, Data.Robotic ? 0.9f : FighterAnimations.AttackBlend(currentMove, moveFrame));
+				rig.ApplyDirect(attackPose, FighterAnimations.AttackBlend(currentMove, moveFrame));
 				break;
 
 			case FighterState.Hitstun:
@@ -826,6 +836,7 @@ public partial class Fighter : CharacterBody2D
 
 			case FighterState.Grounded:
 				rig.SetStanding(true);
+				rig.HandOnHip = Data.HandOnHip;
 				rig.Play(FighterAnimations.Idle);
 				rig.Advance();
 				break;
@@ -1883,10 +1894,32 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>
-	/// A move frame timed the way a robot moves: a smooth burst, a dead stop, a smooth burst -
-	/// shorter beats than his idle or walk, because a move is short. See FighterRig.RobotTime.
+	/// Which key pose of the move a robot is on at this frame, and the move frame that shows it:
+	/// the coil, the strike, the recovery. He snaps between them and holds each - see
+	/// FighterRig.Robotic.
 	/// </summary>
-	float RobotFrame(int frame) => Mathf.Min(currentMove.TotalFrames, FighterRig.RobotTime(frame, 6.0f, 4.0f));
+	(float frame, int key) RobotAttackKey(int frame)
+	{
+		int startup = currentMove.StartupFrames;
+		int activeEnd = startup + currentMove.ActiveFrames;
+		// The coil: snapped to at once and held.
+		if (frame <= startup - RobotAttackSnap) return (startup, 0);
+		// A move that turns through its active frames (a windmill) clicks round in steps.
+		bool turning = currentMove.Anim == AttackAnim.Windmill || currentMove.Anim == AttackAnim.WideArc;
+		if (turning && frame > startup && frame <= activeEnd)
+		{
+			int step = (frame - startup - 1) / 3;
+			return (Mathf.Min(activeEnd, startup + 1 + (step + 1) * 3), 2 + step);
+		}
+		// The strike, fully out by the first active frame, held through the follow-through.
+		int held = activeEnd + Mathf.CeilToInt(currentMove.EndlagFrames * 0.3f);
+		if (frame <= held) return (startup + 1, 1);
+		// And back, in one snap.
+		return (currentMove.TotalFrames, 1000);
+	}
+
+	/// <summary>Frames a robot's attack takes to snap from one key pose to the next.</summary>
+	const int RobotAttackSnap = 2;
 
 	/// <summary>
 	/// A corkscrew dive tips him flat, head first, through the startup, stays flat while it is

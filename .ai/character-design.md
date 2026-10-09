@@ -270,10 +270,14 @@ Some are **traits on `FighterData`**, because they are about the fighter rather 
   claws: a reason to sit at high heat other than the vent.
 - `TelescopingArms` - an arm that reaches out (a piston punch, a command grab) slides out on
   steel rods with the forearm at its own size on the end, instead of stretching. DoomBot.
-- `Robotic` - animated like a machine: every animation plays in beats - a smooth, eased move,
-  then a complete stop, then the next move (`FighterRig.RobotTime`) - attacks in shorter beats,
-  and the walk stopping on each key pose, so every footfall is a stomp: dust, a jolt and a thud.
-  No jitter. DoomBot, "a factory robot that went rogue" (Eric's calls, 2026-10-04).
+- `Robotic` - animated like a machine: he snaps from key pose to key pose - a few frames at one
+  constant speed, starting and stopping dead - and holds each one perfectly still. Idle poses
+  come every 12 frames with every joint on a whole 15 degrees, so they are sharp angles; attacks
+  snap to the coil, the strike and back (`Fighter.RobotAttackKey`); the walk stops on each key
+  pose and every footfall is a stomp, dust and a thud. Never jitter: an eased bob every few
+  frames, beats that shortened as he walked faster and a camera jolt on every step all read as
+  shaking, and are gone. DoomBot, "a factory robot that went rogue" (Eric's calls, 2026-10-04
+  and 2026-10-09).
 - `StickAimed` on a tether recovery - thrown wherever the stick points, from about 30 degrees
   above level on either side over the top, steerable through the startup. EdgeLord's Chain Blade.
 - `ShouldersProp` - the weapon in his hand rides on his shoulder whenever he is on the ground
@@ -281,6 +285,9 @@ Some are **traits on `FighterData`**, because they are about the fighter rather 
   marked `MoveData.CarryOnShoulder` (Lug's barge). `FighterAnimations.CarryOnShoulder` lays the
   arm and the weapon over whatever pose is playing; it is the one pose that turns the prop bone.
   Lug's sledgehammer (Eric's calls, 2026-10-08).
+- `HandOnHip` - standing about, he plants one hand on his hip and holds the other fist up, leaning
+  back with his chin up (`FighterAnimations.HandOnHip`, laid over the idle). Flambe, a hotshot
+  (Eric's call, 2026-10-08). Only when he is just standing.
 - `CanRoll` - false and block plus a direction on the ground does not roll; he stays in his
   block (and block at a ledge just climbs). DoomBot: a factory robot does not tumble across the
   floor (Eric's call, 2026-10-05). Spot dodge and air dodge are unchanged.

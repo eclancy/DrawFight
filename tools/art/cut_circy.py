@@ -256,6 +256,11 @@ def cut_main(parts_dir):
         lower_top = int(mid - JOINT_OVERLAP)
         parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
                              'pivot': [round(knee_x - lbox[0] + lpad, 2), round(mid - lower_top - lbox[1] + lpad, 2)]}
+        # His front leg ends in a long diagonal with a tick on the end, not a flat foot: the game
+        # took the diagonal for a sole and laid it flat on the floor. So it stands as drawn, the
+        # tick on the floor (Eric, 2026-10-09). His back leg's L is a real foot, and is levelled.
+        if name_lower == 'LegFront_Lower':
+            parts[name_lower]['soleSlope'] = 0.0
         return length, knee_x - side / 2
 
     back_arm, front_arm = arms
