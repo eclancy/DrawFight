@@ -241,6 +241,13 @@ any of them:
 - `CancelIntoAttacks` on a recovery - attack or special straight out of it once it is going, or
   down to drop out; it never leaves him spent. Flambe's wings.
 - `RunningLegs` - the legs run the run cycle under the move's pose. Lug driving his wheelbarrow.
+- `LooksBack` - his head turns round to look behind him through the move (`FighterRig.SetLookingBack`;
+  a fighter whose face is drawn on his body turns the body drawing instead). Every back air, from
+  the shared baseline (Eric's call, 2026-10-09).
+- `HeldArtWheel` on a held drawing - pushed along on a wheel, held by its handles: the grip in his
+  near hand, the wheel on the floor out ahead, tilting on it as his hands rise and fall, and his
+  far hand reaching for the grip further along (`Fighter.PlaceHeldArt`). Lug's wheelbarrow, held
+  by the handles at arm's length rather than by the middle (Eric's call, 2026-10-09).
 - **Throws** (`Grabs.cs`, `FighterData.Throws`): four per fighter, forward, back, up, down, each
   built from the same things as the rest of that fighter's kit. Link hits hold the victim
   (`RehitFrames` + `LinkHit`); `FollowShot` fires a projectile after them.

@@ -7,6 +7,7 @@ using Godot;
 ///
 ///     "$GODOT_BIN" --path . -- --parade --shot=90
 ///     "$GODOT_BIN" --path . -- --parade --attacks --shot=90   (every fighter's own attacks)
+///     "$GODOT_BIN" --path . -- --parade --film=fsmash --only=1 --shot=10   (one move, frame by frame)
 ///
 /// This exists because a build cannot tell you whether a puppet is assembled correctly, and
 /// squinting at two 120-pixel fighters in a match cannot either. When a pivot is wrong or a
@@ -43,6 +44,260 @@ public partial class RigParade : Node2D
 	/// or tall can be checked standing, running and attacking without a match. See SizeLevels.
 	/// </summary>
 	public int Size;
+
+	/// <summary>
+	/// A film strip (--film=NAME, with --only=N): one fighter doing one thing, frame by frame
+	/// across the screen. Each cell is played up to its frame through the rig exactly as a match
+	/// plays it - the same blending, the same planted feet, the same robot beats - and then held.
+	/// The parade shows a pose; this shows the motion between poses, which is where a puppet looks
+	/// like a puppet: a joint that snaps, a body that floats, every limb moving at once. NAME is a
+	/// clip (idle, run, jump, land, crouch, block, hurt) or a move (jab, ftilt, utilt, dtilt, dash,
+	/// fsmash, usmash, dsmash, nair, fair, bair, uair, dair). An attack starts from standing and
+	/// settles back into it, so the way in and the way out show too.
+	/// </summary>
+	public string Film = "";
+
+	/// <summary>Frames of standing still before a filmed attack starts.</summary>
+	const int FilmLeadIn = 12;
+
+	static MoveData FilmMove(FighterData d, string name)
+	{
+		switch (name)
+		{
+			case "jab": return d.Move(MoveSlot.Jab);
+			case "ftilt": return d.Move(MoveSlot.ForwardTilt);
+			case "utilt": return d.Move(MoveSlot.UpTilt);
+			case "dtilt": return d.Move(MoveSlot.DownTilt);
+			case "dash": return d.Move(MoveSlot.DashAttack);
+			case "fsmash": return d.Move(MoveSlot.ForwardSmash);
+			case "usmash": return d.Move(MoveSlot.UpSmash);
+			case "dsmash": return d.Move(MoveSlot.DownSmash);
+			case "nair": return d.Move(MoveSlot.NeutralAir);
+			case "fair": return d.Move(MoveSlot.ForwardAir);
+			case "bair": return d.Move(MoveSlot.BackAir);
+			case "uair": return d.Move(MoveSlot.UpAir);
+			case "dair": return d.Move(MoveSlot.DownAir);
+			default: return null;
+		}
+	}
+
+	static bool IsAerial(MoveData d, FighterData data) =>
+		d == data.Move(MoveSlot.NeutralAir) || d == data.Move(MoveSlot.ForwardAir) || d == data.Move(MoveSlot.BackAir)
+		|| d == data.Move(MoveSlot.UpAir) || d == data.Move(MoveSlot.DownAir);
+
+	/// <summary>One frame of the filmed action on a rig, set up as Fighter.UpdateRig sets it up.</summary>
+	static void FilmFrame(FighterRig rig, FighterData data, string film, MoveData move, int frame, Pose scratch)
+	{
+		rig.SetLookingBack(false);
+		rig.HandOnHip = false;
+		rig.CarryOnShoulder = false;
+		rig.ShowProp("");
+		rig.SetPartVisible(RigBone.PropFront, true);
+
+		int moveFrame = frame - FilmLeadIn;
+		if (move != null && moveFrame >= 0 && moveFrame <= move.TotalFrames)
+		{
+			bool aerial = IsAerial(move, data);
+			rig.SetPlanted(!aerial);
+			rig.SetStanding(false);
+			rig.SetLookingBack(move.LooksBack);
+			rig.CarryOnShoulder = data.ShouldersProp && move.CarryOnShoulder;
+			rig.ShowProp(move.PropArt);
+			rig.SetPartVisible(RigBone.PropFront, move.PropArt != "-");
+			FighterAnimations.ShowAttack(rig, move, moveFrame, data.AnimationDrama, scratch);
+			return;
+		}
+		if (move != null)
+		{
+			// Before the move and after it: standing (or, for an aerial, hanging in the air).
+			bool aerial = IsAerial(move, data);
+			rig.SetPlanted(!aerial);
+			rig.SetStanding(!aerial);
+			rig.CarryOnShoulder = data.ShouldersProp && !aerial;
+			rig.HandOnHip = data.HandOnHip && !aerial;
+			rig.Play(aerial ? FighterAnimations.Fall : FighterAnimations.Idle);
+			rig.Advance();
+			return;
+		}
+
+		switch (film)
+		{
+			case "run":
+				rig.SetPlanted(true);
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.Play(data.Robotic ? FighterAnimations.StompWalk : FighterAnimations.Run);
+				rig.Advance(1.25f);
+				break;
+			case "jump":
+				rig.SetPlanted(false);
+				rig.Play(frame < 26 ? FighterAnimations.Jump : FighterAnimations.Fall);
+				rig.Advance();
+				break;
+			case "land":
+				rig.SetPlanted(true);
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.Play(FighterAnimations.Land);
+				rig.Advance();
+				break;
+			case "crouch":
+				rig.SetPlanted(true);
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.Play(FighterAnimations.Crouch);
+				rig.Advance();
+				break;
+			case "block":
+				rig.SetPlanted(true);
+				rig.SetStanding(true);
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.Play(FighterAnimations.Block);
+				rig.Advance();
+				break;
+			case "hurt":
+				rig.SetPlanted(false);
+				rig.Play(FighterAnimations.Hurt);
+				rig.Advance();
+				break;
+			default:
+				rig.SetPlanted(true);
+				rig.SetStanding(true);
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.HandOnHip = data.HandOnHip;
+				rig.Play(FighterAnimations.Idle);
+				rig.Advance();
+				break;
+		}
+	}
+
+	/// <summary>
+	/// Several moves at once (--film=ground, smash, air or moves): one row per move, each at its
+	/// key moments - standing, the windup, the coil, the hit, the follow-through, the recovery and
+	/// back to standing - so every move a fighter has can be looked over for how it moves.
+	/// </summary>
+	static readonly Dictionary<string, string[]> FilmPages = new Dictionary<string, string[]>
+	{
+		{ "ground", new[] { "jab", "ftilt", "utilt", "dtilt", "dash" } },
+		{ "smash", new[] { "fsmash", "usmash", "dsmash" } },
+		{ "air", new[] { "nair", "fair", "bair", "uair", "dair" } },
+	};
+
+	void BuildFilmPage(string[] names)
+	{
+		FighterData data = FighterCatalog.Get(Mathf.Max(0, Only));
+		const float Column = 290.0f;
+		const float Row = 430.0f;
+		string[] beats = { "rest", "windup", "coil", "hit", "follow", "recover", "settled" };
+		var pose = new Pose();
+		int row = 0;
+		foreach (string name in names)
+		{
+			MoveData move = FilmMove(data, name);
+			if (move == null) continue;
+			int s = move.StartupFrames, active = s + move.ActiveFrames, end = move.TotalFrames;
+			int[] frames =
+			{
+				-2, s / 2, s, s + 1,
+				active + Mathf.Max(1, move.EndlagFrames / 4),
+				active + Mathf.Max(2, move.EndlagFrames * 2 / 3),
+				end + 10,
+			};
+			for (int c = 0; c < frames.Length; c++)
+			{
+				var holder = new Node2D { Position = new Vector2(c * Column, row * Row) };
+				AddChild(holder);
+				var rig = new FighterRig();
+				holder.AddChild(rig);
+				if (!rig.Load(data.RigPath)) return;
+				rig.Normalise(300.0f, 150.0f, 1.0f);
+				rig.DramaScale = data.AnimationDrama;
+				rig.Robotic = data.Robotic;
+				rig.Inertia = data.Inertia;
+				int last = FilmLeadIn + frames[c];
+				for (int f = 0; f <= last; f++) FilmFrame(rig, data, name, move, f, pose);
+				if (row == 0)
+				{
+					var head = new Label { Text = beats[c], Position = new Vector2(-50.0f, -280.0f) };
+					head.AddThemeFontSizeOverride("font_size", 34);
+					head.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
+					holder.AddChild(head);
+				}
+			}
+			var label = new Label { Text = name + "\n" + move.MoveName, Position = new Vector2(-330.0f, row * Row - 120.0f) };
+			label.AddThemeFontSizeOverride("font_size", 30);
+			label.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
+			AddChild(label);
+			row++;
+		}
+		var camera = new Camera2D
+		{
+			Position = new Vector2(Column * 3.0f - 120.0f, Row * (row - 1) * 0.5f - 40.0f),
+			Zoom = Vector2.One * Mathf.Min(1040.0f / (Row * row + 160.0f), 1880.0f / (Column * 7 + 420.0f)),
+		};
+		AddChild(camera);
+		camera.MakeCurrent();
+	}
+
+	void BuildFilm()
+	{
+		if (FilmPages.TryGetValue(Film, out string[] page))
+		{
+			BuildFilmPage(page);
+			return;
+		}
+		FighterData data = FighterCatalog.Get(Mathf.Max(0, Only));
+		MoveData move = FilmMove(data, Film);
+		const int Cells = 18;
+		const int PerRow = 6;
+		const float Column = 300.0f;
+		const float Row = 430.0f;
+
+		// The frames to show: through the whole move and a little after, or a stretch of a clip.
+		int first = move != null ? FilmLeadIn - 2 : 0;
+		int span = move != null ? move.TotalFrames + 14 : (Film == "jump" ? 60 : Film == "run" ? 34 : 54);
+		var pose = new Pose();
+
+		for (int cell = 0; cell < Cells; cell++)
+		{
+			int frame = first + Mathf.RoundToInt(span * cell / (float)(Cells - 1));
+			var holder = new Node2D { Position = new Vector2(cell % PerRow * Column, cell / PerRow * Row) };
+			AddChild(holder);
+			var rig = new FighterRig();
+			holder.AddChild(rig);
+			if (!rig.Load(data.RigPath)) return;
+			rig.Normalise(300.0f, 150.0f, 1.0f);
+			rig.DramaScale = data.AnimationDrama;
+			rig.Robotic = data.Robotic;
+			rig.Inertia = data.Inertia;
+			for (int f = 0; f <= frame; f++) FilmFrame(rig, data, Film, move, f, pose);
+
+			int moveFrame = frame - FilmLeadIn;
+			bool live = move != null && moveFrame > move.StartupFrames && moveFrame <= move.StartupFrames + move.ActiveFrames;
+			var label = new Label
+			{
+				Text = move != null ? $"{moveFrame}" : $"{frame}",
+				Position = new Vector2(-30.0f, -200.0f),
+			};
+			label.AddThemeFontSizeOverride("font_size", 34);
+			label.AddThemeColorOverride("font_color", live ? new Color(0.85f, 0.15f, 0.15f) : new Color(0.16f, 0.16f, 0.20f));
+			holder.AddChild(label);
+		}
+
+		var title = new Label
+		{
+			Text = $"{data.DisplayName}: {Film}" + (move != null ? $"  ({move.MoveName}: startup {move.StartupFrames}, active {move.ActiveFrames}, endlag {move.EndlagFrames} - red frames hit)" : ""),
+			Position = new Vector2(-120.0f, -300.0f),
+		};
+		title.AddThemeFontSizeOverride("font_size", 34);
+		title.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
+		AddChild(title);
+
+		var camera = new Camera2D
+		{
+			Position = new Vector2(Column * (PerRow - 1) * 0.5f, Row * (Cells / PerRow - 1) * 0.5f - 40.0f),
+			Zoom = Vector2.One * Mathf.Min(1000.0f / (Row * (Cells / PerRow) + 200.0f), 1880.0f / (Column * PerRow + 60.0f)),
+		};
+		AddChild(camera);
+		camera.MakeCurrent();
+	}
 
 	static bool Stretches(FighterData d) => d.Move(MoveSlot.NeutralSpecial)?.Special == SpecialKind.Resize;
 
@@ -134,6 +389,11 @@ public partial class RigParade : Node2D
 
 	public override void _Ready()
 	{
+		if (!string.IsNullOrEmpty(Film))
+		{
+			BuildFilm();
+			return;
+		}
 		var fighters = new FighterData[Only >= 0 ? 1 : FighterCatalog.Count];
 		for (int i = 0; i < fighters.Length; i++) fighters[i] = FighterCatalog.Get(Only >= 0 ? Only : i);
 
@@ -214,6 +474,7 @@ public partial class RigParade : Node2D
 				rig.Normalise(300.0f, 150.0f, 1.0f);
 				rig.DramaScale = data.AnimationDrama;
 				rig.Robotic = data.Robotic;
+				rig.Inertia = data.Inertia;
 				if (Size != 0 && Stretches(data)) rig.SetLegStretch(SizeLevels.LegStretch(Size), 150.0f);
 				// Feet on the floor for everything done standing, exactly as in a match.
 				string columnLabel = columns[index].label;
@@ -230,6 +491,8 @@ public partial class RigParade : Node2D
 				rig.CarryOnShoulder = data.ShouldersProp && carrying;
 				// And a hand on his hip, standing about.
 				rig.HandOnHip = data.HandOnHip && !Attacks && columnLabel == "idle";
+				// Looking behind him for a back air, as in a match.
+				rig.SetLookingBack(shown != null && shown.LooksBack);
 				if (shown != null)
 				{
 					rig.ShowProp(shown.PropArt);

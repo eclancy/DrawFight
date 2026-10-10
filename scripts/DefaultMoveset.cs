@@ -293,6 +293,8 @@ public static class DefaultMoveset
 		StartupFrames = 8, ActiveFrames = 3, EndlagFrames = 18,
 		Damage = 12.0f, BaseKnockback = 20.0f, KnockbackGrowth = 1.22f,
 		LaunchAngleDegrees = 144.0f,
+		// And he looks where he is hitting.
+		LooksBack = true,
 		HitboxOffset = new Vector2(-78.0f, -18.0f), HitboxRadius = 48.0f,
 	};
 

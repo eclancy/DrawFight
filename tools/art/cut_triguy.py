@@ -288,6 +288,10 @@ def main():
         'figureHeight': dims['figureHeight'],
         # Thin black limbs, as Circy's: darkening the far ones would only lose them.
         'backLimbDarken': 1.0,
+        # His legs come out of the bottom edge of his triangle, well out from its middle - so when
+        # the triangle tips, they go with it, or the triangle swings away from them (Eric,
+        # 2026-10-09: his limbs came off when he attacked).
+        'legsOnBody': True,
         'bones': bones,
         'parts': parts,
         'poses': poses,

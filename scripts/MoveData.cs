@@ -326,6 +326,16 @@ public partial class MoveData : Resource
 	[Export] public float HeldArtSize { get; set; } = 100.0f;
 
 	/// <summary>
+	/// The held drawing is pushed along on a wheel, held by its handles: its anchor (the grip) goes
+	/// in his near hand, it stands on the wheel at <see cref="HeldArtWheel"/> (in the drawing's
+	/// pixels) and tilts up to meet his hand, and his far hand reaches for the grip further along
+	/// at <see cref="HeldArtGrip"/>. Lug's wheelbarrow. Zero is an ordinary held drawing.
+	/// </summary>
+	[Export] public Vector2 HeldArtWheel { get; set; } = Vector2.Zero;
+	[Export] public float HeldArtWheelRadius { get; set; } = 0.0f;
+	[Export] public Vector2 HeldArtGrip { get; set; } = Vector2.Zero;
+
+	/// <summary>
 	/// A drawing swung on a chain from the hand - Lug's wrecking ball. It sweeps from behind him
 	/// up and over through the startup, then leads the way for the rest of the move.
 	/// </summary>
@@ -540,6 +550,12 @@ public partial class MoveData : Resource
 	[Export] public bool CarryOnShoulder { get; set; } = false;
 
 	/// <summary>
+	/// He looks behind him through the move: his head turned round, face to the back. Every back
+	/// air, which hits behind without turning him round (Eric, 2026-10-09).
+	/// </summary>
+	[Export] public bool LooksBack { get; set; } = false;
+
+	/// <summary>
 	/// A tether recovery thrown wherever the stick points (anywhere in the upper half), steerable
 	/// right up to the moment it pulls him - turning him round if it points behind him. With the
 	/// stick left alone it goes up and forward as authored. EdgeLord's Chain Blade (Eric's call,
@@ -677,6 +693,9 @@ public partial class MoveData : Resource
 			HeldArt = HeldArt,
 			HeldArtOffset = HeldArtOffset,
 			HeldArtSize = HeldArtSize,
+			HeldArtWheel = HeldArtWheel,
+			HeldArtWheelRadius = HeldArtWheelRadius,
+			HeldArtGrip = HeldArtGrip,
 			SwingArt = SwingArt,
 			ShockwavePower = ShockwavePower,
 			PlatformHoldFrames = PlatformHoldFrames,
@@ -717,6 +736,7 @@ public partial class MoveData : Resource
 			CancelIntoAttacks = CancelIntoAttacks,
 			RunningLegs = RunningLegs,
 			CarryOnShoulder = CarryOnShoulder,
+			LooksBack = LooksBack,
 			StickAimed = StickAimed,
 			SpentOnHit = SpentOnHit,
 			ShowExtra = ShowExtra,

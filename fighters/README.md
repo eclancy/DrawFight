@@ -85,8 +85,10 @@ the hat itself used to go on and come off.
 
 He swaps a set of heavy tools into his hand - `lug/poses/tool_*.png`: a pipe wrench, shovel,
 pickaxe, crowbar, steel beam, stop sign, jackhammer and nail gun - drawn in his style by
-`lugnut.py`, as are the wheelbarrow, wrecking ball, girder and cone. Each keeps the canvas, grip
-and length of the stick-figure drawing it replaced, because the game holds and measures a tool
+`lugnut.py`, as are the wheelbarrow, wrecking ball, girder and cone. The wheelbarrow has long
+handles with a rubber grip, both his hands on it, and stands on its wheel out in front of him
+(`MoveData.HeldArtWheel`); its hitbox is on the tray. The tools keep the canvas, grip
+and length of the stick-figure drawing each replaced, because the game holds and measures a tool
 by its canvas (Eric's call, 2026-10-08: every weapon redrawn to match its fighter). His reach
 is built on how long those tools are and how far his arms hold them out, so if a tool or an arm
 is redrawn longer or shorter, re-check the hitboxes with `--parade --attacks --only=1`. Every
@@ -245,7 +247,10 @@ themselves, renamed from `photo-1.png`... to what each one is:
 limbs: the body is the white fill grown out to take in its outline and face, plus the hat (the
 big stroke above it), plus the two sharp corners of the triangle that poke past the fill; the
 four remaining strokes are the limbs, the two that reach lowest being the legs. Each limb hangs
-from its top end, where it meets the triangle. Nothing is redrawn.
+from its top end, where it meets the triangle. Nothing is redrawn. His legs come out of the
+triangle's bottom edge well out from its middle, so they turn with the triangle when it tips
+(`"legsOnBody"` in `rig.json`) - hung from the hip, a tipped triangle swung clean off them in
+most of his attacks (Eric, 2026-10-09).
 
 The taunt and crying drawings are front or three-quarter views of the whole figure, so they are
 sized by height rather than by a body part: `figureHeight` in `rig.json`, on the rig and on each

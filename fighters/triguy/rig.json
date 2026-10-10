@@ -105,6 +105,7 @@
   "canonicalHeight": 1252.5, 
   "figureHeight": 2185, 
   "legLength": 958.9, 
+  "legsOnBody": true, 
   "name": "Triguy", 
   "parts": {
     "ArmBack_Lower": {

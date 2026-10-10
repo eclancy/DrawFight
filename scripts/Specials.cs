@@ -563,11 +563,15 @@ public static class Specials
 		RunningLegs = true,
 		Damage = 14.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.95f,
 		LaunchAngleDegrees = 68.0f,
-		HitboxOffset = new Vector2(96.0f, 10.0f), HitboxRadius = 60.0f,
+		// On the tray, out in front at the end of its handles - and, as every hit does, back to
+		// his body, so someone right against him is still scooped up.
+		HitboxOffset = new Vector2(150.0f, 30.0f), HitboxRadius = 58.0f,
 		CarriesMomentum = true,
 		Special = SpecialKind.Dash,
 		SpecialSpeed = 1100.0f,
-		HeldArt = "wheelbarrow", HeldArtOffset = new Vector2(92.0f, 22.0f), HeldArtSize = 130.0f,
+		// Held by its handles, both hands on the grip, standing on its wheel (Eric, 2026-10-09).
+		HeldArt = "wheelbarrow", HeldArtSize = 170.0f,
+		HeldArtWheel = new Vector2(280.0f, 146.0f), HeldArtWheelRadius = 32.0f, HeldArtGrip = new Vector2(80.0f, 46.0f),
 		FxColor = new Color(0.92f, 0.49f, 0.22f), FxRadius = 46.0f,
 	};
 

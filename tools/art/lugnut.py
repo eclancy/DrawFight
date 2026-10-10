@@ -301,18 +301,24 @@ PROP = ('''
 ''', (66, 10))
 
 # The props for his specials, each a whole picture facing right, sized by the move that shows it:
-# name: (svg, canvas width, canvas height).
+# name: (svg, canvas width, canvas height[, anchor]). The anchor is the middle unless given.
 SPECIAL_PROPS = {
+    # Long handles rising back from the tray to a rubber grip at the end, where his near hand holds
+    # it (the anchor, (20, 24)); his far hand takes the grip further along. The game stands it on
+    # its wheel (axle (280, 146)) and tilts it up to his hands (Fighter.PlaceHeldArt). Eric's call,
+    # 2026-10-09: he held the middle of it, too close to his body.
     'wheelbarrow': ('''
-<path d="M 70,52 L 10,72" fill="none" stroke="{ink}" stroke-width="20" stroke-linecap="round"/>
-<path d="M 70,52 L 10,72" fill="none" stroke="{wood}" stroke-width="10" stroke-linecap="round"/>
-<path d="M 150,108 L 140,160" fill="none" stroke="{ink}" stroke-width="14" stroke-linecap="round"/>
-<path d="M 150,108 L 140,160" fill="none" stroke="{grey}" stroke-width="6" stroke-linecap="round"/>
-<path d="M 40,30 L 252,30 L 222,112 L 92,112 Z" fill="{vest}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
-<rect x="32" y="20" width="228" height="18" rx="8" fill="{orange_dark}" stroke="{ink}" stroke-width="{wo}"/>
-<circle cx="226" cy="134" r="30" fill="{grey}" stroke="{ink}" stroke-width="{wo}"/>
-<circle cx="226" cy="134" r="11" fill="{steel}" stroke="{ink}" stroke-width="{wi}"/>
-''', 300, 170),
+<path d="M 20,24 L 140,68 L 284,146" fill="none" stroke="{ink}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 20,24 L 140,68 L 284,146" fill="none" stroke="{wood}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 20,24 L 92,50" fill="none" stroke="{ink}" stroke-width="22" stroke-linecap="round"/>
+<path d="M 20,24 L 92,50" fill="none" stroke="{grey}" stroke-width="12" stroke-linecap="round"/>
+<path d="M 182,118 L 172,178" fill="none" stroke="{ink}" stroke-width="14" stroke-linecap="round"/>
+<path d="M 182,118 L 172,178" fill="none" stroke="{grey}" stroke-width="6" stroke-linecap="round"/>
+<path d="M 138,66 L 322,66 L 292,122 L 168,122 Z" fill="{vest}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
+<rect x="130" y="56" width="200" height="18" rx="8" fill="{orange_dark}" stroke="{ink}" stroke-width="{wo}"/>
+<circle cx="280" cy="146" r="32" fill="{grey}" stroke="{ink}" stroke-width="{wo}"/>
+<circle cx="280" cy="146" r="11" fill="{steel}" stroke="{ink}" stroke-width="{wi}"/>
+''', 340, 186, (20.0, 24.0)),
     'wreckingball': ('''
 <clipPath id="ball"><circle cx="85" cy="92" r="70"/></clipPath>
 <circle cx="85" cy="20" r="11" fill="none" stroke="{ink}" stroke-width="12"/>
@@ -428,8 +434,10 @@ def build():
                    'PropFront': (PROP[0], (0, 0, 132, 306), PROP[1], False)}
     for name, (svg, grip) in HELD.items():
         tool_pieces['tool_' + name] = (svg, (0, 0, 190, 300), grip, False)
-    for name, (svg, w, h) in SPECIAL_PROPS.items():
-        tool_pieces[name] = (svg, (0, 0, w, h), (w / 2.0, h / 2.0), False)
+    for name, entry in SPECIAL_PROPS.items():
+        svg, w, h = entry[:3]
+        anchor = entry[3] if len(entry) > 3 else (w / 2.0, h / 2.0)
+        tool_pieces[name] = (svg, (0, 0, w, h), anchor, False)
     tools, _ = draw_parts(tool_pieces, fill, TOOL_C, 1.0, trim=False)
     poses = {}
     for name in sorted(tool_pieces):

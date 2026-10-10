@@ -219,7 +219,9 @@ that takes half a second to reach it never gets there in a fight.
   held (EdgeLord's air dash too). Eric's call, 2026-10-04. A back air hits behind him and
   launches behind him: its angle is measured from the way he faces, so it is past 90 (144, the
   usual 36 pointed back). At 36 every back air threw people forward, through him (Eric,
-  2026-10-09).
+  2026-10-09). And he looks behind him while he does it (`MoveData.LooksBack`): his head turned
+  round - or, for a fighter whose face is his body, the body drawing - so you can see which way
+  it hits.
 - **Hits reach from the body.** A melee hitbox is a capsule from inside the attacker's body out
   to the hitbox centre (`Fighter.HitboxRoot`), the radius its thickness - so a hammer catches
   someone standing right against him, not only at the end of its head. And what can be hit is

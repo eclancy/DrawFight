@@ -122,10 +122,13 @@ public partial class Fighter : CharacterBody2D
 		{
 			return FighterAnimations.AttackSquash(currentMove, moveFrame);
 		}
-		if (jumpStretchFrames > 0) return 1.0f + 0.16f * jumpStretchFrames / JumpStretchFrames;
-		if (State == FighterState.Grounded && landFrames > 0) return 1.0f - 0.2f * landFrames / 9.0f;
-		if (IsBlocking) return 0.94f;
-		if (State == FighterState.Grounded && IsCrouching) return 0.94f;
+		// Kept small: the knees and the lean do the work, as they do on a person. A cutout that
+		// stretches a fifth of its height to jump and squashes a fifth to land is a rubber toy
+		// (Eric, 2026-10-10: movement looked silly).
+		if (jumpStretchFrames > 0) return 1.0f + 0.05f * jumpStretchFrames / JumpStretchFrames;
+		if (State == FighterState.Grounded && landFrames > 0) return 1.0f - 0.06f * landFrames / 9.0f;
+		if (IsBlocking) return 0.98f;
+		if (State == FighterState.Grounded && IsCrouching) return 0.98f;
 		return 1.0f;
 	}
 
@@ -422,6 +425,7 @@ public partial class Fighter : CharacterBody2D
 				rig.Normalise(data.BodySize.Y * 1.18f, data.BodySize.Y * 0.5f, data.VisualScale);
 				rig.DramaScale = data.AnimationDrama;
 				rig.Robotic = data.Robotic;
+				rig.Inertia = data.Inertia;
 			}
 			else
 			{
@@ -705,7 +709,7 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (rig == null || !rig.Loaded) return;
 
-		rig.SetFacing(Facing);
+		rig.SetFacing(TurnFacing());
 
 		// On the ground, the lowest foot is always on the floor, whatever the pose is doing.
 		rig.SetPlanted(IsOnFloor() && State != FighterState.Dodging
@@ -747,13 +751,15 @@ public partial class Fighter : CharacterBody2D
 		ShowTurnFrame(spinning);
 
 		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll());
-		rig.SetSpinWidth(DiveSpinWidth());
+		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth());
 		rig.SetFrontLegReach(LegReachNow());
 		// Standing still on flat feet (FighterRig.StandOnFeet) - turned on below for each pose
 		// that is just standing.
 		rig.SetStanding(false);
 		// A hammer carried on the shoulder stays there for anything done on the ground that is not
 		// a swing - and through a move that keeps it there, like a barge.
+		// A back air looks behind him, where it hits.
+		rig.SetLookingBack(State == FighterState.Attacking && currentMove != null && currentMove.LooksBack);
 		rig.CarryOnShoulder = Data.ShouldersProp && (State == FighterState.Grounded
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
 		// A hand on his hip only while he is just standing; turned on below.
@@ -792,17 +798,9 @@ public partial class Fighter : CharacterBody2D
 				// the exact frame the hitbox does.
 				// A robot's attacks click from pose to pose too - rounded up, so the strike still
 				// shows by the frame the hitbox does.
-				if (Data.Robotic)
-				{
-					// A robot snaps between the key poses of the move and holds each one.
-					(float keyFrame, int key) = RobotAttackKey(moveFrame);
-					FighterAnimations.SampleAttack(currentMove, keyFrame, attackPose, drama: Data.AnimationDrama);
-					rig.RobotApply(attackPose, currentMove, key, RobotAttackSnap);
-					break;
-				}
-				FighterAnimations.SampleAttack(currentMove, moveFrame, attackPose, drama: Data.AnimationDrama);
-				if (currentMove.RunningLegs && Mathf.Abs(Velocity.X) > 45.0f) RunTheLegs(attackPose);
-				rig.ApplyDirect(attackPose, FighterAnimations.AttackBlend(currentMove, moveFrame));
+				FighterAnimations.ShowAttack(rig, currentMove, moveFrame, Data.AnimationDrama, attackPose,
+					currentMove.RunningLegs && Mathf.Abs(Velocity.X) > 45.0f ? RunTheLegs : null);
+				if (!Data.Robotic) PlaceHeldArt();
 				break;
 
 			case FighterState.Hitstun:
@@ -838,7 +836,8 @@ public partial class Fighter : CharacterBody2D
 				rig.SetStanding(true);
 				rig.HandOnHip = Data.HandOnHip;
 				rig.Play(FighterAnimations.Idle);
-				rig.Advance();
+				// A heavier body breathes slower, and no two fighters breathe in step.
+				rig.Advance(1.0f / Data.Inertia);
 				break;
 
 			case FighterState.Airborne:
@@ -1894,34 +1893,6 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>
-	/// Which key pose of the move a robot is on at this frame, and the move frame that shows it:
-	/// the coil, the strike, the recovery. He snaps between them and holds each - see
-	/// FighterRig.Robotic.
-	/// </summary>
-	(float frame, int key) RobotAttackKey(int frame)
-	{
-		int startup = currentMove.StartupFrames;
-		int activeEnd = startup + currentMove.ActiveFrames;
-		// The coil: snapped to at once and held.
-		if (frame <= startup - RobotAttackSnap) return (startup, 0);
-		// A move that turns through its active frames (a windmill) clicks round in steps.
-		bool turning = currentMove.Anim == AttackAnim.Windmill || currentMove.Anim == AttackAnim.WideArc;
-		if (turning && frame > startup && frame <= activeEnd)
-		{
-			int step = (frame - startup - 1) / 3;
-			return (Mathf.Min(activeEnd, startup + 1 + (step + 1) * 3), 2 + step);
-		}
-		// The strike, fully out by the first active frame, held through the follow-through.
-		int held = activeEnd + Mathf.CeilToInt(currentMove.EndlagFrames * 0.3f);
-		if (frame <= held) return (startup + 1, 1);
-		// And back, in one snap.
-		return (currentMove.TotalFrames, 1000);
-	}
-
-	/// <summary>Frames a robot's attack takes to snap from one key pose to the next.</summary>
-	const int RobotAttackSnap = 2;
-
-	/// <summary>
 	/// A corkscrew dive tips him flat, head first, through the startup, stays flat while it is
 	/// live and comes back up through the endlag.
 	/// </summary>
@@ -1938,6 +1909,45 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>Spinning along his length while the dive is live: two and a half turns.</summary>
+	/// <summary>Frames a turn round takes to show: the body narrows to its edge, flips, and opens out.</summary>
+	const int TurnFrames = 6;
+
+	int turnFrames;
+	int turnFrom = 1;
+	int turnTo = 1;
+	int shownFacing = 1;
+
+	/// <summary>
+	/// The way he is drawn facing. Facing itself changes the moment he turns - controls and hits
+	/// go by it - but a drawing that flips in one frame is a card turned over, so the picture turns
+	/// round over a few frames instead (TurnWidth): the old way until halfway, then the new.
+	/// </summary>
+	int TurnFacing()
+	{
+		if (Facing != turnTo)
+		{
+			// From whichever way he is drawn right now - turning back halfway round goes back.
+			turnFrom = shownFacing;
+			turnTo = Facing;
+			turnFrames = turnFrom == turnTo ? 0 : TurnFrames;
+		}
+		if (turnFrames > 0) turnFrames--;
+		shownFacing = turnFrames * 2 > TurnFrames ? turnFrom : turnTo;
+		return shownFacing;
+	}
+
+	/// <summary>
+	/// How wide he is drawn while turning round: narrowing to an edge as he turns side-on, and
+	/// opening out the other way - how a flat figure turns, rather than a mirror image swapped in a
+	/// frame (Eric, 2026-10-10: movement looked puppeteered). 1 is not turning.
+	/// </summary>
+	float TurnWidth()
+	{
+		if (turnFrames <= 0) return 1.0f;
+		float t = 1.0f - turnFrames / (float)TurnFrames;
+		return Mathf.Max(0.18f, Mathf.Abs(Mathf.Cos(Mathf.Pi * t)));
+	}
+
 	float DiveSpinWidth()
 	{
 		if (!IsDiving || moveFrame <= currentMove.StartupFrames) return 1.0f;
@@ -2518,6 +2528,9 @@ public partial class Fighter : CharacterBody2D
 	public void Face(int direction)
 	{
 		Facing = direction < 0 ? -1 : 1;
+		// Set facing, not turned round to it: a spawn is not a turn.
+		turnFrom = turnTo = shownFacing = Facing;
+		turnFrames = 0;
 		rig?.SetFacing(Facing);
 	}
 
@@ -3255,6 +3268,46 @@ public partial class Fighter : CharacterBody2D
 		}
 	}
 
+	/// <summary>A held drawing pushed along on its wheel is placed this frame (PlaceHeldArt).</summary>
+	bool heldOnWheel;
+	Vector2 heldArtAt;
+	float heldArtTurn;
+
+	/// <summary>
+	/// A drawing pushed along on a wheel and held by its handles (MoveData.HeldArtWheel) - Lug's
+	/// wheelbarrow. Its grip goes in his near hand; its wheel stands on the floor, out ahead along
+	/// the handles, so it tilts on the wheel as he lifts and lowers his hands, the way a barrow
+	/// does; and his far arm reaches for the grip further along, so both hands are on the handle.
+	/// Worked out after the pose is applied, so the hands are where they are drawn.
+	/// </summary>
+	void PlaceHeldArt()
+	{
+		heldOnWheel = false;
+		if (currentMove.HeldArtWheelRadius <= 0.0f || rig == null) return;
+		RigArt art = rig.PoseArtFor(currentMove.HeldArt);
+		var hands = rig.HandsGlobal();
+		if (art == null || hands == null) return;
+
+		Vector2 size = art.Texture.GetSize();
+		float s = currentMove.HeldArtSize / Mathf.Max(size.X, size.Y);
+		// Worked out facing right, and turned round at the end.
+		Vector2 hand = (hands.Value.front - GlobalPosition) * new Vector2(Facing, 1.0f);
+		Vector2 toAxle = (currentMove.HeldArtWheel - art.Anchor) * s;
+		float length = toAxle.Length();
+		float axleY = bodySize.Y * 0.5f - currentMove.HeldArtWheelRadius * s;
+		float drop = Mathf.Clamp(axleY - hand.Y, -length * 0.95f, length * 0.95f);
+		float ahead = Mathf.Sqrt(length * length - drop * drop);
+		float turn = Mathf.Atan2(drop, ahead) - toAxle.Angle();
+
+		heldOnWheel = true;
+		heldArtTurn = turn;
+		heldArtAt = hand * new Vector2(Facing, 1.0f);
+
+		// The far hand on the grip, further along the handle.
+		Vector2 grip = hand + ((currentMove.HeldArtGrip - art.Anchor) * s).Rotated(turn);
+		rig.ReachArm(RigBone.ArmBackUpper, RigBone.ArmBackLower, GlobalPosition + grip * new Vector2(Facing, 1.0f), 1.0f);
+	}
+
 	/// <summary>
 	/// A drawing held out in front for the whole move - the wheelbarrow.
 	/// </summary>
@@ -3269,6 +3322,14 @@ public partial class Fighter : CharacterBody2D
 		Vector2 size = art.Texture.GetSize();
 		float s = currentMove.HeldArtSize / Mathf.Max(size.X, size.Y);
 		Vector2 at = new Vector2(currentMove.HeldArtOffset.X * Facing, currentMove.HeldArtOffset.Y);
+		if (heldOnWheel)
+		{
+			// Stood on its wheel and tilted up to his hand - see PlaceHeldArt.
+			DrawArtTransform(heldArtAt, heldArtTurn * Facing, new Vector2(s * Facing, s));
+			DrawTexture(art.Texture, -art.Anchor, rig.Modulate);
+			DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+			return;
+		}
 		var scale = new Vector2(s * Facing, s);
 		if (currentMove.Flight)
 		{

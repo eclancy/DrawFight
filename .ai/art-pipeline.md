@@ -40,6 +40,37 @@ The cost of this decision is that every fighter has a humanoid body plan. A draw
 a blob does not fit. That is an acceptable trade and is worth stating in the drawing guide up
 front — but see "Non-humanoid fighters" below for the escape hatch.
 
+## Moving like a body, not a puppet
+
+Rigid cutout parts on a fixed skeleton look like a puppet when every joint does the same thing at
+the same moment. These are what keep them looking like a body (Eric's call, 2026-10-10: movement
+looked puppeteered and silly). Keep them when adding poses or clips.
+
+- **Joints follow on springs, from the middle out** (`FighterRig.Follow`). Each joint chases its
+  pose with its own stiffness: the hips and spine lead, the shoulder follows, the elbow after it
+  and the hand last, each carried a little past where it stops and settling back. A strike's
+  active frames still snap - hitlag freezes whatever is showing, so the hit must be fully out.
+  A robot (DoomBot) snaps between held poses on purpose and does not use the springs.
+- **Weight**: a heavyweight's springs are slower (`FighterData.Inertia`), so his limbs swing on
+  further and settle later, and he breathes slower standing.
+- **Clips curve through their keys** (`Pose.Curve`, Catmull-Rom) instead of easing in and out of
+  each one, which stopped the whole body dead four times a stride.
+- **Attacks**: the coil before a hit and the carry after it are a little more of the same
+  movement, capped at 16 degrees a joint (`Pose.Overshoot`) - scaled by the size of the swing, an
+  arm raised overhead was carried on round behind the back. After the hit the limb keeps going,
+  slowing, and is drawn back while still moving; nothing freezes at full stretch.
+- **Angles add up.** What reaches the screen is the lean, plus the shoulder, plus the elbow, each
+  played bigger (`FighterRig.Drama`). A windup with the body leaning back, the arm at the top
+  and the elbow bent points the forearm, and the weapon, straight backwards.
+- **Turning round** narrows the drawing to its edge and opens it out the other way over six
+  frames (`Fighter.TurnWidth`), instead of mirroring it in one.
+- **Squash and stretch are small** - a few percent. A cutout that stretches a fifth of its height
+  to jump is a rubber toy; the knees and the lean do that work.
+
+Check motion, not just poses: `--parade --film=NAME --only=N` films one fighter doing one thing,
+frame by frame, through the rig exactly as a match plays it; `--film=ground`, `smash` or `air`
+shows every move of that kind at its key moments. See CLAUDE.md.
+
 ## Parts, and the parts he will not draw
 
 A kid draws one arm and one leg clearly and no elbows. The pipeline fills the rest in
@@ -280,6 +311,11 @@ small path rather than bending the rig.
   stands on its toe and a kick leads with its heel, rather than a level boot meeting a nearly
   flat shin side-on (Eric, 2026-10-09). A tall boot shaft belongs on the shin, not the foot, so
   it leans with it - Flambe's.
+- **Legs out of the body** (`"legsOnBody": true`): legs that come out of the body's edge well
+  away from the hip - Triguy's, at the corners of his triangle - have their roots carried round
+  as the body tips, or the body swings away from them. Their swings are untouched; only where
+  they start moves. A body turned round to look back (a back air) takes every limb's root round
+  with it.
 - **A shin with no flat sole**: a leg whose bottom is not a foot laid flat - Circy's front leg, a
   diagonal with a tick on the end - says so with `"soleSlope": 0` on its part, and stands as
   drawn. Without it the diagonal was read as a sole and laid flat on the floor. Floor contact, the sole a jet

@@ -110,6 +110,7 @@ public partial class CharacterSelectScreen : Node2D
 				rig.Normalise(230.0f, 115.0f, data.VisualScale);
 				rig.SetFacing(facing[i]);
 				rig.Robotic = data.Robotic;
+				rig.Inertia = data.Inertia;
 				rig.CarryOnShoulder = data.ShouldersProp;
 				rig.HandOnHip = data.HandOnHip;
 				rig.SetPlanted(true);

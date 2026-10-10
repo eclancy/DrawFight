@@ -42,6 +42,7 @@ public partial class GameRoot : Node2D
 		string startAt = "title";
 		int paradeOnly = -1;
 		int paradeSize = 0;
+		string paradeFilm = "";
 
 		foreach (string arg in OS.GetCmdlineUserArgs())
 		{
@@ -60,6 +61,7 @@ public partial class GameRoot : Node2D
 			if (arg == "--parade") startAt = "parade";
 			if (arg.StartsWith("--only=")) paradeOnly = arg.Substring(7).ToInt();
 			if (arg.StartsWith("--size=")) paradeSize = arg.Substring(7).ToInt();
+			if (arg.StartsWith("--film=")) paradeFilm = arg.Substring(7);
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
 			if (arg == "--stages") startAt = "stages";
@@ -84,6 +86,7 @@ public partial class GameRoot : Node2D
 					Attacks = System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--attacks") >= 0,
 					Only = paradeOnly,
 					Size = paradeSize,
+					Film = paradeFilm,
 				});
 				break;
 			case "match": GoMatch(); break;

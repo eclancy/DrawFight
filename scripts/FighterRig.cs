@@ -88,6 +88,92 @@ public partial class FighterRig : Node2D
 	readonly Pose current = new Pose();
 	readonly Pose target = new Pose();
 
+	// --- Moving like a body ------------------------------------------------------------
+
+	/// <summary>
+	/// How heavy he is to move (FighterData.Weight): a heavy body is slower to get going and slower
+	/// to stop, so a heavyweight's limbs swing on further and settle later, and a lightweight is
+	/// snappier. 1 is a middleweight.
+	/// </summary>
+	public float Inertia = 1.0f;
+
+	/// <summary>
+	/// How fast each joint is turning, in degrees a frame, and the hip moving, for the springs
+	/// that carry the puppet toward each pose (<see cref="Follow"/>).
+	/// </summary>
+	readonly float[] spin = new float[(int)RigBone.Count];
+	Vector2 hipSpeed;
+
+	/// <summary>
+	/// How each joint follows its pose: (stiffness, damping) of a spring toward it. A body moves
+	/// from the middle out - the hips and spine lead, the shoulder follows, the elbow after it and
+	/// the hand last, each one carried a little past where it stops and settling back - and that
+	/// lag down the chain is most of what separates a body from a puppet, where every joint turns
+	/// at once and stops dead. Eric's call, 2026-10-10: movement looked puppeteered. Tuned at the
+	/// clips' usual pace; a caller asking for quicker or slower scales the stiffness.
+	/// </summary>
+	static (float stiffness, float damping) SpringFor(RigBone bone)
+	{
+		switch (bone)
+		{
+			case RigBone.Torso: return (0.30f, 1.00f);
+			case RigBone.Head: return (0.22f, 0.80f);
+			case RigBone.ArmFrontUpper:
+			case RigBone.ArmBackUpper: return (0.26f, 0.78f);
+			case RigBone.ArmFrontLower:
+			case RigBone.ArmBackLower: return (0.20f, 0.62f);
+			case RigBone.PropFront: return (0.17f, 0.56f);
+			case RigBone.LegFrontUpper:
+			case RigBone.LegBackUpper: return (0.32f, 0.98f);
+			case RigBone.LegFrontLower:
+			case RigBone.LegBackLower: return (0.28f, 0.88f);
+			default: return (0.30f, 1.00f);
+		}
+	}
+
+	/// <summary>
+	/// Carries <see cref="current"/> toward <paramref name="goal"/> on a spring per joint. A blend of
+	/// 1 snaps there - a strike has to be fully out on the frame its hit lands, because hitlag
+	/// freezes whatever is showing - and leaves a little of the swing in the joint, so what follows
+	/// carries on through rather than stopping dead. Below 1, a blend is how hard the caller wants
+	/// it chased: the clips' usual 0.45 is the springs as tuned, more is quicker.
+	/// </summary>
+	void Follow(Pose goal, float blend)
+	{
+		if (blend >= 0.999f)
+		{
+			for (int i = 0; i < (int)RigBone.Count; i++)
+			{
+				// A joint thrown right round in one frame (a windmill's arm wrapping past straight
+				// down) is not a swing to carry on.
+				float jump = goal[(RigBone)i] - current[(RigBone)i];
+				spin[i] = Mathf.Abs(jump) > 180.0f ? 0.0f : Mathf.Clamp(jump * 0.25f, -10.0f, 10.0f);
+			}
+			hipSpeed = ((goal.HipOffset - current.HipOffset) * 0.25f).LimitLength(6.0f);
+			current.CopyFrom(goal);
+			return;
+		}
+
+		float pace = Mathf.Clamp(blend / 0.45f, 0.4f, 2.2f) / Inertia;
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			var bone = (RigBone)i;
+			(float stiffness, float damping) = SpringFor(bone);
+			float k = Mathf.Min(0.9f, stiffness * pace * pace);
+			float c = Mathf.Min(1.6f, damping * pace);
+			// The poses are written in continuous angles - an arm swung up over the head goes on
+			// past straight up to -185 - so the spring follows the plain difference. Wrapped, an arm
+			// raised over the head went the other way round, back behind his body.
+			float off = goal[bone] - current[bone];
+			spin[i] += k * off - c * spin[i];
+			current.Set(bone, current[bone] + spin[i]);
+		}
+		float hipK = Mathf.Min(0.9f, 0.30f * pace * pace);
+		float hipC = Mathf.Min(1.6f, 1.0f * pace);
+		hipSpeed += hipK * (goal.HipOffset - current.HipOffset) - hipC * hipSpeed;
+		current.HipOffset += hipSpeed;
+	}
+
 	AnimationClip clip;
 	float clipFrame;
 
@@ -129,6 +215,7 @@ public partial class FighterRig : Node2D
 		ballWidth = root.ContainsKey("ballWidth") ? (float)root["ballWidth"] : 0.0f;
 		figureHeight = root.ContainsKey("figureHeight") ? (float)root["figureHeight"] : 0.0f;
 		stanceSpread = root.ContainsKey("stance") ? (float)root["stance"] : 0.0f;
+		legsOnBody = root.ContainsKey("legsOnBody") && (bool)root["legsOnBody"];
 		LoadPoses(root, baseDir);
 
 		var parts = (Godot.Collections.Dictionary)root["parts"];
@@ -839,6 +926,66 @@ public partial class FighterRig : Node2D
 	/// <summary>Where a bone's joint is right now, in global coordinates. Null if the drawing has no such bone.</summary>
 	public Vector2? JointGlobal(RigBone bone) => present[(int)bone] ? bones[(int)bone].GlobalPosition : null;
 
+	/// <summary>
+	/// Turns his head round to look behind him - the head and everything on it (a hard hat)
+	/// mirrored about the neck, which is how a side-on cutout looks over its shoulder. A fighter
+	/// whose face is drawn on his body (EdgeLord's V, Triguy's triangle, Circy's ball) has the
+	/// body drawing turned round instead, about the hip; his limbs stay where they hang.
+	/// </summary>
+	public void SetLookingBack(bool back)
+	{
+		float x = back ? -1.0f : 1.0f;
+		if (sprites[(int)RigBone.Head] != null)
+		{
+			bones[(int)RigBone.Head].Scale = new Vector2(x, 1.0f);
+			return;
+		}
+		Sprite2D body = sprites[(int)RigBone.Torso];
+		if (body == null) return;
+		body.Scale = new Vector2(x, body.Scale.Y);
+		// Limbs that come out of the body's edges turn round with it (Triguy's, off his corners);
+		// on a body drawn about even either side of its middle, they are already on it. Moving
+		// EdgeLord's arm to the other side of his V carried his back-air sword half a body further
+		// back than its hit (2026-10-10).
+		bodyTurned = back && legsOnBody;
+	}
+
+	/// <summary>The body drawing is turned round (SetLookingBack), and every limb that comes out of its edges with it.</summary>
+	bool bodyTurned;
+	bool limbsMoved;
+
+	/// <summary>
+	/// The limbs come out of the body's edges rather than from the hip and shoulders
+	/// (rig.json "legsOnBody"), so they move with the body when it tips or turns round: Triguy's,
+	/// out at the corners of his triangle. Hung from the hip, a tipped triangle swung clean off
+	/// his legs.
+	/// </summary>
+	bool legsOnBody;
+
+	/// <summary>
+	/// Puts each limb where it comes out of the body: turned round with a turned-round body, and,
+	/// for legs that come out of the body (<see cref="legsOnBody"/>), carried round as it tips.
+	/// The limbs' own swings are untouched - only where each one starts.
+	/// </summary>
+	void PlaceLimbRoots()
+	{
+		// Once moved, they are put back where they belong when the body turns back again.
+		if (!bodyTurned && !legsOnBody && !limbsMoved) return;
+		limbsMoved = bodyTurned || legsOnBody;
+		float mirror = bodyTurned ? -1.0f : 1.0f;
+		float tip = present[(int)RigBone.Torso] ? bones[(int)RigBone.Torso].Rotation : 0.0f;
+		foreach (RigBone bone in new[] { RigBone.ArmBackUpper, RigBone.ArmFrontUpper, RigBone.LegBackUpper, RigBone.LegFrontUpper })
+		{
+			int i = (int)bone;
+			if (!present[i]) continue;
+			var at = new Vector2(restOffsets[i].X * mirror, restOffsets[i].Y);
+			bool leg = bone == RigBone.LegBackUpper || bone == RigBone.LegFrontUpper;
+			// An arm hangs from the body bone already, so it tips with it; a leg hangs from the hip.
+			if (leg && legsOnBody) at = at.Rotated(tip);
+			bones[i].Position = at;
+		}
+	}
+
 	/// <summary>Shows or hides an extra drawing by name. Unknown names are ignored.</summary>
 	public void SetExtraVisible(string name, bool visible)
 	{
@@ -924,6 +1071,19 @@ public partial class FighterRig : Node2D
 			? new Vector2(grip.X, size.Y * 0.88f)
 			: new Vector2(grip.X, size.Y * 0.14f);
 		return sprite.GlobalTransform * (head - grip);
+	}
+
+	/// <summary>
+	/// Where his two fists are, in global coordinates: the front hand where whatever he holds is
+	/// gripped (the prop bone), and the back hand the same way along its own forearm. Null if the
+	/// drawing has no prop bone to say where a fist is.
+	/// </summary>
+	public (Vector2 front, Vector2 back)? HandsGlobal()
+	{
+		int prop = (int)RigBone.PropFront;
+		int backArm = (int)RigBone.ArmBackLower;
+		if (!present[prop] || !present[backArm]) return null;
+		return (bones[prop].GlobalPosition, bones[backArm].GlobalTransform * restOffsets[prop]);
 	}
 
 	/// <summary>The hand's own prop is a blank (rig.json "empty"): nothing there until a move puts something in it.</summary>
@@ -1198,7 +1358,7 @@ public partial class FighterRig : Node2D
 	/// His idle and the like stop on a new pose every <see cref="RobotBeat"/> frames, each joint
 	/// set to a whole <see cref="RobotAngle"/> degrees, so his poses are sharp angles rather than
 	/// curves, and a small sway is a held pose and then one clean click. His attacks snap to the
-	/// coil, hold it, snap to the strike as it lands, hold, and snap back (Fighter.RobotAttackKey).
+	/// coil, hold it, snap to the strike as it lands, hold, and snap back (FighterAnimations.RobotAttackKey).
 	/// Eric's calls, 2026-10-04 and 2026-10-09: quick moves, sudden stops, sharp angles - never
 	/// jitter. An eased bob every few frames, and beats that shortened as he walked faster, both
 	/// read as shaking.
@@ -1320,7 +1480,7 @@ public partial class FighterRig : Node2D
 		// Blending toward the target rather than snapping to it smooths the joins between
 		// states, so a fighter landing out of a launch does not pop from tumbling to standing.
 		Pose.Exaggerate(pose, Drama, HipDrama * DramaScale, exaggerated, DramaScale);
-		Pose.Blend(current, exaggerated, blend, current);
+		Follow(exaggerated, blend);
 
 		for (int i = 0; i < (int)RigBone.Count; i++)
 		{
@@ -1342,6 +1502,7 @@ public partial class FighterRig : Node2D
 			bones[i].Rotation = Mathf.DegToRad(degrees);
 		}
 
+		PlaceLimbRoots();
 		standBlend = Mathf.MoveToward(standBlend, standing && planted ? 1.0f : 0.0f, 0.2f);
 		if (standBlend > 0.0f) StandOnFeet(standBlend);
 

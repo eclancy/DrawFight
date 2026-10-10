@@ -107,7 +107,7 @@ public static class CharacterNormals
 		m.MoveName = "Flambe Pan"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_pan";
 		m.StartupFrames = 17;
 		// On the pan's face where it lands, low in front of his feet (see the attack parade).
-		m.HitboxOffset = new Vector2(118.0f, 54.0f); m.HitboxRadius = 60.0f;
+		m.HitboxOffset = new Vector2(121.0f, 40.0f); m.HitboxRadius = 60.0f;
 		m.LaunchAngleDegrees = 38.0f;
 		m.BurnFrames = 90; m.BurnDamage = 5.0f;
 		m.ActiveFx = ActiveFx.Flame;
@@ -265,7 +265,7 @@ public static class CharacterNormals
 		// The sledgehammer itself, brought all the way over and down.
 		m = M(moves, MoveSlot.ForwardSmash);
 		m.MoveName = "Sledge Slam"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_sledgehammer";
-		m.HitboxOffset = new Vector2(134.0f, 46.0f); m.HitboxRadius = 66.0f;
+		m.HitboxOffset = new Vector2(141.0f, 38.0f); m.HitboxRadius = 66.0f;
 		m.Armor = HardHatArmor;
 
 		// A steel I-beam heaved from low behind him up and over his head. Huge and slow;
@@ -289,7 +289,7 @@ public static class CharacterNormals
 		// normal down smash, and the quake carries most of it. The price is reach - the quake
 		// only runs a short way each side, so it punishes people standing close, not the stage.
 		m.Damage = 16.0f; m.BaseKnockback = 30.0f; m.KnockbackGrowth = 1.0f;
-		m.HitboxOffset = new Vector2(134.0f, 46.0f); m.HitboxRadius = 58.0f;
+		m.HitboxOffset = new Vector2(141.0f, 38.0f); m.HitboxRadius = 58.0f;
 		m.LaunchAngleDegrees = 74.0f;
 		m.Special = SpecialKind.Shockwave;
 		m.ShockwavePower = 0.85f;

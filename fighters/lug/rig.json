@@ -348,8 +348,8 @@
     }, 
     "wheelbarrow": {
       "anchor": [
-        150.0, 
-        85.0
+        20.0, 
+        24.0
       ], 
       "texture": "poses/wheelbarrow.png"
     }, 

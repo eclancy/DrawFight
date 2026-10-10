@@ -83,6 +83,45 @@ public sealed class Pose
 	/// <summary>Sets one joint - for a pose worked out each frame rather than authored, like a windmill.</summary>
 	public void Set(RigBone bone, float degrees) => rotations[(int)bone] = degrees;
 
+	/// <summary>
+	/// A smooth curve through four poses, at <paramref name="t"/> (0 to 1) between
+	/// <paramref name="b"/> and <paramref name="c"/>: Catmull-Rom, so a joint passes through each
+	/// key at the speed its neighbours give it rather than stopping there.
+	/// </summary>
+	public static void Curve(Pose a, Pose b, Pose c, Pose d, float t, Pose into)
+	{
+		float t2 = t * t, t3 = t2 * t;
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			into.rotations[i] = CatmullRom(a.rotations[i], b.rotations[i], c.rotations[i], d.rotations[i], t, t2, t3);
+		}
+		into.HipOffset = new Vector2(
+			CatmullRom(a.HipOffset.X, b.HipOffset.X, c.HipOffset.X, d.HipOffset.X, t, t2, t3),
+			CatmullRom(a.HipOffset.Y, b.HipOffset.Y, c.HipOffset.Y, d.HipOffset.Y, t, t2, t3));
+	}
+
+	static float CatmullRom(float p0, float p1, float p2, float p3, float t, float t2, float t3) =>
+		0.5f * (2.0f * p1 + (p2 - p0) * t + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t2 + (3.0f * p1 - p0 - 3.0f * p2 + p3) * t3);
+
+	/// <summary>
+	/// <paramref name="to"/>, carried on past itself the way it came from <paramref name="from"/> by
+	/// <paramref name="amount"/> of the swing - but no joint more than <paramref name="maxDegrees"/>,
+	/// and the spine and neck a third of that. A coil or a follow-through is a little more of the
+	/// same movement; scaled by the size of the swing, an arm swung half a turn overhead was carried
+	/// on another fifty degrees, round behind the back (Eric, 2026-10-10).
+	/// </summary>
+	public static void Overshoot(Pose from, Pose to, float amount, float maxDegrees, Pose into)
+	{
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			var bone = (RigBone)i;
+			float limit = bone == RigBone.Torso || bone == RigBone.Head ? maxDegrees / 3.0f : maxDegrees;
+			float extra = Mathf.Clamp((to.rotations[i] - from.rotations[i]) * amount, -limit, limit);
+			into.rotations[i] = to.rotations[i] + extra;
+		}
+		into.HipOffset = to.HipOffset + (to.HipOffset - from.HipOffset) * amount;
+	}
+
 	public static void Blend(Pose a, Pose b, float t, Pose into)
 	{
 		for (int i = 0; i < (int)RigBone.Count; i++)
@@ -145,6 +184,17 @@ public sealed class AnimationClip
 
 	public int LengthFrames => keys.Count == 0 ? 1 : keys[keys.Count - 1].frame;
 
+	/// <summary>The key before or after the ones being blended, for the curve's tangents.</summary>
+	Pose Neighbour(int index)
+	{
+		int last = keys.Count - 1;
+		if (index >= 0 && index <= last) return keys[index].pose;
+		if (!Loops) return keys[Mathf.Clamp(index, 0, last)].pose;
+		// Looping, the last key is the first again, so before the first comes the one before the
+		// last, and after the last comes the second.
+		return index < 0 ? keys[Mathf.Max(0, last + index)].pose : keys[Mathf.Min(last, index - last)].pose;
+	}
+
 	public void Sample(float frame, Pose into)
 	{
 		if (keys.Count == 0) return;
@@ -162,9 +212,12 @@ public sealed class AnimationClip
 
 			float span = keys[i + 1].frame - keys[i].frame;
 			float local = span <= 0.0f ? 0.0f : (t - keys[i].frame) / span;
-			// Smoothstep between keys, so a four-pose walk cycle does not look like it is
-			// snapping between four drawings.
-			Pose.Blend(keys[i].pose, keys[i + 1].pose, local * local * (3.0f - 2.0f * local), into);
+			// A smooth curve through the keys, so a joint carries on through each one. Easing in
+			// and out of every key, as this did, stopped the whole body dead four times a stride:
+			// a walk that snapped between four drawings (Eric, 2026-10-10: it looked puppeteered).
+			// A loop wraps round for its neighbours (its last key repeats its first); a one-shot
+			// clip holds its ends, so it still eases out of its first pose and into its last.
+			Pose.Curve(Neighbour(i - 1), keys[i].pose, keys[i + 1].pose, Neighbour(i + 2), local, into);
 			return;
 		}
 

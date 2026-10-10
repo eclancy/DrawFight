@@ -159,9 +159,11 @@ public enum AttackAnim
 /// facing direction - because FighterRig flips those two when it applies them (they point up
 /// from their joint, where the limbs hang down).
 ///
-/// Everything here is played bigger than written (FighterRig.Drama), attacks coil past their
-/// windup and hold past their strike (SampleAttack), and the fighter squashes and stretches
-/// (Fighter.TargetSquash). Author the poses at their natural size; the drama is applied on top.
+/// Everything here is played bigger than written (FighterRig.Drama), attacks coil a little past
+/// their windup and carry on a little past their strike (SampleAttack), every joint follows its
+/// pose on a spring (FighterRig.Follow), and clips curve through their keys (Pose.Curve). Author the
+/// poses at their natural size; the drama is applied on top. See "Moving like a body" in
+/// .ai/art-pipeline.md before adding one.
 /// </summary>
 public static class FighterAnimations
 {
@@ -281,35 +283,50 @@ public static class FighterAnimations
 			(AFU, 44), (AFL, -46), (ABU, -46), (ABL, -60),
 			(LFU, -46), (LFL, 10), (LBU, 36), (LBL, 50))));
 
+	/// <summary>
+	/// Leaving the ground: the legs straightening as they push off and the arms swinging forward
+	/// and up to lift him - to about head height, not flung straight overhead - then the knees drawn
+	/// up under him as he rises, the front one higher. Both arms straight up read as a cheer, not a
+	/// jump (Eric, 2026-10-10: movement looked puppeteered and silly).
+	/// </summary>
 	public static readonly AnimationClip Jump = new AnimationClip("jump", false,
-		(0, new Pose(new Vector2(0, 12),
-			(Torso, -12), (Head, 8),
-			(AFU, -70), (AFL, -40), (ABU, -50), (ABL, -30),
-			(LFU, -30), (LFL, 70), (LBU, 20), (LBL, 80))),
-		(10, new Pose(new Vector2(0, -10),
-			(Torso, -6), (Head, -6),
-			(AFU, -150), (AFL, -20), (ABU, -130), (ABL, -20),
-			(LFU, -64), (LFL, 104), (LBU, -22), (LBL, 112))));
+		(0, new Pose(new Vector2(0, 6),
+			(Torso, -10), (Head, 6),
+			(AFU, -60), (AFL, -30), (ABU, -36), (ABL, -30),
+			(LFU, -16), (LFL, 24), (LBU, 22), (LBL, 26))),
+		(10, new Pose(new Vector2(0, -6),
+			(Torso, -4), (Head, -2),
+			(AFU, -92), (AFL, -34), (ABU, -64), (ABL, -30),
+			(LFU, -66), (LFL, 92), (LBU, -10), (LBL, 82))));
 
+	/// <summary>
+	/// Coming down: arms out for balance - the front one forward and up, the back one behind - and
+	/// the legs reaching down for the floor, knees soft, the front foot a little ahead. A slow drift
+	/// between two close poses, so he hangs in the air rather than holding a frozen split.
+	/// </summary>
 	public static readonly AnimationClip Fall = new AnimationClip("fall", true,
 		(0, new Pose(Vector2.Zero,
-			(Torso, 8), (Head, -6),
-			(AFU, -112), (AFL, -30), (ABU, 100), (ABL, 30),
-			(LFU, -30), (LFL, 40), (LBU, 30), (LBL, 52))),
-		(24, new Pose(new Vector2(0, -4),
-			(Torso, 13), (Head, -11),
-			(AFU, -132), (AFL, -12), (ABU, 122), (ABL, 42),
-			(LFU, -18), (LFL, 62), (LBU, 40), (LBL, 30))),
-		(48, new Pose(Vector2.Zero,
-			(Torso, 8), (Head, -6),
-			(AFU, -112), (AFL, -30), (ABU, 100), (ABL, 30),
-			(LFU, -30), (LFL, 40), (LBU, 30), (LBL, 52))));
+			(Torso, 4), (Head, -2),
+			(AFU, -70), (AFL, -26), (ABU, 54), (ABL, -18),
+			(LFU, -24), (LFL, 30), (LBU, 14), (LBL, 36))),
+		(30, new Pose(new Vector2(0, -2),
+			(Torso, 7), (Head, -5),
+			(AFU, -82), (AFL, -18), (ABU, 64), (ABL, -12),
+			(LFU, -18), (LFL, 24), (LBU, 18), (LBL, 42))),
+		(60, new Pose(Vector2.Zero,
+			(Torso, 4), (Head, -2),
+			(AFU, -70), (AFL, -26), (ABU, 54), (ABL, -18),
+			(LFU, -24), (LFL, 30), (LBU, 14), (LBL, 36))));
 
+	/// <summary>
+	/// Touching down: the knees take the weight and the body folds forward over them, arms out,
+	/// then he straightens. Deep enough to feel the landing, not so deep he looks dropped.
+	/// </summary>
 	public static readonly AnimationClip Land = new AnimationClip("land", false,
-		(0, new Pose(new Vector2(0, 46),
-			(Torso, -30), (Head, 18),
-			(AFU, -62), (AFL, -50), (ABU, 52), (ABL, -40),
-			(LFU, -46), (LFL, 92), (LBU, 40), (LBL, 92))),
+		(0, new Pose(new Vector2(0, 32),
+			(Torso, -22), (Head, 14),
+			(AFU, -50), (AFL, -44), (ABU, 40), (ABL, -34),
+			(LFU, -40), (LFL, 78), (LBU, 34), (LBL, 80))),
 		(9, new Pose(Vector2.Zero,
 			(Torso, -2), (Head, 2),
 			(AFU, -12), (AFL, -20), (ABU, 12), (ABL, -16),
@@ -586,9 +603,13 @@ public static class FighterAnimations
 		(AFU, 60), (AFL, -10), (ABU, 80), (ABL, 20),
 		(LFU, -110), (LFL, 0), (LBU, 30), (LBL, 70));
 
-	static readonly Pose OverheadSlamWindup = new Pose(new Vector2(-10, -16),
-		(Torso, 24), (Head, -20),
-		(AFU, -170), (AFL, -40), (ABU, -164), (ABL, -40),
+	// The weapon raised overhead and a little back, the body leaning back just enough to load it.
+	// The angles that reach the screen add up - the lean, the shoulder, the elbow, each played
+	// bigger - so the elbow is nearly straight: leaning 24 degrees back with the elbow bent 40, the
+	// forearm and the weapon pointed straight back, a body's length behind him (Eric, 2026-10-10).
+	static readonly Pose OverheadSlamWindup = new Pose(new Vector2(-8, -12),
+		(Torso, 10), (Head, -12),
+		(AFU, -170), (AFL, -10), (ABU, -164), (ABL, -10),
 		(LFU, -34), (LFL, 24), (LBU, 34), (LBL, 22));
 
 	// The arms are measured from the torso, and the torso is pitched well forward into the
@@ -1018,9 +1039,9 @@ public static class FighterAnimations
 		(LFU, -40), (LFL, 12), (LBU, 40), (LBL, 20));
 
 	// Both hands on the hilt, raised high behind the head; then over and down, leaning into it.
-	static readonly Pose ChopWindup = new Pose(new Vector2(-10, -16),
-		(Torso, 20), (Head, -20),
-		(AFU, -170), (AFL, -30), (ABU, -164), (ABL, -30),
+	static readonly Pose ChopWindup = new Pose(new Vector2(-8, -12),
+		(Torso, 10), (Head, -12),
+		(AFU, -170), (AFL, -10), (ABU, -164), (ABL, -10),
 		(LFU, -34), (LFL, 24), (LBU, 34), (LBL, 22));
 
 	static readonly Pose ChopStrike = new Pose(new Vector2(10, 16),
@@ -1039,8 +1060,8 @@ public static class FighterAnimations
 		(LFU, -50), (LFL, 80), (LBU, 10), (LBL, 70));
 
 	static readonly Pose AirChopWindup = new Pose(new Vector2(-2, -2),
-		(Torso, 18), (Head, -10),
-		(AFU, -170), (AFL, -30), (ABU, -160), (ABL, -30),
+		(Torso, 10), (Head, -8),
+		(AFU, -170), (AFL, -10), (ABU, -160), (ABL, -10),
 		(LFU, -40), (LFL, 70), (LBU, 20), (LBL, 60));
 
 	static readonly Pose AirChopStrike = new Pose(new Vector2(6, 4),
@@ -1123,7 +1144,10 @@ public static class FighterAnimations
 	/// <summary>How far past its strike pose an attack swings, and holds, before recovering.</summary>
 	const float FollowThrough = 0.12f;
 
-	/// <summary>How much of the endlag is spent holding the follow-through.</summary>
+	/// <summary>The most degrees a coil or a follow-through carries any limb past its pose.</summary>
+	const float MaxCoil = 16.0f;
+
+	/// <summary>How much of the endlag the follow-through spends carrying on past the strike, slowing.</summary>
 	const float FollowThroughHold = 0.3f;
 
 	/// <summary>
@@ -1157,10 +1181,10 @@ public static class FighterAnimations
 			}
 			else
 			{
-				// Past the windup and still going: blending beyond 1 extrapolates, which is the
-				// coil - the arm drawn back further than the windup pose itself.
+				// Past the windup and still going: the coil - the arm drawn back a little further
+				// than the windup pose itself, up to a limit, as a body winds up.
 				float a = (t - WindupReached) / (1.0f - WindupReached);
-				Pose.Blend(AttackRecover, windup, 1.0f + anticipation * a, into);
+				Pose.Overshoot(AttackRecover, windup, anticipation * a, MaxCoil, into);
 			}
 			return;
 		}
@@ -1185,17 +1209,67 @@ public static class FighterAnimations
 			return;
 		}
 
+		// After the hit the limb carries on a little past the strike, slowing, and is drawn back
+		// while it is still going - never frozen out at full stretch, which is how a puppet holds a
+		// pose (Eric, 2026-10-10). The recovery starts gently and finishes gently.
 		float endlag = Mathf.Max(1, move.EndlagFrames);
 		float e = Mathf.Clamp((moveFrame - activeEnd) / endlag, 0.0f, 1.0f);
-		if (e < FollowThroughHold)
+		float carry = Mathf.Sin(Mathf.Min(1.0f, e / FollowThroughHold) * Mathf.Pi * 0.5f);
+		Pose.Blend(windup, strike, 1.0f + followThrough, into);
+		Pose.Overshoot(windup, into, 0.5f * followThrough * carry, MaxCoil, into);
+		float back = Mathf.Clamp((e - FollowThroughHold * 0.5f) / (1.0f - FollowThroughHold * 0.5f), 0.0f, 1.0f);
+		if (back > 0.0f) Pose.Blend(into, AttackRecover, back * back * (3.0f - 2.0f * back), into);
+	}
+
+	/// <summary>
+	/// Shows a move at a frame on a rig, exactly as a match does: sampled against the move's own
+	/// frame counts, so the strike pose arrives on the frame the hitbox does - or, for a robot,
+	/// snapped between its key poses and held (<see cref="RobotAttackKey"/>). The parade's film
+	/// strip uses this too, so what it shows is what a fight shows. <paramref name="adjust"/>
+	/// changes the sampled pose before it is shown - legs running under a wheelbarrow.
+	/// </summary>
+	public static void ShowAttack(FighterRig rig, MoveData move, float frame, float drama, Pose scratch,
+		System.Action<Pose> adjust = null)
+	{
+		if (rig.Robotic)
 		{
-			Pose.Blend(windup, strike, 1.0f + followThrough, into);
+			(float keyFrame, int key) = RobotAttackKey(move, (int)frame);
+			SampleAttack(move, keyFrame, scratch, drama: drama);
+			rig.RobotApply(scratch, move, key, RobotAttackSnap);
 			return;
 		}
-
-		float r = (e - FollowThroughHold) / (1.0f - FollowThroughHold);
-		Pose.Blend(strike, AttackRecover, r * r * (3.0f - 2.0f * r), into);
+		SampleAttack(move, frame, scratch, drama: drama);
+		adjust?.Invoke(scratch);
+		rig.ApplyDirect(scratch, AttackBlend(move, frame));
 	}
+
+	/// <summary>
+	/// Which key pose of the move a robot is on at this frame, and the move frame that shows it:
+	/// the coil, the strike, the recovery. He snaps between them and holds each - see
+	/// FighterRig.Robotic.
+	/// </summary>
+	public static (float frame, int key) RobotAttackKey(MoveData move, int frame)
+	{
+		int startup = move.StartupFrames;
+		int activeEnd = startup + move.ActiveFrames;
+		// The coil: snapped to at once and held.
+		if (frame <= startup - RobotAttackSnap) return (startup, 0);
+		// A move that turns through its active frames (a windmill) clicks round in steps.
+		bool turning = move.Anim == AttackAnim.Windmill || move.Anim == AttackAnim.WideArc;
+		if (turning && frame > startup && frame <= activeEnd)
+		{
+			int step = (frame - startup - 1) / 3;
+			return (Mathf.Min(activeEnd, startup + 1 + (step + 1) * 3), 2 + step);
+		}
+		// The strike, fully out by the first active frame, held through the follow-through.
+		int held = activeEnd + Mathf.CeilToInt(move.EndlagFrames * FollowThroughHold);
+		if (frame <= held) return (startup + 1, 1);
+		// And back, in one snap.
+		return (move.TotalFrames, 1000);
+	}
+
+	/// <summary>Frames a robot's attack takes to snap from one key pose to the next.</summary>
+	const int RobotAttackSnap = 2;
 
 	/// <summary>
 	/// Squash and stretch for an attack at this frame: compressed while coiling, stretched long
@@ -1209,14 +1283,14 @@ public static class FighterAnimations
 		if (moveFrame <= startup)
 		{
 			float t = moveFrame / startup;
-			return t < WindupReached ? 1.0f : 1.0f - 0.08f * (t - WindupReached) / (1.0f - WindupReached);
+			return t < WindupReached ? 1.0f : 1.0f - 0.03f * (t - WindupReached) / (1.0f - WindupReached);
 		}
 		// A jackhammer judders the whole time it runs.
-		if (moveFrame <= activeEnd && move.Anim == AttackAnim.Jackhammer) return 1.0f + 0.07f * Mathf.Sin(moveFrame * 2.6f);
-		if (moveFrame <= activeEnd) return 1.08f;
+		if (moveFrame <= activeEnd && move.Anim == AttackAnim.Jackhammer) return 1.0f + 0.05f * Mathf.Sin(moveFrame * 2.6f);
+		if (moveFrame <= activeEnd) return 1.03f;
 
 		float e = Mathf.Clamp((moveFrame - activeEnd) / Mathf.Max(1, move.EndlagFrames), 0.0f, 1.0f);
-		return Mathf.Lerp(1.08f, 1.0f, Mathf.Min(1.0f, e * 2.0f));
+		return Mathf.Lerp(1.03f, 1.0f, Mathf.Min(1.0f, e * 2.0f));
 	}
 
 	/// <summary>

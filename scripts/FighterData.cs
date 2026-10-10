@@ -159,6 +159,12 @@ public partial class FighterData : Resource
 	[Export] public WeightClass Weight { get; set; } = WeightClass.Medium;
 
 	/// <summary>
+	/// How heavy his body is to move, for the rig's joint springs (FighterRig.Inertia): a
+	/// heavyweight's limbs swing on further and settle later, a lightweight's snap round.
+	/// </summary>
+	public float Inertia => Weight == WeightClass.Heavy ? 1.3f : Weight == WeightClass.Light ? 0.85f : 1.0f;
+
+	/// <summary>
 	/// All seventeen moves, indexed by <see cref="MoveSlot"/>. Built by
 	/// <see cref="DefaultMoveset.Build"/>: the character's own normals (see CharacterNormals), plus four
 	/// specials authored per character.
