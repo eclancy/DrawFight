@@ -40,7 +40,8 @@ in the leg, because nearly everything he does is a kick. He is cut and rigged ex
 is (below): three-quarter view, near arm on top, far arm unshaded, boots as feet, coloured in
 pencil, nothing finer than a brow or a stripe. He has two fire wings (`swift/poses/wings.png`,
 one each side of a gap, hinged at his back so each flaps on its own) for his flying up special,
-and a flaming frying pan (`swift/poses/tool_pan.png`) for his forward smash. He holds no weapon
+and a chrome flip-top lighter throwing a huge flame (`swift/poses/tool_lighter.png`) for his
+forward smash, down tilt and two of his throws. He holds no weapon
 of his own, so his hand is an empty prop part (`"empty": true`) that a move can fill - under his
 fist, like Lugnut's tools. His boot shafts are drawn on his shins, so they lean with them, and
 only the foot is cut as a foot - a tall shaft kept upright on a leaning shin had the shin going

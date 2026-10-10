@@ -33,6 +33,13 @@ public partial class DebugDraw : Node2D
 				DrawCircle(centre, fighter.CurrentHitboxRadius, new Color(1.0f, 0.25f, 0.3f, 0.28f));
 				DrawArc(centre, fighter.CurrentHitboxRadius, 0.0f, Mathf.Tau, 32,
 					new Color(1.0f, 0.3f, 0.35f, 0.95f), 2.5f);
+				// And on out as far as it reaches past the limb (Fighter.HitReach).
+				(Vector2 tip, float radius) = fighter.HitReach();
+				if (tip.DistanceTo(centre) > 1.0f || radius > fighter.CurrentHitboxRadius + 1.0f)
+				{
+					DrawLine(centre, tip, new Color(1.0f, 0.25f, 0.3f, 0.2f), radius * 2.0f);
+					DrawArc(tip, radius, 0.0f, Mathf.Tau, 32, new Color(1.0f, 0.3f, 0.35f, 0.6f), 2.0f);
+				}
 			}
 		}
 	}

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dnnkhpdpqkbin"
-path="res://.godot/imported/tool_pan.png-f870a9cde8e6bb55634eaaa4ecb91fbf.ctex"
+uid="uid://2c7rvbw3v0at"
+path="res://.godot/imported/tool_lighter.png-b8ce4059ab64292c3f200cd85b9a8b4b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://fighters/swift/poses/tool_pan.png"
-dest_files=["res://.godot/imported/tool_pan.png-f870a9cde8e6bb55634eaaa4ecb91fbf.ctex"]
+source_file="res://fighters/swift/poses/tool_lighter.png"
+dest_files=["res://.godot/imported/tool_lighter.png-b8ce4059ab64292c3f200cd85b9a8b4b.ctex"]
 
 [params]
 

@@ -160,7 +160,10 @@ public partial class FighterRig : Node2D
 			var bone = (RigBone)i;
 			(float stiffness, float damping) = SpringFor(bone);
 			float k = Mathf.Min(0.9f, stiffness * pace * pace);
-			float c = Mathf.Min(1.6f, damping * pace);
+			// Damping past 1 takes away more than the joint's whole speed each frame, so it swings
+			// back the other way every frame: a jitter, and with a quick blend on a light fighter,
+			// a joint flung further each frame until the body flips over (a dodge roll's curl).
+			float c = Mathf.Min(1.0f, damping * pace);
 			// The poses are written in continuous angles - an arm swung up over the head goes on
 			// past straight up to -185 - so the spring follows the plain difference. Wrapped, an arm
 			// raised over the head went the other way round, back behind his body.
@@ -169,7 +172,7 @@ public partial class FighterRig : Node2D
 			current.Set(bone, current[bone] + spin[i]);
 		}
 		float hipK = Mathf.Min(0.9f, 0.30f * pace * pace);
-		float hipC = Mathf.Min(1.6f, 1.0f * pace);
+		float hipC = Mathf.Min(1.0f, 1.0f * pace);
 		hipSpeed += hipK * (goal.HipOffset - current.HipOffset) - hipC * hipSpeed;
 		current.HipOffset += hipSpeed;
 	}
@@ -551,7 +554,9 @@ public partial class FighterRig : Node2D
 			floor = Mathf.Min(floor, ankle.Y + FootDepth(feet[(int)lower]));
 		}
 
-		at.X = 0.0f;
+		// The hips shift a little with the pose - forward into a punch, back to load one - over feet
+		// that stay where they are, so the knees take it. Standing still the pose has no shift.
+		at.X = current.HipOffset.X * HipShift;
 		bones[hip].Position = bones[hip].Position.Lerp(at, blend);
 		foreach ((RigBone upper, RigBone lower) in legs)
 		{
@@ -585,6 +590,9 @@ public partial class FighterRig : Node2D
 	/// ankle under its hip. Flambe stands with his feet apart, a hotshot (Eric, 2026-10-08).
 	/// </summary>
 	float stanceSpread;
+
+	/// <summary>How much of a pose's sideways hip offset is kept while standing on planted feet.</summary>
+	const float HipShift = 0.6f;
 
 	/// <summary>How far below its ankle a level foot's drawing reaches.</summary>
 	float FootDepth(Sprite2D foot)
@@ -1086,6 +1094,20 @@ public partial class FighterRig : Node2D
 		return (bones[prop].GlobalPosition, bones[backArm].GlobalTransform * restOffsets[prop]);
 	}
 
+	/// <summary>Whether the front hand is empty with this move's prop: "-", or nothing put in a blank hand.</summary>
+	public bool HandEmpty(string propArt) =>
+		propArt == "-" || (string.IsNullOrEmpty(propArt) && defaultPropEmpty) || !present[(int)RigBone.PropFront];
+
+	/// <summary>Shoulder to the end of the hand, on screen, for an arm as drawn.</summary>
+	public float ArmLength(RigBone upper, RigBone lower)
+	{
+		Sprite2D forearm = sprites[(int)lower];
+		if (!present[(int)upper] || !present[(int)lower] || forearm?.Texture == null) return 0.0f;
+		float l1 = bones[(int)lower].Position.Length() * bones[(int)upper].GlobalTransform.Y.Length();
+		float l2 = (forearm.Texture.GetSize().Y + forearm.Offset.Y) * forearm.Scale.Y * bones[(int)lower].GlobalTransform.Y.Length();
+		return l1 + l2;
+	}
+
 	/// <summary>The hand's own prop is a blank (rig.json "empty"): nothing there until a move puts something in it.</summary>
 	bool defaultPropEmpty;
 
@@ -1261,23 +1283,82 @@ public partial class FighterRig : Node2D
 	}
 
 	float roll;
+	bool rollingOnFloor;
 
 	/// <summary>
 	/// Turns the whole puppet about the middle of the fighter's body, for a roll or a flip. Zero
 	/// is upright. Turning about the hip instead would swing the body round the feet.
+	/// <paramref name="alongFloor"/> rolls it along the floor like a ball instead: turned about the
+	/// middle of the curled-up body, with whatever part of him is lowest touching the floor the
+	/// whole way round - his feet, his back, his head. Turned about the middle of the standing
+	/// body, a ball curled up below it swings up off the floor and back down - a somersault in
+	/// the air, not a roll (Eric, 2026-10-10).
 	/// </summary>
-	public void SetRoll(float radians)
+	public void SetRoll(float radians, bool alongFloor = false)
 	{
-		if (Mathf.IsEqualApprox(radians, roll)) return;
+		// Rolling along the floor follows the pose as it curls up, so it is placed every frame.
+		if (Mathf.IsEqualApprox(radians, roll) && !alongFloor && !rollingOnFloor) return;
 		roll = radians;
+		rollingOnFloor = alongFloor;
 		PlaceHip();
 	}
 
 	void PlaceHip()
 	{
 		var hip = new Vector2(0.0f, bodyHalfHeight - LegLength * legStretch * puppetScale * squash);
-		Position = hip.Rotated(roll);
+		if (rollingOnFloor && CurledBall(hip, out Vector2 centre))
+		{
+			// Turned about its middle, then set down so its lowest point is on the floor.
+			float lowest = float.MinValue;
+			foreach (Vector2 p in ballPoints) lowest = Mathf.Max(lowest, (p - centre).Rotated(roll).Y);
+			var middle = new Vector2(centre.X, bodyHalfHeight - lowest);
+			Position = middle + (hip - centre).Rotated(roll);
+		}
+		else
+		{
+			Position = hip.Rotated(roll);
+		}
 		Rotation = roll;
+	}
+
+	/// <summary>The outline of the curled-up body, as <see cref="CurledBall"/> last found it.</summary>
+	readonly List<Vector2> ballPoints = new List<Vector2>();
+
+	/// <summary>
+	/// The middle of the body as it is posed now, as if upright with its hip at
+	/// <paramref name="hip"/>, in the fighter's own space - the ball a curled-up fighter rolls on -
+	/// with the corners of every part of it in <see cref="ballPoints"/>. Every part of the body
+	/// counts, not what he holds. Each part's box is taken a little in from its edges, which are
+	/// mostly empty paper round the drawing, so the ball does not ride on air.
+	/// </summary>
+	bool CurledBall(Vector2 hip, out Vector2 centre)
+	{
+		var upright = new Transform2D(0.0f, Scale, 0.0f, hip);
+		ballPoints.Clear();
+		Rect2? bounds = null;
+		void Take(Sprite2D sprite, bool body = true)
+		{
+			if (sprite == null || sprite.Texture == null || !sprite.Visible) return;
+			Transform2D t = upright * InRig(sprite);
+			Rect2 rect = sprite.GetRect().Grow(-0.1f * Mathf.Min(sprite.GetRect().Size.X, sprite.GetRect().Size.Y));
+			foreach (Vector2 corner in new[] { rect.Position, new Vector2(rect.End.X, rect.Position.Y), new Vector2(rect.Position.X, rect.End.Y), rect.End })
+			{
+				Vector2 p = t * corner;
+				ballPoints.Add(p);
+				if (body) bounds = bounds == null ? new Rect2(p, Vector2.Zero) : bounds.Value.Expand(p);
+			}
+		}
+		for (int i = 0; i < (int)RigBone.Count; i++)
+		{
+			if ((RigBone)i == RigBone.PropFront) continue;
+			Take(sprites[i]);
+			Take(feet[i]);
+		}
+		// A hammer on his shoulder rolls with him and cannot go through the floor either, though
+		// the ball still turns about his body.
+		if (CarryOnShoulder) Take(sprites[(int)RigBone.PropFront], false);
+		centre = bounds?.GetCenter() ?? Vector2.Zero;
+		return bounds != null;
 	}
 
 	void ApplyScale()

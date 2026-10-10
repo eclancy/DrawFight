@@ -19,8 +19,8 @@ public static class CharacterNormals
 
 	// =========================================================================
 	// SWIFT (FLAMBE) - light, fire. A fire-punk French chef: fast feet, flames on everything, and
-	// a frying pan for his big hits. Every move has its own trick - combos that need a second
-	// press, flurries of hits that end in a launch, a crepe flip, fire geysers - so no two of his
+	// a lighter for his big hits. Every move has its own trick - combos that need a second
+	// press, flurries of hits that end in a launch, a hotfoot flip, fire geysers - so no two of his
 	// attacks feel the same.
 	// =========================================================================
 
@@ -76,12 +76,12 @@ public static class CharacterNormals
 		m.LinkHit = new MoveData { MoveName = "Torch Flip (link)", Damage = 1.5f, BaseKnockback = 12.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 90.0f };
 		m.ActiveFx = ActiveFx.Flame;
 
-		// Crepe Flip: the pan slid flat along the floor under their feet and flipped - straight up,
-		// head over heels, like a crepe. Low along the floor, so it is still a sweep, and it sets
-		// up everything he has that hits above him.
+		// Hotfoot: his lighter's flame swept along the floor under their feet - they jump so hard
+		// they go head over heels. Low along the floor, so it is still a sweep, and it sets up
+		// everything he has that hits above him.
 		m = M(moves, MoveSlot.DownTilt);
-		m.MoveName = "Crêpe Flip"; m.Anim = AttackAnim.LowSweep; m.PropArt = "tool_pan";
-		m.HitboxOffset = new Vector2(104.0f, 58.0f); m.HitboxRadius = 46.0f;
+		m.MoveName = "Hotfoot"; m.Anim = AttackAnim.LowSweep; m.PropArt = "tool_lighter";
+		m.HitboxOffset = new Vector2(104.0f, 49.0f); m.HitboxRadius = 46.0f;
 		m.StartupFrames = 7; m.EndlagFrames = 15;
 		m.Damage = 6.0f; m.BaseKnockback = 50.0f; m.KnockbackGrowth = 0.45f;
 		m.LaunchAngleDegrees = 88.0f;
@@ -101,12 +101,13 @@ public static class CharacterNormals
 		m.Damage = 6.0f; m.BaseKnockback = 34.0f; m.KnockbackGrowth = 0.8f; m.LaunchAngleDegrees = 38.0f;
 		m.BurnFrames = 45; m.BurnDamage = 2.0f;
 
-		// Flambe Pan: the chef's big hit. He hauls a frying pan up over his head with the fire
-		// roaring off it and brings it down in front of him. Slow, obvious, and it burns.
+		// Lighters Up: his big hit. He flicks his lighter open and holds it up over his head like
+		// the crowd at a gig, then brings the flame down in front of him. Slow, obvious, and it
+		// burns. It was a frying pan until Eric's call (2026-10-10).
 		m = M(moves, MoveSlot.ForwardSmash);
-		m.MoveName = "Flambe Pan"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_pan";
+		m.MoveName = "Lighters Up"; m.Anim = AttackAnim.OverheadSlam; m.PropArt = "tool_lighter";
 		m.StartupFrames = 17;
-		// On the pan's face where it lands, low in front of his feet (see the attack parade).
+		// In the flame where it lands, low in front of his feet (see the attack parade).
 		m.HitboxOffset = new Vector2(121.0f, 40.0f); m.HitboxRadius = 60.0f;
 		m.LaunchAngleDegrees = 38.0f;
 		m.BurnFrames = 90; m.BurnDamage = 5.0f;
@@ -143,9 +144,12 @@ public static class CharacterNormals
 		m = M(moves, MoveSlot.NeutralAir);
 		m.MoveName = "Fire Wheel"; m.Anim = AttackAnim.Nair;
 		m.ActiveFrames = 12; m.RehitFrames = 4; m.EndlagFrames = 8;
+		// Round the middle of him and as wide as the wheel of fire, which is what hits.
+		m.HitboxOffset = new Vector2(0.0f, -14.0f); m.HitboxRadius = 72.0f;
 		m.Damage = 4.0f;
 		m.LinkHit = new MoveData { MoveName = "Fire Wheel (link)", Damage = 1.5f, BaseKnockback = 10.0f, KnockbackGrowth = 0.1f, LaunchAngleDegrees = 60.0f };
-		m.ActiveFx = ActiveFx.Flame;
+		// A wheel of fire all round him, not a burst at the hit (Eric, 2026-10-10).
+		m.ActiveFx = ActiveFx.FireRing;
 
 		// Double Axe: an axe kick that pops them up - press again for a second, harder one that
 		// knocks them away.
@@ -219,10 +223,10 @@ public static class CharacterNormals
 		MoveData jab = DefaultMoveset.HeavyJab();
 		jab.MoveName = "Wrench Tap";
 		jab.PropArt = "tool_pipewrench";
-		jab.HitboxOffset = new Vector2(150.0f, -113.0f);
+		jab.HitboxOffset = new Vector2(150.0f, -123.0f);
 		jab.ComboNext.MoveName = "Wrench Bash";
 		jab.ComboNext.PropArt = "tool_pipewrench";
-		jab.ComboNext.HitboxOffset = new Vector2(148.0f, -108.0f);
+		jab.ComboNext.HitboxOffset = new Vector2(148.0f, -128.0f);
 		jab.ComboNext.Anim = AttackAnim.Lunge;
 		return jab;
 	}
@@ -232,7 +236,7 @@ public static class CharacterNormals
 		// A shovel jabbed straight out, blade first: the longest poke in the game.
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
 		m.MoveName = "Shovel Jab"; m.Anim = AttackAnim.HeavyPunch; m.PropArt = "tool_shovel";
-		m.HitboxOffset = new Vector2(134.0f, -100.0f); m.HitboxRadius = 50.0f;
+		m.HitboxOffset = new Vector2(134.0f, -109.0f); m.HitboxRadius = 50.0f;
 		m.LaunchAngleDegrees = 30.0f;
 
 		m = M(moves, MoveSlot.UpTilt);
@@ -498,11 +502,11 @@ public static class CharacterNormals
 		jab.PropArt = "sword_shortsword";
 		jab.ComboNext.MoveName = "Back Cut";
 		jab.ComboNext.Anim = AttackAnim.RisingCut;
-		jab.ComboNext.HitboxOffset = new Vector2(137.0f, 10.0f);
+		jab.ComboNext.HitboxOffset = new Vector2(137.0f, 3.0f);
 		jab.ComboNext.PropArt = "sword_shortsword";
 		jab.ComboNext.ComboNext.MoveName = "Thrust";
 		jab.ComboNext.ComboNext.Anim = AttackAnim.Thrust;
-		jab.ComboNext.ComboNext.HitboxOffset = new Vector2(141.0f, 17.0f);
+		jab.ComboNext.ComboNext.HitboxOffset = new Vector2(131.0f, -10.0f);
 		jab.ComboNext.ComboNext.PropArt = "sword_shortsword";
 		return jab;
 	}
@@ -532,7 +536,7 @@ public static class CharacterNormals
 		// From a crouch, a longsword jabbed straight out along the floor.
 		m = M(moves, MoveSlot.DownTilt);
 		m.MoveName = "Ground Thrust"; m.Anim = AttackAnim.LowThrust; m.PropArt = "sword_longsword";
-		m.HitboxOffset = new Vector2(171.0f, 58.0f); m.HitboxRadius = 42.0f;
+		m.HitboxOffset = new Vector2(159.0f, 58.0f); m.HitboxRadius = 42.0f;
 		m.LaunchAngleDegrees = 20.0f;
 
 		// Super speed: a rapier lunge that comes out fast and carries.

@@ -237,12 +237,12 @@
     }
   }, 
   "poses": {
-    "tool_pan": {
+    "tool_lighter": {
       "anchor": [
         95.0, 
         270.0
       ], 
-      "texture": "poses/tool_pan.png"
+      "texture": "poses/tool_lighter.png"
     }, 
     "wings": {
       "anchor": [

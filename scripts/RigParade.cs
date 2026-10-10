@@ -51,9 +51,10 @@ public partial class RigParade : Node2D
 	/// plays it - the same blending, the same planted feet, the same robot beats - and then held.
 	/// The parade shows a pose; this shows the motion between poses, which is where a puppet looks
 	/// like a puppet: a joint that snaps, a body that floats, every limb moving at once. NAME is a
-	/// clip (idle, run, jump, land, crouch, block, hurt) or a move (jab, ftilt, utilt, dtilt, dash,
-	/// fsmash, usmash, dsmash, nair, fair, bair, uair, dair). An attack starts from standing and
-	/// settles back into it, so the way in and the way out show too.
+	/// clip (idle, run, jump, land, crouch, block, hurt), a dodge roll (roll, on a floor line), or a
+	/// move (jab, ftilt, utilt, dtilt, dash, fsmash, usmash, dsmash, nair, fair, bair, uair, dair),
+	/// drawn with its smear. An attack starts from standing and settles back into it, so the way in
+	/// and the way out show too.
 	/// </summary>
 	public string Film = "";
 
@@ -81,6 +82,10 @@ public partial class RigParade : Node2D
 		}
 	}
 
+	static bool IsStandardFilm(string name) => name is "jab" or "ftilt" or "utilt" or "dtilt";
+
+	static bool IsStandardColumn(string label) => label.StartsWith("jab") || label.EndsWith("tilt");
+
 	static bool IsAerial(MoveData d, FighterData data) =>
 		d == data.Move(MoveSlot.NeutralAir) || d == data.Move(MoveSlot.ForwardAir) || d == data.Move(MoveSlot.BackAir)
 		|| d == data.Move(MoveSlot.UpAir) || d == data.Move(MoveSlot.DownAir);
@@ -89,6 +94,7 @@ public partial class RigParade : Node2D
 	static void FilmFrame(FighterRig rig, FighterData data, string film, MoveData move, int frame, Pose scratch)
 	{
 		rig.SetLookingBack(false);
+		rig.SetRoll(0.0f);
 		rig.HandOnHip = false;
 		rig.CarryOnShoulder = false;
 		rig.ShowProp("");
@@ -98,13 +104,20 @@ public partial class RigParade : Node2D
 		if (move != null && moveFrame >= 0 && moveFrame <= move.TotalFrames)
 		{
 			bool aerial = IsAerial(move, data);
+			bool standard = !aerial && IsStandardFilm(film);
 			rig.SetPlanted(!aerial);
-			rig.SetStanding(false);
+			rig.SetStanding(standard && FighterAnimations.StandsThrough(move, MoveSlot.Jab));
 			rig.SetLookingBack(move.LooksBack);
 			rig.CarryOnShoulder = data.ShouldersProp && move.CarryOnShoulder;
 			rig.ShowProp(move.PropArt);
 			rig.SetPartVisible(RigBone.PropFront, move.PropArt != "-");
-			FighterAnimations.ShowAttack(rig, move, moveFrame, data.AnimationDrama, scratch);
+			FighterAnimations.ShowAttack(rig, move, moveFrame, data.AnimationDrama, scratch,
+				standard ? FighterAnimations.GroundAdjust(move, MoveSlot.Jab) : null);
+			if (standard && !rig.Robotic && rig.GetParent() is Node2D holder)
+			{
+				FighterAnimations.ThrowPunch(rig, move, moveFrame, holder.ToGlobal(HitboxInView(data, move)),
+					RadiusInView(data, move), 1, rig.HandEmpty(move.PropArt));
+			}
 			return;
 		}
 		if (move != null)
@@ -156,6 +169,14 @@ public partial class RigParade : Node2D
 				rig.SetPlanted(false);
 				rig.Play(FighterAnimations.Hurt);
 				rig.Advance();
+				break;
+			case "roll" when frame >= FilmLeadIn && frame < FilmLeadIn + Fighter.RollFrames:
+				// A dodge roll, as Fighter.UpdateRig plays it: curled up, rolling along the floor.
+				rig.SetPlanted(false);
+				rig.SetStanding(false);
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.SetRoll(Mathf.Tau * FighterAnimations.RollTurned((frame - FilmLeadIn + 1) / (float)Fighter.RollFrames), true);
+				rig.ApplyDirect(FighterAnimations.Tuck, 0.7f);
 				break;
 			default:
 				rig.SetPlanted(true);
@@ -212,7 +233,13 @@ public partial class RigParade : Node2D
 				rig.Robotic = data.Robotic;
 				rig.Inertia = data.Inertia;
 				int last = FilmLeadIn + frames[c];
-				for (int f = 0; f <= last; f++) FilmFrame(rig, data, name, move, f, pose);
+				var trail = new SmearTrail();
+				for (int f = 0; f <= last; f++)
+				{
+					FilmFrame(rig, data, name, move, f, pose);
+					if (move != null && SmearTrail.Smears(move) && f >= FilmLeadIn) trail.Record(rig, holder, f - FilmLeadIn);
+				}
+				if (move != null) holder.AddChild(SmearView(data, move, frames[c], trail));
 				if (row == 0)
 				{
 					var head = new Label { Text = beats[c], Position = new Vector2(-50.0f, -280.0f) };
@@ -251,8 +278,9 @@ public partial class RigParade : Node2D
 		const float Row = 430.0f;
 
 		// The frames to show: through the whole move and a little after, or a stretch of a clip.
-		int first = move != null ? FilmLeadIn - 2 : 0;
-		int span = move != null ? move.TotalFrames + 14 : (Film == "jump" ? 60 : Film == "run" ? 34 : 54);
+		int first = move != null || Film == "roll" ? FilmLeadIn - 2 : 0;
+		int span = move != null ? move.TotalFrames + 14
+			: Film == "roll" ? Fighter.RollFrames + 8 : (Film == "jump" ? 60 : Film == "run" ? 34 : 54);
 		var pose = new Pose();
 
 		for (int cell = 0; cell < Cells; cell++)
@@ -267,7 +295,23 @@ public partial class RigParade : Node2D
 			rig.DramaScale = data.AnimationDrama;
 			rig.Robotic = data.Robotic;
 			rig.Inertia = data.Inertia;
-			for (int f = 0; f <= frame; f++) FilmFrame(rig, data, Film, move, f, pose);
+			var trail = new SmearTrail();
+			for (int f = 0; f <= frame; f++)
+			{
+				FilmFrame(rig, data, Film, move, f, pose);
+				if (move != null && SmearTrail.Smears(move) && f >= FilmLeadIn) trail.Record(rig, holder, f - FilmLeadIn);
+			}
+			if (move != null) holder.AddChild(SmearView(data, move, frame - FilmLeadIn, trail));
+			// The floor, for a roll: the ball should ride along it, never lift off or sink in.
+			if (Film == "roll")
+			{
+				holder.AddChild(new Line2D
+				{
+					Points = new[] { new Vector2(-130.0f, 150.0f), new Vector2(130.0f, 150.0f) },
+					Width = 3.0f,
+					DefaultColor = new Color(0.16f, 0.16f, 0.20f),
+				});
+			}
 
 			int moveFrame = frame - FilmLeadIn;
 			bool live = move != null && moveFrame > move.StartupFrames && moveFrame <= move.StartupFrames + move.ActiveFrames;
@@ -338,14 +382,55 @@ public partial class RigParade : Node2D
 		Vector2 root = InView(data, new Vector2(side * data.BodySize.X * 0.15f,
 			Mathf.Clamp(offset.Y, -data.BodySize.Y * 0.35f, data.BodySize.Y * 0.35f)));
 
+		// And on past the ring as far as the hit reaches beyond the limb (Fighter.HitReach): a
+		// thinner ring where it ends.
+		(Vector2 tip, float tipRadius) = ReachInView(data, move);
+		bool further = tip.DistanceTo(centre) > 1.0f || tipRadius > radius + 1.0f;
+
 		var marker = new Node2D { ZIndex = 5 };
 		marker.Draw += () =>
 		{
 			if (reaches) marker.DrawLine(root, centre, new Color(0.95f, 0.30f, 0.30f, 0.12f), radius * 2.0f);
 			marker.DrawCircle(centre, radius, new Color(0.95f, 0.30f, 0.30f, 0.18f));
 			marker.DrawArc(centre, radius, 0.0f, Mathf.Tau, 32, new Color(0.85f, 0.20f, 0.22f, 0.8f), 3.0f);
+			if (further)
+			{
+				marker.DrawLine(centre, tip, new Color(0.95f, 0.30f, 0.30f, 0.08f), tipRadius * 2.0f);
+				marker.DrawArc(tip, tipRadius, 0.0f, Mathf.Tau, 32, new Color(0.85f, 0.20f, 0.22f, 0.45f), 1.5f);
+			}
 		};
 		return marker;
+	}
+
+	/// <summary>
+	/// The smear a filmed move leaves at its frame, drawn behind the rig as Fighter.DrawSmear
+	/// draws it in a match, reaching out as far as the hit does.
+	/// </summary>
+	static Node2D SmearView(FighterData data, MoveData move, int moveFrame, SmearTrail trail)
+	{
+		var view = new Node2D { ZIndex = -1 };
+		float power = SmearTrail.Power(move);
+		float strength = SmearTrail.Strength(move, moveFrame, power, out bool reaching);
+		(Vector2 tip, float radius) = ReachInView(data, move);
+		Vector2 centre = HitboxInView(data, move);
+		Color colour = data.TrailColor.A > 0.0f ? data.TrailColor : data.PlaceholderColor;
+		Vector2 pivot = InView(data, new Vector2(0.0f, -data.BodySize.Y * 0.12f));
+		view.Draw += () => trail.Draw(view, move, centre, tip, radius, pivot, power, strength, reaching, colour, moveFrame);
+		return view;
+	}
+
+	/// <summary>Where a move's hit reaches to past its hitbox (Fighter.HitReach), in this view.</summary>
+	static (Vector2 tip, float radius) ReachInView(FighterData data, MoveData move)
+	{
+		float k = 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
+		Vector2 offset = move.HitboxOffset;
+		float side = Mathf.Abs(offset.X) < 1.0f ? 0.0f : Mathf.Sign(offset.X);
+		bool reaches = string.IsNullOrEmpty(move.SwingArt) && move.SweepDegrees == 0.0f;
+		Vector2 centre = HitboxInView(data, move);
+		Vector2 root = reaches ? InView(data, new Vector2(side * data.BodySize.X * 0.15f,
+			Mathf.Clamp(offset.Y, -data.BodySize.Y * 0.35f, data.BodySize.Y * 0.35f))) : centre;
+		return SmearTrail.Extend(root, centre, RadiusInView(data, move), SmearTrail.Reach(move) * k,
+			InView(data, new Vector2(0.0f, -data.BodySize.Y * 0.12f)));
 	}
 
 	/// <summary>A point given as an offset from the fighter's middle in a match, in this view.</summary>
@@ -354,6 +439,10 @@ public partial class RigParade : Node2D
 		float k = 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
 		return new Vector2(matchOffset.X * k, (matchOffset.Y - data.BodySize.Y * 0.5f) * k + 150.0f);
 	}
+
+	/// <summary>A move's hitbox radius in this view.</summary>
+	static float RadiusInView(FighterData data, MoveData move) =>
+		move.HitboxRadius * 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
 
 	/// <summary>Where a move's hitbox is in this view, in its holder's space.</summary>
 	static Vector2 HitboxInView(FighterData data, MoveData move)
@@ -484,6 +573,11 @@ public partial class RigParade : Node2D
 
 				// Each attack shows the weapon it puts in his hand, or an empty hand, as in a match.
 				MoveData shown = Attacks ? MoveFor(data, columns[index].label) : null;
+				// A standard attack done with the arms keeps both feet planted, as in a match.
+				if (shown != null && IsStandardColumn(columnLabel) && FighterAnimations.StandsThrough(shown, MoveSlot.Jab))
+				{
+					rig.SetStanding(true);
+				}
 				// A hammer carried on the shoulder stays there for what is done on the ground without
 				// a swing - and the dash, a head-first barge - as in a match.
 				bool carrying = Attacks ? shown != null && shown.CarryOnShoulder
@@ -591,6 +685,13 @@ public partial class RigParade : Node2D
 			else if (slot.Direct != null)
 			{
 				slot.Rig.ApplyDirect(slot.Direct, 0.3f);
+				// A standard punch goes out in a straight line to its hit, as in a match.
+				if (slot.Move != null && IsStandardColumn(slot.Label) && !slot.Rig.Robotic)
+				{
+					FighterAnimations.ThrowPunch(slot.Rig, slot.Move, FighterAnimations.ShowFrame(slot.Move),
+						slot.Holder.ToGlobal(HitboxInView(slot.Data, slot.Move)), RadiusInView(slot.Data, slot.Move), 1,
+						slot.Rig.HandEmpty(slot.Move.PropArt));
+				}
 			}
 
 			// A kick with a stretching leg reaches out to its hitbox, as it does in a match (see

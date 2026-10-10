@@ -587,11 +587,13 @@ public static class FighterAnimations
 		(AFU, 40), (AFL, -20), (ABU, 50), (ABL, -10),
 		(LFU, -56), (LFL, 84), (LBU, 30), (LBL, 70));
 
-	// Body straight; arms out behind like wings; legs long, together and pointed.
+	// Body straight as a dart; arms pressed back along his sides and legs together and pointed,
+	// so the fire wraps one long shape. Arms swept out like wings stuck out of the fire (Eric,
+	// 2026-10-10: arms and legs tighter to his body).
 	static readonly Pose SwanDiveStrike = new Pose(new Vector2(0, 0),
-		(Torso, 0), (Head, -8),
-		(AFU, 96), (AFL, 6), (ABU, 84), (ABL, 6),
-		(LFU, 4), (LFL, 0), (LBU, -4), (LBL, 0));
+		(Torso, 0), (Head, -4),
+		(AFU, 14), (AFL, -2), (ABU, 10), (ABL, -2),
+		(LFU, 2), (LFL, 0), (LBU, -2), (LBL, 0));
 
 	static readonly Pose FlyingKickWindup = new Pose(new Vector2(-4, 12),
 		(Torso, 16), (Head, -6),
@@ -968,11 +970,54 @@ public static class FighterAnimations
 		(AFU, 12), (AFL, -6), (ABU, -12), (ABL, -6),
 		(LFU, -3), (LFL, 0), (LBU, 3), (LBL, 0));
 
-	/// <summary>Curled up in a ball - knees to the chest, arms wrapped in - for a dodge roll.</summary>
+	// --- Rolling along the floor -------------------------------------------------------------
+
+	/// <summary>The start of a roll, curling up as it gets going.</summary>
+	const float RollCurl = 0.18f;
+
+	/// <summary>Where a roll, flat out since it curled up, starts to slow.</summary>
+	const float RollCoast = 0.45f;
+
+	/// <summary>
+	/// How fast a dodge roll is going, as a fraction of its top speed, <paramref name="t"/> of the
+	/// way through it: getting going while he curls up, flat out, then easing to a stop just as it
+	/// ends - quick over its ground, and it does not skid on after it has uncurled (Eric,
+	/// 2026-10-10: it was slow).
+	/// </summary>
+	public static float RollSpeed(float t)
+	{
+		if (t < RollCurl) return Mathf.Max(0.0f, t) / RollCurl;
+		if (t <= RollCoast) return 1.0f;
+		float u = Mathf.Clamp((t - RollCoast) / (1.0f - RollCoast), 0.0f, 1.0f);
+		return 1.0f - u * u * (3.0f - 2.0f * u);
+	}
+
+	/// <summary>
+	/// How far round a dodge roll has turned, 0 to 1, <paramref name="t"/> of the way through it:
+	/// in step with the ground it has covered at <see cref="RollSpeed"/>, so the ball turns
+	/// exactly as fast as it travels - rolling, not skidding - and comes upright as it stops.
+	/// </summary>
+	public static float RollTurned(float t)
+	{
+		static float Covered(float x)
+		{
+			if (x < RollCurl) return x * x / (2.0f * RollCurl);
+			if (x <= RollCoast) return RollCurl * 0.5f + (x - RollCurl);
+			float u = Mathf.Clamp((x - RollCoast) / (1.0f - RollCoast), 0.0f, 1.0f);
+			return RollCurl * 0.5f + (RollCoast - RollCurl) + (1.0f - RollCoast) * (u - u * u * u + 0.5f * u * u * u * u);
+		}
+		return Covered(Mathf.Clamp(t, 0.0f, 1.0f)) / Covered(1.0f);
+	}
+
+	/// <summary>
+	/// Curled up in a ball for a dodge roll: back rounded, chin tucked to the chest, knees pulled
+	/// up to it and heels to the seat, both arms wrapped round the shins - the way anyone rolls,
+	/// and round enough to roll (Eric, 2026-10-10: the fists were up in a guard, sticking out).
+	/// </summary>
 	public static readonly Pose Tuck = new Pose(new Vector2(0, 30),
-		(Torso, -36), (Head, 24),
-		(AFU, -70), (AFL, -110), (ABU, -50), (ABL, -110),
-		(LFU, -110), (LFL, 140), (LBU, -90), (LBL, 140));
+		(Torso, -28), (Head, -18),
+		(AFU, -46), (AFL, 30), (ABU, -54), (ABL, 34),
+		(LFU, -88), (LFL, 120), (LBU, -80), (LBL, 120));
 
 	// Holding it up to his chest, then a bow from the waist to put it down on the floor in
 	// front - the legs barely bend, so both feet stay planted.
@@ -1219,6 +1264,160 @@ public static class FighterAnimations
 		Pose.Overshoot(windup, into, 0.5f * followThrough * carry, MaxCoil, into);
 		float back = Mathf.Clamp((e - FollowThroughHold * 0.5f) / (1.0f - FollowThroughHold * 0.5f), 0.0f, 1.0f);
 		if (back > 0.0f) Pose.Blend(into, AttackRecover, back * back * (3.0f - 2.0f * back), into);
+	}
+
+	// --- Standing to hit ---------------------------------------------------------
+
+	/// <summary>The standard attacks: the jab and the three tilts, and whatever follows them in a combo.</summary>
+	public static bool IsStandard(MoveSlot slot) =>
+		slot == MoveSlot.Jab || slot == MoveSlot.ForwardTilt || slot == MoveSlot.UpTilt || slot == MoveSlot.DownTilt;
+
+	/// <summary>
+	/// Whether an animation hits with a leg - a kick, a flip, the splits, a stomp. Those lift the
+	/// kicking leg off the floor; every other attack keeps both feet down. A sweep or a stab along
+	/// the floor only crouches, and stays on its feet.
+	/// </summary>
+	public static bool UsesLegs(AttackAnim anim)
+	{
+		switch (anim)
+		{
+			case AttackAnim.FrontKick:
+			case AttackAnim.LowKick:
+			case AttackAnim.FlyingKick:
+			case AttackAnim.Split:
+			case AttackAnim.Stomp:
+			case AttackAnim.Nair:
+			case AttackAnim.Fair:
+			case AttackAnim.Bair:
+			case AttackAnim.Uair:
+			case AttackAnim.Dair:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	/// <summary>
+	/// A standard attack done with the arms keeps both feet planted where he stands: the legs are
+	/// solved under him as they are standing still (FighterRig.StandOnFeet), the knees bending as
+	/// the hips drop or shift into the hit, instead of being swung about by the attack pose (Eric,
+	/// 2026-10-10: feet should stay on the ground). A kick still lifts its kicking leg; the other
+	/// foot stays down.
+	/// </summary>
+	public static bool StandsThrough(MoveData move, MoveSlot slot) =>
+		IsStandard(slot) && !UsesLegs(move.Anim) && move.Special != SpecialKind.Dash && !move.RunningLegs;
+
+	/// <summary>
+	/// A kick on the ground stands on its back leg: a pose that folds that leg right up - a flip
+	/// kick borrowed from the air - gets a standing leg instead, so the kicker never hops off the
+	/// floor (Eric, 2026-10-10). The kicking leg is left alone.
+	/// </summary>
+	public static void KeepSupportLeg(Pose pose)
+	{
+		if (pose[LBL] <= 70.0f) return;
+		pose.Set(LBU, 10.0f);
+		pose.Set(LBL, 6.0f);
+	}
+
+	/// <summary>
+	/// What a standard attack on the ground changes in its sampled pose: a kick keeps a standing
+	/// leg. Null if nothing - an attack done with the arms is stood through instead (StandsThrough).
+	/// </summary>
+	public static System.Action<Pose> GroundAdjust(MoveData move, MoveSlot slot) =>
+		IsStandard(slot) && UsesLegs(move.Anim) ? KeepSupportLeg : null;
+
+	/// <summary>Which arms throw a punch: the front, the back, or both (a two-handed shove).</summary>
+	static (bool front, bool back) PunchingArms(AttackAnim anim)
+	{
+		switch (anim)
+		{
+			case AttackAnim.Punch:
+			case AttackAnim.HeavyPunch:
+			case AttackAnim.Lunge:
+				return (true, false);
+			case AttackAnim.PunchBack:
+				return (false, true);
+			case AttackAnim.PalmThrust:
+				return (true, true);
+			default:
+				return (false, false);
+		}
+	}
+
+	/// <summary>
+	/// How far out a punch is at this frame, from the guard (0) to the hit (1): drawn back a little
+	/// from the guard to load it (below 0), then driven out, fast and faster, to land on the first
+	/// active frame, held a beat, and brought back to the guard along the same line.
+	/// </summary>
+	static float PunchExtension(MoveData move, float frame)
+	{
+		float startup = Mathf.Max(1, move.StartupFrames);
+		float activeEnd = move.StartupFrames + move.ActiveFrames;
+		if (frame <= startup)
+		{
+			float t = frame / startup;
+			if (t < 0.6f)
+			{
+				float u = t / 0.6f;
+				return -0.3f * u * u * (3.0f - 2.0f * u);
+			}
+			float v = (t - 0.6f) / 0.4f;
+			return Mathf.Lerp(-0.3f, 0.9f, v * v);
+		}
+		if (frame <= activeEnd) return 1.0f;
+		float r = (frame - activeEnd) / Mathf.Max(1, move.EndlagFrames);
+		if (r < 0.15f) return 1.0f;
+		float w = Mathf.Clamp((r - 0.15f) / 0.85f, 0.0f, 1.0f);
+		return 1.0f - w * w * (3.0f - 2.0f * w);
+	}
+
+	/// <summary>
+	/// A standard punch thrown like a boxer's (Eric, 2026-10-10: arms should extend outward, not
+	/// straighten anyhow). The fist travels in a straight line from a guard in front of the
+	/// shoulder out toward the hit - <paramref name="hit"/>, the hitbox's centre - as far as the
+	/// arm nearly straight, but never past the far edge of the hit (<paramref name="hitRadius"/>),
+	/// so a short jab still extends and still lands inside its hit; the shoulder and elbow are
+	/// solved to carry it there
+	/// (FighterRig.ReachArm), and the other hand held up at the guard. A hand holding a tool keeps
+	/// its swing: the tool's head is what has to land on the hit. Laid over the attack pose, and
+	/// eased in at the start and out at the end, so it hands back to the pose without a pop.
+	/// </summary>
+	public static void ThrowPunch(FighterRig rig, MoveData move, float frame, Vector2 hit, float hitRadius, int facing, bool frontHandEmpty)
+	{
+		(bool front, bool back) = PunchingArms(move.Anim);
+		if (!front && !back) return;
+		if (front && !frontHandEmpty) return;
+
+		float startup = Mathf.Max(1, move.StartupFrames);
+		float total = Mathf.Max(1, move.TotalFrames);
+		float into = Mathf.Clamp(frame / (startup * 0.35f), 0.0f, 1.0f);
+		float outOf = Mathf.Clamp((total - frame) / Mathf.Max(1.0f, move.EndlagFrames * 0.3f), 0.0f, 1.0f);
+		float amount = Mathf.Min(into, outOf);
+		if (amount <= 0.0f) return;
+		float e = PunchExtension(move, frame);
+
+		foreach ((RigBone upper, RigBone lower, bool punching, Vector2 guardAt) in new[]
+		{
+			(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, front, new Vector2(0.34f, -0.2f)),
+			(RigBone.ArmBackUpper, RigBone.ArmBackLower, back, new Vector2(0.38f, -0.22f)),
+		})
+		{
+			Vector2? shoulder = rig.JointGlobal(upper);
+			float length = rig.ArmLength(upper, lower);
+			if (shoulder == null || length <= 0.0f) continue;
+			Vector2 guard = shoulder.Value + new Vector2(guardAt.X * facing, guardAt.Y) * length;
+			if (!punching)
+			{
+				rig.ReachArm(upper, lower, guard, amount);
+				continue;
+			}
+			Vector2 toward = (hit - guard).Normalized();
+			float reach = Mathf.Min(Mathf.Max((hit - guard).Length(), length * 0.92f), (hit - guard).Length() + hitRadius * 0.8f);
+			Vector2 fist = e >= 0.0f
+				? guard + toward * reach * e
+				: guard - toward * length * -e * 0.6f;
+			rig.ReachArm(upper, lower, fist, amount);
+		}
 	}
 
 	/// <summary>

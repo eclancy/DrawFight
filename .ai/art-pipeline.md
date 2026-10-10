@@ -62,14 +62,42 @@ looked puppeteered and silly). Keep them when adding poses or clips.
 - **Angles add up.** What reaches the screen is the lean, plus the shoulder, plus the elbow, each
   played bigger (`FighterRig.Drama`). A windup with the body leaning back, the arm at the top
   and the elbow bent points the forearm, and the weapon, straight backwards.
+- **Standard attacks on the ground stand on the floor** (Eric, 2026-10-10). A jab or tilt done
+  with the arms keeps both feet planted - the legs are solved under him as if standing, the knees
+  bending as the hips drop or shift into the hit (`FighterAnimations.StandsThrough`). A kick keeps
+  its back leg standing (`KeepSupportLeg`), so a flip kick never hops.
+- **Punches go out in a straight line**, like a boxer's: the fist travels from a guard in front
+  of the shoulder toward the hit and lands on it, the shoulder and elbow solved to carry it
+  (`FighterAnimations.ThrowPunch`), the other hand held up at the guard. A hand holding a tool or
+  a sword keeps its swing - the head of it is what has to land.
 - **Turning round** narrows the drawing to its edge and opens it out the other way over six
   frames (`Fighter.TurnWidth`), instead of mirroring it in one.
 - **Squash and stretch are small** - a few percent. A cutout that stretches a fifth of its height
   to jump is a rubber toy; the knees and the lean do that work.
+- **The springs never take away more than a joint's whole speed in a frame** (damping capped at
+  1 in `FighterRig.Follow`). Past that, a joint swings back the other way every frame - a jitter -
+  and with a quick blend on a light fighter it was thrown further each frame until the body
+  flipped over. The dodge roll's curl found it.
+- **A dodge roll rolls along the floor** (Eric, 2026-10-10). Curled up in a ball (`Tuck`: back
+  rounded, chin down, knees to the chest, arms round the shins), the rig turns about the middle of
+  the ball, set down each frame so whatever part of him is lowest touches the floor
+  (`FighterRig.SetRoll(angle, alongFloor: true)`). Turned about the middle of the standing body,
+  the ball swung up off the floor and back - a somersault in the air. It turns in step with the
+  ground it covers (`FighterAnimations.RollTurned`), so it rolls rather than skids. Thighs pulled
+  tighter than the tuck has them hide behind the torso, which the rig draws in front of the legs;
+  keep the knees showing. A hammer on the shoulder stays there through a roll.
+- **Smears** (Eric, 2026-10-10: hits should reach past the limited reach of the limbs, with smear
+  frames more dramatic the more powerful the attack). Whatever strikes - a hand, a foot, the head
+  of a weapon, whichever one is at the hit - is traced through the last frames of its swing, round
+  the body as a swing goes, and the smear stretches on out of it to the far side of the hit:
+  wider, longer and bolder the stronger the move (`SmearTrail`), with speed lines, and a shock of
+  air off the front of a smash. The hit itself reaches as far (see `.ai/fighting-design.md`). No
+  outline and nothing dark - it is motion, not a thing. Check them with `--film`.
 
 Check motion, not just poses: `--parade --film=NAME --only=N` films one fighter doing one thing,
-frame by frame, through the rig exactly as a match plays it; `--film=ground`, `smash` or `air`
-shows every move of that kind at its key moments. See CLAUDE.md.
+frame by frame, through the rig exactly as a match plays it, smears and all; `--film=roll` films
+a dodge roll on a floor line; `--film=ground`, `smash` or `air` shows every move of that kind at
+its key moments. See CLAUDE.md.
 
 ## Parts, and the parts he will not draw
 
@@ -210,7 +238,7 @@ fighter came in on.
 - **A second copy of a rig** is fine and cheap: DoomBot's MiniBot is his own rig, loaded again
   and normalised small, playing the run clip.
 - **An empty hand.** A fighter with no weapon of its own can still have a `PropFront` part, marked
-  `"empty": true`: a blank, so a move can put a prop in his hand (Flambe's frying pan) the way Lug
+  `"empty": true`: a blank, so a move can put a prop in his hand (Flambe's lighter) the way Lug
   swaps his tools.
 
 ## The rig is a Node2D tree, not a Skeleton2D

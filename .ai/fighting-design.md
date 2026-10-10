@@ -133,7 +133,8 @@ polish, they are the feature:
   that read as the explosion chasing the action rather than happening somewhere. The KO'd fighter then
   stays gone for 80 frames (`Tuning.RespawnDelayFrames`) before reappearing, so the blast has
   the screen to itself and everyone takes in what happened.
-- **Dodges roll.** A roll or a directional air dodge curls the fighter up and turns a full
+- **Dodges roll.** A roll curls the fighter into a ball that rolls along the floor - over his
+  back and feet, never up into the air - and a directional air dodge curls up and turns a full
   somersault the way it travels; a spot dodge curls up in place.
 - **Camera** that smoothly frames all living fighters, with a minimum zoom so two players
   standing together do not fill the screen, and a maximum so a far-flung player stays visible.
@@ -227,6 +228,12 @@ that takes half a second to reach it never gets there in a fight.
   someone standing right against him, not only at the end of its head. And what can be hit is
   the whole drawing: the hurtbox reaches up to the top of the drawn figure, which stands taller
   than the body box. Eric's call, 2026-10-04: hits that looked like they landed went through.
+- **Hits reach past the limb** (Eric, 2026-10-10). A normal attack's capsule runs on past its
+  hitbox, along the way it points, by 0.3 of its radius for a jab up to 0.9 for a smash
+  (`SmearTrail.Reach`, from the move's damage; a charged smash reaches with its charge), and its
+  smear is drawn out exactly that far, so the extra range is always visible. Specials, throws and
+  a wheel of fire round the body do not reach on. Place a hitbox on the weapon head or limb as
+  before - the parade rings it there, and draws a thinner ring where the reach ends.
 - **He stands on his feet.** The collision shape is the body box narrowed at the bottom to how
   wide his feet stand (`Fighter.ShapeBody`, `FighterRig.StanceWidth`), with sides too steep to
   stand on - so at a ledge he stays up only while his feet are over it, and slides off once
@@ -311,6 +318,11 @@ Block plus a direction **rolls**, block on its own **spot-dodges**, and block in
 **air dodge**. All three are vulnerable at the edges and invulnerable only in the middle
 (roughly frames 4-17), which is what makes a dodge a read rather than a panic button: mistime it
 and you are hit during the startup or the recovery.
+
+A roll is the quick one: 20 frames, getting going as he curls up, then faster than he runs, then
+slowing to a stop just as it ends (`FighterAnimations.RollSpeed`; Eric, 2026-10-10: it was slow).
+It covers a little more ground than the old 26-frame roll in three quarters of the time, and its
+invulnerability ends 4 frames before it does, so coming out of it can still be punished.
 
 ## Ledges
 

@@ -151,8 +151,12 @@ public partial class Fighter : CharacterBody2D
 
 	int dodgeFrames;
 	Vector2 dodgeVelocity;
+	/// <summary>This dodge is a roll along the floor, curled up into a ball.</summary>
+	bool groundRoll;
 
-	const int RollFrames = 26;
+	public const int RollFrames = 20;
+	/// <summary>A roll's top speed against his running speed: faster than he runs, then slowing.</summary>
+	const float RollSpeed = 1.3f;
 	const int SpotDodgeFrames = 22;
 	const int AirDodgeFrames = 28;
 
@@ -578,6 +582,7 @@ public partial class Fighter : CharacterBody2D
 
 		UpdateGroundInfo();
 		UpdateRig();
+		RecordSmear();
 		UpdateRigTint();
 		Redraw();
 	}
@@ -750,17 +755,20 @@ public partial class Fighter : CharacterBody2D
 		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut && prop != "-" && State != FighterState.LedgeHang);
 		ShowTurnFrame(spinning);
 
-		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll());
+		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll(),
+			State == FighterState.Dodging && groundRoll);
 		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth());
 		rig.SetFrontLegReach(LegReachNow());
 		// Standing still on flat feet (FighterRig.StandOnFeet) - turned on below for each pose
 		// that is just standing.
 		rig.SetStanding(false);
 		// A hammer carried on the shoulder stays there for anything done on the ground that is not
-		// a swing - and through a move that keeps it there, like a barge.
+		// a swing - and through a move that keeps it there, like a barge - and a roll, hugged to him
+		// rather than swinging through the floor.
 		// A back air looks behind him, where it hits.
 		rig.SetLookingBack(State == FighterState.Attacking && currentMove != null && currentMove.LooksBack);
 		rig.CarryOnShoulder = Data.ShouldersProp && (State == FighterState.Grounded
+			|| State == FighterState.Dodging && groundRoll
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
 		// A hand on his hip only while he is just standing; turned on below.
 		rig.HandOnHip = false;
@@ -770,7 +778,7 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Dodging:
 				// Curled up tight for every dodge; rolls and directional air dodges also turn a
 				// full somersault the way they travel.
-				rig.ApplyDirect(FighterAnimations.Tuck, 0.5f);
+				rig.ApplyDirect(FighterAnimations.Tuck, 0.7f);
 				break;
 
 			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Choice:
@@ -798,8 +806,17 @@ public partial class Fighter : CharacterBody2D
 				// the exact frame the hitbox does.
 				// A robot's attacks click from pose to pose too - rounded up, so the strike still
 				// shows by the frame the hitbox does.
+				// A standard attack done with the arms keeps both feet planted.
+				rig.SetStanding(IsOnFloor() && FighterAnimations.StandsThrough(currentMove, currentSlot));
 				FighterAnimations.ShowAttack(rig, currentMove, moveFrame, Data.AnimationDrama, attackPose,
-					currentMove.RunningLegs && Mathf.Abs(Velocity.X) > 45.0f ? RunTheLegs : null);
+					currentMove.RunningLegs && Mathf.Abs(Velocity.X) > 45.0f ? RunTheLegs
+					: IsOnFloor() ? FighterAnimations.GroundAdjust(currentMove, currentSlot) : null);
+				// And a punch goes out in a straight line, the other hand up (not a robot's).
+				if (!Data.Robotic && IsOnFloor() && FighterAnimations.IsStandard(currentSlot))
+				{
+					FighterAnimations.ThrowPunch(rig, currentMove, moveFrame, CurrentHitboxCentre(), currentMove.HitboxRadius,
+						Facing, rig.HandEmpty(currentMove.PropArt));
+				}
 				if (!Data.Robotic) PlaceHeldArt();
 				break;
 
@@ -1961,7 +1978,8 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (State != FighterState.Dodging || dodgeStartFrames <= 0 || Mathf.Abs(dodgeVelocity.X) < 1.0f) return 0.0f;
 		float t = 1.0f - dodgeFrames / (float)dodgeStartFrames;
-		float eased = t * t * (3.0f - 2.0f * t);
+		// Along the floor the ball turns in step with the ground it covers.
+		float eased = groundRoll ? FighterAnimations.RollTurned(t) : t * t * (3.0f - 2.0f * t);
 		return Mathf.Sign(dodgeVelocity.X) * Mathf.Tau * eased;
 	}
 
@@ -1973,6 +1991,7 @@ public partial class Fighter : CharacterBody2D
 		bool directional = Mathf.Abs(input.Move.X) > 0.5f;
 		// A fighter who cannot roll just keeps blocking.
 		if (!airborne && directional && !Data.CanRoll) return false;
+		groundRoll = !airborne && directional;
 
 		if (airborne)
 		{
@@ -1984,7 +2003,7 @@ public partial class Fighter : CharacterBody2D
 		else if (directional)
 		{
 			dodgeFrames = RollFrames;
-			dodgeVelocity = new Vector2(Mathf.Sign(input.Move.X) * Data.RunSpeed * 1.15f, 0.0f);
+			dodgeVelocity = new Vector2(Mathf.Sign(input.Move.X) * Data.RunSpeed * RollSpeed, 0.0f);
 		}
 		else
 		{
@@ -2004,9 +2023,18 @@ public partial class Fighter : CharacterBody2D
 		int elapsed = (State == FighterState.Dodging) ? dodgeStartFrames - dodgeFrames : 0;
 		dodgeFrames--;
 
-		if (elapsed >= DodgeInvulnStart && elapsed <= DodgeInvulnEnd) invulnFrames = 2;
+		// A roll is quicker than the other dodges; it is still caught coming out of it.
+		if (elapsed >= DodgeInvulnStart && elapsed <= Mathf.Min(DodgeInvulnEnd, dodgeStartFrames - 4)) invulnFrames = 2;
 
-		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0.0f, 2600.0f * dt), Velocity.Y);
+		if (groundRoll)
+		{
+			float t = 1.0f - dodgeFrames / (float)dodgeStartFrames;
+			Velocity = new Vector2(dodgeVelocity.X * FighterAnimations.RollSpeed(t), Velocity.Y);
+		}
+		else
+		{
+			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0.0f, 2600.0f * dt), Velocity.Y);
+		}
 
 		if (dodgeFrames <= 0)
 		{
@@ -2179,7 +2207,8 @@ public partial class Fighter : CharacterBody2D
 		if (action == LedgeAction.Roll)
 		{
 			dodgeFrames = dodgeStartFrames = RollFrames;
-			dodgeVelocity = new Vector2(Facing * Data.RunSpeed * 1.15f, 0.0f);
+			groundRoll = true;
+			dodgeVelocity = new Vector2(Facing * Data.RunSpeed * RollSpeed, 0.0f);
 			Velocity = dodgeVelocity;
 			State = FighterState.Dodging;
 		}
@@ -2259,15 +2288,15 @@ public partial class Fighter : CharacterBody2D
 		// A move with no hitbox of its own - one that only summons or throws - hits nothing here.
 		if (currentMove.HitboxRadius <= 0.0f) return;
 
-		Vector2 centre = CurrentHitboxCentre();
 		Vector2 root = HitboxRoot();
+		(Vector2 centre, float radius) = HitReach();
 
 		foreach (Fighter other in Match.Fighters)
 		{
 			if (other == this || alreadyHitThisMove.Contains(other)) continue;
 			if (!other.CanBeHit) continue;
 
-			if (!CapsuleTouches(root, centre, currentMove.HitboxRadius, other.BodyRect(), out Vector2 nearest)) continue;
+			if (!CapsuleTouches(root, centre, radius, other.BodyRect(), out Vector2 nearest)) continue;
 
 			// A multi-hit's early hits are its weak link hit; only the last window launches.
 			int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
@@ -2306,6 +2335,20 @@ public partial class Fighter : CharacterBody2D
 		return GlobalPosition + new Vector2(
 			currentMove.HitboxOffset.X * Facing,
 			currentMove.HitboxOffset.Y);
+	}
+
+	/// <summary>
+	/// Where the live hit reaches to, and how big it is there: a normal attack reaches past its
+	/// hitbox - past the end of the limb - by more the stronger it is, and its smear shows it
+	/// (SmearTrail; Eric, 2026-10-10). A throw only ever hits the one being thrown.
+	/// </summary>
+	public (Vector2 tip, float radius) HitReach()
+	{
+		Vector2 centre = CurrentHitboxCentre();
+		if (currentMove == null) return (centre, 0.0f);
+		float reach = currentMove == grabKick ? 0.0f : SmearTrail.Reach(currentMove, ChargeScale);
+		return SmearTrail.Extend(HitboxRoot(), centre, currentMove.HitboxRadius, reach,
+			GlobalPosition + new Vector2(0.0f, -bodySize.Y * 0.12f));
 	}
 
 	public bool IsHitboxLive =>
@@ -2406,7 +2449,7 @@ public partial class Fighter : CharacterBody2D
 		IsBlocking = false;
 		blockedStun = blocked;
 
-		// Flipped like a crepe, or tripped over a cone: one somersault through the hitstun.
+		// Flipped by a hotfoot, or tripped over a cone: one somersault through the hitstun.
 		if (!blocked && move.SpinVictim)
 		{
 			spinVictimTotal = spinVictimFrames = Mathf.Clamp(hitstunFrames, 16, 34);
@@ -2839,11 +2882,17 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
-		float steer = input.Move.X * Data.AirSpeed * 0.8f;
+		// Flown, not floated (Eric, 2026-10-10): he goes where the stick points almost at once,
+		// faster than he drifts, and stops when it lets go - and climbs harder with it held up.
+		// Down past half drops out of it altogether (see CancelIntoAttacks).
+		float steer = input.Move.X * Data.AirSpeed * 1.2f;
 		if (Mathf.Abs(input.Move.X) > 0.3f) Facing = input.Move.X > 0.0f ? 1 : -1;
+		float climb = Mathf.Clamp(-input.Move.Y, 0.0f, 1.0f);
+		float rise = currentMove.SpecialRise * (1.0f + 0.3f * climb);
+		bool takeOff = moveFrame == currentMove.StartupFrames + 1;
 		Velocity = new Vector2(
-			Mathf.MoveToward(Velocity.X, steer, Data.AirAcceleration * dt),
-			-currentMove.SpecialRise);
+			Mathf.MoveToward(Velocity.X, steer, Data.AirAcceleration * 3.0f * dt),
+			takeOff ? -rise : Mathf.MoveToward(Velocity.Y, -rise, 3000.0f * dt));
 	}
 
 	// --- Grappling hook ----------------------------------------------------------
@@ -3199,73 +3248,44 @@ public partial class Fighter : CharacterBody2D
 		}
 	}
 
-	/// <summary>
-	/// A crayon arc through where a normal attack hits, for its active frames and a few after,
-	/// fading. It is what makes an up tilt read as "up" and a back air as "behind" at a glance:
-	/// the pose says what the body did, the trail says where the hit went.
-	/// </summary>
-	void DrawSwingTrail()
+	readonly SmearTrail smear = new SmearTrail();
+	/// <summary>The move the smear is following, so a new move - the next hit of a combo - starts a new one.</summary>
+	MoveData smearMove;
+
+	/// <summary>Where whatever might strike is this frame, for the smear - while a normal attack is on.</summary>
+	void RecordSmear()
 	{
-		if (State != FighterState.Attacking || currentMove == null) return;
-		if (currentMove.Special != SpecialKind.None || currentMove.HitboxRadius <= 0.0f || currentMove.Spin) return;
-
-		int activeStart = currentMove.StartupFrames;
-		int activeEnd = activeStart + currentMove.ActiveFrames;
-		const int Linger = 5;
-		if (moveFrame <= activeStart || moveFrame > activeEnd + Linger) return;
-
-		float fade = moveFrame <= activeEnd ? 1.0f : 1.0f - (moveFrame - activeEnd) / (float)(Linger + 1);
-		var pivot = new Vector2(0.0f, -bodySize.Y * 0.12f);
-		Vector2 hit = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y);
-		Vector2 toHit = hit - pivot;
-		float reach = Mathf.Max(toHit.Length(), currentMove.HitboxRadius);
-		float angle = toHit.LengthSquared() > 1.0f ? toHit.Angle() : -Mathf.Pi * 0.5f;
-
-		// A little over a quarter turn of arc, centred on the hit, in the fighter's own colour. It
-		// is a smear, not a shape: strongest along the middle of the swing and fading to nothing
-		// at both ends of the arc and at its inner and outer edges, so it shows the direction of
-		// the hit without a hard-edged band covering the fighter or the one being hit.
-		float Sweep = 0.9f;
-
-		// A sweeping hitbox smears along everything it has swept so far, from where the swing
-		// started to where the hitbox is now, round its own pivot.
-		if (currentMove.SweepDegrees != 0.0f)
+		if (State == FighterState.Attacking && currentMove != grabKick && SmearTrail.Smears(currentMove))
 		{
-			Vector2 sweepPivot = new Vector2(FighterAnimations.SweepPivot.X * Facing, FighterAnimations.SweepPivot.Y);
-			pivot = sweepPivot;
-			reach = (currentMove.HitboxOffset - FighterAnimations.SweepPivot).Length();
-			float t = FighterAnimations.SweepT(currentMove, moveFrame);
-			float from = FighterAnimations.SweepAngle(currentMove, FighterAnimations.SweepPivot, 0.0f);
-			float to = FighterAnimations.SweepAngle(currentMove, FighterAnimations.SweepPivot, t);
-			// Mirrored when facing left: a screen angle a becomes 180 - a.
-			if (Facing < 0)
+			if (currentMove != smearMove)
 			{
-				from = 180.0f - from;
-				to = 180.0f - to;
+				smear.Clear();
+				smearMove = currentMove;
 			}
-			angle = Mathf.DegToRad((from + to) * 0.5f);
-			Sweep = Mathf.Max(0.15f, Mathf.Abs(Mathf.DegToRad(to - from)) * 0.5f);
+			smear.Record(rig, this, moveFrame);
 		}
-		const int Along = 14;
-		const int Across = 4;
-		float width = currentMove.HitboxRadius * 0.6f;
-		float band = width / Across;
+		else
+		{
+			smearMove = null;
+		}
+	}
+
+	/// <summary>
+	/// The smear of a normal attack: whatever strikes, traced through its swing and stretched out
+	/// past itself to the far side of what it hits - wider, longer and bolder the harder it hits.
+	/// It is what makes an up tilt read as "up" and a back air as "behind" at a glance, and why a
+	/// hit that reaches past the end of an arm still reads as the arm doing it.
+	/// </summary>
+	void DrawSmear()
+	{
+		if (State != FighterState.Attacking || currentMove == null || currentMove != smearMove) return;
+		float power = SmearTrail.Power(currentMove, ChargeScale);
+		float strength = SmearTrail.Strength(currentMove, moveFrame, power, out bool reaching);
+		if (strength <= 0.0f) return;
+		(Vector2 tip, float radius) = HitReach();
 		Color colour = Data.TrailColor.A > 0.0f ? Data.TrailColor : Data.PlaceholderColor;
-
-		for (int i = 0; i < Along; i++)
-		{
-			float a0 = angle - Sweep + 2.0f * Sweep * i / Along;
-			float a1 = angle - Sweep + 2.0f * Sweep * (i + 1) / Along;
-			float lengthwise = Mathf.Sin(Mathf.Pi * (i + 0.5f) / Along);
-
-			for (int j = 0; j < Across; j++)
-			{
-				float across = Mathf.Sin(Mathf.Pi * (j + 0.5f) / Across);
-				colour.A = 0.34f * fade * lengthwise * lengthwise * across;
-				float r = reach - width * 0.5f + band * (j + 0.5f);
-				DrawArc(pivot, r, a0, a1, 3, colour, band + 0.5f);
-			}
-		}
+		smear.Draw(this, currentMove, CurrentHitboxCentre() - GlobalPosition, tip - GlobalPosition, radius,
+			new Vector2(0.0f, -bodySize.Y * 0.12f), power, strength, reaching, colour, fxFrames);
 	}
 
 	/// <summary>A held drawing pushed along on its wheel is placed this frame (PlaceHeldArt).</summary>
@@ -4041,25 +4061,9 @@ public partial class Fighter : CharacterBody2D
 		float r = BallRadius() * (1.35f + 0.45f * charge);
 		Vector2 centre = new Vector2(0.0f, bodySize.Y * 0.5f - BallRadius());
 		bool rolling = moveFrame > currentMove.StartupFrames;
-		Vector2 back = rolling ? new Vector2(-Facing, -0.25f).Normalized() : Vector2.Up;
-
-		// Rolling, a long tail of fire streams out behind; charging on the spot, only small licks
-		// of flame rise off the top - a full tail pointing up read as a second fireball.
-		int tail = rolling ? 6 : 3;
-		for (int i = tail; i >= 1; i--)
-		{
-			float k = i / (float)tail;
-			float jitter = CrayonBrush.Noise(fxFrames + i * 5, 13) * r * 0.2f;
-			Vector2 at = rolling
-				? centre + back * r * 0.5f * i + back.Orthogonal() * jitter
-				: centre + back * r * (0.75f + 0.25f * i) + back.Orthogonal() * jitter;
-			float size = rolling ? r * (1.0f - k * 0.65f) : r * (0.42f - 0.1f * i);
-			DrawCircle(at, size, new Color(0.95f, 0.32f + 0.3f * (1.0f - k), 0.16f, 0.7f * (1.0f - k * 0.7f)));
-		}
-		float flicker = 1.0f + CrayonBrush.Noise(fxFrames, 17) * 0.07f;
-		DrawCircle(centre, r * 1.05f * flicker, new Color(0.96f, 0.38f, 0.16f, 0.95f));
-		DrawCircle(centre, r * 0.8f * flicker, new Color(0.99f, 0.64f, 0.22f, 0.95f));
-		DrawCircle(centre, r * 0.55f, new Color(1.0f, 0.90f, 0.55f, 0.9f));
+		// Rolling, the flames stream out behind; charging on the spot, they rise off the top.
+		Vector2 back = rolling ? new Vector2(-Facing, -0.25f) : Vector2.Up;
+		FlameFx.Ball(this, centre, r, back, fxFrames, 0.95f);
 	}
 
 	/// <summary>Shrunk down with a lit fuse. The spark blinks faster as the fuse runs out.</summary>
@@ -4280,10 +4284,14 @@ public partial class Fighter : CharacterBody2D
 				DrawElectric(canvas, hit, currentMove.HitboxRadius);
 				break;
 			case ActiveFx.Flame when currentMove.Corkscrew && IsActiveFrame(2):
-				DrawFireShroud(canvas, CurrentHitboxCentre() - GlobalPosition, currentMove.HitboxRadius);
+				DrawFireShroud(canvas);
 				break;
 			case ActiveFx.Flame when IsActiveFrame(5):
 				DrawFlameBurst(canvas, CurrentHitboxCentre() - GlobalPosition, currentMove.HitboxRadius);
+				break;
+			// Lit as the spin starts, a little before the hit, and dying out just after it.
+			case ActiveFx.FireRing when moveFrame > currentMove.StartupFrames - 3 && IsActiveFrame(4):
+				DrawFireRing(canvas);
 				break;
 			// The jets light halfway through the startup, small, and roar for the whole flight.
 			case ActiveFx.Jets when moveFrame > currentMove.StartupFrames / 2
@@ -4294,7 +4302,7 @@ public partial class Fighter : CharacterBody2D
 
 		// Glowing hot: whatever he swings bursts into flame where it lands.
 		if (HitsHot(currentMove) && IsActiveFrame(5)
-			&& currentMove.ActiveFx != ActiveFx.Flame && currentMove.ActiveFx != ActiveFx.Electric)
+			&& currentMove.ActiveFx != ActiveFx.Flame && currentMove.ActiveFx != ActiveFx.FireRing && currentMove.ActiveFx != ActiveFx.Electric)
 		{
 			DrawFlameBurst(canvas, CurrentHitboxCentre() - GlobalPosition, currentMove.HitboxRadius * 0.8f);
 		}
@@ -4320,58 +4328,162 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>
-	/// A burst of flame tongues round a hit, flickering outward and fading - the hit is on fire.
-	/// Hashed from the frame count like every other flicker.
+	/// Wrapped in fire for as long as a dive is live, shaped to him: tongues of flame rooted all
+	/// along his body from his feet to the crown of his head, on both sides, streaming back off
+	/// him the way he is going and curling as he corkscrews, with a long tail off his feet. Built
+	/// along the line of the drawing itself, so it follows his body rather than sitting round it
+	/// as a ball (Eric, 2026-10-10). See-through enough that he still shows inside it.
 	/// </summary>
-	/// <summary>
-	/// Wrapped in fire for as long as a dive is live: tongues of flame all round him, swirling the
-	/// way he spins and streaming back from the way he goes, full strength until the last frames.
-	/// See-through enough that the drawing still shows through it.
-	/// </summary>
-	void DrawFireShroud(CanvasItem canvas, Vector2 at, float radius)
+	void DrawFireShroud(CanvasItem canvas)
 	{
 		int since = moveFrame - currentMove.StartupFrames;
 		int left = currentMove.ActiveFrames + 2 - since;
-		float fade = Mathf.Clamp(left / 3.0f, 0.0f, 1.0f);
-		const int Tongues = 12;
+		float strength = Mathf.Min(Mathf.Clamp((since + 1) / 3.0f, 0.0f, 1.0f), Mathf.Clamp(left / 3.0f, 0.0f, 1.0f));
+		if (!DiveLine(out Vector2 feet, out Vector2 crown)) return;
+
+		Vector2 along = (crown - feet).Normalized();
+		Vector2 across = along.Orthogonal();
+		var back = new Vector2(-Facing, 0.0f);
+		float thick = bodySize.X * 0.38f;
+		const int Tongues = 14;
 		for (int i = 0; i < Tongues; i++)
 		{
-			float a = Mathf.Tau * i / Tongues + since * 0.55f * Facing + CrayonBrush.Noise(fxFrames / 2, i) * 0.2f;
-			Vector2 dir = Vector2.Right.Rotated(a);
-			// Swept back off him by the speed he is going.
-			Vector2 tipDir = (dir + new Vector2(-Facing * 0.9f, -0.2f)).Normalized();
-			float reach = radius * (0.75f + 0.35f * Mathf.Abs(CrayonBrush.Noise(fxFrames, i + 23)));
-			Vector2 side = dir.Orthogonal() * radius * 0.2f;
-			Vector2 root = at + dir * radius * 0.55f;
-			canvas.DrawColoredPolygon(new[] { root + side, root + tipDir * reach, root - side },
-				new Color(0.96f, 0.40f, 0.16f, 0.62f * fade));
-			canvas.DrawColoredPolygon(new[] { root + side * 0.55f, root + tipDir * reach * 0.6f, root - side * 0.55f },
-				new Color(0.99f, 0.76f, 0.26f, 0.7f * fade));
+			float t = (i / 2) / (float)(Tongues / 2 - 1);
+			int side = i % 2 == 0 ? 1 : -1;
+			// The corkscrew rolls the flames over him: each side's tongues swell and shrink in turn.
+			float roll = 0.55f + 0.45f * Mathf.Sin(since * 0.9f + i * 0.8f + (side > 0 ? 0.0f : Mathf.Pi));
+			Vector2 root = feet + (crown - feet) * t + across * side * thick * roll;
+			Vector2 dir = back * 1.1f + across * side * 0.45f;
+			float length = thick * (1.4f + 1.4f * (1.0f - t)) * (0.7f + 0.3f * roll);
+			FlameFx.Tongue(canvas, root, dir, length, thick * 0.95f, side * 0.22f, fxFrames, i, 0.75f * strength);
+		}
+		// The tail: long flames off his feet, the way he has come.
+		for (int i = 0; i < 3; i++)
+		{
+			Vector2 dir = back + across * (i - 1) * 0.35f;
+			FlameFx.Tongue(canvas, feet + across * (i - 1) * thick * 0.4f, dir, thick * (3.4f - 0.6f * Mathf.Abs(i - 1)),
+				thick * 1.1f, (i - 1) * 0.2f, fxFrames, i + 30, 0.8f * strength);
 		}
 	}
 
+	/// <summary>
+	/// The heat round him through a dive, drawn behind him so he shows through it: a glow along
+	/// the line of his body.
+	/// </summary>
+	void DrawDiveGlow()
+	{
+		if (!IsDiving || currentMove.ActiveFx != ActiveFx.Flame || !IsActiveFrame(2)) return;
+		if (!DiveLine(out Vector2 feet, out Vector2 crown)) return;
+		int since = moveFrame - currentMove.StartupFrames;
+		float strength = Mathf.Clamp((since + 1) / 3.0f, 0.0f, 1.0f);
+		for (int i = 0; i <= 4; i++)
+		{
+			FlameFx.Glow(this, feet + (crown - feet) * (i / 4.0f), bodySize.X * 0.9f, strength);
+		}
+	}
+
+	/// <summary>
+	/// The line of his body through a dive, feet to crown, in his own space - off the drawing, so
+	/// the fire follows him exactly.
+	/// </summary>
+	bool DiveLine(out Vector2 feet, out Vector2 crown)
+	{
+		feet = crown = Vector2.Zero;
+		Vector2? neck = rig?.JointGlobal(RigBone.Head);
+		var sole = rig?.Sole(RigBone.LegFrontLower);
+		if (neck == null || sole == null) return false;
+		feet = sole.Value.sole - GlobalPosition;
+		Vector2 head = neck.Value - GlobalPosition;
+		// The crown: on past the neck by about a head.
+		crown = head + (head - feet).Normalized() * bodySize.Y * 0.28f;
+		return true;
+	}
+
+
+	/// <summary>
+	/// A wheel of fire round his whole body - round the middle of him, wide enough to take in his
+	/// head and his feet - spinning the way he faces. Flames run round the rim the way it turns,
+	/// lick outward off it curling back against the spin, and lick inward toward him, with heat
+	/// glowing inside: fire on the inside of the ring as well as the outside, not an orb with
+	/// spikes (Eric, 2026-10-10). Grows in as it lights, roars through the hit, and dies out in the
+	/// last frames. Flambe's Fire Wheel.
+	/// </summary>
+	void DrawFireRing(CanvasItem canvas)
+	{
+		int since = moveFrame - currentMove.StartupFrames;
+		int left = currentMove.ActiveFrames + 4 - since;
+		float grow = Mathf.Clamp((since + 3) / 4.0f, 0.0f, 1.0f);
+		float fade = Mathf.Clamp(left / 4.0f, 0.0f, 1.0f);
+		float strength = Mathf.Min(grow, fade);
+		// Round the middle of the drawing, not the hitbox: the fire is round him.
+		float tall = bodySize.Y * 1.18f * Data.VisualScale;
+		Vector2 centre = new Vector2(0.0f, bodySize.Y * 0.5f - tall * 0.5f);
+		float radius = tall * 0.5f * (0.75f + 0.25f * grow);
+		float spin = moveFrame * 0.38f * Facing;
+
+		// Heat inside the wheel - faint, so he still shows through it.
+		FlameFx.Glow(canvas, centre, radius * 0.95f, 0.45f * strength);
+
+		// The wheel itself: flames running round the rim the way it spins, each overlapping the
+		// next, so it is one band of fire rather than a ring of separate spikes.
+		const int Rim = 10;
+		for (int i = 0; i < Rim; i++)
+		{
+			float a = Mathf.Tau * i / Rim + spin;
+			Vector2 outward = Vector2.Right.Rotated(a);
+			Vector2 onward = outward.Orthogonal() * Facing;
+			FlameFx.Tongue(canvas, centre + outward * radius - onward * radius * 0.3f, onward + outward * 0.15f,
+				radius * 0.95f, radius * 0.34f, -0.2f * Facing, fxFrames, i, 0.85f * strength);
+		}
+
+		// Off the outside, long flames whipped back by the spin and curling away from it; off the
+		// inside, shorter ones licking in toward him. Set between each other, never in a cluster,
+		// so no part of it reads as a star.
+		const int Licks = 7;
+		for (int i = 0; i < Licks; i++)
+		{
+			float wobble = CrayonBrush.Noise(fxFrames / 2, i + 31);
+			float a = Mathf.Tau * i / Licks + spin + 0.4f;
+			Vector2 outward = Vector2.Right.Rotated(a);
+			Vector2 onward = outward.Orthogonal() * Facing;
+			FlameFx.Tongue(canvas, centre + outward * radius * 1.05f, outward * 0.75f - onward * 0.7f,
+				radius * (0.75f + 0.25f * wobble), radius * 0.36f, 0.35f * Facing, fxFrames, i + 20, 0.8f * strength);
+
+			float b = a + Mathf.Pi / Licks;
+			Vector2 outwardB = Vector2.Right.Rotated(b);
+			Vector2 onwardB = outwardB.Orthogonal() * Facing;
+			FlameFx.Tongue(canvas, centre + outwardB * radius * 0.92f, -outwardB * 0.8f - onwardB * 0.55f,
+				radius * (0.5f + 0.15f * wobble), radius * 0.3f, -0.3f * Facing, fxFrames, i + 50, 0.6f * strength);
+		}
+	}
+
+	/// <summary>
+	/// A burst of fire round a hit: curved tongues flaring out from it and leaning up as they go,
+	/// the way flame rises, swelling as it catches and dying back. Hashed flicker, never random.
+	/// </summary>
 	void DrawFlameBurst(CanvasItem canvas, Vector2 at, float radius)
 	{
 		int since = moveFrame - currentMove.StartupFrames;
 		float t = Mathf.Clamp(since / (float)(currentMove.ActiveFrames + 5), 0.0f, 1.0f);
 		float fade = 1.0f - t * t;
-		const int Tongues = 9;
+		FlameFx.Glow(canvas, at, radius * 0.8f, fade);
+		// A flare-up, not a star: every tongue rises, fanned out from straight up and thrown
+		// forward the way the hit goes, rooted all through the hit and curling as it climbs.
+		const int Tongues = 7;
+		Vector2 rise = (Vector2.Up + Vector2.Right * Facing * 0.55f).Normalized();
 		for (int i = 0; i < Tongues; i++)
 		{
-			float a = Mathf.Tau * i / Tongues + CrayonBrush.Noise(fxFrames / 2, i) * 0.25f;
-			Vector2 dir = Vector2.Right.Rotated(a);
-			// Flames lean upward whichever way they burst.
-			Vector2 tipDir = (dir + Vector2.Up * 0.6f).Normalized();
-			float reach = radius * (0.7f + 0.35f * Mathf.Abs(CrayonBrush.Noise(fxFrames, i + 11))) * (0.6f + 0.5f * t);
-			Vector2 side = dir.Orthogonal() * radius * 0.18f;
-			Vector2 root = at + dir * radius * 0.25f;
-			canvas.DrawColoredPolygon(new[] { root + side, root + tipDir * reach, root - side },
-				new Color(0.96f, 0.40f, 0.16f, 0.85f * fade));
-			canvas.DrawColoredPolygon(new[] { root + side * 0.55f, root + tipDir * reach * 0.62f, root - side * 0.55f },
-				new Color(0.99f, 0.76f, 0.26f, 0.9f * fade));
+			float across = i / (float)(Tongues - 1) - 0.5f;
+			float wobble = CrayonBrush.Noise(fxFrames / 3, i);
+			Vector2 dir = rise.Rotated(across * 2.0f + wobble * 0.2f);
+			Vector2 root = at + new Vector2(across * radius * 1.1f, radius * (0.3f - 0.25f * Mathf.Abs(across)));
+			// Longest up the middle, shorter to the sides.
+			float length = radius * (1.0f + 0.6f * (1.0f - 2.0f * Mathf.Abs(across))
+				+ 0.3f * Mathf.Abs(CrayonBrush.Noise(fxFrames / 2, i + 11))) * (0.6f + 0.6f * t);
+			FlameFx.Tongue(canvas, root, dir, length, radius * 0.5f, -across * 0.6f, fxFrames, i, fade);
 		}
-		canvas.DrawCircle(at, radius * 0.32f * fade, new Color(1.0f, 0.93f, 0.66f, 0.85f * fade));
 	}
+
 
 	/// <summary>
 	/// Above the head, bolts arc up from the antennae into the hit; anywhere else, a crackling
@@ -4505,13 +4617,10 @@ public partial class Fighter : CharacterBody2D
 			float x = (i / (float)(Tongues - 1) - 0.5f) * bodySize.X * 0.9f + CrayonBrush.Noise(clock / 24, i) * 8.0f;
 			float baseY = bodySize.Y * (0.25f - 0.5f * Mathf.Abs(CrayonBrush.Noise(i, 41)));
 			Vector2 foot = new Vector2(x, baseY - 40.0f * t);
-			float height = (34.0f + 16.0f * Mathf.Abs(CrayonBrush.Noise(clock / 6, i))) * (1.0f - t * 0.5f);
-			float width = 13.0f * (1.0f - t * 0.6f);
-			float alpha = fade * (1.0f - t);
-			canvas.DrawColoredPolygon(new[] { foot + new Vector2(-width, 0.0f), foot + new Vector2(width, 0.0f), foot + new Vector2(CrayonBrush.Noise(clock, i) * 6.0f, -height) },
-				new Color(0.97f, 0.45f, 0.18f, 0.85f * alpha));
-			canvas.DrawColoredPolygon(new[] { foot + new Vector2(-width * 0.5f, 0.0f), foot + new Vector2(width * 0.5f, 0.0f), foot + new Vector2(0.0f, -height * 0.6f) },
-				new Color(1.0f, 0.86f, 0.35f, 0.9f * alpha));
+			float height = (38.0f + 16.0f * Mathf.Abs(CrayonBrush.Noise(clock / 6, i))) * (1.0f - t * 0.5f);
+			float width = 22.0f * (1.0f - t * 0.6f);
+			FlameFx.Tongue(canvas, foot, Vector2.Up, height, width, CrayonBrush.Noise(clock / 8, i + 3) * 0.3f,
+				clock, i, fade * (1.0f - t));
 		}
 	}
 
@@ -4818,10 +4927,11 @@ public partial class Fighter : CharacterBody2D
 			if (IsDrawnAsBall) DrawBall(1.0f, rollAngle);
 			else if (pose != null) DrawHeldPose(pose);
 			else if (IsBombArmed) DrawBomb();
+			DrawDiveGlow();
 			DrawBlinkTrail();
 			DrawAirDashTrail();
 			DrawSpinBlades(this, false);
-			DrawSwingTrail();
+			DrawSmear();
 			DrawGrabArms();
 			DrawPistonArm();
 			DrawTether();

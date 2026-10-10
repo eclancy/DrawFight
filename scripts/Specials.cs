@@ -67,17 +67,26 @@ public static class Specials
 
 	/// <summary>
 	/// Up: the recovery. Two wings of fire burst out of his back, each beating on its own hinge,
-	/// and he flies, rising slowly and steadily for over a second while he steers left and right
-	/// - slower than a jump, but it goes much higher and can be aimed back at the stage. Anyone he
-	/// flies into is singed.
+	/// and he flies, rising steadily for over a second - faster with the stick held up - and
+	/// steering hard left and right, stopping where the stick lets go: slower than a jump, but it
+	/// goes much higher and goes where he points it. Anyone he flies into is singed again and
+	/// again, lightly, while they stay in the fire (Eric, 2026-10-10: it hit once, and steered
+	/// like a balloon).
 	/// </summary>
 	static MoveData FlareJump() => new MoveData
 	{
 		MoveName = "Fire Wings",
 		Anim = AttackAnim.Soar,
 		StartupFrames = 8, ActiveFrames = 70, EndlagFrames = 16,
-		Damage = 6.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.6f,
+		Damage = 4.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.5f,
 		LaunchAngleDegrees = 80.0f,
+		RehitFrames = 8,
+		LinkHit = new MoveData
+		{
+			MoveName = "Fire Wings (singe)",
+			Damage = 1.0f, BaseKnockback = 18.0f, KnockbackGrowth = 0.05f, LaunchAngleDegrees = 80.0f,
+			BurnFrames = 24, BurnDamage = 1.0f,
+		},
 		HitboxOffset = new Vector2(0.0f, -30.0f), HitboxRadius = 54.0f,
 		Special = SpecialKind.Recovery,
 		Flight = true, SpecialRise = 560.0f,
@@ -111,6 +120,8 @@ public static class Specials
 			LaunchAngleDegrees = 75.0f,
 			Special = SpecialKind.Drop,
 			SpecialSpeed = 260.0f, SpecialGravity = 2400.0f, SpecialLifetime = 70,
+			// It puts itself out on the first thing it lands on (Eric, 2026-10-10).
+			LandsOnPlatforms = true,
 			BurnFrames = 30, BurnDamage = 1.0f,
 			FxFlame = true, FxColor = new Color(0.98f, 0.52f, 0.20f), FxRadius = 11.0f,
 		},

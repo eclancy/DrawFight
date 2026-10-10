@@ -12,12 +12,12 @@ coloured pencil inside a black marker outline, with nothing finer than a brow or
 Lugnut (Eric's call, 2026-10-08). The folder stays fighters/swift.
 
 Drawn, rasterised and pencilled as drawn.py describes, so this needs $GODOT_BIN. His fire wings
-and frying pan are drawn the same way, in his style, each on the canvas and grip the stick-figure
+and lighter are drawn the same way, in his style, each on the canvas and grip the stick-figure
 drawing it replaced had.
 
 Emits:
     fighters/swift/parts/*.png      the rig's parts, trimmed, with their pivots in rig.json
-    fighters/swift/poses/*.png      his wings and pan
+    fighters/swift/poses/*.png      his wings and lighter
     fighters/swift/rig.json
     fighters/swift/source/drawing.png   the whole figure, as the example is drawn
 """
@@ -34,7 +34,7 @@ from drawn import REPO, along, draw_parts, mirrored, place
 
 ROOT = os.path.join(REPO, 'fighters', 'swift')
 
-# Canonical units per drawing unit. His wings and pan are the size they were beside the stick
+# Canonical units per drawing unit. His wings and lighter are the size they were beside the stick
 # figure, which stood about 613 units tall; at 0.74 he stands the same.
 SCALE = 0.74
 
@@ -50,7 +50,7 @@ C = dict(
 # --- the limbs, each hanging straight down from its joint at (0, 0) ---------------------------
 
 UPPER_ARM_LEN = 135.0
-FIST = 158.0           # elbow to the middle of the fist: where a pan is held
+FIST = 158.0           # elbow to the middle of the fist: where his lighter is held
 HAND_TOP = 120.0       # elbow to the top of the hand: below it is hand, above it is arm
 THIGH_LEN = 170.0
 SHIN_LEN = 165.0
@@ -86,7 +86,7 @@ FOREARM = '''
          C 38,198 44,190 44,176 L 44,140 C 44,130 38,124 30,124 Z" fill="{skin}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
 '''
 
-# The thumb across the empty fist. The hand that holds his pan has none: its handle runs under it.
+# The thumb across the empty fist. The hand that holds his lighter has none: it runs under it.
 THUMB = '''
 <path d="M -44,150 C -26,148 -12,156 -8,170" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round"/>
 '''
@@ -219,27 +219,33 @@ def fill(svg, colours=C):
     return svg.format(**values)
 
 
-# --- his pan and wings, drawn in his style ---------------------------------------------------
+# --- his lighter and wings, drawn in his style -----------------------------------------------
 
 # Each keeps the canvas, grip and anchor the old stick-figure drawing had, so the game holds,
 # sizes and measures it exactly as before. Drawn at one canonical unit per drawing unit, with
 # outlines about as heavy as his own at that size.
-TOOL_C = dict(C, pan='#3c3842', pan_face='#6d6f7a', wood='#c08a52', wo=6, wi=4)
+TOOL_C = dict(C, chrome_shade='#9a9eac', wheel='#3c3842', wo=6, wi=4)
 
-# The flambe pan, held tip up by its handle on a 190 x 300 canvas, fire roaring up off it.
-PAN = ('''
-<rect x="86" y="148" width="18" height="144" rx="9" fill="{wood}" stroke="{ink}" stroke-width="{wo}"/>
-<ellipse cx="95" cy="126" rx="62" ry="34" fill="{pan}" stroke="{ink}" stroke-width="{wo}"/>
-<ellipse cx="95" cy="122" rx="50" ry="24" fill="{pan_face}" stroke="{ink}" stroke-width="{wi}"/>
-<path d="M 50,124 C 40,96 52,74 62,56 C 64,74 70,84 76,88 C 72,60 82,30 98,6 C 100,34 108,54 118,66
-         C 120,52 128,40 140,32 C 136,56 150,90 140,124 Z" fill="{flame_red}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
-<path d="M 64,124 C 58,104 66,90 72,80 C 74,94 80,100 86,102 C 86,80 92,60 102,44 C 104,66 112,80 122,88
-         C 124,98 130,108 126,124 Z" fill="{flame_orange}"/>
-<path d="M 80,124 C 78,112 82,104 88,98 C 90,106 94,110 100,110 C 100,100 104,92 110,86 C 112,100 116,112 112,124 Z"
-      fill="{flame_yellow}"/>
-<path d="M 33,126 C 33,145 61,160 95,160 C 129,160 157,145 157,126 C 157,136 129,146 95,146 C 61,146 33,136 33,126 Z"
-      fill="{pan}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
-''', (95, 270))
+# His lighter: a chrome flip-top, lid thrown open, a flame out of it far bigger than any lighter
+# has a right to make - his frying pan until Eric's call (2026-10-10). Held upright in his fist
+# on the pan's old 190 x 300 canvas and grip, so every move holds and measures it the same. The
+# flame is one curved shape in three sizes, red, orange and a yellow heart, like his wings.
+FLAME = ('M 78,172 C 52,152 34,120 42,88 C 46,68 56,56 62,40 C 66,58 72,66 80,70 C 74,46 84,22 104,4 C 100,28 108,46 120,56 C 124,42 134,32 148,26 C 140,48 158,72 154,98 C 152,130 136,154 108,172 Z')
+LIGHTER = ('''
+<rect x="66" y="154" width="58" height="40" rx="8" fill="{metal}" stroke="{ink}" stroke-width="{wo}"
+      transform="rotate(-100 66 194)"/>
+<path d="%s" fill="{flame_red}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
+<path d="%s" fill="{flame_orange}" transform="translate(93,170) scale(0.72) translate(-93,-170)"/>
+<path d="%s" fill="{flame_yellow}" transform="translate(93,170) scale(0.44) translate(-93,-170)"/>
+<rect x="72" y="166" width="42" height="32" rx="3" fill="{chrome_shade}" stroke="{ink}" stroke-width="{wi}"/>
+<circle cx="84" cy="182" r="4.5" fill="{ink}"/>
+<circle cx="102" cy="182" r="4.5" fill="{ink}"/>
+<circle cx="119" cy="176" r="10" fill="{wheel}" stroke="{ink}" stroke-width="{wi}"/>
+<rect x="66" y="194" width="58" height="100" rx="10" fill="{metal}" stroke="{ink}" stroke-width="{wo}"/>
+<path d="M 78,200 L 78,236" fill="none" stroke="{white}" stroke-width="7" stroke-linecap="round"/>
+<path d="M 103,204 L 107,216 L 120,216 L 110,224 L 114,237 L 103,229 L 92,237 L 96,224 L 86,216 L 99,216 Z"
+      fill="{flame_red}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
+''' % (FLAME, FLAME, FLAME), (95, 270))
 
 
 # His two fire wings, one each side of his back with a gap between them: each a curved leading
@@ -334,16 +340,16 @@ def build():
             if name.startswith('Arm') and name.endswith('_Lower'):
                 parts[part]['hand'] = round((HAND_TOP - box[1]) * SCALE - top, 1)
 
-    # Nothing in his hand until a move puts his pan there: a blank prop part, the size the old one
-    # was. His pan and wings, drawn and pencilled like him, each on its old canvas.
+    # Nothing in his hand until a move puts his lighter there: a blank prop part, the size the old
+    # one was. His lighter and wings, drawn and pencilled like him, each on its old canvas.
     blank = Image.new('RGBA', (24, 26), (0, 0, 0, 0))
     blank.save(os.path.join(parts_dir, 'PropFront.png'))
     parts['PropFront'] = {'texture': 'parts/PropFront.png', 'pivot': [12.0, 10.0], 'empty': True}
-    tools, _ = draw_parts({'tool_pan': (PAN[0], (0, 0, 190, 300), PAN[1], False),
+    tools, _ = draw_parts({'tool_lighter': (LIGHTER[0], (0, 0, 190, 300), LIGHTER[1], False),
                            'wings': (WINGS[0], (0, 0, 860, 330), WINGS[1], False)},
                           fill, TOOL_C, 1.0, seed_prefix='flambe/', trim=False)
     poses = {}
-    for name in ('tool_pan', 'wings'):
+    for name in ('tool_lighter', 'wings'):
         img, anchor, _ = tools[name]
         img.save(os.path.join(poses_dir, name + '.png'))
         poses[name] = {'texture': 'poses/%s.png' % name, 'anchor': [round(anchor[0], 1), round(anchor[1], 1)]}

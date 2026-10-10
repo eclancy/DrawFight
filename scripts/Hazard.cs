@@ -381,7 +381,9 @@ public partial class Hazard : Node2D
 
 		// Something dropped - a steel beam, an anvil - stops on solid ground instead of falling
 		// through the stage. Soft platforms do not stop it; it lands on what you cannot drop through.
-		if (move.Special == SpecialKind.Drop && velocity.Y > 0.0f && HitsSolidGround())
+		// Rain lands on anything at all, soft platforms too.
+		if (move.Special == SpecialKind.Drop && velocity.Y > 0.0f
+			&& (move.LandsOnPlatforms ? FellOntoPlatform(dt) : HitsSolidGround()))
 		{
 			Expire();
 			return;
@@ -484,6 +486,24 @@ public partial class Hazard : Node2D
 			CollisionMask = 0b01,
 		};
 		return GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count > 0;
+	}
+
+	/// <summary>
+	/// Whether this hazard came down onto solid ground or a soft platform in the last frame: a ray
+	/// along the way it fell, not a point where it is now, because rain falling fast enough to
+	/// cover a platform's whole thickness in a frame would otherwise pass through it.
+	/// </summary>
+	bool FellOntoPlatform(float dt)
+	{
+		Vector2 bottom = GlobalPosition + new Vector2(0.0f, move.FxRadius * 0.4f);
+		var query = new PhysicsRayQueryParameters2D
+		{
+			From = bottom - velocity * dt,
+			To = bottom,
+			CollisionMask = 0b11,
+			HitFromInside = true,
+		};
+		return GetWorld2D().DirectSpaceState.IntersectRay(query).Count > 0;
 	}
 
 	/// <summary>Whether the bottom of this hazard's drawing rests on solid ground or a soft platform.</summary>
@@ -771,20 +791,9 @@ public partial class Hazard : Node2D
 	/// </summary>
 	void DrawFlame(float radius)
 	{
-		Vector2 back = velocity.LengthSquared() > 1.0f ? -velocity.Normalized() : Vector2.Left;
-		const int Puffs = 5;
-		for (int i = Puffs; i >= 1; i--)
-		{
-			float k = i / (float)Puffs;
-			float jitter = CrayonBrush.Noise(ageFrames + i * 7, 11) * radius * 0.25f;
-			Vector2 at = back * radius * 0.55f * i + back.Orthogonal() * jitter;
-			var puff = new Color(0.95f, 0.30f + 0.25f * (1.0f - k), 0.16f, 0.75f * (1.0f - k * 0.8f));
-			DrawCircle(at, radius * (1.0f - k * 0.6f), puff);
-		}
-		float flicker = 1.0f + CrayonBrush.Noise(ageFrames, 3) * 0.08f;
-		DrawCircle(Vector2.Zero, radius * 1.1f * flicker, new Color(0.96f, 0.36f, 0.16f));
-		DrawCircle(Vector2.Zero, radius * 0.78f * flicker, new Color(0.99f, 0.62f, 0.20f));
-		DrawCircle(Vector2.Zero, radius * 0.45f, new Color(1.0f, 0.93f, 0.62f));
+		// Curved flames trailing off it the way it is not going (FlameFx).
+		Vector2 back = velocity.LengthSquared() > 1.0f ? -velocity.Normalized() : Vector2.Up;
+		FlameFx.Ball(this, Vector2.Zero, radius, back, ageFrames);
 	}
 
 	/// <summary>

@@ -42,9 +42,9 @@ follows weight — light fighters get quick multi-hit strings, heavies get two s
 |---|---|---|---|
 | theme | a hotshot punk rocker who is also a French chef: flame mohawk, spiked and studded leather jacket, wallet chain, chef's neckerchief, a defiant smirk, flames on everything; lean and long in the leg, so nearly every normal is a kick; a slow charged fireball, a charged fireball roll, two flapping fire wings, a cloud that rains fire; every normal has its own trick | ball on long stretchy legs: tall for big, slow hits, short for small, quick ones | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); his hard hat glints while he blocks, and while it is armour through his smashes and barge; huge up top and short in the leg, so almost nothing he does uses his feet |
 | jab | two flicker jabs, then "Flambe!" - a burning palm | kick, low kick, ball bonk | two slow pipe-wrench bashes |
-| tilts | roundhouse (press again: heel hook), torch flip (a flurry that pops them up), crêpe flip (the pan slid under them flips them head over heels) | kicks that stretch the kicking leg out to the hit | shovel jab, pickaxe arc, cone shove (a traffic cone shoved along the floor with both hands; whoever runs into it trips) |
+| tilts | roundhouse (press again: heel hook), torch flip (a flurry that pops them up), hotfoot (his lighter's flame swept under their feet flips them head over heels) | kicks that stretch the kicking leg out to the hit | shovel jab, pickaxe arc, cone shove (a traffic cone shoved along the floor with both hands; whoever runs into it trips) |
 | dash | swan dive (flat out, corkscrewing, wrapped in fire) | rolls into them as a ball | hard-hat barge |
-| smashes | flambe pan (a flaming frying pan, slow, burns), fire pillar (four climbing hits), fire geysers (out of the floor both sides) | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
+| smashes | lighters up (his lighter held high like the crowd at a gig, then the flame brought down; slow, burns), fire pillar (four climbing hits), fire geysers (out of the floor both sides) | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
 | aerials | fire wheel (a quick flurry all round), double axe kick, backdraft (burns), bicycle flurry, fire drill (no spike) | ball spin, stretch kick, donkey kick, flip, stomp | stop sign spin, sledge chop, shovel back swing, pick swipe, jackhammer (ridden down, many hits, a spike) |
 
 This is why the normal attacks are authored **once, at medium**, in `DefaultMoveset.cs` and
@@ -163,9 +163,13 @@ any of them:
 - `ShowExtra` - shows one of the rig's extras for the move (the glint on Lug's hard hat through a barge).
 - `ChargeWithSpecial` + `ChargeDamage` + `ChargeSize` - a chargeable special: hold the special
   button and it charges (in the air too), then fires bigger and harder. Swift's fireball.
-- `Flight` - a recovery that flies: a steady slow rise through a long active window, steered
-  left and right, with `HeldArt` drawn behind as flapping wings. Checked by the height it gains
-  rather than by launch speed. Swift's fire wings.
+- `Flight` - a recovery that flies: a steady rise through a long active window, faster with the
+  stick held up, steered hard left and right and stopping where the stick lets go, with `HeldArt`
+  drawn behind as flapping wings. Checked by the height it gains rather than by launch speed.
+  Swift's fire wings, which singe whoever they fly through again and again with a light burning
+  link hit (`RehitFrames` + `LinkHit`; Eric, 2026-10-10: it hit once and steered like a balloon).
+- `LandsOnPlatforms` - a `Drop` that stops on anything that can be stood on, soft platforms too,
+  instead of only on solid ground. Fire rain does; a wrecking ball crashes on through.
 - `FxFlame` - a projectile with no art drawn as a ball of fire with a tail. `FxMissile` draws
   one as a little finned missile with an exhaust flame (DoomBot's forward air).
 - `BurnFrames` + `BurnDamage` - sets whoever it hits on fire: small ticks of damage over the
@@ -180,6 +184,14 @@ any of them:
 - `ComboNext` on **any** normal, not just the jab: press attack again during the move and the
   follow-up comes out as soon as the first hit is done. Flambe's tilts, dash attack and forward
   air are two-part this way. The speed check counts a combo string as one move.
+- `ActiveFx.FireRing` - a wheel of fire all the way round him, spinning, for as long as the hit
+  is live; size the hitbox to the wheel. Flambe's Fire Wheel (Eric, 2026-10-10: the fire was a
+  small burst over his stomach). It is a band of flames running round the rim, with long ones
+  whipped off the outside and shorter ones licking in toward him.
+- **Fire is tongues, not spikes** (`FlameFx`; Eric, 2026-10-10: it looked like an orb with
+  spikes). Every flame Flambe makes is built of curved teardrop tongues - round at the root,
+  bending as they rise, flickering to a point, red outside, orange, a yellow heart - so they run
+  together into fire. A burst rises and leans the way the hit goes; it never fans out like a star.
 - `ActiveFx` - what a hit is drawn as while live: `Sparks` (steel), `Electric` (bolts from the
   antennae to a hitbox overhead, or a crackling ring round one anywhere else), `Jets` (rocket
   flames out of both soles, wherever the feet are in the pose) and `Flame` (a burst of flame
@@ -208,7 +220,7 @@ any of them:
 - `StretchLeg` - the front leg alone stretches out to the hitbox and points at it through the
   windup, then comes back. Circy's long kicks.
 - `SpinVictim` - whoever it hits turns one somersault through their hitstun. Only the drawing
-  turns. Flambe's crepe flip and Lug's traffic cone.
+  turns. Flambe's hotfoot and Lug's traffic cone.
 - `Armor` - through the windup and swing, a hit doing this much damage or less still counts but
   does not flinch: no knockback, no hitstun, a clang. Bigger hits and grabs get through. Lug's
   hard hat (8%, on his smashes and barge), which glints for exactly as long as it is on.

@@ -141,6 +141,12 @@ public enum ActiveFx
 
 	/// <summary>A burst of flame tongues round the hitbox - a kick or a punch on fire.</summary>
 	Flame,
+
+	/// <summary>
+	/// A wheel of fire all the way round him, spinning the way he spins and roaring for as long as
+	/// the hit is live - the fire is the move, not a spark where it lands. Flambe's Fire Wheel.
+	/// </summary>
+	FireRing,
 }
 
 [GlobalClass]
@@ -396,7 +402,7 @@ public partial class MoveData : Resource
 	[Export] public bool StretchLeg { get; set; } = false;
 
 	/// <summary>
-	/// The hit turns its victim head over heels through their hitstun - flipped like a crepe, or
+	/// The hit turns its victim head over heels through their hitstun - flipped by a hotfoot, or
 	/// tripped over a cone. Only the drawing turns; the launch is the move's own.
 	/// </summary>
 	[Export] public bool SpinVictim { get; set; } = false;
@@ -593,6 +599,13 @@ public partial class MoveData : Resource
 	public MoveData RainDrop;
 
 	/// <summary>
+	/// A <see cref="SpecialKind.Drop"/> that stops on anything that can be stood on - a soft
+	/// platform as well as the floor - instead of falling through what you can drop through.
+	/// Rain does; a steel beam or a wrecking ball crashes on through to solid ground.
+	/// </summary>
+	[Export] public bool LandsOnPlatforms { get; set; } = false;
+
+	/// <summary>
 	/// On a throw: a projectile fired from his hand after whoever he throws, along the throw - so
 	/// a throw can be a two-hit combo. EdgeLord's up throw sends a sword up after them.
 	/// </summary>
@@ -745,6 +758,7 @@ public partial class MoveData : Resource
 			ChargeSize = ChargeSize,
 			Flight = Flight,
 			FxFlame = FxFlame,
+			LandsOnPlatforms = LandsOnPlatforms,
 			HangFromArt = HangFromArt,
 			ReleaseDrop = ReleaseDrop,
 			FxColor = FxColor,

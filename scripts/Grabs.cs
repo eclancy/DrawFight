@@ -8,7 +8,7 @@ using Godot;
 /// "no grabs" rule (see .ai/fighting-design.md).
 ///
 /// Every fighter's throws are made of the same things as the rest of their kit, so a throw is
-/// part of who they are: Flambe's are fire and his pan, Lug's are site tools, Circy's are his
+/// part of who they are: Flambe's are fire and his lighter, Lug's are site tools, Circy's are his
 /// stretching ball, EdgeLord's are swords - his up throw sends a sword up after them for a second
 /// hit - DoomBot's are pistons, lightning and rocket boots - his down throw pins them to the floor
 /// and burns them with his jets - and Triguy's are his point, his skid and his tears.
@@ -63,17 +63,17 @@ public static class Grabs
 
 	// Each set is forward, back, up, down.
 
-	/// <summary>Flambe: flame, his frying pan, and a fire column.</summary>
+	/// <summary>Flambe: flame, his lighter, and a fire column.</summary>
 	public static MoveData[] Flambe()
 	{
 		MoveData f = Throw("Flambe Toss", AttackAnim.PalmThrust, 8.0f, 55.0f, 0.6f, 40.0f);
 		f.ActiveFx = ActiveFx.Flame; f.BurnFrames = 40; f.BurnDamage = 2.0f; f.PropArt = "-";
-		MoveData b = Throw("Pan Flip", AttackAnim.OverheadArc, 9.0f, 50.0f, 0.7f, 42.0f);
-		b.PropArt = "tool_pan"; b.SpinVictim = true;
+		MoveData b = Throw("Backdraft", AttackAnim.OverheadArc, 9.0f, 50.0f, 0.7f, 42.0f);
+		b.PropArt = "tool_lighter"; b.SpinVictim = true;
 		MoveData u = Throw("Fire Lift", AttackAnim.Uppercut, 7.0f, 60.0f, 0.55f, 88.0f);
 		u.ActiveFx = ActiveFx.Flame; u.BurnFrames = 40; u.BurnDamage = 2.0f; u.PropArt = "-";
-		MoveData d = Throw("Hot Plate", AttackAnim.OverheadSlam, 6.0f, 70.0f, 0.3f, 72.0f);
-		d.PropArt = "tool_pan"; d.ActiveFx = ActiveFx.Flame; d.BurnFrames = 60; d.BurnDamage = 2.0f;
+		MoveData d = Throw("Hot Seat", AttackAnim.OverheadSlam, 6.0f, 70.0f, 0.3f, 72.0f);
+		d.PropArt = "tool_lighter"; d.ActiveFx = ActiveFx.Flame; d.BurnFrames = 60; d.BurnDamage = 2.0f;
 		return new[] { f, b, u, d };
 	}
 
