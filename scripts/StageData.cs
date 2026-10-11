@@ -96,6 +96,19 @@ public enum PlatformLook
 	/// has <see cref="StageData.Traffic"/>, cars drive along the top of it.
 	/// </summary>
 	Road,
+
+	/// <summary>A concert stage's floor: wooden boards, with a pleated skirt hanging down its front.</summary>
+	StageDeck,
+
+	/// <summary>An amp on a stack of speaker cabinets standing on the ground; the top of the amp is the platform.</summary>
+	AmpStack,
+
+	/// <summary>
+	/// A red steel girder - a lighting rig - held up on a steel tower at each end, the towers
+	/// drawn down to the ground, with spotlights hanging from it shining down. Lugnut's, in
+	/// Flambé's story.
+	/// </summary>
+	Girder,
 }
 
 /// <summary>One collidable surface, plus how to draw it.</summary>

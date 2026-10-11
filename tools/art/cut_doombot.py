@@ -54,6 +54,9 @@ import os
 
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter
 
+import faces
+from face_specs import FACES
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
 ROOT = os.path.join(REPO, 'fighters', 'doombot')
@@ -513,6 +516,8 @@ def main():
     }
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
+    # Last: the eyes and mouth lifted out so the game can move them (faces.py, face_specs.py).
+    faces.apply(ROOT, *FACES['doombot'])
     print('head %s  torso %s  covered patch %d px' % (hbox, tbox, sum(arm_over_body.histogram()[128:])))
 
 

@@ -74,7 +74,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
    readability at match size: widening every line uniformly, in place, when it is too thin to
    see - Circy's and Triguy's `LINE_BOOST` - on Eric's own DoomBot at his request, a dark
    ring round the outside edge - and, on Eric's call, Circy's front foot redrawn flat. Each was
-   asked for by name; none is a precedent for the next drawing. See `.ai/art-pipeline.md`.)
+   asked for by name; none is a precedent for the next drawing. Eyes and mouths are lifted out
+   whole and moved - squashed to blink, stretched to talk - never redrawn, and at rest the face
+   is exactly as drawn (Eric's call, 2026-10-11). See `.ai/art-pipeline.md`.)
 2. **Every fighter rigs to the same skeleton**, so the animation library is authored once and
    inherited by everyone. Do not generalise the bone hierarchy — see the non-humanoid escape
    hatch in `.ai/art-pipeline.md` instead.
@@ -107,7 +109,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   (`idle`, `run`, `jump`, `land`, `crouch`, `block`, `hurt`, `roll`, or a move: `jab`, `ftilt`,
   `fsmash`, `nair`...), smears included. **`--film=ground`**, **`smash`** or **`air`** shows every
   move of that kind at its key moments. A pose can look right and move wrong - **this is how
-  motion gets checked**. See "Moving like a body" in `.ai/art-pipeline.md`.
+  motion gets checked**. See "Moving like a body" in `.ai/art-pipeline.md`. **`--film=face`**
+  shows one fighter's face in every expression, and **`--film=turn`** the paper turn and the roll
+  a story twirls a drawing with.
 - **`python tools/art/flambe.py`** and **`python tools/art/lugnut.py`** — redraw and re-rig
   the two stand-ins we drew ourselves, Flambé and Lugnut, with their tools and props. Their parts
   are SVG coloured in pencil (`tools/art/drawn.py`), so they need `$GODOT_BIN` to rasterise them
@@ -121,6 +125,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   wholesale when his own coloured art arrives - see `fighters/README.md`.
 - **`python tools/art/cut_doombot.py`** — re-cut DoomBot from the photo of his drawing,
   including the patch of body filled in behind his arm. About 10 seconds.
+- Every cut script ends by lifting the fighter's eyes and mouth out of the drawing so they can
+  move (`tools/art/faces.py`, the boxes in `tools/art/face_specs.py`); Flambé's and Lugnut's are
+  drawn as separate parts in their own scripts (`FACE`). See "Faces" in `.ai/art-pipeline.md`.
 - **`bash tools/intake/pull_submissions.sh`** — "check for new fighters". Copies new
   submissions from the ecec.dev/draw form into `fighters/incoming/<id>/` (photos, `answers.json`,
   `sheet.md`). That folder is gitignored: a kid's drawing only enters the public repo when it is

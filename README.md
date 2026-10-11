@@ -36,7 +36,7 @@ played it.
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
 | **Fighters** | 6 — **Circy**, the first fighter designed by a kid (Elim), and **Triguy**, his second, sent in through the submission form; **EdgeLord**, a sword fighter drawn by Eric, with placeholder colouring; **DoomBot**, a rogue factory robot drawn and designed by Eric, with a furnace that heats up as he fights; and two stand-ins we drew in code: **Flambé**, a punk rocker, and **Lugnut**, a muscle-bound construction worker |
-| **Stages** | 3 — Fridge Door, Open Plains, City Rooftops |
+| **Stages** | 4 — Fridge Door, Open Plains, City Rooftops, and Big Show: a concert stage with a girder across the top |
 | **Items** | 30, all art supplies — a giant pencil to swing, a paint bucket to throw, glitter bombs, a magic marker that draws a platform, White-Out that rubs off damage. Off, low, medium or high, and each one on or off, from the stage select screen |
 | **Drawing** | draw a fighter in the game itself, on lined paper: marker, coloured pencil, paint bucket, eraser, layers (one per body part) and pages for the things a fighter uses. Saved as you go, and sent straight to ecec.dev - the same place as the website's form |
 | **Screens** | title, main menu, character select, stage select, item settings, match; your drawings, the drawing screen, sending it in |

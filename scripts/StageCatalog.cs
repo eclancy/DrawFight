@@ -6,7 +6,7 @@ using Godot;
 /// </summary>
 public static class StageCatalog
 {
-	public const int Count = 3;
+	public const int Count = 4;
 
 	/// <summary>Cached for the same reason the fighter roster is: a StageData is a Resource.</summary>
 	static readonly StageData[] cache = new StageData[Count];
@@ -16,7 +16,7 @@ public static class StageCatalog
 		int i = ((index % Count) + Count) % Count;
 		if (cache[i] != null) return cache[i];
 
-		cache[i] = i == 1 ? OpenPlains() : i == 2 ? CityRooftops() : FridgeDoor();
+		cache[i] = i == 1 ? OpenPlains() : i == 2 ? CityRooftops() : i == 3 ? BigShow() : FridgeDoor();
 		return cache[i];
 	}
 
@@ -26,6 +26,7 @@ public static class StageCatalog
 		{
 			case 1: return "Open Plains";
 			case 2: return "City Rooftops";
+			case 3: return "Big Show";
 			default: return "Fridge Door";
 		}
 	}
@@ -277,12 +278,78 @@ public static class StageCatalog
 			new StageProp(PropKind.Cloud, new Rect2(200.0f, -880.0f, 280.0f, 90.0f), 24),
 		};
 
-		data.SpawnPoints = new[]
+			data.SpawnPoints = new[]
 		{
 			new Vector2(-850.0f, -340.0f), new Vector2(520.0f, -370.0f),
 			new Vector2(-130.0f, -520.0f), new Vector2(930.0f, -1060.0f),
 		};
 		data.RespawnPoint = new Vector2(-130.0f, -900.0f);
+		return data;
+	}
+
+	// =========================================================================
+	// 3 - BIG SHOW
+	// =========================================================================
+
+	/// <summary>
+	/// A concert stage, drawn on a big page stuck to the fridge door - Flambé's, for his story,
+	/// where Lugnut has put a lighting rig over it (.ai/story-mode.md). A wooden stage deck with
+	/// the fall off either end, an amp stack at each side, and a red steel girder across the top
+	/// exactly as wide as the deck, its spotlights shining down. The amps are the way up for anyone
+	/// whose jump will not reach the girder on its own (Circy).
+	/// </summary>
+	public static StageData BigShow()
+	{
+		var data = new StageData
+		{
+			DisplayName = "Big Show",
+			Style = StageStyle.PinnedPages,
+
+			// The fridge door round the page, as on Fridge Door.
+			SkyTop = new Color(0.86f, 0.88f, 0.90f),
+			SkyBottom = new Color(0.76f, 0.79f, 0.83f),
+			RuleLine = new Color(0.78f, 0.855f, 0.90f),
+			MarginLine = new Color(0.91f, 0.66f, 0.72f),
+			Ink = new Color(0.19f, 0.31f, 0.61f),
+			GroundFill = new Color(0.96f, 0.95f, 0.91f),
+			GroundCrayon = new Color(0.72f, 0.80f, 0.86f),
+			PlatformCrayon = new Color(0.93f, 0.62f, 0.45f),
+			PropFill = new Color(0.97f, 0.96f, 0.92f),
+			PropCrayon = new Color(0.72f, 0.83f, 0.72f),
+			Accent = new Color(0.98f, 0.66f, 0.32f),
+			Celestial = new Color(0.99f, 0.93f, 0.62f),
+			Night = false,
+			GroundLine = 0.0f,
+		};
+
+		const float Width = 1520.0f;
+		data.Platforms = new[]
+		{
+			new StagePlatform(new Rect2(-Width * 0.5f, 0.0f, Width, 52.0f), false, PlatformLook.StageDeck),
+			new StagePlatform(new Rect2(-620.0f, -230.0f, 210.0f, 26.0f), true, PlatformLook.AmpStack),
+			new StagePlatform(new Rect2(410.0f, -230.0f, 210.0f, 26.0f), true, PlatformLook.AmpStack),
+			// The girder: the same width as the deck under it.
+			new StagePlatform(new Rect2(-Width * 0.5f, -470.0f, Width, 30.0f), true, PlatformLook.Girder),
+		};
+
+		data.Pages = new[]
+		{
+			new PinnedPage(new Rect2(-900.0f, -720.0f, 1800.0f, 920.0f), -0.6f, PaperKind.Plain, 2, 7),
+		};
+
+		data.Props = new[]
+		{
+			new StageProp(PropKind.TapedDrawing, new Rect2(-1080.0f, -1180.0f, 300.0f, 250.0f), 85),
+			new StageProp(PropKind.FridgeMagnet, new Rect2(-955.0f, -1205.0f, 50.0f, 50.0f), 86),
+			new StageProp(PropKind.FridgeHandle, new Rect2(1180.0f, -1100.0f, 56.0f, 1700.0f), 87),
+		};
+
+		data.SpawnPoints = new[]
+		{
+			new Vector2(-300.0f, -160.0f), new Vector2(300.0f, -160.0f),
+			new Vector2(-120.0f, -560.0f), new Vector2(120.0f, -560.0f),
+		};
+		data.RespawnPoint = new Vector2(0.0f, -660.0f);
 		return data;
 	}
 }

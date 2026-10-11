@@ -61,7 +61,10 @@ uses it at the moment.
 own paper (ruled with a margin, squared, or plain), a tilt of a degree or two, a soft shadow,
 and one or two round fridge magnets along its top edge. They overlap, back to front, the way a
 real fridge door does, and the stage is drawn across them - every platform sits on paper, with
-the door showing in the gaps. Used by Fridge Door.
+the door showing in the gaps. Used by Fridge Door, and by Big Show, where one big sheet has a
+concert stage drawn on it: a wooden deck with a pleated skirt, amp stacks, and a red steel
+girder across the top hung with spotlights (`PlatformLook.StageDeck`, `AmpStack`, `Girder`).
+Its spotlights are pale and see-through, so they light a fighter rather than hide one.
 
 **`OutsideTheLines`** is for nature stages. Plain paper, no rules, indigo outlines, and crayon
 fill that deliberately **overshoots the line**. Used by Open Plains. The overshoot is the single

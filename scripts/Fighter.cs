@@ -499,6 +499,7 @@ public partial class Fighter : CharacterBody2D
 		float dt = (float)delta;
 		UpdateChargeVoice();
 		fxFrames++;
+		TickTwirl();
 
 		// Hitlag freezes this fighter completely - no movement, no state advance, no timers.
 		// Everything else in the world keeps running. This is the single biggest contributor
@@ -765,9 +766,10 @@ public partial class Fighter : CharacterBody2D
 		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut && prop != "-" && State != FighterState.LedgeHang && heldItem == null);
 		ShowTurnFrame(spinning);
 
-		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter(),
+		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll(),
 			State == FighterState.Dodging && groundRoll);
-		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth());
+		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth());
+		UpdateFace();
 		rig.SetFrontLegReach(LegReachNow());
 		// Standing still on flat feet (FighterRig.StandOnFeet) - turned on below for each pose
 		// that is just standing.

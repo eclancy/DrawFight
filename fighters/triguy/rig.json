@@ -114,6 +114,34 @@
       ], 
       "onPart": true, 
       "part": "Hat"
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "eye", 
+      "name": "faceEye", 
+      "offset": [
+        -182.5, 
+        -447.0
+      ], 
+      "onPart": true, 
+      "part": "FaceEye", 
+      "stretch": 1.1, 
+      "tilt": 1
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "mouth", 
+      "name": "faceMouth", 
+      "offset": [
+        -127.5, 
+        -346.5
+      ], 
+      "onPart": true, 
+      "part": "FaceMouth", 
+      "stretch": 0.12, 
+      "tilt": 1
     }
   ], 
   "figureHeight": 2185, 
@@ -148,6 +176,20 @@
         17.5
       ], 
       "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "FaceEye": {
+      "pivot": [
+        134.5, 
+        114.5
+      ], 
+      "texture": "parts/FaceEye.png"
+    }, 
+    "FaceMouth": {
+      "pivot": [
+        234.5, 
+        0.0
+      ], 
+      "texture": "parts/FaceMouth.png"
     }, 
     "Hat": {
       "pivot": [

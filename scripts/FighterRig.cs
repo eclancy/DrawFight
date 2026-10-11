@@ -332,6 +332,8 @@ public partial class FighterRig : Node2D
 	void LoadExtras(Godot.Collections.Dictionary root, Godot.Collections.Dictionary parts, string baseDir)
 	{
 		extras.Clear();
+		face.Clear();
+		mouthOpen = null;
 		if (!root.ContainsKey("extras")) return;
 
 		foreach (Godot.Collections.Dictionary entry in (Godot.Collections.Array)root["extras"])
@@ -359,10 +361,28 @@ public partial class FighterRig : Node2D
 			// One that is part of the drawing it hangs on ("onPart") goes on that drawing, not only
 			// its bone, so it turns round with it when he looks back - Triguy's hat on his triangle.
 			bool onPart = entry.ContainsKey("onPart") && (bool)entry["onPart"] && sprites[(int)bone] != null;
+			// An eye, a brow or a mouth lifted out of the drawing (tools/art/faces.py), hung back on
+			// it exactly where it was drawn, so SetFace can move it.
+			string faceKind = entry.ContainsKey("face") ? (string)entry["face"] : null;
+			if (faceKind != null)
+			{
+				sprite.Visible = faceKind != "mouthOpen";
+				var feature = new FaceFeature
+				{
+					Sprite = sprite,
+					Kind = faceKind,
+					Tilt = entry.ContainsKey("tilt") ? (float)entry["tilt"] : 1.0f,
+					Rest = sprite.Position,
+					Reach = Mathf.Max(texture.GetSize().X, texture.GetSize().Y),
+					Stretch = entry.ContainsKey("stretch") ? (float)entry["stretch"] : 1.1f,
+				};
+				if (faceKind == "mouthOpen") mouthOpen = feature;
+				else face.Add(feature);
+			}
 			if (onPart)
 			{
 				sprites[(int)bone].AddChild(sprite);
-				bodyExtras.Add(sprite);
+				if (faceKind == null) bodyExtras.Add(sprite);
 			}
 			else
 			{
@@ -382,6 +402,67 @@ public partial class FighterRig : Node2D
 	}
 
 	float limbDarken = 0.7f;
+
+	sealed class FaceFeature
+	{
+		public Sprite2D Sprite;
+		public string Kind;
+		public float Tilt;
+		public Vector2 Rest;
+		public float Reach;
+		/// <summary>How far a mouth may open, as a fraction of its own height (rig.json "stretch").</summary>
+		public float Stretch;
+	}
+
+	readonly List<FaceFeature> face = new List<FaceFeature>();
+	FaceFeature mouthOpen;
+
+	/// <summary>Whether this drawing's eyes and mouth were lifted out so they can move.</summary>
+	public bool HasFace => face.Count > 0;
+
+	/// <summary>
+	/// Sets the face: squashes, tilts and nudges the eyes, brows and mouth as drawn. Each is only
+	/// ever moved about where it was drawn - a blink is the eye squashed flat, a shout the mouth
+	/// stretched open downward from its top - so at rest the face is exactly the drawing.
+	/// </summary>
+	public void SetFace(FaceState f)
+	{
+		bool openDrawn = mouthOpen != null && f.Open > 0.45f;
+		foreach (FaceFeature feature in face)
+		{
+			Sprite2D s = feature.Sprite;
+			float reach = feature.Reach;
+			switch (feature.Kind)
+			{
+				case "eye":
+				{
+					float y = (1.0f - 0.86f * f.Blink) * (1.0f - 0.5f * f.Squint) * (1.0f + 0.3f * f.Wide);
+					float x = (1.0f + 0.12f * f.Wide) * (1.0f + 0.06f * f.Squint);
+					s.Scale = new Vector2(x, Mathf.Max(0.08f, y));
+					s.Rotation = feature.Tilt * (0.16f * f.Angry - 0.14f * f.Sad);
+					s.Position = feature.Rest + new Vector2(f.LookX * 0.1f * reach, (f.LookY * 0.08f + f.Angry * 0.03f - f.Surprise * 0.04f) * reach);
+					break;
+				}
+				case "brow":
+					s.Scale = Vector2.One;
+					s.Rotation = feature.Tilt * (0.32f * f.Angry - 0.28f * f.Sad);
+					s.Position = feature.Rest + new Vector2(0.0f, (0.12f * f.Angry - 0.3f * f.Surprise - 0.12f * f.Wide) * reach);
+					break;
+				case "mouth":
+					s.Visible = !openDrawn;
+					s.Scale = new Vector2(1.0f - 0.1f * f.Open + 0.06f * f.Grit, Mathf.Max(0.3f, (1.0f + feature.Stretch * f.Open) * (1.0f - 0.35f * f.Grit)));
+					s.Rotation = 0.0f;
+					s.Position = feature.Rest;
+					break;
+			}
+		}
+		if (mouthOpen != null)
+		{
+			mouthOpen.Sprite.Visible = openDrawn;
+			float open = Mathf.Clamp((f.Open - 0.45f) / 0.55f, 0.0f, 1.0f);
+			mouthOpen.Sprite.Scale = new Vector2(1.0f, 0.7f + 0.45f * open);
+		}
+	}
 
 	/// <summary>Extras that are part of the body's drawing (rig.json "onPart"): they count as body.</summary>
 	readonly List<Sprite2D> bodyExtras = new List<Sprite2D>();
@@ -1518,9 +1599,21 @@ public partial class FighterRig : Node2D
 	float spinWidth = 1.0f;
 
 	/// <summary>
+	/// How wide a cut-out is, turned <paramref name="angle"/> radians about its upright axis: face
+	/// on at 0, edge on a quarter of the way round, mirrored - its back - at half. Squared toward
+	/// the edge so it snaps through edge-on, the way card does, rather than lingering thin.
+	/// </summary>
+	public static float PaperTurnWidth(float angle)
+	{
+		float c = Mathf.Cos(angle);
+		return Mathf.Sign(c) * Mathf.Sqrt(Mathf.Abs(c));
+	}
+
+	/// <summary>
 	/// Turning about the long axis of the body, as a cutout can: the drawing narrows to an edge
 	/// and opens out again mirrored, which reads as rolling over. 1 is face on, -1 is the back.
 	/// Laid flat by a roll, this is a corkscrew. Never quite zero, so it never vanishes.
+	/// Fighter.Twirl spins a whole drawing round this way for a story; see PaperTurnWidth.
 	/// </summary>
 	public void SetSpinWidth(float width)
 	{

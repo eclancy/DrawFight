@@ -28,7 +28,7 @@ import json
 import math
 import os
 
-from drawn import REPO, along, draw_parts, mirrored, place
+from drawn import REPO, along, draw_parts, face_parts, mirrored, place
 
 ROOT = os.path.join(REPO, 'fighters', 'lug')
 
@@ -156,8 +156,10 @@ HEAD_PATH = ('M 362,150 C 362,105 405,88 440,92 C 478,96 498,124 497,156 L 500,1
              'C 508,172 512,180 512,186 L 528,198 L 503,207 C 506,218 510,230 512,242 '
              'C 514,262 494,276 462,276 C 428,276 398,266 384,248 C 368,236 358,200 362,150 Z')
 # The tough guy: a heavy brow angled down at the nose, squinting eyes looking where he faces,
-# gritted teeth pulled down at the near corner, a stubbled jaw, and a proper ear.
-HEAD = '''
+# gritted teeth pulled down at the near corner, a stubbled jaw, and a proper ear. The brows, eyes
+# and mouth are FACE, below, each its own part so the game can move them; HEAD_BASE is the head
+# without them.
+HEAD_BASE = '''
 <clipPath id="head"><path d="{hp}"/></clipPath>
 <path d="M 386,318 L 390,246 L 464,246 L 468,318 Z" fill="{skin}"/>
 <path d="M 386,310 L 390,246 M 464,246 L 468,310" fill="none" stroke="{ink}" stroke-width="{wo}" stroke-linecap="round"/>
@@ -172,17 +174,25 @@ HEAD = '''
 <path d="M 404,178 C 396,168 380,170 376,184 C 373,195 378,205 381,214 C 384,222 390,226 397,223"
       fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round"/>
 <path d="M 398,183 C 389,180 384,189 388,198 C 390,203 395,204 397,200" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
-<path d="M 422,150 L 478,166 L 476,180 L 424,166 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-<path d="M 482,170 L 500,160 L 502,170 L 484,180 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-<path d="M 442,186 C 448,178 464,177 474,182 C 466,192 450,193 442,186 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="468" cy="185" r="4.4" fill="{ink}"/>
-<path d="M 439,183 L 475,180" fill="none" stroke="{ink}" stroke-width="5" stroke-linecap="round"/>
-<path d="M 485,189 C 488,184 496,183 501,185 C 498,192 490,193 485,189 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="497" cy="187" r="3.2" fill="{ink}"/>
-<path d="M 484,186 L 502,183" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>
-<path d="M 472,238 C 482,235 494,234 506,236 L 505,245 C 494,244 484,247 474,252 Z" fill="{white}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
-<path d="M 468,244 C 465,250 466,256 470,261" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
 '''
+
+# name: (kind, svg, centre in drawing units, tilt) - see flambe.py's FACE.
+FACE = {
+    'BrowFront': ('brow', '<path d="M 422,150 L 478,166 L 476,180 L 424,166 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (450.0, 165.0), 1),
+    'BrowBack': ('brow', '<path d="M 482,170 L 500,160 L 502,170 L 484,180 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (492.0, 170.0), -1),
+    'EyeFront': ('eye', '''<path d="M 442,186 C 448,178 464,177 474,182 C 466,192 450,193 442,186 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="468" cy="185" r="4.4" fill="{ink}"/>
+<path d="M 439,183 L 475,180" fill="none" stroke="{ink}" stroke-width="5" stroke-linecap="round"/>''', (457.0, 184.0), 1),
+    'EyeBack': ('eye', '''<path d="M 485,189 C 488,184 496,183 501,185 C 498,192 490,193 485,189 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="497" cy="187" r="3.2" fill="{ink}"/>
+<path d="M 484,186 L 502,183" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (493.0, 187.0), -1),
+    'Mouth': ('mouth', '''<path d="M 472,238 C 482,235 494,234 506,236 L 505,245 C 494,244 484,247 474,252 Z" fill="{white}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
+<path d="M 468,244 C 465,250 466,256 470,261" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>''', (488.0, 236.0), 1),
+    # Shown instead of his gritted teeth when he opens up to shout or talk: a wide-open bellow.
+    'MouthOpen': ('mouthOpen', '''<path d="M 470,236 C 482,232 498,232 508,236 L 506,262 C 494,270 480,268 472,258 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M 473,238 C 484,236 496,236 506,238 L 506,244 C 494,243 484,244 474,246 Z" fill="{white}"/>''', (488.0, 236.0), 1),
+}
+HEAD = HEAD_BASE + '\n'.join(svg for name, (kind, svg, centre, tilt) in sorted(FACE.items()) if kind != 'mouthOpen')
 
 HAT_DOME = 'M 352,138 C 348,82 392,48 434,48 C 478,48 512,80 512,126 L 514,134 L 352,140 Z'
 HAT_BRIM = ('M 340,140 C 340,132 348,130 358,130 L 516,128 C 530,128 538,134 538,140 '
@@ -396,7 +406,7 @@ def build():
     limb_box = (-110, -110, 110, 260)
     pieces = {
         'Torso': (TORSO, (230, 260, 620, 720), HIP, False),
-        'Head': (HEAD, (330, 60, 560, 340), NECK, False),
+        'Head': (HEAD_BASE, (330, 60, 560, 340), NECK, False),
         'Hat': (HAT, (320, 20, 560, 180), NECK, False),
         'HatShine': (HAT_SHINE, (300, 0, 580, 190), NECK, False),
         'Arm_Upper': (UPPER_ARM, limb_box, (0, 0), True),
@@ -477,6 +487,7 @@ def build():
         {'name': 'footBack', 'bone': 'LegBack_Lower', 'part': 'FootBack', 'offset': [0, unit(SHIN_LEN)], 'foot': True, 'always': True},
         {'name': 'footFront', 'bone': 'LegFront_Lower', 'part': 'FootFront', 'offset': [0, unit(SHIN_LEN)], 'foot': True, 'always': True},
     ]
+    extras += face_parts(FACE, (330, 60, 560, 340), NECK, SCALE, C, fill, '', parts_dir, parts)
     rig = {
         'name': 'Lug',
         # Hip to crown (the hat sits above it), and hip to sole with the legs straight.

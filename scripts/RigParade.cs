@@ -269,8 +269,79 @@ public partial class RigParade : Node2D
 		camera.MakeCurrent();
 	}
 
+	/// <summary>
+	/// --film=face: one fighter's face in every expression, big - the drawn eyes, brows and mouth
+	/// moved by FighterRig.SetFace. --film=turn: the paper turn about the upright axis, then a roll
+	/// round in the plane of the page (Fighter.Twirl).
+	/// </summary>
+	void BuildFaceFilm()
+	{
+		FighterData data = FighterCatalog.Get(Mathf.Max(0, Only));
+		bool turn = Film == "turn";
+		string[] names = { "rest", "closed", "squint", "angry", "shout", "hurt", "shocked", "happy", "sad", "talking" };
+		int cells = turn ? 12 : names.Length;
+		const float Column = 380.0f;
+		const float Row = 560.0f;
+		for (int i = 0; i < cells; i++)
+		{
+			var holder = new Node2D { Position = new Vector2(i % 6 * Column, i / 6 * Row) };
+			AddChild(holder);
+			var rig = new FighterRig();
+			holder.AddChild(rig);
+			if (!rig.Load(data.RigPath)) return;
+			rig.Normalise(440.0f, 220.0f, 1.0f);
+			rig.ArmBackLimit = data.ArmReachBack;
+			rig.SetPlanted(true);
+			rig.SetStanding(true);
+			rig.HandOnHip = data.HandOnHip;
+			rig.CarryOnShoulder = data.ShouldersProp;
+			rig.Play(FighterAnimations.Idle);
+			rig.Advance();
+			string label;
+			if (turn)
+			{
+				// Six steps of a paper turn round, then six of a roll round on the page.
+				float angle = Mathf.Tau * (i % 6) / 6.0f;
+				if (i < 6) rig.SetSpinWidth(FighterRig.PaperTurnWidth(angle));
+				else rig.SetRoll(angle);
+				label = (i < 6 ? "turn " : "roll ") + Mathf.RoundToInt(Mathf.RadToDeg(angle));
+			}
+			else
+			{
+				FaceState face = names[i] == "talking" ? FaceState.Talking : FaceState.Named(names[i]);
+				if (names[i] == "talking") face.Open = 0.85f;
+				rig.SetFace(face);
+				label = names[i];
+			}
+			var text = new Label { Text = label, Position = new Vector2(-80.0f, -330.0f) };
+			text.AddThemeFontSizeOverride("font_size", 34);
+			text.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
+			holder.AddChild(text);
+		}
+		var title = new Label { Text = $"{data.DisplayName}: {Film}" + (rigHasFace(data) ? "" : "  (no face parts)"), Position = new Vector2(-150.0f, -420.0f) };
+		title.AddThemeFontSizeOverride("font_size", 36);
+		title.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
+		AddChild(title);
+		var camera = new Camera2D { Position = new Vector2(Column * 2.5f, Row * 0.5f - 160.0f), Zoom = Vector2.One * 0.82f };
+		AddChild(camera);
+		camera.MakeCurrent();
+	}
+
+	static bool rigHasFace(FighterData data)
+	{
+		var probe = new FighterRig();
+		bool has = probe.Load(data.RigPath) && probe.HasFace;
+		probe.Free();
+		return has;
+	}
+
 	void BuildFilm()
 	{
+		if (Film == "face" || Film == "turn")
+		{
+			BuildFaceFilm();
+			return;
+		}
 		if (FilmPages.TryGetValue(Film, out string[] page))
 		{
 			BuildFilmPage(page);

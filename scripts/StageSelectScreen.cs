@@ -44,11 +44,13 @@ public partial class StageSelectScreen : Node2D
 
 		for (int i = 0; i < stages.Length; i++) stages[i] = StageCatalog.Get(i);
 
-		float total = stages.Length * CardWidth + (stages.Length - 1) * CardGap;
+		// As wide as a card can be and still fit every stage across the page.
+		float width = Mathf.Min(CardWidth, (viewport.X - 360.0f - (stages.Length - 1) * CardGap) / stages.Length);
+		float total = stages.Length * width + (stages.Length - 1) * CardGap;
 		float left = (viewport.X - total) * 0.5f;
 		for (int i = 0; i < cards.Length; i++)
 		{
-			cards[i] = new Rect2(left + i * (CardWidth + CardGap), 262.0f, CardWidth, 440.0f);
+			cards[i] = new Rect2(left + i * (width + CardGap), 262.0f, width, 440.0f * width / CardWidth);
 		}
 
 		for (int i = 0; i < stages.Length; i++) previews[i] = BuildPreview(stages[i], cards[i].Size);

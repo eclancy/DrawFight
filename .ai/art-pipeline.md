@@ -343,6 +343,34 @@ pixels picked off the photo, exactly like the joints.
 manifest is missing, so a fighter with broken art still plays as a rectangle instead of taking
 the whole match down with it.
 
+## Faces
+
+A fighter's eyes, brows and mouth move: they blink, glance about, squint winding up a hit, open
+as it lands, squeeze shut when hit and go wide when launched (`FighterFace.cs`), and talk in a
+story. **Nothing is redrawn to do it.** Each feature is lifted out of the drawing whole, pixel
+for pixel, and hung back exactly where it was as its own part (a rig.json extra with a `face`
+kind: `eye`, `brow`, `mouth`, or `mouthOpen`), so at rest the face is precisely the drawing. The
+game only squashes, tilts, nudges and stretches those marks (`FighterRig.SetFace`): a blink is
+the eye squashed flat, a shout the mouth stretched open down from its top. Eric's call,
+2026-10-11.
+
+- **Lifting them** (`tools/art/faces.py`): each cut script's last step. A feature is found
+  inside a box by what it is made of - dark ink, strong colour, a glow, teeth - taking only the
+  marks wholly inside the box, or under the points it names, so an outline passing through stays
+  on the body. The boxes are in `tools/art/face_specs.py`, in the pixels of the cut part.
+- **What is left behind** is filled in, which is allowed (rule 1: fill in what is missing): the
+  face's own flat colour, or, on a pencilled or hatched face, the texture grown in from round it.
+  It only shows while a feature is squashed or stretched off its spot.
+- **A mark joined to the outline stays.** Triguy's long back eye line runs into his outline,
+  so only his front eye moves. Never cut a line apart to free a feature.
+- **A mouth opens only as far as the drawing has room** under it (`stretch`): Triguy's and
+  DoomBot's barely, Circy's more.
+- **Flambé and Lugnut are ours**, drawn in SVG, so their faces are drawn as separate parts in
+  their own scripts (`FACE` in `flambe.py` and `lugnut.py`) - with an open mouth (`mouthOpen`),
+  shown instead of the closed one when they shout or talk.
+- **A new fighter gets a face** when they are cut: add their boxes to `face_specs.py` and check
+  every expression with `--parade --film=face --only=N`.
+
 ## Inspecting a rig
 
 A build cannot tell you whether a puppet is assembled correctly, and neither can squinting at a

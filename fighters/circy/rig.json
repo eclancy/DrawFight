@@ -104,6 +104,50 @@
     }
   ], 
   "canonicalHeight": 792.0, 
+  "extras": [
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "eye", 
+      "name": "faceEyeLeft", 
+      "offset": [
+        -103.0, 
+        -475.5
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeLeft", 
+      "stretch": 1.1, 
+      "tilt": -1
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "eye", 
+      "name": "faceEyeRight", 
+      "offset": [
+        220.5, 
+        -461.5
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeRight", 
+      "stretch": 1.1, 
+      "tilt": 1
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "mouth", 
+      "name": "faceMouth", 
+      "offset": [
+        10.5, 
+        -344.0
+      ], 
+      "onPart": true, 
+      "part": "FaceMouth", 
+      "stretch": 0.45, 
+      "tilt": 1
+    }
+  ], 
   "legLength": 866.5, 
   "name": "Circy", 
   "parts": {
@@ -134,6 +178,27 @@
         16.0
       ], 
       "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "FaceEyeLeft": {
+      "pivot": [
+        26.5, 
+        157.5
+      ], 
+      "texture": "parts/FaceEyeLeft.png"
+    }, 
+    "FaceEyeRight": {
+      "pivot": [
+        29.0, 
+        143.5
+      ], 
+      "texture": "parts/FaceEyeRight.png"
+    }, 
+    "FaceMouth": {
+      "pivot": [
+        231.0, 
+        0.0
+      ], 
+      "texture": "parts/FaceMouth.png"
     }, 
     "LegBack_Lower": {
       "pivot": [

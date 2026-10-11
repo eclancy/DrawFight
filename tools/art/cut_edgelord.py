@@ -32,6 +32,8 @@ from PIL import Image, ImageChops, ImageFilter
 
 import color_edgelord as ce
 import edgelord_extras as ex
+import faces
+from face_specs import FACES
 
 ROOT = os.path.join(ce.REPO, 'fighters', 'edgelord')
 JOINT_OVERLAP = 10
@@ -268,6 +270,8 @@ def main():
     }
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
+    # Last: the eyes and mouth lifted out so the game can move them (faces.py, face_specs.py).
+    faces.apply(ROOT, *FACES['edgelord'])
     print('legs %d/%d  arms %d/%d  body %dx%d' % (
         lengths['LegBack_Upper'], lengths['LegFront_Upper'], lengths['ArmBack_Upper'],
         lengths['ArmFront_Upper'], tbox[2] - tbox[0], tbox[3] - tbox[1]))

@@ -162,6 +162,25 @@ def pencilled(colour, ink, seed):
 
 # --- cutting -----------------------------------------------------------------------------------
 
+def face_parts(face, box, neck, scale, colours, fill, seed_prefix, parts_dir, parts):
+    """
+    Each feature of the face drawn as its own part, on the head's canvas, so the game can move it
+    (FighterRig.SetFace) - the same drawing as before, only no longer stuck to the head. Returns
+    the rig.json extras that hang them back on the head where they were drawn.
+    """
+    pieces = dict(('Face' + name, (svg, box, centre, False)) for name, (kind, svg, centre, tilt) in face.items())
+    cut, _ = draw_parts(pieces, fill, colours, scale, seed_prefix=seed_prefix)
+    extras = []
+    for name, (kind, svg, centre, tilt) in sorted(face.items()):
+        img, pivot_px, _ = cut['Face' + name]
+        img.save(os.path.join(parts_dir, 'Face%s.png' % name))
+        parts['Face' + name] = {'texture': 'parts/Face%s.png' % name, 'pivot': [round(pivot_px[0], 1), round(pivot_px[1], 1)]}
+        extras.append({'name': 'face' + name, 'bone': 'Head', 'part': 'Face' + name,
+                       'offset': [round((centre[0] - neck[0]) * scale, 1), round((centre[1] - neck[1]) * scale, 1)],
+                       'always': True, 'onPart': True, 'face': kind, 'tilt': tilt})
+    return extras
+
+
 def draw_parts(pieces, fill, colours, scale, extra=None, seed_prefix='', trim=True):
     """
     Renders and pencils every piece. pieces: {name: (svg, viewBox, pivot, mirrored)}, the pivot in

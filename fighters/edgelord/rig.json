@@ -156,6 +156,48 @@
         0
       ], 
       "part": "Turn4"
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "eye", 
+      "name": "faceEyeLeft", 
+      "offset": [
+        -45.0, 
+        -268.0
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeLeft", 
+      "stretch": 1.1, 
+      "tilt": 1
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "eye", 
+      "name": "faceEyeRight", 
+      "offset": [
+        90.0, 
+        -260.0
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeRight", 
+      "stretch": 1.1, 
+      "tilt": -1
+    }, 
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "face": "mouth", 
+      "name": "faceMouth", 
+      "offset": [
+        -6.0, 
+        -221.0
+      ], 
+      "onPart": true, 
+      "part": "FaceMouth", 
+      "stretch": 0.25, 
+      "tilt": 1
     }
   ], 
   "legLength": 283.0, 
@@ -188,6 +230,27 @@
         4.5
       ], 
       "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "FaceEyeLeft": {
+      "pivot": [
+        35.0, 
+        33.0
+      ], 
+      "texture": "parts/FaceEyeLeft.png"
+    }, 
+    "FaceEyeRight": {
+      "pivot": [
+        40.0, 
+        29.0
+      ], 
+      "texture": "parts/FaceEyeRight.png"
+    }, 
+    "FaceMouth": {
+      "pivot": [
+        54.0, 
+        0.0
+      ], 
+      "texture": "parts/FaceMouth.png"
     }, 
     "LegBack_Lower": {
       "pivot": [

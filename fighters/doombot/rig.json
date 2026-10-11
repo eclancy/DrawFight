@@ -134,6 +134,76 @@
         256.0
       ], 
       "part": "FootFront"
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "brow", 
+      "name": "faceBrowFront", 
+      "offset": [
+        -66.0, 
+        -211.0
+      ], 
+      "onPart": true, 
+      "part": "FaceBrowFront", 
+      "stretch": 1.1, 
+      "tilt": -1
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "eye", 
+      "name": "faceEyeFront", 
+      "offset": [
+        -28.0, 
+        -141.0
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeFront", 
+      "stretch": 1.1, 
+      "tilt": -1
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "eye", 
+      "name": "faceEyeBack", 
+      "offset": [
+        142.0, 
+        -190.0
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeBack", 
+      "stretch": 1.1, 
+      "tilt": 1
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "brow", 
+      "name": "faceBrowBack", 
+      "offset": [
+        158.0, 
+        -247.0
+      ], 
+      "onPart": true, 
+      "part": "FaceBrowBack", 
+      "stretch": 1.1, 
+      "tilt": 1
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "mouth", 
+      "name": "faceMouth", 
+      "offset": [
+        140.0, 
+        -118.0
+      ], 
+      "onPart": true, 
+      "part": "FaceMouth", 
+      "stretch": 0.12, 
+      "tilt": 1
     }
   ], 
   "legLength": 660, 
@@ -168,6 +238,41 @@
         1.0
       ], 
       "texture": "parts/ArmFront_Upper.png"
+    }, 
+    "FaceBrowBack": {
+      "pivot": [
+        25.0, 
+        21.0
+      ], 
+      "texture": "parts/FaceBrowBack.png"
+    }, 
+    "FaceBrowFront": {
+      "pivot": [
+        39.0, 
+        57.0
+      ], 
+      "texture": "parts/FaceBrowFront.png"
+    }, 
+    "FaceEyeBack": {
+      "pivot": [
+        45.0, 
+        42.0
+      ], 
+      "texture": "parts/FaceEyeBack.png"
+    }, 
+    "FaceEyeFront": {
+      "pivot": [
+        25.0, 
+        19.0
+      ], 
+      "texture": "parts/FaceEyeFront.png"
+    }, 
+    "FaceMouth": {
+      "pivot": [
+        99.0, 
+        0.0
+      ], 
+      "texture": "parts/FaceMouth.png"
     }, 
     "FootBack": {
       "pivot": [

@@ -313,6 +313,9 @@ public partial class Stage : Node2D
 			case PlatformLook.CraneJib: DrawCrane(platform, seed); break;
 			case PlatformLook.HangingBeam: DrawHangingBeam(platform, seed); break;
 			case PlatformLook.Scaffold: DrawScaffold(platform, seed); break;
+			case PlatformLook.StageDeck: DrawStageDeck(platform, seed); break;
+			case PlatformLook.AmpStack: DrawAmpStack(platform, seed); break;
+			case PlatformLook.Girder: DrawGirder(platform, seed); break;
 			default: DrawLedge(platform, seed); break;
 		}
 	}
@@ -650,6 +653,132 @@ public partial class Stage : Node2D
 		var wood = new Color(0.86f, 0.66f, 0.42f);
 		DrawRect(r, wood);
 		CrayonBrush.CrayonFill(this, r, new Color(0.76f, 0.54f, 0.32f, 0.6f), seed, 9.0f, 0.0f, 5.0f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	static readonly Color Wood = new Color(0.86f, 0.66f, 0.42f);
+	static readonly Color Steel = new Color(0.62f, 0.66f, 0.74f);
+
+	/// <summary>
+	/// A concert stage floor. The rectangle is the deck, boards running across it; below it hangs
+	/// the stage's skirt, pleated, down to where the deck would meet the floor of the hall.
+	/// </summary>
+	void DrawStageDeck(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		var skirt = new Rect2(r.Position.X + 10.0f, r.End.Y, r.Size.X - 20.0f, 150.0f);
+		DrawRect(skirt, new Color(0.90f, 0.58f, 0.58f));
+		for (float x = skirt.Position.X + 30.0f; x < skirt.End.X - 10.0f; x += 46.0f)
+		{
+			CrayonBrush.InkLine(this, new Vector2(x, skirt.Position.Y + 4.0f), new Vector2(x, skirt.End.Y - 4.0f),
+				new Color(0.78f, 0.44f, 0.46f), 4.0f, seed + Mathf.RoundToInt(x), 1.0f);
+		}
+		CrayonBrush.InkRect(this, skirt, Data.Ink, 2.5f, seed + 3, 1.6f);
+
+		DrawRect(r, Wood);
+		CrayonBrush.CrayonFill(this, r, new Color(0.76f, 0.54f, 0.32f, 0.5f), seed, 10.0f, 0.0f, 5.0f);
+		for (float x = r.Position.X + 80.0f; x < r.End.X - 20.0f; x += 120.0f)
+		{
+			CrayonBrush.InkLine(this, new Vector2(x, r.Position.Y + 4.0f), new Vector2(x, r.End.Y - 4.0f),
+				new Color(0.62f, 0.44f, 0.28f), 2.5f, seed + Mathf.RoundToInt(x), 0.6f);
+		}
+		OutlinePlatform(r, platform.OneWay, seed);
+		if (!platform.OneWay)
+		{
+			CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 5.0f, seed + 77, 1.6f);
+		}
+	}
+
+	/// <summary>
+	/// An amp on top of speaker cabinets. The rectangle is the amp's top, the part you stand on;
+	/// the cabinets stack under it to the ground, each with a pair of speakers. Grey, not black -
+	/// the fighters own black.
+	/// </summary>
+	void DrawAmpStack(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		float ground = Data.GroundLine;
+		var cabinet = new Color(0.56f, 0.57f, 0.63f);
+		var grille = new Color(0.70f, 0.71f, 0.76f);
+		float height = (ground - r.End.Y) * 0.5f;
+		for (int i = 0; i < 2; i++)
+		{
+			var box = new Rect2(r.Position.X + 8.0f, r.End.Y + i * height, r.Size.X - 16.0f, height);
+			DrawRect(box, cabinet);
+			DrawRect(box.Grow(-10.0f), grille);
+			foreach (float fx in new[] { 0.3f, 0.7f })
+			{
+				var at = new Vector2(box.Position.X + box.Size.X * fx, box.GetCenter().Y);
+				float radius = Mathf.Min(box.Size.X * 0.17f, box.Size.Y * 0.36f);
+				DrawCircle(at, radius, new Color(0.62f, 0.63f, 0.69f));
+				DrawArc(at, radius, 0.0f, Mathf.Tau, 24, Data.Ink, 2.5f, true);
+				DrawCircle(at, radius * 0.32f, new Color(0.80f, 0.80f, 0.84f));
+			}
+			CrayonBrush.InkRect(this, box, Data.Ink, 2.5f, seed + 5 + i, 1.2f);
+		}
+
+		// The amp: knobs along its front, and a warm light that says it is on.
+		DrawRect(r, new Color(0.66f, 0.62f, 0.58f));
+		for (float x = r.Position.X + 26.0f; x < r.End.X - 40.0f; x += 24.0f)
+		{
+			DrawCircle(new Vector2(x, r.GetCenter().Y), 4.0f, new Color(0.96f, 0.93f, 0.86f));
+		}
+		DrawCircle(new Vector2(r.End.X - 22.0f, r.GetCenter().Y), 5.0f, Data.Accent);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// A lighting rig: a red steel girder, riveted, held up at each end on a steel lattice tower
+	/// that stands on the ground, with spotlights hung along it. A soft girder gets the dashed
+	/// outline, like any platform you can jump up through. The beams of light are pale and
+	/// see-through, so they light whoever is under them rather than hiding them - and they are
+	/// part of the girder, drawn over the page, where a prop would sit behind it.
+	/// </summary>
+	void DrawGirder(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		float ground = Data.GroundLine;
+		const float TowerW = 44.0f;
+		int i = 0;
+		foreach (float x in new[] { r.Position.X + 6.0f, r.End.X - 6.0f - TowerW })
+		{
+			var tower = new Rect2(x, r.End.Y, TowerW, ground - r.End.Y);
+			DrawRect(tower, new Color(Steel, 0.35f));
+			CrayonBrush.InkLine(this, tower.Position, new Vector2(tower.Position.X, tower.End.Y), Data.Ink, 3.5f, seed + 1 + i, 1.0f);
+			CrayonBrush.InkLine(this, new Vector2(tower.End.X, tower.Position.Y), tower.End, Data.Ink, 3.5f, seed + 3 + i, 1.0f);
+			int k = 0;
+			for (float y = tower.Position.Y; y < tower.End.Y - 10.0f; y += TowerW, k++)
+			{
+				float x0 = k % 2 == 0 ? tower.Position.X : tower.End.X;
+				float x1 = k % 2 == 0 ? tower.End.X : tower.Position.X;
+				CrayonBrush.InkLine(this, new Vector2(x0, y), new Vector2(x1, Mathf.Min(y + TowerW, tower.End.Y)), Steel, 4.0f, seed + 20 + k + i * 50, 0.6f);
+			}
+			i++;
+		}
+
+		int lamps = Mathf.Max(1, Mathf.RoundToInt((r.Size.X - TowerW * 2.0f) / 320.0f));
+		for (int l = 0; l < lamps; l++)
+		{
+			float x = r.Position.X + TowerW + (r.Size.X - TowerW * 2.0f) * (l + 0.5f) / lamps;
+			var lamp = new Vector2(x, r.End.Y + 30.0f);
+			DrawColoredPolygon(new[]
+			{
+				lamp + new Vector2(-12.0f, 8.0f), lamp + new Vector2(12.0f, 8.0f),
+				new Vector2(x + 110.0f, ground), new Vector2(x - 110.0f, ground),
+			}, new Color(Data.Celestial, 0.18f));
+			CrayonBrush.InkLine(this, new Vector2(x, r.End.Y), lamp, Data.Ink, 2.5f, seed + 60 + l, 0.3f);
+			DrawCircle(lamp, 16.0f, Steel);
+			DrawArc(lamp, 16.0f, 0.0f, Mathf.Tau, 20, Data.Ink, 2.5f, true);
+			DrawCircle(lamp + new Vector2(0.0f, 8.0f), 8.0f, Data.Celestial);
+		}
+
+		var beam = new Color(0.90f, 0.40f, 0.34f);
+		DrawRect(r, beam);
+		DrawRect(new Rect2(r.Position.X, r.Position.Y + r.Size.Y * 0.3f, r.Size.X, r.Size.Y * 0.4f), new Color(0.80f, 0.34f, 0.30f));
+		for (float x = r.Position.X + 22.0f; x < r.End.X - 10.0f; x += 36.0f)
+		{
+			DrawCircle(new Vector2(x, r.GetCenter().Y), 3.5f, new Color(0.98f, 0.94f, 0.88f));
+		}
 		OutlinePlatform(r, platform.OneWay, seed);
 	}
 

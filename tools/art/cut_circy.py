@@ -41,7 +41,9 @@ from collections import deque
 
 from PIL import Image, ImageFilter
 
+import faces
 import linework
+from face_specs import FACES
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -457,6 +459,8 @@ def main():
     }
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
+    # Last: the eyes and mouth lifted out so the game can move them (faces.py, face_specs.py).
+    faces.apply(ROOT, *FACES['circy'])
     print('done')
 
 

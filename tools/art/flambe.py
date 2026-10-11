@@ -30,7 +30,7 @@ import os
 
 from PIL import Image
 
-from drawn import REPO, along, draw_parts, mirrored, place
+from drawn import REPO, along, draw_parts, face_parts, mirrored, place
 
 ROOT = os.path.join(REPO, 'fighters', 'swift')
 
@@ -183,8 +183,9 @@ MOHAWK = '''
          C 444,160 442,170 442,180 Z" fill="{flame_yellow}"/>
 '''
 # Confident and defiant: brows down hard, eyes open and looking ahead, a one-sided smirk with
-# the lips shut. No moustache (Eric, 2026-10-08).
-HEAD = MOHAWK + '''
+# the lips shut. No moustache (Eric, 2026-10-08). The brows, eyes and mouth are FACE, below,
+# each its own part so the game can move them; HEAD_BASE is the head without them.
+HEAD_BASE = MOHAWK + '''
 <clipPath id="head"><path d="{hp}"/></clipPath>
 <path d="M 414,336 L 420,290 L 458,290 L 464,336 Z" fill="{skin}"/>
 <path d="M 414,330 L 420,290 M 458,290 L 464,330" fill="none" stroke="{ink}" stroke-width="{wo}" stroke-linecap="round"/>
@@ -200,18 +201,27 @@ HEAD = MOHAWK + '''
 <path d="M 407,228 C 399,226 395,234 398,242 C 400,247 404,248 406,244" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
 <circle cx="401" cy="272" r="8" fill="none" stroke="{ink}" stroke-width="9"/>
 <circle cx="401" cy="272" r="8" fill="none" stroke="{metal}" stroke-width="4"/>
-<path d="M 436,200 L 482,214 L 479,224 L 438,211 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-<path d="M 486,216 L 503,204 L 506,212 L 489,225 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-<path d="M 446,237 C 451,227 469,226 479,232 C 472,244 455,245 446,237 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="473" cy="235" r="4.6" fill="{ink}"/>
-<path d="M 446,232 L 480,229" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>
-<path d="M 488,238 C 491,233 499,232 504,234 C 501,241 493,242 488,238 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="500" cy="236" r="3.2" fill="{ink}"/>
-<path d="M 487,235 L 505,232" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>
-<path d="M 470,266 C 474,274 484,278 494,278 C 498,278 502,277 505,275" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 466,261 C 463,267 464,273 468,278" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
 <path d="M 410,334 L 466,334 L 452,352 L 440,368 L 426,350 Z" fill="{scarf}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
 '''
+
+# name: (kind, svg, centre in drawing units, tilt). The centre is what each turns and squashes
+# about; a mouth's is its top, since it opens downward. Tilt: which way it turns angry.
+FACE = {
+    'BrowFront': ('brow', '<path d="M 436,200 L 482,214 L 479,224 L 438,211 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (459.0, 212.0), 1),
+    'BrowBack': ('brow', '<path d="M 486,216 L 503,204 L 506,212 L 489,225 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (496.0, 214.0), -1),
+    'EyeFront': ('eye', '''<path d="M 446,237 C 451,227 469,226 479,232 C 472,244 455,245 446,237 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="473" cy="235" r="4.6" fill="{ink}"/>
+<path d="M 446,232 L 480,229" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (463.0, 235.0), 1),
+    'EyeBack': ('eye', '''<path d="M 488,238 C 491,233 499,232 504,234 C 501,241 493,242 488,238 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="500" cy="236" r="3.2" fill="{ink}"/>
+<path d="M 487,235 L 505,232" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (496.0, 236.0), -1),
+    'Mouth': ('mouth', '''<path d="M 470,266 C 474,274 484,278 494,278 C 498,278 502,277 505,275" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 466,261 C 463,267 464,273 468,278" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>''', (486.0, 262.0), 1),
+    # Shown instead of the smirk when he opens his mouth to shout or talk.
+    'MouthOpen': ('mouthOpen', '''<path d="M 466,262 C 468,290 500,296 508,272 C 496,278 480,274 466,262 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="489" cy="283" rx="9" ry="4.5" fill="{scarf}"/>''', (486.0, 262.0), 1),
+}
+HEAD = HEAD_BASE + '\n'.join(svg for name, (kind, svg, centre, tilt) in sorted(FACE.items()) if kind != 'mouthOpen')
 
 
 def fill(svg, colours=C):
@@ -311,7 +321,7 @@ def build():
     limb_box = (-110, -110, 110, 260)
     pieces = {
         'Torso': (TORSO, (250, 300, 620, 680), HIP, False),
-        'Head': (HEAD, (320, 20, 560, 380), NECK, False),
+        'Head': (HEAD_BASE, (320, 20, 560, 380), NECK, False),
         'Arm_Upper': (UPPER_ARM, limb_box, (0, 0), True),
         'ArmFront_Lower': (FOREARM, limb_box, (0, 0), True),
         'ArmBack_Lower': (FOREARM + THUMB, limb_box, (0, 0), True),
@@ -381,6 +391,7 @@ def build():
         {'name': 'footBack', 'bone': 'LegBack_Lower', 'part': 'FootBack', 'offset': [0, unit(SHIN_LEN)], 'foot': True, 'always': True},
         {'name': 'footFront', 'bone': 'LegFront_Lower', 'part': 'FootFront', 'offset': [0, unit(SHIN_LEN)], 'foot': True, 'always': True},
     ]
+    extras += face_parts(FACE, (320, 20, 560, 380), NECK, SCALE, C, fill, 'flambe/', parts_dir, parts)
     rig = {
         'name': 'Swift',
         # Hip to crown (the mohawk stands above it), and hip to sole with the legs straight.
