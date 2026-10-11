@@ -242,6 +242,11 @@
         95.0, 
         270.0
       ], 
+      "flame": [
+        93.0, 
+        166.0
+      ], 
+      "flameHeight": 165.0, 
       "texture": "poses/tool_lighter.png"
     }, 
     "wings": {

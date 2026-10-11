@@ -135,7 +135,20 @@ polish, they are the feature:
   the screen to itself and everyone takes in what happened.
 - **Dodges roll.** A roll curls the fighter into a ball that rolls along the floor - over his
   back and feet, never up into the air - and a directional air dodge curls up and turns a full
-  somersault the way it travels; a spot dodge curls up in place.
+  somersault the way it travels; a spot dodge curls up in place. A fighter who cannot roll
+  (`FighterData.CanRoll`, DoomBot) cannot dodge in the air either.
+- **An attack never holds you after it is done** (Eric, 2026-10-10: it felt like hitlag
+  stopped him moving after an attack). Measured, nothing did - every fighter is at half speed
+  within four frames of a move ending - so the fix is Melee's: the back half of a normal
+  attack's endlag is only the body settling, and moving, jumping, blocking, dodging or attacking
+  cuts it short (`Fighter.CanCutEndlag`, `CuttableEndlag`). Not for specials, throws or a taunt,
+  and not after DoomBot misses: his rusty-joint lag is his weakness, so a whiff keeps it all.
+- **Moving into an attack slides** (Eric, 2026-10-10, like Melee). On the ground an attack sheds
+  its momentum at a fifth of his normal traction, so walking into a jab carries him on 40 to 80
+  pixels through it - never more slippery than the slipperiest fighter was before
+  (`Fighter.AttackTraction`, `SlipperiestAttack`). A dash attack sheds less still.
+- **Aerials drift.** An aerial is steered exactly as a jump is, at his own air speed, and drifting
+  never turns him round. A special in the air is still committed to.
 - **Camera** that smoothly frames all living fighters, with a minimum zoom so two players
   standing together do not fill the screen, and a maximum so a far-flung player stays visible.
 - **Telegraphs** for anything fast and strong. A move that crosses the stage in a few frames
@@ -198,10 +211,10 @@ that takes half a second to reach it never gets there in a fight.
   It is still the one air jump - the same refreshes, the same once per trip - and attacking out
   of it keeps half the speed. Straight up it gains about what a jump does; diagonally it trades
   height for distance, which is the point.
-- **A built platform** (Lug's girder, `SpecialKind.BuildPlatform`) is a soft platform you can
-  stand on and jump off, but it is not the ground: standing on it gives back no air jump, no up
-  special and no second build. Only real ground or a ledge does - otherwise build, jump, build
-  would be a recovery that never ends.
+- **A built platform** (Lug's girder, `SpecialKind.BuildPlatform`) is a soft platform like any
+  other: standing on it gives back the air jump and the up special (Eric, 2026-10-10: he could
+  not double jump off it). The one thing it does not give back is a second girder - only real
+  ground or a ledge does - otherwise build, jump, build would climb for ever.
 - **Up special once per trip into the air.** Landing, grabbing a ledge or being hit gives it
   back (Eric's call, 2026-10-04: a fighter knocked away always has a recovery). A second press in the air does nothing — it is discarded, not buffered, so it
   cannot come out as a neutral special when the stick leaves up.
@@ -251,7 +264,8 @@ Input forgiveness, all of it non-negotiable:
 
 - **Coyote time** — ~5 frames of still being able to jump after walking off a ledge.
 - **Jump buffering** — a jump pressed up to ~6 frames before landing fires on landing.
-- **Input buffering** — an attack pressed during endlag fires when the move ends.
+- **Input buffering** — an attack pressed during endlag fires as soon as the endlag can be cut
+  short (above), or when the move ends.
 
 ## Controls (age 10-12 target)
 
@@ -443,14 +457,21 @@ blocked knockback = knockback * 0.20
 ```
 
 This is not a compromise version of a shield — it is a smaller system that produces a better
-game here, and it is the reason the whole shield-health subsystem is out of scope.
+game here.
 
 **The cost of blocking is paid in the mechanic the game already has.** Chip damage raises your
 percent, and a higher percent means the next clean hit launches you further. A player who
-blocks everything does not win slowly; they lose slowly. There is no separate shield-health
-resource to deplete, no regeneration rate, no shield-break stun state, no shrinking shield and
-therefore no shield-poking edge cases, and no second balance knob that can be set wrong. The
-percent system does all of it.
+blocks everything does not win slowly; they lose slowly.
+
+**And the shield wears out** (Eric's call, 2026-10-10, reversing the old rule that it never
+broke). Every blocked hit takes its full damage off the shield's strength (`Fighter.ShieldHealth`,
+45) and cracks it where it landed - a crack for every four points or so, fanning out across it
+from that spot, longer the more worn it is - and it pales and trembles near the end. Worn
+through, it shatters: he is knocked up off his feet and reels for 110 frames with stars round
+his head, wide open, and it comes back half mended. Out of a block it mends, broken to whole in
+about five seconds, the cracks closing as it does. The shield never shrinks, so there is still
+no shield poking. Two of Lug's Sledge Slams into a block crack it nearly through; the third
+breaks it, and the fourth lands clean on him while he reels.
 
 **The second cost is positional.** Blocked knockback is reduced, not removed, so blocking
 still slides you backwards. Turtle near the edge and you push yourself off the stage. This is
@@ -460,15 +481,20 @@ twice, which is the good kind of learning.
 Supporting rules, each a single number rather than a system:
 
 - **A block shows as a shield**: a bubble round him in his player's colour, which flashes when
-  a hit lands on it and stays up through blockstun (`Fighter.DrawShield`). It is only how a
-  block looks - nothing above changes, and the bubble never shrinks or breaks, because there is
-  no shield health. Drawn without a hard outline: an outline means something you can stand on or
-  be hit by. Eric's call, 2026-10-04, in place of blocking with crossed arms.
+  a hit lands on it and stays up through blockstun (`Fighter.DrawShield`), cracking as it wears
+  (above). Drawn without a hard outline: an outline means something you can stand on or be hit
+  by. Its cracks are its own colour darkened, never near black. Eric's call, 2026-10-04, in place
+  of blocking with crossed arms.
 - You cannot attack or move while blocking.
 - **Block-release lag**: ~5 frames after releasing block before you can act, so block-hit-block
   is not free.
 - **Blockstun pushback** applies to the attacker too, so a blocked attack at point blank
-  separates both fighters instead of stalemating.
+  separates both fighters instead of stalemating - except a move that carries him somewhere, a
+  charge or a recovery, which carries on through a block rather than stopping dead
+  (`Fighter.IsMovingAbility`; Eric, 2026-10-10).
+- **Two charges meeting both land.** When two dash specials meet - Lug's wheelbarrow into
+  Flambe's fireball - each is hit by the other and knocked out of it, whichever came out first.
+  Without this, the one already moving hit the other in its windup and carried on through him.
 - Blocking still holds up against **projectiles**, and chip from a projectile is low enough
   that a zoner cannot chip someone to death from across the stage. The answer to a zoner is to
   approach, which is what the `Dash` archetype exists for.

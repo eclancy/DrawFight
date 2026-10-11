@@ -226,17 +226,13 @@ def fill(svg, colours=C):
 # outlines about as heavy as his own at that size.
 TOOL_C = dict(C, chrome_shade='#9a9eac', wheel='#3c3842', wo=6, wi=4)
 
-# His lighter: a chrome flip-top, lid thrown open, a flame out of it far bigger than any lighter
-# has a right to make - his frying pan until Eric's call (2026-10-10). Held upright in his fist
-# on the pan's old 190 x 300 canvas and grip, so every move holds and measures it the same. The
-# flame is one curved shape in three sizes, red, orange and a yellow heart, like his wings.
-FLAME = ('M 78,172 C 52,152 34,120 42,88 C 46,68 56,56 62,40 C 66,58 72,66 80,70 C 74,46 84,22 104,4 C 100,28 108,46 120,56 C 124,42 134,32 148,26 C 140,48 158,72 154,98 C 152,130 136,154 108,172 Z')
+# His lighter: a chrome flip-top, lid thrown open - his frying pan until Eric's call
+# (2026-10-10). Held upright in his fist on the pan's old 190 x 300 canvas and grip, so every
+# move holds and measures it the same. Its flame is not drawn on it: the game draws that rising
+# from the chimney (LIGHTER_FLAME) whichever way he holds it, since fire burns upward.
 LIGHTER = ('''
 <rect x="66" y="154" width="58" height="40" rx="8" fill="{metal}" stroke="{ink}" stroke-width="{wo}"
       transform="rotate(-100 66 194)"/>
-<path d="%s" fill="{flame_red}" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
-<path d="%s" fill="{flame_orange}" transform="translate(93,170) scale(0.72) translate(-93,-170)"/>
-<path d="%s" fill="{flame_yellow}" transform="translate(93,170) scale(0.44) translate(-93,-170)"/>
 <rect x="72" y="166" width="42" height="32" rx="3" fill="{chrome_shade}" stroke="{ink}" stroke-width="{wi}"/>
 <circle cx="84" cy="182" r="4.5" fill="{ink}"/>
 <circle cx="102" cy="182" r="4.5" fill="{ink}"/>
@@ -245,7 +241,10 @@ LIGHTER = ('''
 <path d="M 78,200 L 78,236" fill="none" stroke="{white}" stroke-width="7" stroke-linecap="round"/>
 <path d="M 103,204 L 107,216 L 120,216 L 110,224 L 114,237 L 103,229 L 92,237 L 96,224 L 86,216 L 99,216 Z"
       fill="{flame_red}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-''' % (FLAME, FLAME, FLAME), (95, 270))
+''', (95, 270))
+
+# Where the flame comes out - the top of the chimney - and how tall it burns, on that canvas.
+LIGHTER_FLAME = ((93.0, 166.0), 165.0)
 
 
 # His two fire wings, one each side of his back with a gap between them: each a curved leading
@@ -353,6 +352,8 @@ def build():
         img, anchor, _ = tools[name]
         img.save(os.path.join(poses_dir, name + '.png'))
         poses[name] = {'texture': 'poses/%s.png' % name, 'anchor': [round(anchor[0], 1), round(anchor[1], 1)]}
+    poses['tool_lighter']['flame'] = list(LIGHTER_FLAME[0])
+    poses['tool_lighter']['flameHeight'] = LIGHTER_FLAME[1]
 
     def at(point, origin):
         return [unit(point[0] - origin[0]), unit(point[1] - origin[1])]

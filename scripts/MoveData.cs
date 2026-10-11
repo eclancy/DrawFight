@@ -117,6 +117,15 @@ public enum SpecialKind
 	/// puddle never hits; what comes up out of it does. Triguy's crying.
 	/// </summary>
 	Puddle,
+
+	/// <summary>
+	/// Flings a piece of his own drawing - <see cref="MoveData.FxTexture"/>, taken off him while
+	/// it is out (<see cref="MoveData.FlingExtra"/>) - straight ahead at
+	/// <see cref="MoveData.SpecialSpeed"/>, slowing to a stop <see cref="MoveData.Reach"/> away,
+	/// or stopping dead on the first fighter it hits. Either way, there it hangs, and he leaps to
+	/// it and puts it back on. Triguy's top hat (Eric, 2026-10-10).
+	/// </summary>
+	Fling,
 }
 
 /// <summary>
@@ -595,6 +604,25 @@ public partial class MoveData : Resource
 	/// <summary>Draw a projectile with no art as a ball of fire with a flickering tail.</summary>
 	[Export] public bool FxFlame { get; set; } = false;
 
+	/// <summary>
+	/// Held in both hands: the back hand goes on what the front hand holds, this far from the
+	/// front fist to its head (FighterRig.SecondHand). Zero is one-handed. Lug's nail gun and
+	/// shovel.
+	/// </summary>
+	[Export] public float SecondHandAt { get; set; } = 0.0f;
+
+	/// <summary>
+	/// An upward kick on the first active frame, px/s, in the air - the burst of a booster pushing
+	/// him up as it fires down. DoomBot's jet blast.
+	/// </summary>
+	[Export] public float BurstLift { get; set; } = 0.0f;
+
+	/// <summary>
+	/// For a <see cref="SpecialKind.Fling"/>: the rig extra that is flung - hidden on him while it
+	/// is out, and where he leaps to put it back.
+	/// </summary>
+	[Export] public string FlingExtra { get; set; } = "";
+
 	/// <summary>What a <see cref="SpecialKind.Cloud"/> drops. Not exported, like GrabThrow: built in code.</summary>
 	public MoveData RainDrop;
 
@@ -759,6 +787,9 @@ public partial class MoveData : Resource
 			Flight = Flight,
 			FxFlame = FxFlame,
 			LandsOnPlatforms = LandsOnPlatforms,
+			SecondHandAt = SecondHandAt,
+			FlingExtra = FlingExtra,
+			BurstLift = BurstLift,
 			HangFromArt = HangFromArt,
 			ReleaseDrop = ReleaseDrop,
 			FxColor = FxColor,

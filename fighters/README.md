@@ -40,8 +40,9 @@ in the leg, because nearly everything he does is a kick. He is cut and rigged ex
 is (below): three-quarter view, near arm on top, far arm unshaded, boots as feet, coloured in
 pencil, nothing finer than a brow or a stripe. He has two fire wings (`swift/poses/wings.png`,
 one each side of a gap, hinged at his back so each flaps on its own) for his flying up special,
-and a chrome flip-top lighter throwing a huge flame (`swift/poses/tool_lighter.png`) for his
-forward smash, down tilt and two of his throws. He holds no weapon
+and a chrome flip-top lighter (`swift/poses/tool_lighter.png`) for his forward smash, down tilt
+and two of his throws. Its huge flame is not on the drawing: the game draws it rising from the
+chimney (`flame` in rig.json), so it burns upward however he holds the lighter. He holds no weapon
 of his own, so his hand is an empty prop part (`"empty": true`) that a move can fill - under his
 fist, like Lugnut's tools. His boot shafts are drawn on his shins, so they lean with them, and
 only the foot is cut as a foot - a tall shaft kept upright on a leaning shin had the shin going
@@ -245,9 +246,13 @@ themselves, renamed from `photo-1.png`... to what each one is:
 | `outline.png` | a jagged outline | drawn behind him while he is invincible |
 
 `python tools/art/cut_triguy.py` cuts them. He is a white triangle with a black top hat on stick
-limbs: the body is the white fill grown out to take in its outline and face, plus the hat (the
-big stroke above it), plus the two sharp corners of the triangle that poke past the fill; the
-four remaining strokes are the limbs, the two that reach lowest being the legs. Each limb hangs
+limbs: the body is the white fill grown out to take in its outline and face, plus the two sharp
+corners of the triangle that poke past the fill; the four remaining strokes are the limbs, the
+two that reach lowest being the legs. The hat (the big stroke above it, and the bottom of its
+brim, which the grown fill took in) is masked off as its own piece, `parts/Hat.png`, hung back on
+the triangle where he drew it - an extra on the body's own drawing (`"onPart"`), so it turns
+round with him - and copied to `poses/hat.png` to be thrown: his side special flings it (Eric,
+2026-10-10). The same pixels, only kept apart. Each limb hangs
 from its top end, where it meets the triangle. Nothing is redrawn. His legs come out of the
 triangle's bottom edge well out from its middle, so they turn with the triangle when it tips
 (`"legsOnBody"` in `rig.json`) - hung from the hip, a tipped triangle swung clean off them in

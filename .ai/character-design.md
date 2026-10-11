@@ -41,7 +41,7 @@ follows weight — light fighters get quick multi-hit strings, heavies get two s
 | | Swift (light, fire) | Circy (medium, Elim's) | Lug (heavy, construction) |
 |---|---|---|---|
 | theme | a hotshot punk rocker who is also a French chef: flame mohawk, spiked and studded leather jacket, wallet chain, chef's neckerchief, a defiant smirk, flames on everything; lean and long in the leg, so nearly every normal is a kick; a slow charged fireball, a charged fireball roll, two flapping fire wings, a cloud that rains fire; every normal has its own trick | ball on long stretchy legs: tall for big, slow hits, short for small, quick ones | a construction worker in a hi-vis vest: normals with a different heavy tool each, site-tool specials (nail gun, wheelbarrow, wrecking ball, and a steel girder he builds under his own feet, stands on, and that falls); his hard hat glints while he blocks, and while it is armour through his smashes and barge; huge up top and short in the leg, so almost nothing he does uses his feet |
-| jab | two flicker jabs, then "Flambe!" - a burning palm | kick, low kick, ball bonk | two slow pipe-wrench bashes |
+| jab | two flicker jabs, then "Flambe!" - a burning palm | kick, low kick, ball bonk | two pipe-wrench swings across the front of him: down, then back up |
 | tilts | roundhouse (press again: heel hook), torch flip (a flurry that pops them up), hotfoot (his lighter's flame swept under their feet flips them head over heels) | kicks that stretch the kicking leg out to the hit | shovel jab, pickaxe arc, cone shove (a traffic cone shoved along the floor with both hands; whoever runs into it trips) |
 | dash | swan dive (flat out, corkscrewing, wrapped in fire) | rolls into them as a ball | hard-hat barge |
 | smashes | lighters up (his lighter held high like the crowd at a gig, then the flame brought down; slow, burns), fire pillar (four climbing hits), fire geysers (out of the floor both sides) | ball headbutt, spring up, splits | sledge slam, beam heave (a steel I-beam; big, slow, telegraphed), sledgehammer quake (shockwave both ways along the floor) |
@@ -129,7 +129,10 @@ the signal to build one.
 | `Cloud`         | forms a cloud high above that hangs there raining `RainDrop` every `RainInterval` frames; the cloud never hits, the rain does | down |
 
 Built so far: `Projectile`, `Dash`, `Recovery`, `Trap`, `Drop` (as `SpecialKind.Drop`, a falling
-spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform`, `Choice`, `CommandGrab`, `Vent` and `Cloud`.
+spike), `Resize`, `Bomb`, `Shockwave`, `BuildPlatform`, `Choice`, `CommandGrab`, `Vent`, `Cloud`,
+`Puddle`, `Walker` and `Fling` (a piece of his own drawing thrown straight out - it stops at the
+end of its throw or on the first one it hits, and he leaps to it and puts it back on; Triguy's
+Hat Toss, with `FlingExtra` naming the rig extra that is thrown).
 `CommandGrab` exists twice: as its own kind (DoomBot's Claw Grab - arms stretch out along the
 ground, catch, reel in, then `GrabThrow` plays as a follow-up move) and as a flag on a tether
 recovery (`GrabThrow`, below). The rest are designs, not code.
@@ -168,6 +171,17 @@ any of them:
   drawn behind as flapping wings. Checked by the height it gains rather than by launch speed.
   Swift's fire wings, which singe whoever they fly through again and again with a light burning
   link hit (`RehitFrames` + `LinkHit`; Eric, 2026-10-10: it hit once and steered like a balloon).
+- `SecondHandAt` - held in both hands: the back hand goes on the tool in the front hand, this far
+  along it from the fist to its head, or as near there as an arm reaches comfortably
+  (`FighterRig.SecondHand`). Lug's nail gun and shovel jab.
+- `AttackAnim.Aim` - a gun held out in both hands and fired, kicking up a little with every shot of
+  its burst (`FighterAnimations.Recoil`). Lug's nail gun.
+- `BurstLift` - an upward kick on the first active frame in the air: a booster firing down pushes
+  him up. With `ActiveFx.Jets` and `AttackAnim.Rocket`, DoomBot's Jet Blast down air (Eric,
+  2026-10-10).
+- `FighterData.ArmReachBack` - how far behind straight down a fighter's arms can go. A body like
+  Lug's is too broad for an arm to go round behind it, so his is 70 degrees, and every swing he
+  has stays in front of him (Eric, 2026-10-10). Waived on a back air, when he is looking back.
 - `LandsOnPlatforms` - a `Drop` that stops on anything that can be stood on, soft platforms too,
   instead of only on solid ground. Fire rain does; a wrecking ball crashes on through.
 - `FxFlame` - a projectile with no art drawn as a ball of fire with a tail. `FxMissile` draws
@@ -188,10 +202,10 @@ any of them:
   is live; size the hitbox to the wheel. Flambe's Fire Wheel (Eric, 2026-10-10: the fire was a
   small burst over his stomach). It is a band of flames running round the rim, with long ones
   whipped off the outside and shorter ones licking in toward him.
-- **Fire is tongues, not spikes** (`FlameFx`; Eric, 2026-10-10: it looked like an orb with
-  spikes). Every flame Flambe makes is built of curved teardrop tongues - round at the root,
-  bending as they rise, flickering to a point, red outside, orange, a yellow heart - so they run
-  together into fire. A burst rises and leans the way the hit goes; it never fans out like a star.
+- **Fire is tongues, and fire rises** (`FlameFx`) - see "Effects drawn round a fighter" in
+  `.ai/art-direction.md`. A fire burst (`ActiveFx.Flame`) rises and leans the way the hit goes.
+  A prop that burns gives its pose a `flame` point and `flameHeight` in rig.json, and the game
+  draws the flame (`FlameFx.Torch`, Flambe's lighter).
 - `ActiveFx` - what a hit is drawn as while live: `Sparks` (steel), `Electric` (bolts from the
   antennae to a hitbox overhead, or a crackling ring round one anywhere else), `Jets` (rocket
   flames out of both soles, wherever the feet are in the pose) and `Flame` (a burst of flame
@@ -309,7 +323,8 @@ Some are **traits on `FighterData`**, because they are about the fighter rather 
   (Eric's call, 2026-10-08). Only when he is just standing.
 - `CanRoll` - false and block plus a direction on the ground does not roll; he stays in his
   block (and block at a ledge just climbs). DoomBot: a factory robot does not tumble across the
-  floor (Eric's call, 2026-10-05). Spot dodge and air dodge are unchanged.
+  floor (Eric's call, 2026-10-05), and in the air he does not dodge at all (2026-10-10). His
+  spot dodge is unchanged.
 - `BlockLeak` - how much more than usual a block lets through. Triguy's 1.8: blocking is standing
   still, which he is terrible at.
 - `AirDashSpeed` - the air jump becomes an eight-way dash: 14 frames, no gravity, then a glide.

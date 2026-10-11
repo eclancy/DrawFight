@@ -103,6 +103,19 @@
     }
   ], 
   "canonicalHeight": 1252.5, 
+  "extras": [
+    {
+      "always": true, 
+      "bone": "Torso", 
+      "name": "hat", 
+      "offset": [
+        -333.5, 
+        -589.5
+      ], 
+      "onPart": true, 
+      "part": "Hat"
+    }
+  ], 
   "figureHeight": 2185, 
   "legLength": 958.9, 
   "legsOnBody": true, 
@@ -136,6 +149,13 @@
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
+    "Hat": {
+      "pivot": [
+        385.5, 
+        677.0
+      ], 
+      "texture": "parts/Hat.png"
+    }, 
     "LegBack_Lower": {
       "pivot": [
         69.5, 
@@ -166,8 +186,8 @@
     }, 
     "Torso": {
       "pivot": [
-        719.0, 
-        1266.5
+        560.0, 
+        730.5
       ], 
       "texture": "parts/Torso.png"
     }
@@ -180,6 +200,13 @@
       ], 
       "figureHeight": 2473, 
       "texture": "poses/crying.png"
+    }, 
+    "hat": {
+      "anchor": [
+        385.5, 
+        345.5
+      ], 
+      "texture": "poses/hat.png"
     }, 
     "outline": {
       "anchor": [

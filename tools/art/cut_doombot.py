@@ -239,6 +239,60 @@ def fill_covered(torso, photo):
     return torso
 
 
+def solid(piece, keep=0.03):
+    """The piece without the specks the cut catches round it - a fleck of pencil on the paper
+    next to a boot, a dot by a shin - which the ring then turns into a dark nugget stuck to the
+    part (Eric, 2026-10-10). Any blot of the drawing not joined to the piece and under `keep` of
+    the size of its biggest blot goes, with the faint edge round it. Only what is not attached:
+    nothing of the drawing itself is touched."""
+    box = piece.getbbox()
+    if box is None:
+        return piece
+    alpha = piece.split()[3]
+    crop = alpha.crop(box)
+    w, h = crop.size
+    a = crop.load()
+    seen = bytearray(w * h)
+    blots = []
+    for y0 in range(h):
+        for x0 in range(w):
+            if seen[y0 * w + x0] or a[x0, y0] <= 100:
+                continue
+            blot, stack = [], [(x0, y0)]
+            seen[y0 * w + x0] = 1
+            while stack:
+                x, y = stack.pop()
+                blot.append((x, y))
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx] and a[nx, ny] > 100:
+                        seen[ny * w + nx] = 1
+                        stack.append((nx, ny))
+            blots.append(blot)
+    if len(blots) < 2:
+        return piece
+    biggest = max(len(b) for b in blots)
+    specks = Image.new('L', crop.size, 0)
+    sp = specks.load()
+    dropped = 0
+    for blot in blots:
+        if len(blot) < biggest * keep:
+            dropped += 1
+            for x, y in blot:
+                sp[x, y] = 255
+    if not dropped:
+        return piece
+    # Their faint edges too, but nothing that belongs to a blot that stays.
+    kept = ImageChops.subtract(crop.point(lambda v: 255 if v > 100 else 0), specks)
+    specks = specks.filter(ImageFilter.MaxFilter(5))
+    specks = ImageChops.subtract(specks, kept.filter(ImageFilter.MaxFilter(3)))
+    full = Image.new('L', piece.size, 0)
+    full.paste(specks, box[:2])
+    out = piece.copy()
+    out.putalpha(ImageChops.subtract(alpha, full))
+    empty = Image.new('RGBA', piece.size, (0, 0, 0, 0))
+    return Image.composite(out, empty, out.split()[3].point(lambda v: 255 if v > 0 else 0))
+
+
 def ringed(piece, below=0):
     """The piece with a dark ring OUTLINE pixels wide round its outside edge - drawn behind it,
     so nothing of the drawing is covered - and none above row `below`. The pen is round: the
@@ -304,7 +358,7 @@ def capped_leg(photo, look, polygon, hip):
 
 def boot(photo, look, polygon, ankle, name, parts_dir, parts):
     """A boot, as drawn - level - pinned at its ankle."""
-    piece = ringed(cut(photo, polygon, look))
+    piece = ringed(solid(cut(photo, polygon, look)))
     box = piece.getbbox()
     piece.crop(box).save(os.path.join(parts_dir, name + '.png'))
     parts[name] = {'texture': 'parts/%s.png' % name, 'pivot': [ankle[0] - box[0], ankle[1] - box[1]]}
@@ -407,9 +461,9 @@ def main():
     # Ringed whole, before the halving, so no line runs across the knee; capped round at the
     # hip and the knee; and the boots cut off as feet.
     leg, cap = capped_leg(photo, look, BACK_LEG, BACK_HIP)
-    knee_back = canonical(ringed(leg), BACK_HIP, BACK_FOOT, 'LegBack_Upper', 'LegBack_Lower', parts_dir, parts, cap=cap)
+    knee_back = canonical(ringed(solid(leg)), BACK_HIP, BACK_FOOT, 'LegBack_Upper', 'LegBack_Lower', parts_dir, parts, cap=cap)
     leg, cap = capped_leg(photo, look, FRONT_LEG, FRONT_HIP)
-    knee_front = canonical(ringed(leg), FRONT_HIP, FRONT_FOOT, 'LegFront_Upper', 'LegFront_Lower', parts_dir, parts, cap=cap)
+    knee_front = canonical(ringed(solid(leg)), FRONT_HIP, FRONT_FOOT, 'LegFront_Upper', 'LegFront_Lower', parts_dir, parts, cap=cap)
     boot(photo, look, BACK_BOOT, BACK_FOOT, 'FootBack', parts_dir, parts)
     boot(photo, look, FRONT_BOOT, FRONT_FOOT, 'FootFront', parts_dir, parts)
     shin_back = math.hypot(BACK_FOOT[0] - BACK_HIP[0], BACK_FOOT[1] - BACK_HIP[1]) - knee_back

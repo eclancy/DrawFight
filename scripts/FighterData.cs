@@ -127,11 +127,18 @@ public partial class FighterData : Resource
 	[Export] public bool Robotic { get; set; } = false;
 
 	/// <summary>
-	/// Whether block plus a direction on the ground rolls. False for DoomBot: a factory robot does
-	/// not tumble across the floor - he blocks, spot-dodges and air-dodges, but to get out of a
-	/// corner he has to walk, jump or fight. Eric's call, 2026-10-05.
+	/// Whether he can roll: block plus a direction on the ground, and dodging in the air. False
+	/// for DoomBot: a factory robot does not tumble across the floor or through the air - he
+	/// blocks and spot-dodges, but to get out of a corner he has to walk, jump or fight. Eric's
+	/// calls, 2026-10-05 and (in the air) 2026-10-10.
 	/// </summary>
 	[Export] public bool CanRoll { get; set; } = true;
+
+	/// <summary>
+	/// How far behind straight down his arms can swing, in degrees (FighterRig.ArmBackLimit).
+	/// The default is as far as anyone's go; a fighter built like a fridge has less. Lug.
+	/// </summary>
+	[Export] public float ArmReachBack { get; set; } = FighterRig.ArmBackMost;
 
 	/// <summary>
 	/// Carries the weapon in his hand on his shoulder (FighterAnimations.CarryOnShoulder) whenever
@@ -247,6 +254,9 @@ public partial class FighterData : Resource
 			TrailColor = new Color(1.0f, 0.74f, 0.12f),
 			// On the ground, the sledgehammer rests on his shoulder.
 			ShouldersProp = true,
+			// Arms that big do not go round behind a back that broad: every swing stays in front
+			// of him (Eric, 2026-10-10).
+			ArmReachBack = 70.0f,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Construction(),
 			CharacterNormals.Lug, CharacterNormals.LugJab());

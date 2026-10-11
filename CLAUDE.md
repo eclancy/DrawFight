@@ -67,8 +67,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 1. **Never redraw, clean up, smooth, or "fix" his linework.** Fill in what is missing; never
    replace what is there. This is the entire point of the project. (The allowed exceptions, for
    readability at match size: widening every line uniformly, in place, when it is too thin to
-   see - Circy's and Triguy's `LINE_BOOST` - and, on Eric's own DoomBot at his request, a dark
-   ring round the outside edge. See `.ai/art-pipeline.md`.)
+   see - Circy's and Triguy's `LINE_BOOST` - on Eric's own DoomBot at his request, a dark
+   ring round the outside edge - and, on Eric's call, Circy's front foot redrawn flat. Each was
+   asked for by name; none is a precedent for the next drawing. See `.ai/art-pipeline.md`.)
 2. **Every fighter rigs to the same skeleton**, so the animation library is authored once and
    inherited by everyone. Do not generalise the bone hierarchy — see the non-humanoid escape
    hatch in `.ai/art-pipeline.md` instead.
@@ -128,9 +129,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`bash tools/release/release.sh X.Y.Z`** — publish a version: exports the Windows build and
   makes a GitHub Release. Every downloaded copy updates itself to it on next start. Needs a clean
   tree and the export templates - see `.ai/releasing.md`. Never publish without being asked.
-- **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real title-screen
-  frame (Lug's face). The icon is never drawn separately; when a real drawing replaces the
-  stick figures, re-shoot and re-crop per the script's docstring.
+- **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real frame of the
+  game: Circy, Elim's drawing, standing idle in his parade cell (shoot it first with
+  `--parade --only=2 --shot=70`). The icon is never drawn separately; if Circy is re-cut, re-shoot
+  and re-crop per the script's docstring.
 - **`"$GODOT_BIN" --path . -- --stage=N --shot=120`** — boot straight into one stage and
   screenshot it. `F4` cycles stages while playing.
 - **`--match`, `--select`, `--stages`, `--parade`** each boot straight to that screen, so a
@@ -207,9 +209,10 @@ something is unstated here, default to however that project does it.
 - Give a fighter throws that are not themed on the rest of their kit. Everyone grabs (block +
   attack) and has four throws, in `Grabs.cs` - see `.ai/fighting-design.md`. Grabs went in on
   Eric's call (2026-10-04), reversing the old "no grabs" rule.
-- Build a Smash-style shield. Blocking **reduces** damage and knockback; it never negates them.
-  There is no shield health, no shield break, and no shield poking, and the cost of blocking is
-  paid in chip damage raising your percent.
+- Build a Smash-style shield. Blocking **reduces** damage and knockback; it never negates them,
+  and its cost is paid in chip damage raising your percent. The shield does wear down - it
+  cracks with every blocked hit and breaks at 45 damage, leaving him reeling (Eric's call,
+  2026-10-10) - but it never shrinks, so there is no shield poking. See `.ai/fighting-design.md`.
 - Accept or request a drawing that is not in **side view facing right**.
 - Write a PSD parser for the importer. Layered art arrives as a folder of exported PNGs, which
   every tablet app can produce and Godot can already read. `.ora` is the only single-file format
@@ -233,6 +236,15 @@ something is unstated here, default to however that project does it.
 - Use `Skeleton2D`/`Bone2D` for the rig. Cutout parts are rigid and rotate about a joint; the
   rig is a `Node2D` tree with `Centered = false` sprites offset by `-pivot`. See
   `.ai/art-pipeline.md`.
+- Write an elbow or knee bent past straight, or swing an arm round behind further than 145
+  degrees. Elbows fold the hand forward, knees fold the foot back, and a weapon goes overhead up
+  the front. The rig holds joints to that, so a pose asking for more just stops stiff. A limb
+  swung far back turns to face back by itself - do not fake it. See "Moving like a body" in
+  `.ai/art-pipeline.md`, which lists the rules for every pose and clip.
+- Push a hitbox out past the weapon or limb to give a move range. Put it on the business end;
+  a normal attack reaches past it with its power, and its smear shows the reach (`SmearTrail`).
+- Draw fire pointing down, as a ring of spikes, or onto a prop. Fire rises (`FlameFx`), and a
+  burning prop names a `flame` point for the game to draw from. See `.ai/art-direction.md`.
 - Call game feel or animation verified when you have only run `dotnet build`.
 - Hand-edit a file in `assets/sfx/` or `assets/music/`, or pick a move's sound per move. Sounds
   are generated, and a move's sound is read off its data by `SfxCatalog.ForMove`; a move it

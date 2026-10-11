@@ -43,61 +43,119 @@ front — but see "Non-humanoid fighters" below for the escape hatch.
 ## Moving like a body, not a puppet
 
 Rigid cutout parts on a fixed skeleton look like a puppet when every joint does the same thing at
-the same moment. These are what keep them looking like a body (Eric's call, 2026-10-10: movement
-looked puppeteered and silly). Keep them when adding poses or clips.
+the same moment, and broken when a joint goes where a body cannot. Eric's calls, all 2026-10-10:
+movement looked puppeteered and silly; feet left the floor on a jab; arms ended up facing
+completely backwards and knees bent backwards; fire pointed every way; hits stopped at the end of
+the limb. The rules below are what came of it. Follow them when adding or changing any pose,
+clip, attack animation or effect drawn round a fighter; the rig enforces the ones it can.
 
-- **Joints follow on springs, from the middle out** (`FighterRig.Follow`). Each joint chases its
-  pose with its own stiffness: the hips and spine lead, the shoulder follows, the elbow after it
-  and the hand last, each carried a little past where it stops and settling back. A strike's
-  active frames still snap - hitlag freezes whatever is showing, so the hit must be fully out.
-  A robot (DoomBot) snaps between held poses on purpose and does not use the springs.
-- **Weight**: a heavyweight's springs are slower (`FighterData.Inertia`), so his limbs swing on
-  further and settle later, and he breathes slower standing.
-- **Clips curve through their keys** (`Pose.Curve`, Catmull-Rom) instead of easing in and out of
+### Rules for poses and animation
+
+1. **Write the angle you want to see, divided by about 1.3.** Every limb angle is played bigger
+   (`FighterRig.Drama`, and each fighter's `AnimationDrama` on top for the legs), and angles add
+   up down the chain: the lean, plus the shoulder, plus the elbow. A windup leaning back with the
+   arm up and the elbow bent points the forearm, and the weapon, straight backwards.
+2. **Elbows fold the hand forward, knees fold the foot back, and neither goes past straight.**
+   In pose terms: a forearm is 0 or negative, a shin 0 or positive (less than about 160 either
+   way). The rig holds every pose, spring and solved limb to it, so a pose asking for more stops
+   dead at straight - write the bend you mean.
+3. **An arm never goes round behind.** At most 145 degrees behind straight down - out behind
+   and up, as far as a body turning away takes a swing - and less for a fighter whose build
+   says so (`FighterData.ArmReachBack`: Lug's is 70, because a back that broad does not let a big
+   arm round it). A weapon gets overhead by going up the front (negative, on past -180 if it
+   must), and an arm aimed by code wraps onto the front for straight up (`WideArcAt`). Swings
+   for a fighter like that are written to stay in front of him: Lug's cross-body swings
+   (`CrossSwing`, `CrossBackhand`), his two-handed thrust (`ToolThrust`).
+4. **A limb pointing back faces back.** Do not fake it with a strange elbow or knee: the rig
+   turns a limb on its own once it is swung far enough behind (Joints, below), and a turned
+   limb's elbow or knee bends the other way. A star - Flambe's nair, the splits - is legs split
+   and arms out both ways, each pointing its own way.
+5. **Arms spread forward and back go a little below the shoulder.** Drawn three-quarter on, the
+   near shoulder is on the far side of the chest, and an arm out level crosses the face.
+6. **Feet stay on the floor unless the move is a kick.** A standard attack on the ground keeps
+   both feet planted; a kick lifts only its kicking leg. A new kicking animation goes in the kick
+   list (`FighterAnimations.UsesLegs`), or the solver will plant its feet.
+7. **Punches go out straight.** An empty hand on a jab or tilt is carried from a guard to the hit
+   on a line (`ThrowPunch`); do not pose a straightening arm by hand. A hand holding something
+   keeps its swing, and the head of what it holds is what lands. A tool held in both hands says
+   so (`MoveData.SecondHandAt`) and the back hand is solved onto it every frame - do not pose
+   the second arm to meet it.
+8. **Hitboxes sit on the business end** - ringed in `--parade --attacks`, which prints where the
+   weapon head is. Never push one out to give a move range: a normal attack already reaches past
+   its hitbox with its power, and its smear shows that reach (see Smears below).
+9. **Keep the knees showing in a curl.** The rig draws the legs behind the torso; a thigh pulled
+   tighter than the lean of the body disappears behind it.
+10. **Fire rises.** Every procedural flame leans at most 50 degrees off straight up, whatever
+    it is thrown off; a prop that burns never has its flame drawn on - it names a `flame` point
+    and the game draws the flame rising from it. See `.ai/art-direction.md`.
+11. **Leave the springs' damping cap at 1** (`FighterRig.Follow`). Past it a joint reverses every
+    frame - a jitter - and a quick blend on a light fighter flung the body over.
+12. **Look at it move.** A pose can look right and move wrong. `--parade --film=NAME --only=N`
+    plays one thing frame by frame through the rig exactly as a match does, smears and all;
+    `--film=ground`, `smash` or `air` shows each move's key moments; `--film=roll` films a dodge
+    roll on a floor line. See CLAUDE.md.
+
+### How the rig keeps them
+
+**Springs and weight.**
+- Joints follow on springs, from the middle out (`FighterRig.Follow`). Each joint chases its pose
+  with its own stiffness: the hips and spine lead, the shoulder follows, the elbow after it and
+  the hand last, each carried a little past where it stops and settling back. A strike's active
+  frames still snap - hitlag freezes whatever is showing, so the hit must be fully out. A robot
+  (DoomBot) snaps between held poses on purpose and does not use the springs.
+- A heavyweight's springs are slower (`FighterData.Inertia`), so his limbs swing on further and
+  settle later, and he breathes slower standing.
+- Clips curve through their keys (`Pose.Curve`, Catmull-Rom) instead of easing in and out of
   each one, which stopped the whole body dead four times a stride.
-- **Attacks**: the coil before a hit and the carry after it are a little more of the same
-  movement, capped at 16 degrees a joint (`Pose.Overshoot`) - scaled by the size of the swing, an
-  arm raised overhead was carried on round behind the back. After the hit the limb keeps going,
-  slowing, and is drawn back while still moving; nothing freezes at full stretch.
-- **Angles add up.** What reaches the screen is the lean, plus the shoulder, plus the elbow, each
-  played bigger (`FighterRig.Drama`). A windup with the body leaning back, the arm at the top
-  and the elbow bent points the forearm, and the weapon, straight backwards.
-- **Standard attacks on the ground stand on the floor** (Eric, 2026-10-10). A jab or tilt done
-  with the arms keeps both feet planted - the legs are solved under him as if standing, the knees
-  bending as the hips drop or shift into the hit (`FighterAnimations.StandsThrough`). A kick keeps
-  its back leg standing (`KeepSupportLeg`), so a flip kick never hops.
-- **Punches go out in a straight line**, like a boxer's: the fist travels from a guard in front
-  of the shoulder toward the hit and lands on it, the shoulder and elbow solved to carry it
-  (`FighterAnimations.ThrowPunch`), the other hand held up at the guard. A hand holding a tool or
-  a sword keeps its swing - the head of it is what has to land.
-- **Turning round** narrows the drawing to its edge and opens it out the other way over six
-  frames (`Fighter.TurnWidth`), instead of mirroring it in one.
-- **Squash and stretch are small** - a few percent. A cutout that stretches a fifth of its height
-  to jump is a rubber toy; the knees and the lean do that work.
-- **The springs never take away more than a joint's whole speed in a frame** (damping capped at
-  1 in `FighterRig.Follow`). Past that, a joint swings back the other way every frame - a jitter -
-  and with a quick blend on a light fighter it was thrown further each frame until the body
-  flipped over. The dodge roll's curl found it.
-- **A dodge roll rolls along the floor** (Eric, 2026-10-10). Curled up in a ball (`Tuck`: back
-  rounded, chin down, knees to the chest, arms round the shins), the rig turns about the middle of
-  the ball, set down each frame so whatever part of him is lowest touches the floor
-  (`FighterRig.SetRoll(angle, alongFloor: true)`). Turned about the middle of the standing body,
-  the ball swung up off the floor and back - a somersault in the air. It turns in step with the
-  ground it covers (`FighterAnimations.RollTurned`), so it rolls rather than skids. Thighs pulled
-  tighter than the tuck has them hide behind the torso, which the rig draws in front of the legs;
-  keep the knees showing. A hammer on the shoulder stays there through a roll.
-- **Smears** (Eric, 2026-10-10: hits should reach past the limited reach of the limbs, with smear
-  frames more dramatic the more powerful the attack). Whatever strikes - a hand, a foot, the head
-  of a weapon, whichever one is at the hit - is traced through the last frames of its swing, round
-  the body as a swing goes, and the smear stretches on out of it to the far side of the hit:
-  wider, longer and bolder the stronger the move (`SmearTrail`), with speed lines, and a shock of
-  air off the front of a smash. The hit itself reaches as far (see `.ai/fighting-design.md`). No
-  outline and nothing dark - it is motion, not a thing. Check them with `--film`.
+- The coil before a hit and the carry after it are a little more of the same movement, capped
+  at 16 degrees a joint (`Pose.Overshoot`). After the hit the limb keeps going, slowing, and is
+  drawn back while still moving; nothing freezes at full stretch.
 
-Check motion, not just poses: `--parade --film=NAME --only=N` films one fighter doing one thing,
-frame by frame, through the rig exactly as a match plays it, smears and all; `--film=roll` films
-a dodge roll on a floor line; `--film=ground`, `smash` or `air` shows every move of that kind at
-its key moments. See CLAUDE.md.
+**Joints.**
+- Elbows and knees are held to their range in the pose, against the springs, and again after
+  anything solves a limb directly - a punch, a hand on a ledge or a handle
+  (`FighterRig.BendOneWay`, `KeepBoneInRange`). Arms are held to `ArmBackLimit`, the fighter's
+  own `ArmReachBack`, except while looking back on a back air.
+- A limb solved onto a point (`ReachArm`) bends the way its elbow can: of the two ways to reach,
+  the one the joint allows, then the one with the elbow lower. Elbow-down regardless bent a hand
+  reaching for a tool in front of his chest backwards, and the joint straightened it off the tool.
+  A second hand on a tool slides along it to a point an arm reaches comfortably
+  (`FighterRig.SecondHand`): Lug's far shoulder sits right by his front fist.
+- A limb turns - drawn mirrored about its own length, with the joint below, its foot and the
+  front hand's prop carried across - when it swings more than 80 degrees behind straight down
+  for an arm, or 65 for a leg in the air, and turns back once it comes forward past 55 (40), so
+  a limb swinging near the line does not flicker (`FighterRig.TurnLimbs`, `ShowTurns`). On the
+  floor a leg turns only past 95 - the splits - never for a lunge or a kneel, whose back foot
+  points forward; a standing leg never does.
+
+**On the floor.**
+- Standard attacks stand: the legs are solved under him as if standing, the knees bending as
+  the hips drop or shift into the hit (`FighterAnimations.StandsThrough`, `GroundAdjust`). A kick
+  keeps its back leg standing (`KeepSupportLeg`), so a flip kick never hops.
+- Punches: the fist travels from a guard in front of the shoulder toward the hit and lands on
+  it, the shoulder and elbow solved to carry it, the other hand held up at the guard.
+
+**Rolling.** A dodge roll curls into a ball (`Tuck`: back rounded, chin down, knees to the chest,
+upper arms down his sides and forearms folded round the shins) and rolls along the floor: the
+rig turns about the middle of the ball and sets it down each frame so whatever part of him is
+lowest touches the floor (`FighterRig.SetRoll(angle, alongFloor: true)`). Turned about the
+middle of the standing body, the ball swung up off the floor and back - a somersault in the air.
+It turns in step with the ground it covers (`FighterAnimations.RollTurned`), so it rolls rather
+than skids. A hammer on the shoulder stays there through a roll and counts as part of the ball.
+
+**Smears.** Whatever strikes - a hand, a foot, the head of a weapon: whichever is moving fastest
+as the swing comes through, then whichever is at the hit - is traced through the last few frames
+of the windup and the hit, round the body as a swing goes, and the smear stretches on out of it
+to the far side of the hit: wider, longer and bolder the stronger the move (`SmearTrail`), with
+speed lines, and a shock of air off the front of a smash. The hit reaches as far as the smear
+does (`SmearTrail.Reach`; see `.ai/fighting-design.md`). Specials, throws and a wheel of fire
+round the body have none.
+
+**Turning round** narrows the drawing to its edge and opens it out the other way over six frames
+(`Fighter.TurnWidth`), instead of mirroring it in one.
+
+**Squash and stretch are small** - a few percent. A cutout that stretches a fifth of its height
+to jump is a rubber toy; the knees and the lean do that work.
 
 ## Parts, and the parts he will not draw
 
@@ -330,6 +388,14 @@ small path rather than bending the rig.
   aiming for about 2.5px at match size. It keeps every line's path and touches only the generated
   parts and poses, never `source/`. Never use it to tidy, smooth or join anything. Eric's call,
   2026-10-04.
+- **One redrawn foot: Circy's front one** (Eric, 2026-10-10, who allowed editing the drawing for
+  this). Elim drew that leg bowing out and then hooking back in on a diagonal with a tick on the
+  end - a foot angled down and back that never stood flat, however the rig turned it. The cut
+  script takes off the hook below where his line stops coming straight down and draws the leg on
+  down to the floor his back foot stands on, with a flat foot as long as that one, in the same
+  black marker at his own line width (`redraw_front_foot` in `tools/art/cut_circy.py`). It works
+  on the copy the parts are cut from; `source/` is untouched. It is the only redrawn line in any
+  kid's fighter: do not take it as leave to redraw another without being asked for that one.
 - **Feet cut separately** (DoomBot's boots): a foot is an extra on its lower leg pinned at the
   ankle, marked `"foot": true` in rig.json. The rig keeps it level as far as the fighter is
   planted (`FighterRig.LevelFeet`) - an ankle, without a new bone - and, standing, solves thigh
@@ -344,15 +410,26 @@ small path rather than bending the rig.
   as the body tips, or the body swings away from them. Their swings are untouched; only where
   they start moves. A body turned round to look back (a back air) takes every limb's root round
   with it.
-- **A shin with no flat sole**: a leg whose bottom is not a foot laid flat - Circy's front leg, a
-  diagonal with a tick on the end - says so with `"soleSlope": 0` on its part, and stands as
-  drawn. Without it the diagonal was read as a sole and laid flat on the floor. Floor contact, the sole a jet
-  comes out of, stance width and portrait framing all count the feet.
+- **A shin with no flat sole**: a leg whose bottom is not a foot laid flat - a diagonal with a
+  tick on the end, as Circy's front leg was before it was redrawn - says so with `"soleSlope": 0`
+  on its part, and stands as drawn. Without it the diagonal is read as a sole and laid flat on
+  the floor. Nobody uses it now. Floor contact, the sole a jet comes out of, stance width and
+  portrait framing all count the feet.
 - **Round joint caps** (DoomBot's legs): each half of a limb keeps a disc of the limb round the
   joint, and the thigh's disc round the hip is filled with leg cloned from just below it (hidden
   behind the body at rest) - so a leg swung far out turns one round end over another instead of
   opening a notch. A cut-script job (`canonical(..., cap=)` in `tools/art/cut_doombot.py`).
   Eric's call, 2026-10-04: his legs came visibly away from his body on his kicks.
+- **A piece a move takes off him** - Triguy's top hat, which he throws - is masked off his
+  drawing as its own part and hung back on as an extra on the body's own drawing
+  (`"onPart": true` in rig.json), so it turns round with the body when he looks back and counts
+  as body for framing. Its pixels are his; it is only kept apart, never redrawn. A copy goes in
+  `poses/` for the thrown one.
+- **Specks are not part of a piece.** A fleck of pencil on the paper beside a cut piece, not
+  joined to it, gets its own outline ring and shows as a dark nugget stuck to the part - DoomBot's
+  boots and shins (Eric, 2026-10-10). `solid` in `tools/art/cut_doombot.py` drops any blot not
+  joined to the piece and under 3% of its size before the ring is drawn. It only ever removes
+  what is not attached; nothing of the drawing itself is touched.
 - **An outer outline** - a dark ring round each piece's outside edge, drawn behind it - is the
   same kind of step for a drawing whose edge is faint pencil. DoomBot only, on his artist's own
   request (`ringed` in `tools/art/cut_doombot.py`): ring each whole shape before cutting it at a

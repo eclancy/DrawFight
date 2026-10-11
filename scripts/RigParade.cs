@@ -78,6 +78,10 @@ public partial class RigParade : Node2D
 			case "bair": return d.Move(MoveSlot.BackAir);
 			case "uair": return d.Move(MoveSlot.UpAir);
 			case "dair": return d.Move(MoveSlot.DownAir);
+			case "nspec": return d.Move(MoveSlot.NeutralSpecial);
+			case "sspec": return d.Move(MoveSlot.SideSpecial);
+			case "uspec": return d.Move(MoveSlot.UpSpecial);
+			case "dspec": return d.Move(MoveSlot.DownSpecial);
 			default: return null;
 		}
 	}
@@ -232,6 +236,7 @@ public partial class RigParade : Node2D
 				rig.DramaScale = data.AnimationDrama;
 				rig.Robotic = data.Robotic;
 				rig.Inertia = data.Inertia;
+				rig.ArmBackLimit = data.ArmReachBack;
 				int last = FilmLeadIn + frames[c];
 				var trail = new SmearTrail();
 				for (int f = 0; f <= last; f++)
@@ -240,6 +245,7 @@ public partial class RigParade : Node2D
 					if (move != null && SmearTrail.Smears(move) && f >= FilmLeadIn) trail.Record(rig, holder, f - FilmLeadIn);
 				}
 				if (move != null) holder.AddChild(SmearView(data, move, frames[c], trail));
+				holder.AddChild(FlameView(rig, last));
 				if (row == 0)
 				{
 					var head = new Label { Text = beats[c], Position = new Vector2(-50.0f, -280.0f) };
@@ -295,6 +301,7 @@ public partial class RigParade : Node2D
 			rig.DramaScale = data.AnimationDrama;
 			rig.Robotic = data.Robotic;
 			rig.Inertia = data.Inertia;
+			rig.ArmBackLimit = data.ArmReachBack;
 			var trail = new SmearTrail();
 			for (int f = 0; f <= frame; f++)
 			{
@@ -302,6 +309,7 @@ public partial class RigParade : Node2D
 				if (move != null && SmearTrail.Smears(move) && f >= FilmLeadIn) trail.Record(rig, holder, f - FilmLeadIn);
 			}
 			if (move != null) holder.AddChild(SmearView(data, move, frame - FilmLeadIn, trail));
+			holder.AddChild(FlameView(rig, frame));
 			// The floor, for a roll: the ball should ride along it, never lift off or sink in.
 			if (Film == "roll")
 			{
@@ -400,6 +408,21 @@ public partial class RigParade : Node2D
 			}
 		};
 		return marker;
+	}
+
+	/// <summary>
+	/// The flame out of a burning prop in the rig's hand, drawn as Fighter.DrawPropFlame draws
+	/// it - nothing when the hand holds nothing that burns.
+	/// </summary>
+	static Node2D FlameView(FighterRig rig, int clock)
+	{
+		var view = new Node2D { ZIndex = 1 };
+		view.Draw += () =>
+		{
+			(Vector2 at, float height)? flame = rig.PropFlameGlobal();
+			if (flame != null) FlameFx.Torch(view, view.ToLocal(flame.Value.at), flame.Value.height, clock);
+		};
+		return view;
 	}
 
 	/// <summary>
@@ -558,12 +581,14 @@ public partial class RigParade : Node2D
 					GD.PushError($"RigParade: {data.DisplayName} failed to load {data.RigPath}");
 					continue;
 				}
+				holder.AddChild(FlameView(rig, 0));
 
 				// Much larger than in a match, which is the entire point of this view.
 				rig.Normalise(300.0f, 150.0f, 1.0f);
 				rig.DramaScale = data.AnimationDrama;
 				rig.Robotic = data.Robotic;
 				rig.Inertia = data.Inertia;
+				rig.ArmBackLimit = data.ArmReachBack;
 				if (Size != 0 && Stretches(data)) rig.SetLegStretch(SizeLevels.LegStretch(Size), 150.0f);
 				// Feet on the floor for everything done standing, exactly as in a match.
 				string columnLabel = columns[index].label;

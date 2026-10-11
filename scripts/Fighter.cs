@@ -430,6 +430,7 @@ public partial class Fighter : CharacterBody2D
 				rig.DramaScale = data.AnimationDrama;
 				rig.Robotic = data.Robotic;
 				rig.Inertia = data.Inertia;
+				rig.ArmBackLimit = data.ArmReachBack;
 			}
 			else
 			{
@@ -558,6 +559,12 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Hitstun: TickHitstun(dt); break;
 			case FighterState.Tumbling: TickTumbling(input, dt); break;
 			case FighterState.Respawning: TickRespawning(); break;
+		}
+
+		// Knocked out of a fling, or out of the match: whatever he flung is back on him.
+		if (flung != null && (State != FighterState.Attacking || currentMove == null || currentMove.Special != SpecialKind.Fling))
+		{
+			TakeBackFlung();
 		}
 
 		if (State != FighterState.Respawning && State != FighterState.LedgeHang)
@@ -732,6 +739,7 @@ public partial class Fighter : CharacterBody2D
 		string moveExtra = State == FighterState.Attacking ? currentMove?.ShowExtra ?? "" : "";
 		// Armour is the hard hat too: lit for as long as a small hit would bounce off him.
 		rig.SetExtraVisible("hardhat", IsBlocking || moveExtra == "hardhat" || IsArmoredMove);
+		if (!string.IsNullOrEmpty(flungExtra)) rig.SetExtraVisible(flungExtra, flung == null);
 
 		// Knocked over, or curled into a bomb: the limbs are gone and he is drawn as one piece in
 		// _Draw. Elim asked for exactly that - "get rid of his arms and legs until he gets back up".
@@ -945,6 +953,7 @@ public partial class Fighter : CharacterBody2D
 
 	void TickTimers(InputState input)
 	{
+		MendShield();
 		if (invulnFrames > 0) invulnFrames--;
 		if (blockReleaseLagFrames > 0) blockReleaseLagFrames--;
 		if (coyoteFrames > 0) coyoteFrames--;
@@ -1001,14 +1010,14 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
+		// A girder he built is ground like any other: standing on it gives back the air jump and
+		// the up special (Eric, 2026-10-10: he could not double jump off it). Only real ground
+		// gives back a second girder, or build, jump, build would climb for ever.
 		helpless = false;
-		if (!standingOnBuilt)
-		{
-			airJumpsUsed = 0;
-			upSpecialUsed = false;
-			buildUsed = false;
-			usedThisAirtime.Clear();
-		}
+		airJumpsUsed = 0;
+		upSpecialUsed = false;
+		usedThisAirtime.Clear();
+		if (!standingOnBuilt) buildUsed = false;
 		IsCrouching = false;
 
 		if (IsBlocking)
@@ -1247,6 +1256,12 @@ public partial class Fighter : CharacterBody2D
 
 		bool active = moveFrame > activeStart && moveFrame <= activeEnd;
 
+		// A booster firing down kicks him up as it fires (DoomBot's jet blast).
+		if (moveFrame == activeStart + 1 && currentMove.BurstLift > 0.0f && !IsOnFloor())
+		{
+			Velocity = new Vector2(Velocity.X, Mathf.Min(Velocity.Y, -currentMove.BurstLift));
+		}
+
 		// A charged dash goes on its first active frame, as fast as it was charged; a dash that
 		// waits goes then too, at its own speed.
 		if (currentMove.Special == SpecialKind.Dash && (currentMove.Chargeable || currentMove.DashAfterStartup)
@@ -1302,6 +1317,10 @@ public partial class Fighter : CharacterBody2D
 				if (TickGrab(input, activeStart, activeEnd)) return;
 				break;
 
+			case SpecialKind.Fling:
+				if (TickFling(activeStart, activeEnd, dt)) return;
+				break;
+
 			case SpecialKind.Vent:
 				// Planted while the furnace opens; in the air he hangs for it.
 				Velocity = IsOnFloor() ? new Vector2(0.0f, Velocity.Y) : new Vector2(Velocity.X * 0.8f, Mathf.Min(Velocity.Y, 200.0f));
@@ -1345,11 +1364,27 @@ public partial class Fighter : CharacterBody2D
 				break;
 		}
 
-		// Attacks keep their momentum but shed it - you commit to a move, you do not steer it.
-		// A dash attack sheds far less, so it slides the whole way through; stopping dead on
-		// startup would make it a slow jab rather than a dash attack.
-		float shed = currentMove.CarriesMomentum ? 0.12f : 0.5f;
-		ApplyFriction(dt, IsOnFloor() ? GroundFriction * shed : Data.AirAcceleration * 0.15f);
+		// On the ground an attack keeps its momentum and sheds it slowly, so moving into one
+		// slides him on through it, as in Melee (Eric, 2026-10-10: the game should feel faster and
+		// more mobile) - though never more slippery than he already is. A dash attack sheds far
+		// less still, so it slides the whole way through. In the air he steers an aerial as he
+		// steers a jump - drifting never turns him round - and a special is committed to.
+		bool aerial = !IsOnFloor() && !moveStartedGrounded && currentMove.Special == SpecialKind.None;
+		if (aerial && Mathf.Abs(input.Move.X) > MoveDeadzone)
+		{
+			float drift = input.Move.X * Data.AirSpeed * SizeLevels.Speed(sizeLevel);
+			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, drift, Data.AirAcceleration * dt), Velocity.Y);
+		}
+		else if (IsOnFloor())
+		{
+			float traction = currentMove.CarriesMomentum ? GroundFriction * 0.12f
+				: Mathf.Max(GroundFriction * AttackTraction, Mathf.Min(GroundFriction * 0.5f, SlipperiestAttack));
+			ApplyFriction(dt, traction);
+		}
+		else
+		{
+			ApplyFriction(dt, Data.AirAcceleration * 0.15f);
+		}
 
 		// The next combo hit comes out as soon as this one's hitbox is done - not after its
 		// endlag, which is what makes tapping attack a fast string rather than separate jabs.
@@ -1366,16 +1401,52 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
-		if (moveFrame >= currentMove.TotalFrames + whiffExtraFrames)
+		// The back of a normal attack's endlag is only the body settling, and anything he does
+		// cuts it short - moving, jumping, blocking, attacking again - as Melee's moves can be
+		// (Eric, 2026-10-10: he could not move after an attack). Not a special, a throw or a
+		// taunt, and not DoomBot's rusty joints after a miss: that lag is his weakness.
+		if (CanCutEndlag(activeEnd) && WantsToAct(input))
 		{
-			ReleaseGrabbed();
-			// Still sliding from a move made on the ground: the slide keeps stopping at the edge
-			// until it is spent or he steers.
-			slideStopsAtEdge = moveStartedGrounded && Mathf.Abs(Velocity.X) > 20.0f;
-			currentMove = null;
-			alreadyHitThisMove.Clear();
-			State = IsOnFloor() ? FighterState.Grounded : FighterState.Airborne;
+			EndMove();
+			if (State == FighterState.Grounded) TickGrounded(input, dt);
+			else TickAirborne(input, dt);
+			return;
 		}
+
+		if (moveFrame >= currentMove.TotalFrames + whiffExtraFrames) EndMove();
+	}
+
+	/// <summary>Of a normal attack's endlag, the part at the end that anything he does cuts short.</summary>
+	const float CuttableEndlag = 0.5f;
+
+	/// <summary>
+	/// An attack's ground traction against his own, and the least anyone's is: low enough that
+	/// moving into an attack slides, and no lower than the slipperiest fighter slid before.
+	/// </summary>
+	const float AttackTraction = 0.2f;
+	const float SlipperiestAttack = 1300.0f;
+
+	bool CanCutEndlag(int activeEnd)
+	{
+		if (currentMove.Special != SpecialKind.None || currentMove == Data.Taunt || currentMove == grabKick
+			|| grabbed != null || whiffExtraFrames > 0 || currentMove.ComboNext != null && comboQueued) return false;
+		int from = activeEnd + Mathf.CeilToInt(currentMove.EndlagFrames * (1.0f - CuttableEndlag));
+		return moveFrame >= from && moveFrame < currentMove.TotalFrames;
+	}
+
+	bool WantsToAct(InputState input) =>
+		Mathf.Abs(input.Move.X) > 0.3f || jumpBufferFrames > 0 || attackBufferFrames > 0
+		|| specialBufferFrames > 0 || input.BlockHeld;
+
+	void EndMove()
+	{
+		ReleaseGrabbed();
+		// Still sliding from a move made on the ground: the slide keeps stopping at the edge
+		// until it is spent or he steers.
+		slideStopsAtEdge = moveStartedGrounded && Mathf.Abs(Velocity.X) > 20.0f;
+		currentMove = null;
+		alreadyHitThisMove.Clear();
+		State = IsOnFloor() ? FighterState.Grounded : FighterState.Airborne;
 	}
 
 	/// <summary>
@@ -1989,8 +2060,8 @@ public partial class Fighter : CharacterBody2D
 
 		bool airborne = !IsOnFloor();
 		bool directional = Mathf.Abs(input.Move.X) > 0.5f;
-		// A fighter who cannot roll just keeps blocking.
-		if (!airborne && directional && !Data.CanRoll) return false;
+		// A fighter who cannot roll just keeps blocking - and in the air does not dodge at all.
+		if (!Data.CanRoll && (airborne || directional)) return false;
 		groundRoll = !airborne && directional;
 
 		if (airborne)
@@ -2304,6 +2375,12 @@ public partial class Fighter : CharacterBody2D
 				? currentMove.LinkHit
 				: currentMove;
 
+			// Two charges meeting head on - Lug's wheelbarrow into Flambe's fireball - both land:
+			// each is hit by the other's and knocked out of it, whichever came out first (Eric,
+			// 2026-10-10: the first one out hit the other in its windup and carried on through).
+			MoveData theirs = IsCharge(currentMove) ? other.ChargeUnderway() : null;
+			float theirScale = other.ChargeScale;
+
 			alreadyHitThisMove.Add(other);
 			hitSomethingThisMove = true;
 			other.ReceiveHit(this, hit, nearest, ChargeScale);
@@ -2313,8 +2390,29 @@ public partial class Fighter : CharacterBody2D
 
 			// The attacker shares the victim's hitlag, so both sides feel the impact.
 			hitlagFrames = Knockback.HitlagFrames(hit.Damage * ChargeScale);
+
+			if (theirs != null)
+			{
+				ReceiveHit(other, theirs, nearest, theirScale);
+				return;
+			}
 		}
 	}
+
+	/// <summary>A charge across the stage: a dash special that is not a teleport.</summary>
+	static bool IsCharge(MoveData move) => move != null && move.Special == SpecialKind.Dash && !move.Blink;
+
+	/// <summary>The charge he is winding up or carrying out, or null - not one he has finished.</summary>
+	MoveData ChargeUnderway() =>
+		State == FighterState.Attacking && IsCharge(currentMove)
+		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames ? currentMove : null;
+
+	/// <summary>
+	/// A move that carries him somewhere - a charge, a recovery. A block does not stop it: it
+	/// goes on through (Eric, 2026-10-10).
+	/// </summary>
+	bool IsMovingAbility => State == FighterState.Attacking && currentMove != null
+		&& (currentMove.Special == SpecialKind.Dash || currentMove.Special == SpecialKind.Recovery);
 
 	public Vector2 CurrentHitboxCentre()
 	{
@@ -2480,14 +2578,95 @@ public partial class Fighter : CharacterBody2D
 
 		if (blocked) shieldFlashFrames = 8;
 
-		if (blocked && attacker != null)
+		if (blocked && attacker != null && !attacker.IsMovingAbility)
 		{
 			// Blockstun pushback separates both fighters, so a blocked attack at point blank
-			// does not stalemate into a shoving match.
+			// does not stalemate into a shoving match. A charge or a recovery is not stopped
+			// by it - it carries on through.
 			attacker.Velocity = new Vector2(-attacker.Facing * 260.0f, attacker.Velocity.Y);
 		}
 
 		Match.OnHitLanded(attacker, this, contactPoint, knockback, damage, blocked);
+
+		if (blocked) WearShield(move.Damage * damageScale, contactPoint);
+	}
+
+	// --- The shield wears down ------------------------------------------------------------
+
+	/// <summary>
+	/// How much hitting his block takes before it breaks - the damage of the hits it stops, at
+	/// full strength - and how fast it mends while he is not blocking: from broken to whole in
+	/// about five seconds. Eric's call, 2026-10-10: it cracks more and more until it breaks.
+	/// </summary>
+	public const float ShieldHealth = 45.0f;
+	const float ShieldMendPerFrame = ShieldHealth / 300.0f;
+
+	/// <summary>Frames he reels for once his shield breaks, wide open, and what it comes back at.</summary>
+	const int ShieldBreakFrames = 110;
+	const float ShieldAfterBreak = 0.5f;
+
+	float shield = ShieldHealth;
+
+	/// <summary>
+	/// Each crack in the shield, oldest first: where it starts, as an angle round the rim (where
+	/// the hit landed), and which way it runs across from there, off straight in.
+	/// </summary>
+	readonly List<(float at, float fan)> cracks = new List<(float at, float fan)>();
+
+	/// <summary>Frames since the shield broke, for the shards; and whether he is reeling from it.</summary>
+	int shieldBreakFrames = int.MaxValue;
+	bool shieldBroken;
+
+	/// <summary>How worn his shield is, 0 whole to 1 about to go.</summary>
+	public float ShieldWear => 1.0f - shield / ShieldHealth;
+
+	/// <summary>
+	/// A blocked hit wears the shield down by its damage, and cracks it where it landed - a crack
+	/// for every few points of damage. Worn through, it breaks.
+	/// </summary>
+	void WearShield(float damage, Vector2 contactPoint)
+	{
+		shield -= damage;
+		Vector2 from = contactPoint - (GlobalPosition + ShieldCentre);
+		float at = from.LengthSquared() > 1.0f ? from.Angle() : -Mathf.Pi * 0.5f;
+		// They fan out across the shield from the one point, as glass breaks.
+		int added = Mathf.Max(1, Mathf.RoundToInt(damage / 4.0f));
+		for (int i = 0; i < added; i++)
+		{
+			float spread = added == 1 ? 0.0f : (i / (float)(added - 1) - 0.5f) * 1.5f;
+			cracks.Add((at + 0.12f * CrayonBrush.Noise(cracks.Count, PlayerIndex + 29), spread));
+		}
+		if (shield <= 0.0f) BreakShield();
+	}
+
+	/// <summary>
+	/// The shield shatters: he is knocked up off his feet and left reeling, wide open, until he
+	/// comes round - the price of blocking everything. It comes back half mended.
+	/// </summary>
+	void BreakShield()
+	{
+		shield = ShieldHealth * ShieldAfterBreak;
+		cracks.Clear();
+		shieldBreakFrames = 0;
+		shieldBroken = true;
+		IsBlocking = false;
+		blockedStun = false;
+		State = FighterState.Hitstun;
+		hitstunFrames = ShieldBreakFrames;
+		Velocity = new Vector2(0.0f, -620.0f);
+		SfxPlayer.At("shield_break", GlobalPosition);
+		Match?.Shake(40.0f);
+	}
+
+	/// <summary>Mends a little every frame he is not blocking; the cracks close as it does.</summary>
+	void MendShield()
+	{
+		if (shieldBreakFrames < int.MaxValue) shieldBreakFrames++;
+		if (shieldBroken && State != FighterState.Hitstun) shieldBroken = false;
+		if (IsBlocking || shieldBroken || State == FighterState.Hitstun && blockedStun) return;
+		shield = Mathf.Min(ShieldHealth, shield + ShieldMendPerFrame);
+		int showing = Mathf.CeilToInt(ShieldWear * 14.0f - 0.01f);
+		while (cracks.Count > Mathf.Max(0, showing)) cracks.RemoveAt(0);
 	}
 
 	// --- Stocks --------------------------------------------------------------
@@ -2893,6 +3072,107 @@ public partial class Fighter : CharacterBody2D
 		Velocity = new Vector2(
 			Mathf.MoveToward(Velocity.X, steer, Data.AirAcceleration * 3.0f * dt),
 			takeOff ? -rise : Mathf.MoveToward(Velocity.Y, -rise, 3000.0f * dt));
+	}
+
+	// --- Fling and leap after it ---------------------------------------------------------
+
+	/// <summary>What he has flung - Triguy's hat - while it is out; and which extra of his it is.</summary>
+	Hazard flung;
+	string flungExtra = "";
+
+	/// <summary>Where the flung thing sat on him, from his middle as he faced - so the leap lands it back there.</summary>
+	Vector2 flungFrom;
+
+	bool leaping;
+	Vector2 leapFrom, leapTo;
+	int leapFrame, leapFrames;
+	float leapArc;
+
+	/// <summary>
+	/// A fling (SpecialKind.Fling): out of his hand on the first active frame, then the throw is
+	/// held while it flies - hanging in the air if he threw it from there - until it stops, at
+	/// the end of its throw or on whoever it hit. Then he leaps to it, arcing over, and puts it
+	/// back on; the endlag plays after that. True while it is out, which takes over the rest of
+	/// the attacking tick.
+	/// </summary>
+	bool TickFling(int activeStart, int activeEnd, float dt)
+	{
+		if (moveFrame <= activeStart)
+		{
+			// Winding up in the air, he hangs a little rather than dropping out from under it.
+			if (!IsOnFloor()) Velocity = new Vector2(Velocity.X * 0.9f, Mathf.Min(Velocity.Y, 240.0f));
+			return false;
+		}
+		if (moveFrame == activeStart + 1 && flung == null) Fling();
+		if (flung == null) return false;
+		if (!IsInstanceValid(flung) || flung.IsExpiring)
+		{
+			// Off the stage, or out of time: back on him, and the move finishes.
+			TakeBackFlung();
+			moveFrame = activeEnd + 1;
+			return false;
+		}
+
+		// Held at the end of the throw while it is out.
+		moveFrame = activeEnd;
+		if (!leaping)
+		{
+			if (IsOnFloor()) ApplyFriction(dt, GroundFriction);
+			else Velocity = new Vector2(Velocity.X * 0.85f, Mathf.Min(Velocity.Y, 120.0f));
+			if (flung.Stopped) StartLeap();
+			return true;
+		}
+
+		leapFrame++;
+		if (leapFrame >= leapFrames)
+		{
+			// There: it goes back on, and he carries a little of the leap into the landing.
+			Vector2 heading = (leapTo - leapFrom).Normalized();
+			TakeBackFlung();
+			Velocity = new Vector2(heading.X * 260.0f, Mathf.Max(0.0f, heading.Y) * 260.0f);
+			moveFrame = activeEnd + 1;
+			return true;
+		}
+		Vector2 next = LeapPoint((leapFrame + 1) / (float)leapFrames);
+		Velocity = (next - GlobalPosition) / dt;
+		return true;
+	}
+
+	void Fling()
+	{
+		flungExtra = currentMove.FlingExtra ?? "";
+		Vector2? sits = rig?.ExtraCentreGlobal(flungExtra);
+		flungFrom = (sits ?? GlobalPosition + new Vector2(0.0f, -bodySize.Y * 0.6f)) - GlobalPosition;
+		// Out ahead of his hand, level with where it sat on him - so when he leaps to it, it lands
+		// exactly back where it was, and a hit is at the height of his head.
+		Vector2 from = GlobalPosition + new Vector2(currentMove.HitboxOffset.X * Facing, flungFrom.Y);
+		flung = Match.SpawnHazard(this, SizedFor(currentMove), from, new Vector2(Facing * currentMove.SpecialSpeed, 0.0f));
+		flung.ArtSize = rig?.ExtraGlobalSize(flungExtra) ?? 0.0f;
+		leaping = false;
+	}
+
+	/// <summary>Off after it, timed to the distance - he is really fast - with a little hop over the way.</summary>
+	void StartLeap()
+	{
+		leapFrom = GlobalPosition;
+		leapTo = flung.GlobalPosition - flungFrom;
+		float distance = leapFrom.DistanceTo(leapTo);
+		leapFrames = Mathf.Clamp(Mathf.RoundToInt(distance / 36.0f), 5, 14);
+		leapArc = Mathf.Min(110.0f, distance * 0.3f);
+		leapFrame = 0;
+		leaping = true;
+		if (Mathf.Abs(leapTo.X - leapFrom.X) > 2.0f) Facing = leapTo.X > leapFrom.X ? 1 : -1;
+		SfxPlayer.At("special_dash", GlobalPosition);
+	}
+
+	Vector2 LeapPoint(float t) => leapFrom.Lerp(leapTo, t) + new Vector2(0.0f, -leapArc * 4.0f * t * (1.0f - t));
+
+	/// <summary>Whatever he flung, gone from the stage and back on him.</summary>
+	void TakeBackFlung()
+	{
+		if (flung != null && IsInstanceValid(flung)) flung.Remove();
+		flung = null;
+		leaping = false;
 	}
 
 	// --- Grappling hook ----------------------------------------------------------
@@ -3766,19 +4046,124 @@ public partial class Fighter : CharacterBody2D
 	/// never shrinks or breaks (see the blocking rules in .ai/fighting-design.md). No hard outline:
 	/// in this game an outline means something you can stand on or be hit by.
 	/// </summary>
+	Vector2 ShieldCentre => new Vector2(0.0f, -bodySize.Y * 0.04f);
+
+	float ShieldRadius => Mathf.Max(bodySize.X, bodySize.Y) * 0.62f;
+
 	void DrawShield(CanvasItem canvas)
 	{
 		if (shieldFlashFrames > 0) shieldFlashFrames--;
-		if (!IsBlocking && !(State == FighterState.Hitstun && blockedStun)) return;
 		Color tint = PlayerIndex == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
-		float radius = Mathf.Max(bodySize.X, bodySize.Y) * 0.62f;
-		// Breathing a little, hashed from the frame count like everything else that moves.
+		DrawShieldBreak(canvas, tint);
+		if (!IsBlocking && !(State == FighterState.Hitstun && blockedStun)) return;
+		float wear = ShieldWear;
+		float radius = ShieldRadius;
+		// Breathing a little, hashed from the frame count like everything else that moves - and,
+		// nearly worn through, trembling.
 		radius *= 1.0f + 0.025f * Mathf.Sin(fxFrames * 0.18f);
+		Vector2 centre = ShieldCentre;
+		if (wear > 0.7f) centre += new Vector2(CrayonBrush.Noise(fxFrames, 7), CrayonBrush.Noise(fxFrames, 8)) * 3.0f * (wear - 0.7f) / 0.3f;
 		float flash = shieldFlashFrames / 8.0f;
-		Vector2 centre = new Vector2(0.0f, -bodySize.Y * 0.04f);
-		canvas.DrawCircle(centre, radius, new Color(tint.R, tint.G, tint.B, 0.16f + 0.25f * flash));
-		canvas.DrawArc(centre, radius, 0.0f, Mathf.Tau, 48, new Color(tint.R, tint.G, tint.B, 0.55f + 0.4f * flash), 7.0f, true);
-		canvas.DrawArc(centre, radius * 0.93f, -2.3f, -1.2f, 12, new Color(1.0f, 1.0f, 1.0f, 0.55f), 5.0f, true);
+		// Thinner and paler as it wears.
+		float body = 1.0f - 0.45f * wear;
+		canvas.DrawCircle(centre, radius, new Color(tint.R, tint.G, tint.B, (0.16f + 0.25f * flash) * body));
+		canvas.DrawArc(centre, radius, 0.0f, Mathf.Tau, 48, new Color(tint.R, tint.G, tint.B, (0.55f + 0.4f * flash) * body), 7.0f, true);
+		canvas.DrawArc(centre, radius * 0.93f, -2.3f, -1.2f, 12, new Color(1.0f, 1.0f, 1.0f, 0.55f * body), 5.0f, true);
+		DrawCracks(canvas, centre, radius, tint);
+	}
+
+	/// <summary>
+	/// The cracks across his shield: each a jagged line in from the rim where a hit landed,
+	/// forking as it goes, longer the more worn it is. In the shield's own colour, darkened - never
+	/// near black, which only fighters wear (.ai/art-direction.md). Hashed, so they hold still.
+	/// </summary>
+	void DrawCracks(CanvasItem canvas, Vector2 centre, float radius, Color tint)
+	{
+		if (cracks.Count == 0) return;
+		var ink = new Color(tint.R * 0.5f, tint.G * 0.5f, tint.B * 0.5f, 0.85f);
+		var shine = new Color(1.0f, 1.0f, 1.0f, 0.7f);
+		float reach = radius * (0.6f + 0.9f * ShieldWear);
+		for (int c = 0; c < cracks.Count; c++)
+		{
+			Vector2 inward = -Vector2.Right.Rotated(cracks[c].at);
+			Vector2 at = centre - inward * radius * 0.96f;
+			Vector2 heading = inward.Rotated(cracks[c].fan);
+			const int Steps = 4;
+			for (int s = 0; s < Steps; s++)
+			{
+				float length = reach / Steps * (0.8f + 0.4f * Mathf.Abs(CrayonBrush.Noise(c * 13 + s, PlayerIndex + 3)));
+				Vector2 step = heading.Rotated(0.3f * CrayonBrush.Noise(c * 7 + s, PlayerIndex + 11)) * length;
+				// Stopped at the rim: a crack in the shield, not past it.
+				if ((at + step - centre).Length() > radius * 0.97f) break;
+				Vector2 next = at + step;
+				canvas.DrawLine(at, next, ink, 3.0f, true);
+				canvas.DrawLine(at + new Vector2(1.5f, -1.5f), next + new Vector2(1.5f, -1.5f), shine, 1.0f, true);
+				// A fork off every other step.
+				if (s % 2 == 1)
+				{
+					Vector2 fork = step.Rotated(0.9f * Mathf.Sign(CrayonBrush.Noise(c * 5 + s, PlayerIndex + 17) + 0.01f)) * 0.6f;
+					canvas.DrawLine(at, at + fork, ink, 2.0f, true);
+				}
+				at = next;
+			}
+		}
+	}
+
+	/// <summary>
+	/// The shield bursting into shards, flung out and fading, and stars going round his head for
+	/// as long as he reels.
+	/// </summary>
+	void DrawShieldBreak(CanvasItem canvas, Color tint)
+	{
+		const int ShardFrames = 26;
+		if (shieldBreakFrames < ShardFrames)
+		{
+			float t = shieldBreakFrames / (float)ShardFrames;
+			Vector2 centre = ShieldCentre;
+			float radius = ShieldRadius;
+			const int Shards = 12;
+			for (int i = 0; i < Shards; i++)
+			{
+				float a = Mathf.Tau * i / Shards + 0.3f * CrayonBrush.Noise(i, PlayerIndex + 21);
+				Vector2 dir = Vector2.Right.Rotated(a);
+				Vector2 at = centre + dir * radius * (1.0f + 0.9f * t) + new Vector2(0.0f, 140.0f * t * t);
+				float size = radius * 0.18f * (1.0f - 0.5f * t);
+				Vector2 side = dir.Orthogonal();
+				var shard = new Color(tint.R, tint.G, tint.B, 0.75f * (1.0f - t));
+				canvas.DrawColoredPolygon(new[] { at - dir * size, at + side * size * 0.6f, at + dir * size * 0.8f, at - side * size * 0.5f }, shard);
+			}
+		}
+		if (!shieldBroken) return;
+		// Dizzy: three stars round his head.
+		Vector2 head = new Vector2(0.0f, -bodySize.Y * 0.62f);
+		for (int i = 0; i < 3; i++)
+		{
+			float a = fxFrames * 0.12f + Mathf.Tau * i / 3.0f;
+			Vector2 at = head + new Vector2(Mathf.Cos(a) * bodySize.X * 0.45f, Mathf.Sin(a) * bodySize.X * 0.12f);
+			DrawStar(canvas, at, 9.0f, new Color(1.0f, 0.86f, 0.30f));
+		}
+	}
+
+	static void DrawStar(CanvasItem canvas, Vector2 at, float size, Color colour)
+	{
+		var points = new Vector2[10];
+		for (int i = 0; i < 10; i++)
+		{
+			float r = i % 2 == 0 ? size : size * 0.45f;
+			points[i] = at + Vector2.Up.Rotated(Mathf.Tau * i / 10.0f) * r;
+		}
+		canvas.DrawColoredPolygon(points, colour);
+	}
+
+	/// <summary>
+	/// The flame out of whatever burning thing is in his hand - Flambe's lighter - rising
+	/// whichever way the lighter is turned, as fire does.
+	/// </summary>
+	void DrawPropFlame(CanvasItem canvas)
+	{
+		(Vector2 at, float height)? flame = rig.PropFlameGlobal();
+		if (flame == null) return;
+		FlameFx.Torch(canvas, overlay.ToLocal(flame.Value.at), flame.Value.height, fxFrames);
 	}
 
 	void DrawOverlay()
@@ -3790,6 +4175,7 @@ public partial class Fighter : CharacterBody2D
 		DrawSpinBlades(overlay, true);
 		DrawBlinkGlint(overlay);
 		DrawActiveFx(overlay);
+		DrawPropFlame(overlay);
 		DrawHeatSmoke(overlay);
 		DrawBurnFlames(overlay);
 		DrawHotClaws(overlay);
@@ -4561,8 +4947,13 @@ public partial class Fighter : CharacterBody2D
 			Vector2 down = sole.HasValue ? sole.Value.down : Vector2.Down;
 			Vector2 side = down.Orthogonal();
 			float flicker = 0.8f + 0.2f * CrayonBrush.Noise(fxFrames, i + 3);
-			float length = bodySize.Y * (live ? 0.62f : 0.27f) * flicker;
-			float width = bodySize.X * 0.17f;
+			// A burst - DoomBot's jet blast, not a flight - roars out longer and wider in one go,
+			// and blooms into a ball of heat where it hits.
+			float burst = !currentMove.Flight && live
+				? 1.0f - (moveFrame - currentMove.StartupFrames - 1) / (float)Mathf.Max(1, currentMove.ActiveFrames) : 0.0f;
+			float length = bodySize.Y * (live ? 0.62f + 0.4f * burst : 0.27f) * flicker;
+			float width = bodySize.X * (0.17f + 0.07f * burst);
+			if (burst > 0.0f) FlameFx.Glow(canvas, nozzle + down * length * 0.85f, width * (2.0f + burst), 0.9f * burst);
 			canvas.DrawColoredPolygon(new[] { nozzle + side * width, nozzle - side * width, nozzle + down * length },
 				new Color(0.96f, 0.42f, 0.18f, 0.9f));
 			canvas.DrawColoredPolygon(new[] { nozzle + side * width * 0.6f, nozzle - side * width * 0.6f, nozzle + down * length * 0.68f },

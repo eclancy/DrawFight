@@ -81,6 +81,8 @@ public static class CharacterNormals
 		// everything he has that hits above him.
 		m = M(moves, MoveSlot.DownTilt);
 		m.MoveName = "Hotfoot"; m.Anim = AttackAnim.LowSweep; m.PropArt = "tool_lighter";
+		// The flame rises off the lighter; the fire at their feet is the hit's own.
+		m.ActiveFx = ActiveFx.Flame;
 		m.HitboxOffset = new Vector2(104.0f, 49.0f); m.HitboxRadius = 46.0f;
 		m.StartupFrames = 7; m.EndlagFrames = 15;
 		m.Damage = 6.0f; m.BaseKnockback = 50.0f; m.KnockbackGrowth = 0.45f;
@@ -218,25 +220,30 @@ public static class CharacterNormals
 		return ResourceLoader.Exists(path) ? GD.Load<Texture2D>(path) : null;
 	}
 
+	/// <summary>
+	/// Two swings of his pipe wrench across the front of him: down and across, then back up and
+	/// across - both landing right in front of him at chest height. It swung up over his head and
+	/// hit behind and above him (Eric, 2026-10-10).
+	/// </summary>
 	public static MoveData LugJab()
 	{
 		MoveData jab = DefaultMoveset.HeavyJab();
-		jab.MoveName = "Wrench Tap";
+		jab.MoveName = "Wrench Swing"; jab.Anim = AttackAnim.CrossSwing;
 		jab.PropArt = "tool_pipewrench";
-		jab.HitboxOffset = new Vector2(150.0f, -123.0f);
-		jab.ComboNext.MoveName = "Wrench Bash";
+		jab.HitboxOffset = new Vector2(134.0f, -31.0f);
+		jab.ComboNext.MoveName = "Wrench Backhand"; jab.ComboNext.Anim = AttackAnim.CrossBackhand;
 		jab.ComboNext.PropArt = "tool_pipewrench";
-		jab.ComboNext.HitboxOffset = new Vector2(148.0f, -128.0f);
-		jab.ComboNext.Anim = AttackAnim.Lunge;
+		jab.ComboNext.HitboxOffset = new Vector2(125.0f, -83.0f);
 		return jab;
 	}
 
 	public static void Lug(MoveData[] moves)
 	{
-		// A shovel jabbed straight out, blade first: the longest poke in the game.
+		// A shovel jabbed straight out in both hands, blade first: the longest poke in the game.
 		MoveData m = M(moves, MoveSlot.ForwardTilt);
-		m.MoveName = "Shovel Jab"; m.Anim = AttackAnim.HeavyPunch; m.PropArt = "tool_shovel";
-		m.HitboxOffset = new Vector2(134.0f, -109.0f); m.HitboxRadius = 50.0f;
+		m.MoveName = "Shovel Jab"; m.Anim = AttackAnim.ToolThrust; m.PropArt = "tool_shovel";
+		m.SecondHandAt = 0.35f;
+		m.HitboxOffset = new Vector2(128.0f, -39.0f); m.HitboxRadius = 50.0f;
 		m.LaunchAngleDegrees = 30.0f;
 
 		m = M(moves, MoveSlot.UpTilt);
@@ -312,7 +319,7 @@ public static class CharacterNormals
 
 		m = M(moves, MoveSlot.BackAir);
 		m.MoveName = "Shovel Back Swing"; m.Anim = AttackAnim.BackSlash; m.PropArt = "tool_shovel";
-		m.HitboxOffset = new Vector2(-156.0f, -100.0f);
+		m.HitboxOffset = new Vector2(-163.0f, -93.0f);
 
 		m = M(moves, MoveSlot.UpAir);
 		m.MoveName = "Pick Swipe"; m.Anim = AttackAnim.OverheadArc; m.PropArt = "tool_pickaxe";
@@ -478,11 +485,16 @@ public static class CharacterNormals
 		m.HitboxOffset = new Vector2(6.0f, -112.0f); m.HitboxRadius = 56.0f;
 		m.StartupFrames = 8;
 
-		// Dropped boots first. Slow to start, and a spike.
+		// Jet Blast: knees drawn up, then legs driven straight down as both boot jets fire in one
+		// burst - a blast of flame under him that spikes and singes, and kicks him up a little as
+		// it fires. Slow to start. Eric's call, 2026-10-10.
 		m = M(moves, MoveSlot.DownAir);
-		m.MoveName = "Steel Boots"; m.Anim = AttackAnim.Dair;
-		m.HitboxOffset = new Vector2(6.0f, 96.0f); m.HitboxRadius = 48.0f;
-		m.StartupFrames = 14;
+		m.MoveName = "Jet Blast"; m.Anim = AttackAnim.Rocket; m.PropArt = "-";
+		m.HitboxOffset = new Vector2(0.0f, 118.0f); m.HitboxRadius = 50.0f;
+		m.StartupFrames = 14; m.ActiveFrames = 6;
+		m.ActiveFx = ActiveFx.Jets; m.Sound = "jets";
+		m.BurnFrames = 30; m.BurnDamage = 2.0f;
+		m.BurstLift = 380.0f;
 	}
 
 	// =========================================================================

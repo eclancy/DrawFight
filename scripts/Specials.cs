@@ -534,20 +534,22 @@ public static class Specials
 	}
 
 	/// <summary>
-	/// Neutral: the signature. He pulls out an orange nail gun and fires a burst of four nails,
-	/// straight ahead and fast. Each one is weak and barely pushes, so it is a way to chip at
+	/// Neutral: the signature. He pulls out an orange nail gun, holds it out in front in both
+	/// hands and fires a burst of four nails, straight ahead and fast, the gun kicking up a little
+	/// with each (Eric, 2026-10-10). Each one is weak and barely pushes, so it is a way to chip at
 	/// someone who stays out of reach of his tools - the one thing a heavy is otherwise bad at.
 	/// </summary>
 	static MoveData NailGun() => new MoveData
 	{
 		MoveName = "Nail Gun",
-		Anim = AttackAnim.Punch,
+		Anim = AttackAnim.Aim,
 		PropArt = "tool_nailgun",
+		SecondHandAt = 0.45f,
 		StartupFrames = 12, ActiveFrames = 14, EndlagFrames = 20,
 		Damage = 2.5f, BaseKnockback = 12.0f, KnockbackGrowth = 0.35f,
 		LaunchAngleDegrees = 20.0f,
-		// From the muzzle of the gun, held out at arm's length.
-		HitboxOffset = new Vector2(112.0f, -54.0f), HitboxRadius = 0.0f,
+		// From the muzzle of the gun, held out in front at chest height.
+		HitboxOffset = new Vector2(96.0f, -56.0f), HitboxRadius = 0.0f,
 		Special = SpecialKind.Projectile,
 		SpecialSpeed = 1700.0f, SpecialGravity = 0.0f, SpecialLifetime = 32,
 		BurstCount = 4, BurstInterval = 4,
@@ -651,7 +653,7 @@ public static class Specials
 
 	// The crying is his down special and the point attack his side special - the other way round
 	// from his sheet, on Eric's call (2026-10-04).
-	public static MoveData[] Triguy() => new[] { ShowOff(), PointPoke(), Trampoline(), Crybaby() };
+	public static MoveData[] Triguy() => new[] { ShowOff(), HatToss(), Trampoline(), Crybaby() };
 
 	/// <summary>His three taunt poses: the Sonic Adventure pose, the surprised face, and the POG face.</summary>
 	public static readonly string[] TriguyPoses = { "taunt_pose", "taunt_surprised", "taunt_pog" };
@@ -743,18 +745,27 @@ public static class Specials
 	};
 
 	/// <summary>
-	/// Side: "a point attack where he sticks the top of his triangle out and can hit someone. It is
-	/// a short-ranged attack." He lunges forward point first - quick, and it knocks them away,
-	/// which is how it protects him.
+	/// Side: Hat Toss. He whips his top hat off and flings it straight ahead, spinning; it flies
+	/// a long way and slows to a stop - or stops dead on the first one it hits, popping them up -
+	/// and wherever it stops, he leaps after it and lands with it back on his head (Eric,
+	/// 2026-10-10: his side special was just a punch). It is his way of reaching someone far away,
+	/// which is what Elim's sheet asked of the slot: hit them with the hat and he arrives right
+	/// beside them while they are still in the air. Once per trip into the air. Elim's own hat,
+	/// only taken off him: nothing new is drawn.
 	/// </summary>
-	static MoveData PointPoke() => new MoveData
+	static MoveData HatToss() => new MoveData
 	{
-		MoveName = "Point",
-		Anim = AttackAnim.PointThrust,
-		StartupFrames = 5, ActiveFrames = 4, EndlagFrames = 18,
-		Damage = 9.0f, BaseKnockback = 44.0f, KnockbackGrowth = 0.75f,
-		LaunchAngleDegrees = 38.0f,
-		HitboxOffset = new Vector2(96.0f, -6.0f), HitboxRadius = 36.0f,
-		FxColor = new Color(0.97f, 0.97f, 0.95f), FxRadius = 0.0f,
+		MoveName = "Hat Toss",
+		Anim = AttackAnim.Slash,
+		StartupFrames = 9, ActiveFrames = 2, EndlagFrames = 14,
+		Damage = 6.0f, BaseKnockback = 40.0f, KnockbackGrowth = 0.35f,
+		LaunchAngleDegrees = 74.0f,
+		// Out of his hand as it comes through, level with where the hat sat (Fighter.Fling).
+		HitboxOffset = new Vector2(70.0f, 0.0f), HitboxRadius = 0.0f,
+		Special = SpecialKind.Fling, FlingExtra = "hat",
+		SpecialSpeed = 2300.0f, Reach = 400.0f, SpecialLifetime = 90,
+		OncePerAirtime = true,
+		FxTexture = TriguyFx("hat"), FxSpin = 26.0f, FxRadius = 40.0f,
+		FxColor = new Color(0.2f, 0.2f, 0.2f),
 	};
 }

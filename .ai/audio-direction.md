@@ -28,7 +28,9 @@ fighter:
 - **Hits** are a falling thump under a short bright slap, like paper. The size of the hit goes
   with **knockback** (`SfxCatalog.ForHit`), so the same move sounds bigger at 120% than at 0%.
   That matches the rumble and the camera shake, which already work that way. A hit at kill range
-  also gets a crack and a ringing tail. A blocked hit sounds muffled, like hitting cardboard.
+  also gets a crack and a ringing tail. A blocked hit sounds muffled, like hitting cardboard;
+  a shield worn through shatters (`shield_break`: a crack, a spray of tinkling shards, and a low
+  wobble as he reels).
 - **Everything tonal is in A major**: the countdown ticks are A, FIGHT! is an A major chord, the
   win fanfare climbs A–C♯–E–A, and both music loops are in A. The countdown then resolves into the
   music it starts.
@@ -83,7 +85,7 @@ there and rebuild; do not add `VolumeDb` at call sites.
 | How often | Peak | Members |
 |---|---|---|
 | once a match | −3 to −5 dBFS | `ko_blast`, `game_set`, `count_go`, `explosion`, `hit_smash` |
-| a few times a stock | −6 to −9 dBFS | `hit_heavy`, `hit_medium`, `count_tick`, `special_quake`, `special_beam`, `special_blink` |
+| a few times a stock | −6 to −9 dBFS | `hit_heavy`, `hit_medium`, `count_tick`, `special_quake`, `special_beam`, `special_blink`, `shield_break` |
 | every exchange | −10 to −14 dBFS | swings, most specials, `hit_light`, `hit_block`, menu select |
 | constantly | −15 dBFS and below | `bomb_fuse`, `smash_charge` (−17), `ui_move` (−21) |
 

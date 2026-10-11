@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 /// <summary>
@@ -29,6 +30,14 @@ public partial class FighterRig : Node2D
 
 		/// <summary>How wide the body is in this drawing, so it can be matched to the puppet's.</summary>
 		public float BallWidth;
+
+		/// <summary>
+		/// For a prop that burns - Flambe's lighter - where its flame comes out, in texture pixels,
+		/// and how tall the flame is. The flame is drawn by the game, rising whichever way the prop
+		/// is turned, not drawn on the prop.
+		/// </summary>
+		public Vector2? Flame;
+		public float FlameHeight;
 
 		/// <summary>Size this pose the same as another one, keeping the size the kid drew it relative to that.</summary>
 		public string ScaleLike;
@@ -347,7 +356,18 @@ public partial class FighterRig : Node2D
 				// drawing that has to sit over another part, like a socket an "inFront" limb comes out of.
 				Visible = entry.ContainsKey("always") && (bool)entry["always"],
 			};
-			bones[(int)bone].AddChild(sprite);
+			// One that is part of the drawing it hangs on ("onPart") goes on that drawing, not only
+			// its bone, so it turns round with it when he looks back - Triguy's hat on his triangle.
+			bool onPart = entry.ContainsKey("onPart") && (bool)entry["onPart"] && sprites[(int)bone] != null;
+			if (onPart)
+			{
+				sprites[(int)bone].AddChild(sprite);
+				bodyExtras.Add(sprite);
+			}
+			else
+			{
+				bones[(int)bone].AddChild(sprite);
+			}
 			extras[(string)entry["name"]] = sprite;
 
 			// A foot: a drawing hung on the end of a shin at the ankle, which the rig keeps level
@@ -355,6 +375,7 @@ public partial class FighterRig : Node2D
 			if (entry.ContainsKey("foot") && (bool)entry["foot"])
 			{
 				feet[(int)bone] = sprite;
+				footRest[(int)bone] = sprite.Position;
 				if (RigBones.IsBackLimb(bone)) sprite.Modulate = new Color(limbDarken, limbDarken, limbDarken);
 			}
 		}
@@ -362,8 +383,27 @@ public partial class FighterRig : Node2D
 
 	float limbDarken = 0.7f;
 
+	/// <summary>Extras that are part of the body's drawing (rig.json "onPart"): they count as body.</summary>
+	readonly List<Sprite2D> bodyExtras = new List<Sprite2D>();
+
+	/// <summary>The middle of an extra's drawing, in global coordinates; null if there is no such extra.</summary>
+	public Vector2? ExtraCentreGlobal(string name) =>
+		extras.TryGetValue(name, out Sprite2D sprite) && sprite.Texture != null
+			? sprite.GlobalTransform * sprite.GetRect().GetCenter() : null;
+
+	/// <summary>How big an extra is drawn, in global pixels along its longest side; 0 if there is no such extra.</summary>
+	public float ExtraGlobalSize(string name)
+	{
+		if (!extras.TryGetValue(name, out Sprite2D sprite) || sprite.Texture == null) return 0.0f;
+		Vector2 size = sprite.Texture.GetSize() * sprite.GlobalScale.Abs();
+		return Mathf.Max(size.X, size.Y);
+	}
+
 	/// <summary>The foot hung on each lower leg, if the drawing has its feet cut separately.</summary>
 	readonly Sprite2D[] feet = new Sprite2D[(int)RigBone.Count];
+
+	/// <summary>Where each extra hung on a lower leg sits on it as drawn.</summary>
+	readonly Vector2[] footRest = new Vector2[(int)RigBone.Count];
 
 	bool HasFeet => feet[(int)RigBone.LegBackLower] != null && feet[(int)RigBone.LegFrontLower] != null;
 
@@ -672,8 +712,8 @@ public partial class FighterRig : Node2D
 
 	/// <summary>
 	/// A shin's sole slope given by its drawing (rig.json "soleSlope") instead of read off it, for
-	/// a leg whose bottom looks like a foot and is not - Circy's front leg, a diagonal with a tick
-	/// on the end. Zero stands the shin as drawn.
+	/// a leg whose bottom looks like a foot and is not - a diagonal with a tick on the end, as
+	/// Circy's front leg was before it was redrawn flat. Zero stands the shin as drawn.
 	/// </summary>
 	readonly float?[] soleSlopes = new float?[(int)RigBone.Count];
 
@@ -683,8 +723,8 @@ public partial class FighterRig : Node2D
 	/// <summary>
 	/// The bottom of a foot: a point on it, and how steeply it slopes (down per pixel across), in
 	/// texture pixels - read off the lowest drawn pixel of each column in the bottom fifth or so
-	/// of a shin drawing, which takes in a whole drawn foot: a boot, an L, or Circy's diagonal
-	/// stroke with a tick on the end. A boot's flat bottom slopes 0; a foot drawn pointing down at
+	/// of a shin drawing, which takes in a whole drawn foot: a boot, an L, or a diagonal stroke
+	/// with a tick on the end. A boot's flat bottom slopes 0; a foot drawn pointing down at
 	/// the toe slopes positive. A leg that simply ends - in a point, like EdgeLord's, or a round
 	/// stick end - has no foot to lay flat: anything less than twice as wide as the leg itself
 	/// counts as level. And it is kept within 40 degrees either way.
@@ -810,7 +850,7 @@ public partial class FighterRig : Node2D
 				bounds = bounds == null ? new Rect2(p, Vector2.Zero) : bounds.Value.Expand(p);
 			}
 		}
-		foreach (Sprite2D foot in feet)
+		foreach (Sprite2D foot in feet.Concat(bodyExtras))
 		{
 			if (foot == null || !foot.IsVisibleInTree()) continue;
 			Transform2D t = toSpace * foot.GetGlobalTransform();
@@ -942,6 +982,7 @@ public partial class FighterRig : Node2D
 	/// </summary>
 	public void SetLookingBack(bool back)
 	{
+		lookingBack = back;
 		float x = back ? -1.0f : 1.0f;
 		if (sprites[(int)RigBone.Head] != null)
 		{
@@ -960,6 +1001,17 @@ public partial class FighterRig : Node2D
 
 	/// <summary>The body drawing is turned round (SetLookingBack), and every limb that comes out of its edges with it.</summary>
 	bool bodyTurned;
+
+	/// <summary>Looking back over his shoulder (a back air): behind him is where he is facing.</summary>
+	bool lookingBack;
+
+	/// <summary>
+	/// How far behind straight down this fighter's arms go, in degrees - FighterData.ArmReachBack,
+	/// no more than <see cref="ArmBackMost"/>. Lug's are short: arms that big do not go round
+	/// behind a back that broad (Eric, 2026-10-10). Not while looking back, when behind is the
+	/// way he is facing.
+	/// </summary>
+	public float ArmBackLimit = ArmBackMost;
 	bool limbsMoved;
 
 	/// <summary>
@@ -1062,6 +1114,48 @@ public partial class FighterRig : Node2D
 	}
 
 	/// <summary>
+	/// Where the flame comes out of whatever is in the hand, in global coordinates, and how tall
+	/// it burns there; null if what he holds does not burn or is not showing.
+	/// </summary>
+	public (Vector2 at, float height)? PropFlameGlobal()
+	{
+		Sprite2D sprite = sprites[(int)RigBone.PropFront];
+		if (sprite == null || !sprite.IsVisibleInTree()) return null;
+		PoseArt art = PoseArtFor(shownProp);
+		if (art?.Flame == null) return null;
+		Transform2D t = sprite.GlobalTransform;
+		return (t * (art.Flame.Value + sprite.Offset), art.FlameHeight * t.BasisXform(Vector2.Up).Length());
+	}
+
+	/// <summary>
+	/// Both hands on what the front hand holds: the back hand put on it
+	/// <paramref name="along"/> of the way from the front fist to its head - under a nail gun's
+	/// body, further down a shovel's handle - or, if that is too close to his shoulder for an arm
+	/// to fold to (his far shoulder can sit right by the front fist), as near it along the tool as
+	/// an arm reaches comfortably. Call it after the pose is applied.
+	/// </summary>
+	public void SecondHand(float along)
+	{
+		Vector2? head = PropHeadGlobal();
+		Vector2? shoulder = JointGlobal(RigBone.ArmBackUpper);
+		float length = ArmLength(RigBone.ArmBackUpper, RigBone.ArmBackLower);
+		if (head == null || shoulder == null || length <= 0.0f || !present[(int)RigBone.PropFront]) return;
+		Vector2 grip = bones[(int)RigBone.PropFront].GlobalPosition;
+		float best = along, bestOff = float.MaxValue;
+		for (float t = along; t <= 0.85f; t += 0.05f)
+		{
+			float off = Mathf.Abs(shoulder.Value.DistanceTo(grip.Lerp(head.Value, t)) - length * 0.75f);
+			if (off < bestOff - 0.5f)
+			{
+				best = t;
+				bestOff = off;
+			}
+			if (off < length * 0.15f) break;
+		}
+		ReachArm(RigBone.ArmBackUpper, RigBone.ArmBackLower, grip.Lerp(head.Value, best), 1.0f);
+	}
+
+	/// <summary>
 	/// Where the business end of whatever is in the hand is right now, in global coordinates:
 	/// the head of the hammer, the point of the sword. The parade reports it so hitboxes can be
 	/// put where the weapon actually is. Null if there is nothing in the hand.
@@ -1137,6 +1231,10 @@ public partial class FighterRig : Node2D
 				BallWidth = entry.ContainsKey("ballWidth") ? (float)entry["ballWidth"] : 0.0f,
 				ScaleLike = entry.ContainsKey("scaleLike") ? (string)entry["scaleLike"] : null,
 				FigureHeight = entry.ContainsKey("figureHeight") ? (float)entry["figureHeight"] : 0.0f,
+				Flame = entry.ContainsKey("flame")
+					? new Vector2((float)((Godot.Collections.Array)entry["flame"])[0], (float)((Godot.Collections.Array)entry["flame"])[1])
+					: null,
+				FlameHeight = entry.ContainsKey("flameHeight") ? (float)entry["flameHeight"] : 0.0f,
 			};
 		}
 	}
@@ -1254,13 +1352,25 @@ public partial class FighterRig : Node2D
 		float reach = Mathf.Clamp(d.Length(), Mathf.Abs(l1 - l2) + 0.5f, l1 + l2 - 0.01f);
 		float bend = Mathf.Acos(Mathf.Clamp((l1 * l1 + reach * reach - l2 * l2) / (2.0f * l1 * reach), -1.0f, 1.0f));
 		float toward = d.Angle();
-		// Elbow down: of the two ways the arm can bend, the one with the elbow lower.
-		float armDir = Mathf.Sin(toward + bend) > Mathf.Sin(toward - bend) ? toward + bend : toward - bend;
-		Vector2 elbow = shoulder + Vector2.Right.Rotated(armDir) * l1;
+		// Of the two ways the arm can bend, the one the elbow can make (BendOneWay) - and of two it
+		// can, the one with the elbow lower. Elbow down regardless bent a hand reaching for a tool
+		// in front of his chest backwards, and the joint then straightened it off the tool.
+		float Turned(float dir) => Mathf.Wrap((target - (shoulder + Vector2.Right.Rotated(dir) * l1)).Angle()
+			- Mathf.Pi * 0.5f - (dir - elbowRest.Angle()), -Mathf.Pi, Mathf.Pi);
+		(float min, float max) = JointRange(LimbOf(lower));
+		bool Bends(float dir)
+		{
+			float degrees = Mathf.RadToDeg(Turned(dir));
+			return degrees >= min - 1.0f && degrees <= max + 1.0f;
+		}
+		float lowerElbow = Mathf.Sin(toward + bend) > Mathf.Sin(toward - bend) ? toward + bend : toward - bend;
+		float higherElbow = lowerElbow == toward + bend ? toward - bend : toward + bend;
+		float armDir = Bends(lowerElbow) || !Bends(higherElbow) ? lowerElbow : higherElbow;
 		float upperTurn = armDir - elbowRest.Angle();
-		float lowerTurn = (target - elbow).Angle() - Mathf.Pi * 0.5f - upperTurn;
+		float lowerTurn = Turned(armDir);
 		bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, upperTurn, amount);
 		bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, lowerTurn, amount);
+		KeepBoneInRange(LimbOf(lower));
 	}
 
 	static readonly RigBone[] LegParts = { RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower };
@@ -1272,12 +1382,13 @@ public partial class FighterRig : Node2D
 			int i = (int)bone;
 			bool front = bone == RigBone.LegFrontUpper || bone == RigBone.LegFrontLower;
 			float k = legStretch * (front ? frontLegReach : 1.0f);
-			if (sprites[i] != null) sprites[i].Scale = new Vector2(1.0f, k);
+			float side = TurnSign(bone);
+			if (sprites[i] != null) sprites[i].Scale = new Vector2(side, k);
 			// The knees move with it - down the leg only: a knee drawn off to one side (a bowed
 			// leg) stays on its side.
 			if ((bone == RigBone.LegBackLower || bone == RigBone.LegFrontLower) && present[i])
 			{
-				bones[i].Position = new Vector2(restOffsets[i].X, restOffsets[i].Y * k);
+				bones[i].Position = new Vector2(restOffsets[i].X * side, restOffsets[i].Y * k);
 			}
 		}
 	}
@@ -1562,6 +1673,8 @@ public partial class FighterRig : Node2D
 		// states, so a fighter landing out of a launch does not pop from tumbling to standing.
 		Pose.Exaggerate(pose, Drama, HipDrama * DramaScale, exaggerated, DramaScale);
 		Follow(exaggerated, blend);
+		TurnLimbs();
+		BendOneWay();
 
 		for (int i = 0; i < (int)RigBone.Count; i++)
 		{
@@ -1583,9 +1696,11 @@ public partial class FighterRig : Node2D
 			bones[i].Rotation = Mathf.DegToRad(degrees);
 		}
 
+		ShowTurns();
 		PlaceLimbRoots();
 		standBlend = Mathf.MoveToward(standBlend, standing && planted ? 1.0f : 0.0f, 0.2f);
 		if (standBlend > 0.0f) StandOnFeet(standBlend);
+		for (int l = 0; l < Limbs.Length; l++) KeepBoneInRange(l);
 
 		plantBlend = Mathf.MoveToward(plantBlend, planted ? 1.0f : 0.0f, 0.25f);
 		LevelFeet();
@@ -1594,6 +1709,161 @@ public partial class FighterRig : Node2D
 		{
 			bones[(int)RigBone.Hip].Position += new Vector2(0.0f, FloorGap() * plantBlend);
 		}
+	}
+
+	// --- Elbows and knees bend one way; limbs turn to face the way they point -------------------
+
+	/// <summary>
+	/// Front arm, back arm, front leg, back leg: each upper bone with the one below it. Every limb
+	/// is drawn facing forward - knuckles, toes and kneecap to the front.
+	/// </summary>
+	static readonly (RigBone upper, RigBone lower)[] Limbs =
+	{
+		(RigBone.ArmFrontUpper, RigBone.ArmFrontLower), (RigBone.ArmBackUpper, RigBone.ArmBackLower),
+		(RigBone.LegFrontUpper, RigBone.LegFrontLower), (RigBone.LegBackUpper, RigBone.LegBackLower),
+	};
+
+	static int LimbOf(RigBone bone)
+	{
+		for (int l = 0; l < Limbs.Length; l++) if (Limbs[l].upper == bone || Limbs[l].lower == bone) return l;
+		return -1;
+	}
+
+	/// <summary>
+	/// Each limb turned round to face backward: drawn mirrored about its own length, so a hand
+	/// flung out behind leads with its knuckles and a leg kicked out behind points its toe, and
+	/// its elbow or knee bends the other way. A limb swung far back still drawn facing forward is
+	/// the arm put on backwards (Eric, 2026-10-10).
+	/// </summary>
+	readonly bool[] turned = new bool[4];
+
+	/// <summary>
+	/// How far behind straight down, in degrees, a limb swings before it turns to face back, and
+	/// how far forward again before it turns round to the front - apart, so a limb swinging about
+	/// near the line does not flicker between the two. A running arm or a stride never gets there.
+	/// </summary>
+	const float ArmTurnOn = 80.0f;
+	const float ArmTurnOff = 55.0f;
+	const float LegTurnOn = 65.0f;
+	const float LegTurnOff = 40.0f;
+
+	/// <summary>
+	/// On the floor a leg turns only when it is out behind as far as the splits - well past a
+	/// lunge or a kneel, whose back foot still points forward on the floor.
+	/// </summary>
+	const float PlantedLegTurnOn = 95.0f;
+	const float PlantedLegTurnOff = 75.0f;
+
+	/// <summary>
+	/// How far an elbow and a knee fold, in degrees - and neither ever goes past straight the
+	/// other way: an elbow bent back reads as a broken arm, and a knee past straight as a leg
+	/// bending backwards (Eric, 2026-10-10).
+	/// </summary>
+	const float ElbowFold = 160.0f;
+	const float KneeFold = 165.0f;
+
+	/// <summary>
+	/// The furthest an arm swings back behind straight down, in degrees, turned or not - out
+	/// behind him and up, as far as a body turning away takes a swing. Past that it was going
+	/// round over his back. Forward it goes on up over his head as far as a pose asks.
+	/// </summary>
+	public const float ArmBackMost = 145.0f;
+
+	float TurnSign(RigBone bone)
+	{
+		int limb = LimbOf(bone);
+		return limb >= 0 && turned[limb] ? -1.0f : 1.0f;
+	}
+
+	/// <summary>
+	/// Which limbs face back, from how far behind each one is swung now. A leg standing on the
+	/// floor never does, and a leg on it only in the splits.
+	/// </summary>
+	void TurnLimbs()
+	{
+		for (int l = 0; l < Limbs.Length; l++)
+		{
+			bool leg = l >= 2;
+			float behind = current[Limbs[l].upper];
+			float on = !leg ? ArmTurnOn : planted ? PlantedLegTurnOn : LegTurnOn;
+			float off = !leg ? ArmTurnOff : planted ? PlantedLegTurnOff : LegTurnOff;
+			if (leg && standBlend > 0.0f) turned[l] = false;
+			else if (!turned[l] && behind > on) turned[l] = true;
+			else if (turned[l] && behind < off) turned[l] = false;
+		}
+	}
+
+	/// <summary>
+	/// The range an elbow or knee bends through, in degrees: an elbow folds the hand forward
+	/// (negative), a knee folds the foot back (positive), and a turned limb each the other way.
+	/// </summary>
+	(float min, float max) JointRange(int limb)
+	{
+		bool leg = limb >= 2;
+		float fold = leg ? KneeFold : ElbowFold;
+		return leg == turned[limb] ? (-fold, 0.0f) : (0.0f, fold);
+	}
+
+	/// <summary>
+	/// Every elbow and knee in the pose kept within its range, and every arm from swinging round
+	/// behind, the spring stopped where it meets the end.
+	/// </summary>
+	void BendOneWay()
+	{
+		for (int l = 0; l < Limbs.Length; l++)
+		{
+			(float min, float max) = JointRange(l);
+			Hold(Limbs[l].lower, min, max);
+			if (l < 2) Hold(Limbs[l].upper, float.MinValue, lookingBack ? ArmBackMost : Mathf.Min(ArmBackMost, ArmBackLimit));
+		}
+	}
+
+	void Hold(RigBone bone, float min, float max)
+	{
+		float now = current[bone];
+		float kept = Mathf.Clamp(now, min, max);
+		if (kept == now) return;
+		current.Set(bone, kept);
+		spin[(int)bone] = 0.0f;
+	}
+
+	/// <summary>The same for a limb solved straight onto its bones - a punch, a hand on a ledge.</summary>
+	void KeepBoneInRange(int limb)
+	{
+		if (limb < 0) return;
+		int lower = (int)Limbs[limb].lower;
+		if (!present[lower]) return;
+		(float min, float max) = JointRange(limb);
+		float degrees = Mathf.RadToDeg(Mathf.Wrap(bones[lower].Rotation, -Mathf.Pi, Mathf.Pi));
+		bones[lower].Rotation = Mathf.DegToRad(Mathf.Clamp(degrees, min, max));
+	}
+
+	/// <summary>
+	/// Draws each turned limb mirrored about its joint, and carries whatever hangs off it - the
+	/// joint below, a foot, the front hand's prop - across to the same side.
+	/// </summary>
+	void ShowTurns()
+	{
+		for (int l = 0; l < Limbs.Length; l++)
+		{
+			float side = turned[l] ? -1.0f : 1.0f;
+			(RigBone upper, RigBone lower) = Limbs[l];
+			foreach (RigBone bone in new[] { upper, lower })
+			{
+				Sprite2D sprite = sprites[(int)bone];
+				if (sprite != null) sprite.Scale = new Vector2(side, sprite.Scale.Y);
+			}
+			int i = (int)lower;
+			if (present[i]) bones[i].Position = new Vector2(restOffsets[i].X * side, bones[i].Position.Y);
+			Sprite2D foot = feet[i];
+			if (foot != null)
+			{
+				foot.Scale = new Vector2(side, foot.Scale.Y);
+				foot.Position = new Vector2(footRest[i].X * side, foot.Position.Y);
+			}
+		}
+		int prop = (int)RigBone.PropFront;
+		if (present[prop]) bones[prop].Position = new Vector2(restOffsets[prop].X * TurnSign(RigBone.ArmFrontLower), bones[prop].Position.Y);
 	}
 
 	/// <summary>Flips the whole puppet. A profile drawing turning around is just a mirror.</summary>

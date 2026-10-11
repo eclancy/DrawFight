@@ -117,6 +117,18 @@ public partial class Hazard : Node2D
 	/// <summary>Hazards do not hit the fighter who made them for this many frames.</summary>
 	const int OwnerGraceFrames = 8;
 
+	/// <summary>
+	/// A flung drawing has come to rest - at the end of its throw, or on whoever it hit - and
+	/// hangs there for its owner to come and take back. It hits nobody once stopped.
+	/// </summary>
+	public bool Stopped { get; private set; }
+
+	/// <summary>How big the drawing is drawn, overriding the move's own size - a hat drawn the size it is on him.</summary>
+	public float ArtSize;
+
+	/// <summary>The way it was sent, so a spinning drawing keeps turning the same way when it stops.</summary>
+	float spinSign = 1.0f;
+
 	public void Launch(Fighter owner, MoveData move, MatchManager match,
 		Vector2 position, Vector2 velocity, float gravity, int lifeFrames)
 	{
@@ -124,6 +136,7 @@ public partial class Hazard : Node2D
 		this.move = move;
 		this.match = match;
 		this.velocity = velocity;
+		spinSign = velocity.X < 0.0f ? -1.0f : 1.0f;
 		this.gravity = gravity;
 		this.lifeFrames = lifeFrames;
 
@@ -352,6 +365,18 @@ public partial class Hazard : Node2D
 		{
 			TickPuddle(dt);
 		}
+		else if (move.Special == SpecialKind.Fling)
+		{
+			// Thrown hard and slowing evenly, so it comes to rest exactly its reach away.
+			if (!Stopped)
+			{
+				float slowing = move.SpecialSpeed * move.SpecialSpeed / (2.0f * Mathf.Max(1.0f, move.Reach));
+				float speed = Mathf.Max(0.0f, velocity.Length() - slowing * dt);
+				velocity = velocity.Normalized() * speed;
+				GlobalPosition += velocity * dt;
+				if (speed <= 0.0f) Stop();
+			}
+		}
 		else if (rising && move.Topple)
 		{
 			if (TickTopple(dt)) return;
@@ -520,6 +545,12 @@ public partial class Hazard : Node2D
 
 	public bool IsExpiring => expiring;
 
+	void Stop()
+	{
+		Stopped = true;
+		velocity = Vector2.Zero;
+	}
+
 	/// <summary>Takes this hazard away early - the oldest planted blade, when a new one goes in.</summary>
 	public void Remove() => Expire();
 
@@ -575,6 +606,8 @@ public partial class Hazard : Node2D
 			return;
 		}
 
+		if (move.Special == SpecialKind.Fling && Stopped) return;
+
 		foreach (Fighter other in match.Fighters)
 		{
 			if (other == owner && ageFrames < OwnerGraceFrames) continue;
@@ -586,6 +619,13 @@ public partial class Hazard : Node2D
 
 			alreadyHit.Add(other);
 			other.ReceiveHit(owner, move, nearest, DamageScale);
+
+			// A flung drawing stops dead on whoever it hits, and waits there to be taken back.
+			if (move.Special == SpecialKind.Fling)
+			{
+				Stop();
+				return;
+			}
 
 			if (move.Beam)
 			{
@@ -677,14 +717,14 @@ public partial class Hazard : Node2D
 		}
 		else
 		{
-			float fit = move.FxArtSize > 0.0f ? move.FxArtSize : move.FxRadius * 2.3f;
+			float fit = ArtSize > 0.0f ? ArtSize : move.FxArtSize > 0.0f ? move.FxArtSize : move.FxRadius * 2.3f;
 			float s = fit / Mathf.Max(size.X, size.Y);
 
 			// Blades are drawn tip-up: one pointing along its flight is turned a quarter past the
 			// flight angle; one tumbling turns a little every frame, the way it is thrown.
 			float angle = 0.0f;
 			if (move.FxAlongFlight && velocity.LengthSquared() > 1.0f) angle = velocity.Angle() + Mathf.Pi * 0.5f;
-			else if (move.FxSpin != 0.0f) angle = Mathf.DegToRad(move.FxSpin * ageFrames) * (velocity.X < 0.0f ? -1.0f : 1.0f);
+			else if (move.FxSpin != 0.0f) angle = Mathf.DegToRad(move.FxSpin * ageFrames) * spinSign;
 
 			Vector2 origin = Vector2.Zero;
 			if (toppling)

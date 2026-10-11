@@ -83,6 +83,28 @@ All of a night stage's warmth comes from its **lit windows**, not from the sky. 
 quiet and the accent colour does the work. Any future night or interior stage follows the same
 rule: light substrate, warm accents, darkness implied rather than drawn.
 
+## Effects drawn round a fighter
+
+Smears and fire are drawn by the game, not by the kids, so this contract covers them.
+
+- **A smear is motion, not a thing**: no outline - an outline means something real you can
+  stand on or that hits you - and soft at its edges and its tail, in the fighter's own trail
+  colour with a pale core, never darker than the 30% line. It is drawn behind the fighter.
+  The harder the hit, the bigger and bolder it is; a jab's is a flick.
+- **Fire is tongues, and fire rises.** Every flame is curved teardrop tongues - round at the
+  root, bending as they rise, flickering to a point; red outside, orange, a yellow heart - so
+  they run together into one fire (`FlameFx`). However a flame is thrown - off a spinning wheel,
+  trailing a dive or a fireball - it leans no more than 50 degrees off straight up. Never a
+  ring of spikes, never a star, never pointing down (Eric, 2026-10-10: it looked like an orb with
+  spikes, then pointed every way).
+- **Jets are the one fire that points down**, because they are thrust, not a burning thing:
+  DoomBot's boot jets come straight out of his soles along his legs, and a burst of them (his
+  Jet Blast) blooms into a ball of heat at its end.
+- **A burning prop is drawn without its flame.** It names a `flame` point and `flameHeight` in
+  rig.json, and the game draws the flame rising from it whichever way it is held (Flambe's
+  lighter). A flame drawn on the prop turns upside down with the hand.
+- Every flicker and wobble is hashed from a frame count, never random.
+
 ## A stage is data, not a renderer
 
 There is **one** stage renderer (`Stage.cs`) and there should stay one. A stage is a palette,

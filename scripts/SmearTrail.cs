@@ -73,11 +73,12 @@ public sealed class SmearTrail
 
 	/// <summary>
 	/// Whether a move is smeared and reaches past its hitbox: the normal attacks, swung with the
-	/// body. Not a special - its effect is its own - and not a wheel of fire round him.
+	/// body. Not a special - its effect is its own - and not a wheel of fire round him or a
+	/// blast of his jets, which are the move's own effect.
 	/// </summary>
 	public static bool Smears(MoveData move) =>
 		move != null && move.Special == SpecialKind.None && move.HitboxRadius > 0.0f && !move.Spin
-		&& move.ActiveFx != ActiveFx.FireRing;
+		&& move.ActiveFx != ActiveFx.FireRing && move.ActiveFx != ActiveFx.Jets;
 
 	/// <summary>
 	/// How strongly the smear shows at <paramref name="moveFrame"/>, 0 when it does not: coming in

@@ -17,8 +17,11 @@ Emits:
 HOW THE MAIN DRAWING IS CUT. Triguy is a white triangle with a black top hat and stick limbs, on
 a transparent canvas, drawn side-on facing right:
   - the BODY is the white fill, grown outward far enough to take in its outline and the face
-    drawn on it, plus the hat - the one big stroke above it. He has no separate head: the
-    triangle is his head and body both, as Circy's ball is.
+    drawn on it. He has no separate head: the triangle is his head and body both, as Circy's
+    ball is.
+  - the HAT - the one big stroke above it - is masked off as its own piece, hung on the body
+    where he drew it, so he can take it off and throw it (his side special, Eric's call
+    2026-10-10). It is the same pixels, only kept apart; a copy is also saved as poses/hat.png.
   - every other stroke is a limb. The two that reach lowest are the legs (they end in feet), the
     other two the arms; the further left of each pair is the back one, since he faces right.
   - each limb's joint is its top end, where it meets the triangle. It is rotated about that joint
@@ -70,6 +73,8 @@ OUTLINE_GROW = 16      # px added around the white fill to take in the triangle'
 STRAY_PIXELS = 400     # a stroke smaller than this is a stray mark, given to the nearest limb
 BODY_CORNER_PIXELS = 3000  # a piece this small touching the body is a corner of its outline
 JOINT_OVERLAP = 10     # px each half of a split limb extends past the joint
+HAT_KEEP_OUTLINE = 12  # rows of ink above the white the body keeps: the triangle's own outline
+HAT_REACH = 18         # px from the hat stroke the brim can reach into what the body took
 
 # How many pixels each side every line of ink is widened by in the generated parts and poses
 # (tools/art/linework.py). He is drawn on a bigger canvas than Circy and shrunk further, so it
@@ -130,7 +135,29 @@ def cut_main(parts_dir):
     limbs = [s for s in big if s is not hat]
     if len(limbs) != 4:
         raise SystemExit('expected 4 limbs in %s, found %d' % (MAIN, len(limbs)))
-    body_pts.extend(hat)
+    # Where the brim sits on the triangle, the grown body took in the bottom of it; those pixels
+    # are the hat's. Ink in the body right by the hat and above the triangle's own outline, joined
+    # to the hat, goes with the hat - and nothing further along the triangle's edge.
+    hat_set = set(hat)
+    body_set = set(body_pts)
+    near_hat = Image.new('L', img.size, 0)
+    nh = near_hat.load()
+    for (x, y) in hat:
+        nh[x, y] = 255
+    near_hat = near_hat.filter(ImageFilter.MaxFilter(HAT_REACH * 2 + 1)).load()
+    white_top = {}
+    for (x, y) in body_pts:
+        if is_white(px[x, y]):
+            white_top[x] = min(white_top.get(x, h), y)
+    frontier = list(hat)
+    while frontier:
+        x, y = frontier.pop()
+        for q in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if q in body_set and q not in hat_set and not is_white(px[q[0], q[1]])                     and near_hat[q[0], q[1]] > 0                     and q[1] < white_top.get(q[0], h) - HAT_KEEP_OUTLINE:
+                hat_set.add(q)
+                frontier.append(q)
+    hat = sorted(hat_set)
+    body_pts = [p for p in body_pts if p not in hat_set]
 
     for stray in strays:
         sx, sy = stray[0]
@@ -206,7 +233,17 @@ def cut_main(parts_dir):
     def rel(point):
         return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
 
-    top = min(p[1] for p in body_pts)
+    # The hat, apart, hung on the body by the middle of its brim.
+    hat_img, hat_origin = circy.extract(img, hat)
+    hat_img, hpad = linework.thicken(hat_img, LINE_BOOST)
+    hat_img.save(os.path.join(parts_dir, 'Hat.png'))
+    hx0, hy0, hx1, hy1 = circy.bbox(hat)
+    brim = ((hx0 + hx1) / 2.0, hy1)
+    parts['Hat'] = {'texture': 'parts/Hat.png',
+                    'pivot': [round(brim[0] - hat_origin[0] + hpad, 2), round(brim[1] - hat_origin[1] + hpad, 2)]}
+
+    # His crown is still the top of his hat: the rig is as tall as he is drawn.
+    top = min(min(p[1] for p in body_pts), hy0)
     crown = hip[1] - top
     bones = [
         {'name': 'Hip', 'parent': None, 'offset': [0, 0], 'part': None},
@@ -227,7 +264,10 @@ def cut_main(parts_dir):
     print('body %dx%d  arms %d/%d  legs %d/%d  figure %d tall' % (
         body_box[2] - body_box[0], body_box[3] - body_box[1],
         arm_len[0], arm_len[1], leg_len[0], leg_len[1], feet - top))
-    return bones, parts, {'canonicalHeight': round(crown, 1),
+    extras = [{'name': 'hat', 'bone': 'Torso', 'part': 'Hat', 'offset': rel(brim), 'always': True,
+               # On the body's drawing, not just its bone, so it turns round with it.
+               'onPart': True}]
+    return bones, parts, extras, hat_img, {'canonicalHeight': round(crown, 1),
                           'legLength': round(sum(leg_len) / 2.0, 1),
                           'figureHeight': feet - top}
 
@@ -277,8 +317,12 @@ def main():
         if not os.path.isdir(d):
             os.makedirs(d)
 
-    bones, parts, dims = cut_main(parts_dir)
+    bones, parts, extras, hat_img, dims = cut_main(parts_dir)
     poses = cut_poses(poses_dir)
+    # The hat on its own, for when it is thrown: spinning about its middle.
+    hat_img.save(os.path.join(poses_dir, 'hat.png'))
+    poses['hat'] = {'texture': 'poses/hat.png',
+                    'anchor': [round(hat_img.size[0] / 2.0, 1), round(hat_img.size[1] / 2.0, 1)]}
 
     rig = {
         'name': 'Triguy',
@@ -293,6 +337,7 @@ def main():
         # 2026-10-09: his limbs came off when he attacked).
         'legsOnBody': True,
         'bones': bones,
+        'extras': extras,
         'parts': parts,
         'poses': poses,
     }

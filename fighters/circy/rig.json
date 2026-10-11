@@ -42,8 +42,8 @@
     {
       "name": "LegFront_Lower", 
       "offset": [
-        168.5, 
-        438.6
+        -10.0, 
+        444.1
       ], 
       "parent": "LegFront_Upper", 
       "part": "LegFront_Lower"
@@ -104,7 +104,7 @@
     }
   ], 
   "canonicalHeight": 792.0, 
-  "legLength": 861.1, 
+  "legLength": 866.5, 
   "name": "Circy", 
   "parts": {
     "ArmBack_Lower": {
@@ -151,15 +151,14 @@
     }, 
     "LegFront_Lower": {
       "pivot": [
-        194.5, 
-        20.63
+        174.0, 
+        20.08
       ], 
-      "soleSlope": 0.0, 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        10.0, 
+        28.0, 
         10.0
       ], 
       "texture": "parts/LegFront_Upper.png"

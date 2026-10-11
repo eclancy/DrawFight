@@ -14,6 +14,13 @@ public static class FlameFx
 	static readonly Color Heart = new Color(1.0f, 0.88f, 0.42f);
 
 	/// <summary>
+	/// The furthest a tongue leans off straight up, in radians (50 degrees). Fire rises: a tongue
+	/// thrown sideways or down off a wheel, a fireball or a dive still burns upward (Eric,
+	/// 2026-10-10).
+	/// </summary>
+	const float MostLean = 0.87f;
+
+	/// <summary>
 	/// One tongue of flame from <paramref name="root"/>, rising along <paramref name="dir"/> for
 	/// <paramref name="length"/>, <paramref name="width"/> across at its widest, curving to one side
 	/// by <paramref name="bend"/> (a fraction of its length; the sign is the side) and swaying with
@@ -23,13 +30,43 @@ public static class FlameFx
 		float bend, int clock, int seed, float alpha)
 	{
 		if (alpha <= 0.01f || length < 2.0f) return;
-		dir = dir.Normalized();
+		dir = Rising(dir.Normalized(), seed);
 		// The tip sways: the bend breathes in and out, out of step with every other tongue.
 		float sway = bend + 0.18f * Mathf.Sin(clock * 0.31f + seed * 1.7f);
 		float flicker = 1.0f + 0.14f * CrayonBrush.Noise(clock / 2, seed * 3 + 1);
 		Layer(canvas, root, dir, length * flicker, width, sway, new Color(Outer, 0.82f * alpha));
 		Layer(canvas, root + dir * width * 0.12f, dir, length * flicker * 0.72f, width * 0.68f, sway * 1.1f, new Color(Middle, 0.88f * alpha));
 		Layer(canvas, root + dir * width * 0.22f, dir, length * flicker * 0.42f, width * 0.36f, sway * 1.2f, new Color(Heart, 0.92f * alpha));
+	}
+
+	/// <summary>
+	/// <paramref name="dir"/>, leaned back toward straight up until it is within
+	/// <see cref="MostLean"/> of it, on the side it leans. Straight down picks a side by seed.
+	/// </summary>
+	static Vector2 Rising(Vector2 dir, int seed)
+	{
+		float lean = Mathf.Wrap(dir.Angle() + Mathf.Pi * 0.5f, -Mathf.Pi, Mathf.Pi);
+		if (Mathf.Abs(lean) > MostLean)
+		{
+			bool down = Mathf.Pi - Mathf.Abs(lean) < 0.02f;
+			lean = (down ? (seed % 2 == 0 ? 1.0f : -1.0f) : Mathf.Sign(lean)) * MostLean;
+		}
+		return Vector2.Up.Rotated(lean);
+	}
+
+	/// <summary>
+	/// A lighter's flame - far bigger than any lighter has a right to make - rising from
+	/// <paramref name="at"/> <paramref name="height"/> tall, whichever way the lighter is held.
+	/// Flambe's. It is drawn here rather than on the lighter, which turns with his hand.
+	/// </summary>
+	public static void Torch(CanvasItem canvas, Vector2 at, float height, int clock, float alpha = 1.0f)
+	{
+		Glow(canvas, at + Vector2.Up * height * 0.3f, height * 0.36f, 0.5f * alpha);
+		Tongue(canvas, at + Vector2.Left * height * 0.1f, Vector2.Up.Rotated(-0.38f), height * 0.6f, height * 0.4f,
+			-0.25f, clock, 3, alpha);
+		Tongue(canvas, at + Vector2.Right * height * 0.1f, Vector2.Up.Rotated(0.38f), height * 0.58f, height * 0.4f,
+			0.25f, clock, 4, alpha);
+		Tongue(canvas, at, Vector2.Up, height, height * 0.55f, 0.12f, clock, 1, alpha);
 	}
 
 	/// <summary>

@@ -178,7 +178,7 @@
     }, 
     "FootFront": {
       "pivot": [
-        103, 
+        86, 
         20
       ], 
       "texture": "parts/FootFront.png"
@@ -213,7 +213,7 @@
     }, 
     "LegFront_Upper": {
       "pivot": [
-        74.0, 
+        73.0, 
         82.0
       ], 
       "texture": "parts/LegFront_Upper.png"

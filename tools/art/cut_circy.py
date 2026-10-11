@@ -6,9 +6,10 @@ Cuts Circy - drawn by Elim - out of Elim's own drawings. Run with the only Pytho
 
 This is the hand-cut step the roadmap asks for before the M3 importer exists, done as a script
 so it can be re-run: the parts are GENERATED from fighters/circy/source/, which is the master
-copy, and are never edited by hand. Nothing here draws, cleans, thickens or smooths a line.
-Pixels are only ever cropped, masked apart, rotated and trimmed - the same things the rig does
-to a part every frame.
+copy, and are never edited by hand. Pixels are cropped, masked apart, rotated and trimmed - the
+same things the rig does to a part every frame - and nothing is cleaned or smoothed. Two things
+go further, each on Eric's word: every line is widened in place so it shows at match size
+(LINE_BOOST), and his front foot is redrawn flat (redraw_front_foot). Neither touches source/.
 
 Emits:
     fighters/circy/parts/*.png   the ball and the four limbs, in canonical orientation
@@ -75,6 +76,10 @@ HOOK_SHEET = 'grapplinghook.png'
 OUTLINE_GROW = 16      # px added around the yellow to take in the ball's outline
 STRAY_PIXELS = 400     # a stroke smaller than this is a stray mark, given to the nearest limb
 JOINT_OVERLAP = 10     # px each half of a split limb extends past the joint
+
+# The front leg below this row of the source drawing is the hook redraw_front_foot takes off:
+# where his line stops coming straight down and turns back in.
+HOOK_FROM = 1550
 
 # How many pixels each side every line of ink is widened by in the generated parts and poses
 # (tools/art/linework.py), so his ~9px line comes out about 2.5px wide at match size instead of
@@ -256,15 +261,13 @@ def cut_main(parts_dir):
         lower_top = int(mid - JOINT_OVERLAP)
         parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
                              'pivot': [round(knee_x - lbox[0] + lpad, 2), round(mid - lower_top - lbox[1] + lpad, 2)]}
-        # His front leg ends in a long diagonal with a tick on the end, not a flat foot: the game
-        # took the diagonal for a sole and laid it flat on the floor. So it stands as drawn, the
-        # tick on the floor (Eric, 2026-10-09). His back leg's L is a real foot, and is levelled.
-        if name_lower == 'LegFront_Lower':
-            parts[name_lower]['soleSlope'] = 0.0
+        # Both feet are real feet now - his back leg's L as he drew it, his front one redrawn flat
+        # (redraw_front_foot) - so the game reads each sole off the drawing and levels it.
         return length, knee_x - side / 2
 
     back_arm, front_arm = arms
     back_leg, front_leg = legs
+    redraw_front_foot(img, front_leg, back_leg)
     arms_cut = [canonical_limb(back_arm, 'ArmBack_Upper', 'ArmBack_Lower'),
                 canonical_limb(front_arm, 'ArmFront_Upper', 'ArmFront_Lower')]
     legs_cut = [canonical_limb(back_leg, 'LegBack_Upper', 'LegBack_Lower'),
@@ -357,6 +360,57 @@ def cut_poses(poses_dir):
 
     return poses
 
+
+
+def redraw_front_foot(img, leg, back_leg):
+    """
+    Redraws his front foot flat - Eric's call, 2026-10-10, and the one change to Elim's drawing
+    beyond widening its line. Elim drew the front leg bowing out and then hooking back in on a
+    diagonal with a tick on the end: a foot angled down and back that never stood flat on the
+    floor, however the game turned it. The hook comes off below HOOK_FROM, where his line stops
+    coming straight down; the leg carries on straight down to the floor his back foot stands on,
+    and a flat foot points forward from it, as long as that one - in his own marker, the same
+    black, as wide as his line. Works on the in-memory copy of the drawing the parts are cut
+    from, and updates the leg's points and far end to match; source/ is never written.
+    """
+    from PIL import ImageDraw
+
+    px = img.load()
+    keep = [p for p in leg['points'] if p[1] < HOOK_FROM]
+    for p in leg['points']:
+        if p[1] >= HOOK_FROM:
+            px[p[0], p[1]] = (0, 0, 0, 0)
+
+    # Where his line comes down, and how wide it is, just above the hook.
+    above = [p for p in keep if p[1] >= HOOK_FROM - 30]
+    shin_x = sum(p[0] for p in above) / float(len(above))
+    widths = {}
+    for x, y in above:
+        widths.setdefault(y, []).append(x)
+    line = max(1, int(round(sum(max(xs) - min(xs) + 1 for xs in widths.values()) / float(len(widths)))))
+
+    # His back foot: the floor it stands on, and how far it reaches forward of its shin.
+    floor = max(p[1] for p in back_leg['points'])
+    back_shin = [p[0] for p in back_leg['points'] if floor - 60 <= p[1] <= floor - 40]
+    back_x = sum(back_shin) / float(len(back_shin))
+    reach = max(p[0] for p in back_leg['points'] if p[1] >= floor - 30) - back_x
+
+    sole = floor - line / 2.0
+    layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    path = [(shin_x, HOOK_FROM - line), (shin_x, sole), (shin_x + reach, sole)]
+    draw.line(path, fill=(0, 0, 0, 255), width=line, joint='curve')
+    r = line / 2.0
+    for x, y in path:
+        draw.ellipse((x - r, y - r, x + r, y + r), fill=(0, 0, 0, 255))
+    img.paste(layer, (0, 0), layer)
+
+    lx0, ly0, lx1, ly1 = layer.getbbox()
+    lpx = layer.load()
+    drawn = [(x, y) for y in range(ly0, ly1) for x in range(lx0, lx1) if lpx[x, y][3] > 0]
+    leg['points'] = sorted(set(keep) | set(drawn))
+    jx, jy = leg['joint']
+    leg['tip'] = max(leg['points'], key=lambda p: (p[0] - jx) ** 2 + (p[1] - jy) ** 2)
 
 
 def knee_on_stroke(canvas, row, centre_x):

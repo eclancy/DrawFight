@@ -465,6 +465,16 @@ def clang():
     return S.layer([(ring, 0.0, 1.0), (tick, 0.0, 0.5)])
 
 
+def shield_break():
+    """A block worn through: a sharp crack, a spray of bright shards tinkling away, and a low
+    wobble under it as the one behind it is left reeling."""
+    crack = slap(0.06, cutoff=4200.0, k=45.0, seed=SEED + 81)
+    shards = S.layer([(metal(2300 + 340 * i, 0.22, k=16.0), 0.02 + 0.035 * i, 0.55 - 0.07 * i)
+                      for i in range(6)])
+    wobble = S.env_mul(S.osc("sine", S.sweep(0.6, 300, 140), 0.6), S.adsr(0.6, 0.01, 0.1, 0.5, 0.3))
+    return S.layer([(crack, 0.0, 1.0), (shards, 0.0, 0.6), (wobble, 0.03, 0.35)])
+
+
 def stomp():
     """A robot's footfall: a heavy, low thud with a dull clank of steel on top - every step of
     DoomBot's walk. Short and low, because it plays twice a stride."""
@@ -564,6 +574,8 @@ REGISTRY = [
     ("burn", "hit", -20.0, burn, False),
     ("creak", "swing", -14.0, creak, False),
     ("clang", "hit", -10.0, clang, False),
+    # A few times a match at most.
+    ("shield_break", "hit", -7.0, shield_break, False),
     # Twice a stride: well down in the mix.
     ("stomp", "move", -16.0, stomp, False),
     ("minibot_pop", "special", -9.0, minibot_pop, False),

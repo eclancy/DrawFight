@@ -57,6 +57,11 @@ he has a catchphrase that is "that's, really kewl", also his 3 taunts are him do
 - **The surprised-face taunt** is named for the face, not for the meme it is drawn from.
 - **The crying is his down special** and the point attack his side special - the other way round
   from the sheet. Eric's call, 2026-10-04.
+- **His side special is Hat Toss** (Eric's call, 2026-10-10: the point attack was just a
+  punch). He flings his top hat straight ahead, spinning; it stops at the end of its throw, or
+  dead on the first one it hits, and either way he leaps to it and lands with it back on his
+  head. It is the sheet's "move for reaching someone far away" again: hit someone with it and
+  he arrives right beside them. His point attack lives on in his forward smash and dash attack.
 - **His normals are made of his specials' things** (Eric's call, 2026-10-04): his dash attack is
   a Nose Charge - point out, a burst forward, then the long skid - his forward tilt flicks a
   tear, his up smash spins the top hat for three hits, his down smash sends two of the puddle's

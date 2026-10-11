@@ -23,7 +23,7 @@ public static class SfxCatalog
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
 		"ui_move", "ui_select", "ui_back", "ui_ready", "pause",
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
-		"clang", "minibot_pop", "splash", "boing", "stomp",
+		"clang", "shield_break", "minibot_pop", "splash", "boing", "stomp",
 	};
 
 	/// <summary>Sounds that loop until stopped. Everything else is a one-shot.</summary>
@@ -112,6 +112,8 @@ public static class SfxCatalog
 			case SpecialKind.Walker: return new Cue("special_build", active);
 			// Crying a puddle: the splash as it hits the floor.
 			case SpecialKind.Puddle: return new Cue("splash", active);
+			// The throw is a swing; the leap after it plays where it starts (Fighter.StartLeap).
+			case SpecialKind.Fling: return new Cue("swing_medium", active);
 
 			// Picking a sword starts the sword's own move, which makes its own sound.
 			case SpecialKind.Choice: return default;
