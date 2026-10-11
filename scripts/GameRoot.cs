@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using Godot;
 
 /// <summary>
-/// Owns the screen flow and the choices made along it: title, character select, stage select,
-/// match, and back to the title.
+/// Owns the screen flow and the choices made along it: title, main menu, then either character
+/// select, stage select and a match, or the drawings - and back to the title.
 ///
 /// Screens are swapped as children of this node rather than through Godot scene changes. The
 /// whole game is built in code, so there is nothing for a .tscn per screen to hold, and keeping
@@ -21,6 +22,12 @@ public partial class GameRoot : Node2D
 	public bool[] CpuPlayers = { false, false };
 	public int SelectedStage;
 
+	/// <summary>The item settings, saved between games (ItemSettings.Save).</summary>
+	public readonly ItemSettings Items = new ItemSettings();
+
+	/// <summary>Only this item drops in a match (--item=ID), for looking at one at a time.</summary>
+	public string OnlyItem = "";
+
 	Node currentScreen;
 
 	public override void _Ready()
@@ -33,6 +40,7 @@ public partial class GameRoot : Node2D
 		AddChild(new MusicPlayer());
 
 		RegressionChecks.RunAll();
+		Items.Load();
 
 		// Pads are reassigned live everywhere, not just in a match: a controller that goes to
 		// sleep on the title screen and wakes on character select has to just work.
@@ -65,6 +73,19 @@ public partial class GameRoot : Node2D
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
 			if (arg == "--stages") startAt = "stages";
+			if (arg == "--itemsettings") startAt = "items";
+			if (arg == "--menu") startAt = "menu";
+			if (arg == "--drawings") startAt = "drawings";
+			if (arg == "--draw") startAt = "draw";
+			if (arg == "--send") startAt = "send";
+			if (arg.StartsWith("--item=")) OnlyItem = arg.Substring(7);
+			if (arg.StartsWith("--items="))
+			{
+				// "--items=high": how often, for this run only - not saved.
+				string how = arg.Substring(8).ToLower();
+				Items.Frequency = how == "off" ? ItemFrequency.Off : how == "low" ? ItemFrequency.Low
+					: how == "high" ? ItemFrequency.High : ItemFrequency.Medium;
+			}
 		}
 
 		ScreenshotRequestFrames = shotAfter;
@@ -92,6 +113,18 @@ public partial class GameRoot : Node2D
 			case "match": GoMatch(); break;
 			case "select": GoCharacterSelect(); break;
 			case "stages": GoStageSelect(); break;
+			case "items": GoItemSettings(); break;
+			case "menu": GoMainMenu(); break;
+			case "drawings": GoDrawings(); break;
+			// The newest saved drawing, or a new one: for looking at the drawing screens.
+			case "draw":
+			case "send":
+				List<SavedDrawing> saved = Drawing.ListSaved();
+				Drawing drawing = saved.Count > 0 ? Drawing.Load(saved[0].Id) : null;
+				drawing ??= Drawing.New();
+				if (startAt == "draw") OpenDrawing(drawing);
+				else GoSendFighter(drawing);
+				break;
 			// A downloaded copy checks ecec.dev for a newer version before anything else.
 			default:
 				if (UpdateScreen.ShouldCheck()) Show(new UpdateScreen());
@@ -114,13 +147,19 @@ public partial class GameRoot : Node2D
 		if (currentScreen is MatchManager match) match.ReassignControllers();
 		else if (currentScreen is CharacterSelectScreen) GoCharacterSelect();
 		else if (currentScreen is TitleScreen) GoTitle();
+		else if (currentScreen is MainMenuScreen) GoMainMenu();
 	}
 
 	// --- Flow ----------------------------------------------------------------
 
 	public void GoTitle() => Show(new TitleScreen());
+	public void GoMainMenu() => Show(new MainMenuScreen());
+	public void GoDrawings() => Show(new DrawingsScreen());
+	public void OpenDrawing(Drawing drawing) => Show(new DrawScreen { Doc = drawing });
+	public void GoSendFighter(Drawing drawing) => Show(new SendFighterScreen { Doc = drawing });
 	public void GoCharacterSelect() => Show(new CharacterSelectScreen());
 	public void GoStageSelect() => Show(new StageSelectScreen());
+	public void GoItemSettings() => Show(new ItemSettingsScreen());
 
 	public void GoMatch()
 	{
@@ -129,6 +168,8 @@ public partial class GameRoot : Node2D
 			StageIndex = SelectedStage,
 			FighterIndices = (int[])SelectedFighters.Clone(),
 			CpuPlayers = (bool[])CpuPlayers.Clone(),
+			Items = Items,
+			OnlyItem = OnlyItem,
 		};
 		Show(match);
 	}
@@ -143,6 +184,10 @@ public partial class GameRoot : Node2D
 
 		currentScreen = screen;
 		AddChild(screen);
+
+		// The click that changed screens is spent: without this it carries on into the new
+		// screen too - and on the drawing screen, a click is a dot of ink.
+		GetViewport().SetInputAsHandled();
 
 		// A match starts in silence and brings its music in on FIGHT! (see MatchManager); the
 		// parade is a tool, not a screen. Every other screen is a menu.

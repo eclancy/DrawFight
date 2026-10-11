@@ -3,8 +3,10 @@
 #
 #     bash tools/intake/pull_submissions.sh
 #
-# Each submission arrives as a folder: photo-1.jpg, photo-2.png ... (the drawing, the moves
-# page, anything else they drew), answers.json, and sheet.md (the character sheet, readable).
+# Each submission arrives as a folder: photo-1-<name>.jpg, photo-2-<name>.png ... (the drawing,
+# the moves page, anything else they drew - each keeps the name it was sent with; one drawn in
+# the game is a picture per page or per layer, named after it), answers.json, and sheet.md (the
+# character sheet, readable).
 # Folders already pulled are skipped, so it is safe to run any time. Nothing is deleted from
 # the server.
 #

@@ -105,6 +105,45 @@ Smears and fire are drawn by the game, not by the kids, so this contract covers 
   lighter). A flame drawn on the prop turns upside down with the hand.
 - Every flicker and wobble is hashed from a frame count, never random.
 
+## Items
+
+Items are drawn by us, not by the kids, so they follow the stand-ins: **coloured pencil with
+indigo outlines** (`tools/art/items.py`, through `drawn.py`), which keeps them in the world of
+the page and clear of the characters' black. An item hits you, so it gets a solid outline.
+
+- **A tool points along the arm; a carried thing stays upright.** A pencil, a brush or an
+  airbrush points out of the fist along the forearm. A bucket, a bottle, a box or a book is
+  held upright whichever way the arm points - a bucket that followed the arm lay on its side.
+- **Held in the fist, not behind the body.** A held item is drawn inside the front forearm,
+  under its drawing (`FighterRig.HeldLayer`): in front of the chest, behind the hand. Drawn
+  behind the whole fighter, anything smaller than a pencil vanished behind his chest.
+- **On the floor, things lie as they would.** Something long and thin lies on its side; the
+  rest sit upright on their bottoms. Nothing an item does goes through the floor - a swing
+  scrapes along it, splashes land on it, a cloud of ink sits on it and billows up.
+- **What an item leaves behind is flat on the floor**: a puddle is a glossy ellipse with an
+  edge a shade darker than itself, so white glue still reads on a white page. The marker's
+  platform is **dashed**, because you can drop through it - the outline grammar holds.
+- **Effects are the material, not a generic blast**: a glitter bomb is a starburst and glitter
+  drifting down, ink is a billowing cloud, the rubber stamp prints its star on the floor. The
+  stage's orange explosion flash is for bombs that are bombs.
+
+## The drawing screen
+
+The drawing screen is the kid's page, so it is the one place outside a fighter where black
+belongs: its palette has black in it, because what is drawn there *is* a character. Everything
+round the page - the desk, the panels, the buttons - keeps to the menus' look and the 30% line.
+
+- **The page is lined paper**, like every menu, with a pencilled reminder in its corner ("Side
+  view, facing right"). The paper is never sent: every picture goes see-through.
+- **The coloured pencil has the game's grain.** Its tooth is the same recipe as
+  `CrayonBrush.PencilFill` - close strokes at a slant, a lighter cross-hatch - fixed to the page,
+  so a kid's colouring in and the game's own pencil art look like the same pencils. Going over
+  it again fills it in; a light pencil over a dark line barely shows, so colouring in never
+  hides an outline.
+- **The paint bucket fills in pencil** by default (solid if asked), and tucks a couple of pixels
+  under the lines it fills, so there is no pale fringe between colour and line.
+- **The marker is for outlines**, even all the way along however slowly it is drawn.
+
 ## A stage is data, not a renderer
 
 There is **one** stage renderer (`Stage.cs`) and there should stay one. A stage is a palette,

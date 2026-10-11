@@ -1,0 +1,572 @@
+{
+  "airbrush": {
+    "grip": [
+      44.0, 
+      208.0
+    ], 
+    "head": [
+      44.0, 
+      10.0
+    ], 
+    "size": [
+      116, 
+      266
+    ], 
+    "texture": "airbrush.png"
+  }, 
+  "canvas": {
+    "grip": [
+      77.0, 
+      202.0
+    ], 
+    "head": [
+      77.0, 
+      122.0
+    ], 
+    "size": [
+      154, 
+      218
+    ], 
+    "texture": "canvas.png"
+  }, 
+  "crayon_blue": {
+    "grip": [
+      77.0, 
+      23.0
+    ], 
+    "head": [
+      143.0, 
+      23.0
+    ], 
+    "size": [
+      146, 
+      46
+    ], 
+    "texture": "crayon_blue.png"
+  }, 
+  "crayon_box": {
+    "grip": [
+      75.0, 
+      109.0
+    ], 
+    "head": [
+      75.0, 
+      109.0
+    ], 
+    "size": [
+      150, 
+      176
+    ], 
+    "texture": "crayon_box.png"
+  }, 
+  "crayon_green": {
+    "grip": [
+      77.0, 
+      23.0
+    ], 
+    "head": [
+      143.0, 
+      23.0
+    ], 
+    "size": [
+      146, 
+      46
+    ], 
+    "texture": "crayon_green.png"
+  }, 
+  "crayon_red": {
+    "grip": [
+      77.0, 
+      23.0
+    ], 
+    "head": [
+      143.0, 
+      23.0
+    ], 
+    "size": [
+      146, 
+      46
+    ], 
+    "texture": "crayon_red.png"
+  }, 
+  "crayon_yellow": {
+    "grip": [
+      77.0, 
+      23.0
+    ], 
+    "head": [
+      143.0, 
+      23.0
+    ], 
+    "size": [
+      146, 
+      46
+    ], 
+    "texture": "crayon_yellow.png"
+  }, 
+  "eraser": {
+    "grip": [
+      47.0, 
+      121.0
+    ], 
+    "head": [
+      54.0, 
+      16.0
+    ], 
+    "size": [
+      108, 
+      154
+    ], 
+    "texture": "eraser.png"
+  }, 
+  "glitter_bomb": {
+    "grip": [
+      69.0, 
+      112.0
+    ], 
+    "head": [
+      69.0, 
+      112.0
+    ], 
+    "size": [
+      138, 
+      181
+    ], 
+    "texture": "glitter_bomb.png"
+  }, 
+  "glue_bottle": {
+    "grip": [
+      48.0, 
+      120.0
+    ], 
+    "head": [
+      48.0, 
+      120.0
+    ], 
+    "size": [
+      96, 
+      191
+    ], 
+    "texture": "glue_bottle.png"
+  }, 
+  "gold_star": {
+    "grip": [
+      82.0, 
+      85.0
+    ], 
+    "head": [
+      82.0, 
+      85.0
+    ], 
+    "size": [
+      164, 
+      156
+    ], 
+    "texture": "gold_star.png"
+  }, 
+  "ink_bottle": {
+    "grip": [
+      65.0, 
+      101.0
+    ], 
+    "head": [
+      65.0, 
+      101.0
+    ], 
+    "size": [
+      130, 
+      164
+    ], 
+    "texture": "ink_bottle.png"
+  }, 
+  "magnifying_glass": {
+    "grip": [
+      75.0, 
+      233.0
+    ], 
+    "head": [
+      75.0, 
+      75.0
+    ], 
+    "size": [
+      150, 
+      296
+    ], 
+    "texture": "magnifying_glass.png"
+  }, 
+  "marker": {
+    "grip": [
+      38.0, 
+      187.0
+    ], 
+    "head": [
+      38.0, 
+      11.0
+    ], 
+    "size": [
+      76, 
+      236
+    ], 
+    "texture": "marker.png"
+  }, 
+  "metre_stick": {
+    "grip": [
+      38.0, 
+      282.0
+    ], 
+    "head": [
+      38.0, 
+      10.0
+    ], 
+    "size": [
+      76, 
+      324
+    ], 
+    "texture": "metre_stick.png"
+  }, 
+  "paint_balloon": {
+    "grip": [
+      61.0, 
+      77.0
+    ], 
+    "head": [
+      61.0, 
+      77.0
+    ], 
+    "size": [
+      122, 
+      177
+    ], 
+    "texture": "paint_balloon.png"
+  }, 
+  "paint_bucket": {
+    "grip": [
+      75.0, 
+      103.0
+    ], 
+    "head": [
+      75.0, 
+      103.0
+    ], 
+    "size": [
+      150, 
+      162
+    ], 
+    "texture": "paint_bucket.png"
+  }, 
+  "paint_tube": {
+    "grip": [
+      60.0, 
+      211.0
+    ], 
+    "head": [
+      60.0, 
+      11.0
+    ], 
+    "size": [
+      120, 
+      238
+    ], 
+    "texture": "paint_tube.png"
+  }, 
+  "paintbrush": {
+    "grip": [
+      29.0, 
+      237.0
+    ], 
+    "head": [
+      29.0, 
+      11.0
+    ], 
+    "size": [
+      58, 
+      311
+    ], 
+    "texture": "paintbrush.png"
+  }, 
+  "palette": {
+    "grip": [
+      90.0, 
+      63.0
+    ], 
+    "head": [
+      90.0, 
+      63.0
+    ], 
+    "size": [
+      178, 
+      129
+    ], 
+    "texture": "palette.png"
+  }, 
+  "paper_airplane": {
+    "grip": [
+      91.0, 
+      55.0
+    ], 
+    "head": [
+      173.0, 
+      53.0
+    ], 
+    "size": [
+      182, 
+      112
+    ], 
+    "texture": "paper_airplane.png"
+  }, 
+  "paper_ball": {
+    "grip": [
+      68.0, 
+      71.0
+    ], 
+    "head": [
+      68.0, 
+      71.0
+    ], 
+    "size": [
+      140, 
+      139
+    ], 
+    "texture": "paper_ball.png"
+  }, 
+  "pencil": {
+    "grip": [
+      38.0, 
+      215.0
+    ], 
+    "head": [
+      38.0, 
+      11.0
+    ], 
+    "size": [
+      76, 
+      310
+    ], 
+    "texture": "pencil.png"
+  }, 
+  "pencil_case": {
+    "grip": [
+      97.0, 
+      84.0
+    ], 
+    "head": [
+      97.0, 
+      84.0
+    ], 
+    "size": [
+      194, 
+      135
+    ], 
+    "texture": "pencil_case.png"
+  }, 
+  "pencil_stub": {
+    "grip": [
+      38.0, 
+      103.0
+    ], 
+    "head": [
+      38.0, 
+      11.0
+    ], 
+    "size": [
+      76, 
+      166
+    ], 
+    "texture": "pencil_stub.png"
+  }, 
+  "popup_book": {
+    "grip": [
+      77.0, 
+      83.0
+    ], 
+    "head": [
+      77.0, 
+      83.0
+    ], 
+    "size": [
+      154, 
+      166
+    ], 
+    "texture": "popup_book.png"
+  }, 
+  "popup_book_open": {
+    "grip": [
+      130.0, 
+      182.0
+    ], 
+    "head": [
+      130.0, 
+      100.0
+    ], 
+    "size": [
+      260, 
+      193
+    ], 
+    "texture": "popup_book_open.png"
+  }, 
+  "rinse_cup": {
+    "grip": [
+      67.0, 
+      126.0
+    ], 
+    "head": [
+      67.0, 
+      126.0
+    ], 
+    "size": [
+      135, 
+      195
+    ], 
+    "texture": "rinse_cup.png"
+  }, 
+  "roller": {
+    "grip": [
+      87.0, 
+      245.0
+    ], 
+    "head": [
+      87.0, 
+      39.0
+    ], 
+    "size": [
+      209, 
+      302
+    ], 
+    "texture": "roller.png"
+  }, 
+  "scissors": {
+    "grip": [
+      74.5, 
+      213.0
+    ], 
+    "head": [
+      76.0, 
+      13.0
+    ], 
+    "size": [
+      146, 
+      264
+    ], 
+    "texture": "scissors.png"
+  }, 
+  "scissors_open": {
+    "grip": [
+      94.0, 
+      198.5
+    ], 
+    "head": [
+      96.0, 
+      15.0
+    ], 
+    "size": [
+      185, 
+      249
+    ], 
+    "texture": "scissors_open.png"
+  }, 
+  "sketchbook": {
+    "grip": [
+      81.0, 
+      179.0
+    ], 
+    "head": [
+      81.0, 
+      9.0
+    ], 
+    "size": [
+      151, 
+      188
+    ], 
+    "texture": "sketchbook.png"
+  }, 
+  "spray_can": {
+    "grip": [
+      46.0, 
+      153.0
+    ], 
+    "head": [
+      46.0, 
+      9.0
+    ], 
+    "size": [
+      92, 
+      199
+    ], 
+    "texture": "spray_can.png"
+  }, 
+  "stamp": {
+    "grip": [
+      79.0, 
+      147.0
+    ], 
+    "head": [
+      79.0, 
+      13.0
+    ], 
+    "size": [
+      158, 
+      192
+    ], 
+    "texture": "stamp.png"
+  }, 
+  "tack": {
+    "grip": [
+      36.0, 
+      43.0
+    ], 
+    "head": [
+      36.0, 
+      43.0
+    ], 
+    "size": [
+      72, 
+      95
+    ], 
+    "texture": "tack.png"
+  }, 
+  "thumbtacks": {
+    "grip": [
+      80.0, 
+      87.0
+    ], 
+    "head": [
+      80.0, 
+      87.0
+    ], 
+    "size": [
+      160, 
+      136
+    ], 
+    "texture": "thumbtacks.png"
+  }, 
+  "tracing_paper": {
+    "grip": [
+      72.0, 
+      86.0
+    ], 
+    "head": [
+      72.0, 
+      86.0
+    ], 
+    "size": [
+      144, 
+      172
+    ], 
+    "texture": "tracing_paper.png"
+  }, 
+  "white_out": {
+    "grip": [
+      48.0, 
+      119.0
+    ], 
+    "head": [
+      48.0, 
+      119.0
+    ], 
+    "size": [
+      96, 
+      184
+    ], 
+    "texture": "white_out.png"
+  }
+}

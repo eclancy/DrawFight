@@ -29,6 +29,9 @@ public partial class StageSelectScreen : Node2D
 	const float CardWidth = 470.0f;
 	const float CardGap = 40.0f;
 
+	/// <summary>The button to the item settings, with how often items are set to turn up on it.</summary>
+	static readonly Rect2 ItemsButton = new Rect2(1440.0f, 820.0f, 400.0f, 96.0f);
+
 	public override void _Ready()
 	{
 		bool[] cpu = GameRoot.Instance.CpuPlayers;
@@ -158,6 +161,13 @@ public partial class StageSelectScreen : Node2D
 				SfxPlayer.Ui("ui_move");
 			}
 
+			if (cursor.Confirm && ItemsButton.HasPoint(cursor.Position))
+			{
+				SfxPlayer.Ui("ui_select");
+				GameRoot.Instance.GoItemSettings();
+				return;
+			}
+
 			if (cursor.Confirm && under >= 0)
 			{
 				GameRoot.Instance.SelectedStage = under;
@@ -195,6 +205,20 @@ public partial class StageSelectScreen : Node2D
 	{
 		Vector2 size = GetViewportRect().Size;
 		MenuTheme.DrawPage(this, size);
+
+		DrawRect(ItemsButton, MenuTheme.Paper);
+		CrayonBrush.InkRect(this, ItemsButton, MenuTheme.Ink, 4.0f, 91, 2.2f);
+		foreach (MenuCursor cursor in cursors)
+		{
+			if (!ItemsButton.HasPoint(cursor.Position)) continue;
+			CrayonBrush.InkRect(this, ItemsButton.Grow(9.0f), cursor.Tint, 6.0f, 92, 2.6f);
+			break;
+		}
+		ItemSettings items = GameRoot.Instance.Items;
+		string label = "Items: " + ItemSettings.Describe(items.Frequency);
+		if (items.Frequency != ItemFrequency.Off && items.EnabledCount < ItemCatalog.Count) label += $"  ({items.EnabledCount} on)";
+		DrawString(ThemeDB.FallbackFont, ItemsButton.Position + new Vector2(28.0f, 62.0f), label,
+			HorizontalAlignment.Left, ItemsButton.Size.X - 40.0f, 36, MenuTheme.Text);
 
 		for (int i = 0; i < stages.Length; i++)
 		{

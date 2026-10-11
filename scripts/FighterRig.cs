@@ -1188,6 +1188,42 @@ public partial class FighterRig : Node2D
 		return (bones[prop].GlobalPosition, bones[backArm].GlobalTransform * restOffsets[prop]);
 	}
 
+	Node2D heldLayer;
+
+	/// <summary>
+	/// A layer inside the front forearm, under its drawing: whatever is drawn there is in front of
+	/// the body and the upper arm and behind the hand - so a held item is gripped in the fist, and
+	/// never hidden behind his chest. Null for a rig with no front forearm.
+	/// </summary>
+	public Node2D HeldLayer()
+	{
+		int lower = (int)RigBone.ArmFrontLower;
+		if (!present[lower]) return null;
+		if (heldLayer != null && IsInstanceValid(heldLayer)) return heldLayer;
+		heldLayer = new Node2D { Name = "HeldLayer" };
+		bones[lower].AddChild(heldLayer);
+		bones[lower].MoveChild(heldLayer, 0);
+		return heldLayer;
+	}
+
+	/// <summary>
+	/// The front fist, in global coordinates, and the way the forearm points out through it -
+	/// where an item is held, pointing on along the arm. From the prop bone where there is one;
+	/// otherwise the far end of the forearm drawing, whatever the fighter.
+	/// </summary>
+	public (Vector2 fist, Vector2 along)? FrontHandGlobal()
+	{
+		int lower = (int)RigBone.ArmFrontLower;
+		if (!present[lower]) return null;
+		Transform2D t = bones[lower].GlobalTransform;
+		Vector2 along = t.BasisXform(Vector2.Down).Normalized();
+		int prop = (int)RigBone.PropFront;
+		if (present[prop]) return (bones[prop].GlobalPosition, along);
+		Sprite2D forearm = sprites[lower];
+		float length = forearm?.Texture != null ? (forearm.Texture.GetSize().Y + forearm.Offset.Y) * forearm.Scale.Y * 0.9f : 60.0f;
+		return (t * new Vector2(0.0f, length), along);
+	}
+
 	/// <summary>Whether the front hand is empty with this move's prop: "-", or nothing put in a blank hand.</summary>
 	public bool HandEmpty(string propArt) =>
 		propArt == "-" || (string.IsNullOrEmpty(propArt) && defaultPropEmpty) || !present[(int)RigBone.PropFront];

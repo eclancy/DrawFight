@@ -29,6 +29,9 @@ public partial class Hazard : Node2D
 	/// </summary>
 	public void ShareHits(HashSet<Fighter> moveHits) => alreadyHit = moveHits;
 
+	/// <summary>Who made it. An eraser rubs out anyone's but its own holder's.</summary>
+	public Fighter OwnerFighter => owner;
+
 	/// <summary>Multiplies the move's damage for this hazard - a charged smash's shockwave.</summary>
 	public float DamageScale = 1.0f;
 
@@ -617,6 +620,19 @@ public partial class Hazard : Node2D
 
 			if (!Touches(other.BodyRect(), out Vector2 nearest)) continue;
 
+			// A sketchbook held up toward a shot sends it straight back, his now.
+			if (move.Special == SpecialKind.Projectile && !move.Beam && other.ReflectsFrom(GlobalPosition))
+			{
+				owner = other;
+				velocity = new Vector2(-velocity.X, velocity.Y);
+				spinSign = -spinSign;
+				FlipArt = !FlipArt;
+				alreadyHit = new HashSet<Fighter>();
+				ageFrames = OwnerGraceFrames;
+				other.ShowReflect(GlobalPosition);
+				return;
+			}
+
 			alreadyHit.Add(other);
 			other.ReceiveHit(owner, move, nearest, DamageScale);
 
@@ -1000,8 +1016,29 @@ public partial class Hazard : Node2D
 			return;
 		}
 
+		if (move.FxPaint)
+		{
+			DrawPaintBlob(radius, body);
+			return;
+		}
+
 		DrawCircle(Vector2.Zero, radius, body);
 		CrayonBrush.Scribble(this, Vector2.Zero, new Vector2(radius * 2.1f, radius * 2.1f),
 			new Color(0.16f, 0.16f, 0.20f, 0.85f), ageFrames / 3, 5.0f, 6);
+	}
+
+	/// <summary>A wet blob of paint: stretched a little along its flight, a tail of drops behind, a shine.</summary>
+	void DrawPaintBlob(float radius, Color paint)
+	{
+		Vector2 back = velocity.LengthSquared() > 1.0f ? -velocity.Normalized() : Vector2.Left;
+		for (int i = 1; i <= 3; i++)
+		{
+			DrawCircle(back * radius * (0.9f + 0.75f * i), radius * (0.62f - 0.14f * i), new Color(paint, 0.9f));
+		}
+		DrawSetTransform(Vector2.Zero, back.Angle(), new Vector2(1.18f, 0.9f));
+		DrawCircle(Vector2.Zero, radius + 2.5f, paint.Darkened(0.28f));
+		DrawCircle(Vector2.Zero, radius, paint);
+		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+		DrawCircle(new Vector2(-radius * 0.3f, -radius * 0.35f), radius * 0.28f, new Color(1, 1, 1, 0.75f));
 	}
 }

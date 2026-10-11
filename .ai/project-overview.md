@@ -46,10 +46,13 @@ passes, not a two-button toy.
 ## Scope
 
 **In, eventually:** local versus for 2-4 players, CPU opponents, stocks and percent, a handful
-of stages, a character-select screen, the in-editor import tool, as many fighters as he draws.
+of stages, a character-select screen, the in-editor import tool, as many fighters as he draws -
+and a drawing screen in the game itself, so a fighter can be drawn and sent in without paper,
+a camera or a tablet app (Eric, 2026-10-11).
 
 **Out, and staying out unless something changes:** online play (fighting-game netcode is a
-project of its own), story mode, unlockables and progression, mobile, controller remapping UI
+project of its own), story mode (the main menu has a "coming soon" card for it, on Eric's
+call of 2026-10-11, but nothing about it is designed), unlockables and progression, mobile, controller remapping UI
 beyond a basic screen, anything resembling monetisation.
 
 **The name.** This started as `DuskFight`, after the kid's own online handle `Dusk`, and was

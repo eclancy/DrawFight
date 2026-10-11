@@ -364,7 +364,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (cursor.Cancel)
 			{
-				// B takes a pick back; with nothing picked it goes back to the title.
+				// B takes a pick back; with nothing picked it goes back to the main menu.
 				SfxPlayer.Ui("ui_back");
 				if (slot.Locked)
 				{
@@ -372,7 +372,7 @@ public partial class CharacterSelectScreen : Node2D
 				}
 				else
 				{
-					GameRoot.Instance.GoTitle();
+					GameRoot.Instance.GoMainMenu();
 					return;
 				}
 			}

@@ -47,6 +47,100 @@ public partial class MatchManager : Node2D
 	public bool InputLocked => countdownFrames > FightBannerFrames;
 	float lastKnockback;
 
+	// --- Items -------------------------------------------------------------------------
+	// Every so often an item drops in onto a platform somewhere, as in Smash: how often, and
+	// which, are the item settings (GameRoot.Items).
+
+	/// <summary>The item settings in force. Null - no items - when there is no GameRoot (the parade).</summary>
+	public ItemSettings Items;
+
+	/// <summary>Only this item drops (--item=ID), for looking at one item at a time.</summary>
+	public string OnlyItem = "";
+
+	int itemTimer = -1;
+	readonly System.Random itemRng = new System.Random();
+
+	/// <summary>A random item that may appear; never a pencil case out of a pencil case.</summary>
+	public ItemData RandomItem(int salt, bool fromCase)
+	{
+		var choices = new List<ItemData>();
+		for (int i = 0; i < ItemCatalog.Count; i++)
+		{
+			ItemData data = ItemCatalog.Get(i);
+			if (fromCase && data.Use == ItemUse.Open) continue;
+			if (!string.IsNullOrEmpty(OnlyItem) && !fromCase) { if (data.Id == OnlyItem) choices.Add(data); continue; }
+			if (Items != null && !Items.Enabled[i]) continue;
+			choices.Add(data);
+		}
+		if (choices.Count == 0) return null;
+		return choices[itemRng.Next(choices.Count)];
+	}
+
+	public Item SpawnItem(ItemData data, Vector2 at, Vector2 velocity)
+	{
+		var item = new Item();
+		AddChild(item);
+		item.Launch(data, this, at, velocity);
+		return item;
+	}
+
+	/// <summary>A stripe of wet paint left by a paint roller.</summary>
+	public void SpawnStripe(Fighter owner, ItemData data, Vector2 at)
+	{
+		var item = new Item();
+		AddChild(item);
+		item.StartStripe(data, this, owner, at);
+	}
+
+	void TickItems()
+	{
+		bool only = !string.IsNullOrEmpty(OnlyItem);
+		if (Items == null && !only) return;
+		if (!only && (Items.Frequency == ItemFrequency.Off || Items.EnabledCount == 0)) return;
+		int interval = only ? 150 : Items.SpawnInterval;
+		int most = only ? 2 : Items.MaxOnStage;
+		if (itemTimer < 0) itemTimer = interval / 2;
+		if (--itemTimer > 0) return;
+		itemTimer = interval + itemRng.Next(interval / 3) - interval / 6;
+
+		int lying = 0;
+		foreach (Node child in GetChildren())
+		{
+			if (child is Item item && (item.State == Item.Phase.Falling || item.State == Item.Phase.Resting)) lying++;
+		}
+		if (lying >= most) return;
+
+		ItemData pick = RandomItem(framesElapsed, false);
+		if (pick == null) return;
+		if (FindItemDrop(out Vector2 at)) SpawnItem(pick, at, Vector2.Zero);
+	}
+
+	/// <summary>
+	/// Somewhere over a platform, inside the blast zone and clear of anything solid, for an item
+	/// to drop from - onto that platform, or whatever it meets on the way down.
+	/// </summary>
+	bool FindItemDrop(out Vector2 at)
+	{
+		at = Vector2.Zero;
+		var space = GetWorld2D().DirectSpaceState;
+		Rect2 zone = stage.BlastZone.Grow(-120.0f);
+		for (int tries = 0; tries < 12; tries++)
+		{
+			Rect2 platform = stage.Platforms[itemRng.Next(stage.Platforms.Count)];
+			if (platform.Size.X < 140.0f) continue;
+			float left = Mathf.Max(platform.Position.X + 50.0f, zone.Position.X);
+			float right = Mathf.Min(platform.End.X - 50.0f, zone.End.X);
+			if (right <= left) continue;
+			Vector2 point = new Vector2(left + (float)itemRng.NextDouble() * (right - left), platform.Position.Y - 420.0f);
+			if (!zone.HasPoint(point)) point.Y = Mathf.Max(point.Y, zone.Position.Y + 40.0f);
+			var query = new PhysicsPointQueryParameters2D { Position = point, CollisionMask = 0b11 };
+			if (space.IntersectPoint(query, 1).Count > 0) continue;
+			at = point;
+			return true;
+		}
+		return false;
+	}
+
 	// Screenshot capture. Animation and game feel cannot be verified by a build - they have to
 	// be looked at - and this is what makes "looked at" possible without a human at the screen.
 	int shotAfterFrames = -1;
@@ -199,6 +293,7 @@ public partial class MatchManager : Node2D
 			countdownFrames--;
 		}
 		if (matchOver) return;
+		if (countdownFrames <= FightBannerFrames) TickItems();
 
 		foreach (Fighter fighter in Fighters)
 		{

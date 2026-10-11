@@ -63,6 +63,15 @@ because it repeats), `creak` when rusty joints seize after a miss, and `clang` w
 bounces off armour (Lug's hard hat), over the muffled blocked-hit thud. EdgeLord's air dash is a
 quiet `special_dash`.
 
+Items play their sounds where the item does something, not through `ForMove` - an item's own
+swing is a move like any other and gets its whoosh from the rules. Their own: `item_pickup`
+(picking one up, a pencil case opening), `item_spray`, `item_snip`, `item_heal` (White-Out),
+`item_gust` (the airbrush) and `item_crumple` (the paper ball bouncing). The rest borrow:
+`splash` for paint and water, `boing` for the pop-up book, `stomp` for the rubber stamp,
+`explosion` for the glitter bomb, `creak` for the thumbtacks, `special_volley` for the crayons,
+`special_shot` for the paint tube, `special_build` for the marker's platform, `clang` for the
+sketchbook sending something back, and the resize, blink and glint sounds for the boosts.
+
 The whoosh starts 4 frames early on purpose. A whoosh is loudest about a third of the way through,
 so starting early puts the rush of air on the hit, not after it.
 

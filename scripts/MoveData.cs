@@ -605,6 +605,12 @@ public partial class MoveData : Resource
 	[Export] public bool FxFlame { get; set; } = false;
 
 	/// <summary>
+	/// Draw a projectile with no art as a wet blob of paint in its own colour - glossy, with a
+	/// short tail - rather than the scribbled ball, whose dark scribble turned paint brown.
+	/// </summary>
+	[Export] public bool FxPaint { get; set; } = false;
+
+	/// <summary>
 	/// Held in both hands: the back hand goes on what the front hand holds, this far from the
 	/// front fist to its head (FighterRig.SecondHand). Zero is one-handed. Lug's nail gun and
 	/// shovel.
@@ -622,6 +628,15 @@ public partial class MoveData : Resource
 	/// is out, and where he leaps to put it back.
 	/// </summary>
 	[Export] public string FlingExtra { get; set; } = "";
+
+	/// <summary>
+	/// The hit is where the held item's business end is, not at a fixed offset: an item swing lands
+	/// where the drawing of the item is, whoever holds it. See Item.HeadGlobal.
+	/// </summary>
+	[Export] public bool AtItemHead { get; set; } = false;
+
+	/// <summary>What the move does with an item: picks it up, throws it, uses it. None for every attack.</summary>
+	[Export] public ItemAction ItemAction { get; set; } = ItemAction.None;
 
 	/// <summary>What a <see cref="SpecialKind.Cloud"/> drops. Not exported, like GrabThrow: built in code.</summary>
 	public MoveData RainDrop;
@@ -786,9 +801,12 @@ public partial class MoveData : Resource
 			ChargeSize = ChargeSize,
 			Flight = Flight,
 			FxFlame = FxFlame,
+			FxPaint = FxPaint,
 			LandsOnPlatforms = LandsOnPlatforms,
 			SecondHandAt = SecondHandAt,
 			FlingExtra = FlingExtra,
+			AtItemHead = AtItemHead,
+			ItemAction = ItemAction,
 			BurstLift = BurstLift,
 			HangFromArt = HangFromArt,
 			ReleaseDrop = ReleaseDrop,

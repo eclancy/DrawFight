@@ -69,6 +69,10 @@ The `EditorPlugin` dock, with **two input paths** (see `.ai/art-pipeline.md`):
 
 Both converge on the same generate step. Re-import must preserve hand-tuned stats.
 
+The game's own drawing screen already produces the layered input in exactly this shape - whole-page
+see-through PNGs, one named body part per layer - and sends it through the same intake as the
+website (`.ai/art-pipeline.md`, "Drawn in the game").
+
 Built *after* M2 because M2 teaches us what the tool actually needs to produce. Building the
 tool first means building it against a guess.
 
@@ -89,7 +93,7 @@ of his own drawings.
   stages (Fridge Door, Open Plains, City Rooftops). See `.ai/art-direction.md`. Grabbable
   ledges are still outstanding.
 - HUD: portraits, percent, stock icons
-- ~~title, character select, stage select~~ **done early.** The title animates two real rigs
+- ~~title, main menu, character select, stage select~~ **done early.** The title animates two real rigs
   through the shared animation library rather than a bespoke title animation, so it improves on
   its own whenever the animations do or a real drawing lands. Results screen still outstanding.
 - a training mode with infinite stocks and hitbox display — this doubles as the debug tool and
@@ -137,8 +141,8 @@ milestone never really ends and never costs much.
   M1 leaves the door open; nothing else should assume it.
 - **Non-humanoid fighters.** Build the single-sprite path when he actually draws one, not
   speculatively.
-- **Items.** Fun, chaotic, kid-friendly, and a natural home for his smaller drawings. A good
-  first thing to add after M5 if he wants more chaos.
+- ~~**Items.**~~ In, on Eric's call (2026-10-10): thirty art supplies, drawn by us for now - see
+  Items in `.ai/fighting-design.md`. Still a natural home for the kids' smaller drawings.
 
 ## What is on the critical path right now
 

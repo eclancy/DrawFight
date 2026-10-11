@@ -24,8 +24,10 @@ Everything is built in code, with no `.tscn` beyond a two-line `scenes/Main.tscn
 needed one yet.
 
 **Screen flow** is owned by `GameRoot`, which swaps screens as its own children rather than
-changing Godot scenes: title → character select → stage select → match → title. Selections live
-in ordinary fields on `GameRoot`, so there is no global for a screen to forget to write.
+changing Godot scenes: title → main menu, then either versus (character select → stage select
+(→ item settings) → match → title) or draw a fighter (your drawings → the drawing screen →
+sending it in). Selections live in ordinary fields on `GameRoot`, so there is no global for a
+screen to forget to write.
 `ControllerAssignment` hands out pads for menus and matches alike — a pad that works in a fight
 has to work on the select screen without a second mapping to keep in step.
 
@@ -46,7 +48,10 @@ content decision. Do not restate its contents here.
 - `.ai/audio-direction.md` — how every sound and both music loops are generated, how a move
   gets its sound, and the mix. **Read before adding or changing any sound.**
 - `.ai/character-design.md` — how a kid's description becomes a balanced moveset, the special
-  archetype library, the weakness rule. **Read before designing any character.**
+  archetype library, the weakness rule, and the story every fighter brings. **Read before
+  designing any character.**
+- `.ai/story-mode.md` — story mode: the premise, every fighter's story, and how scenes are
+  staged (cameras, dialogue, music). **Read before writing or changing any story.**
 - `.ai/releasing.md` — the downloadable Windows build, GitHub Releases, and how every copy
   updates itself from ecec.dev. **Read before changing `UpdateScreen`, the export preset, or
   anything under `tools/release/`.**
@@ -129,14 +134,22 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`bash tools/release/release.sh X.Y.Z`** — publish a version: exports the Windows build and
   makes a GitHub Release. Every downloaded copy updates itself to it on next start. Needs a clean
   tree and the export templates - see `.ai/releasing.md`. Never publish without being asked.
+- **`python tools/art/items.py`** — redraw the thirty items into `assets/items/` with
+  `items.json` (where each is gripped, and its business end). Coloured pencil, like the
+  stand-ins, so it needs `$GODOT_BIN`. About 15 seconds; then `--import`.
+- **`--items=off|low|medium|high`** sets how often items drop for one run (not saved);
+  **`--item=ID`** drops only that one (`--item=glitter_bomb`), every couple of seconds, to look
+  at it; **`--itemsettings`** boots to the item settings screen.
 - **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real frame of the
   game: Circy, Elim's drawing, standing idle in his parade cell (shoot it first with
   `--parade --only=2 --shot=70`). The icon is never drawn separately; if Circy is re-cut, re-shoot
   and re-crop per the script's docstring.
 - **`"$GODOT_BIN" --path . -- --stage=N --shot=120`** — boot straight into one stage and
   screenshot it. `F4` cycles stages while playing.
-- **`--match`, `--select`, `--stages`, `--parade`** each boot straight to that screen, so a
-  screen can be checked without clicking through the flow to reach it. **`--fighters=2,0`**
+- **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--drawings`** each boot straight to
+  that screen, so a screen can be checked without clicking through the flow to reach it;
+  **`--draw`** and **`--send`** open the newest saved drawing (or a new one) in the drawing or
+  sending screen. **`--fighters=2,0`**
   picks the matchup (player one, player two) by catalog index, and **`--cpu`** makes player two
   the computer.
 - **`"$GODOT_BIN" --headless --path . --quit-after 120`** — boot the match headless and read
@@ -191,6 +204,8 @@ something is unstated here, default to however that project does it.
 - Add new root-level status `.md` files. Durable notes go in `.ai/`. The only root markdown is
   `README.md` (the front page, for a human arriving at the repo) and this file — keep it that
   way, and keep the README in step when milestones or controls change.
+- Add a fighter to the roster without their story: their own story, their challenger scenes and
+  their DoomBot roast. See "Every fighter brings a story" in `.ai/character-design.md`.
 - Give a fighter an up-special that does not provide real vertical recovery. `RegressionChecks`
   now fails the build loudly if one does not beat a standing jump.
 - Author a character's normal attacks from scratch. Every character has its **own** normals in
@@ -206,9 +221,10 @@ something is unstated here, default to however that project does it.
 - Build a new roster entry by calling a catalog in a loop. `FighterCatalog` and `StageCatalog`
   cache their entries because each one now owns seventeen `MoveData` Resources.
 - Ship a move with both high base knockback and high knockback growth.
-- Give a fighter throws that are not themed on the rest of their kit. Everyone grabs (block +
-  attack) and has four throws, in `Grabs.cs` - see `.ai/fighting-design.md`. Grabs went in on
-  Eric's call (2026-10-04), reversing the old "no grabs" rule.
+- Give a fighter throws that are not themed on the rest of their kit. Everyone grabs (the grab
+  button, RB, or block + attack) and has four throws, in `Grabs.cs` - see
+  `.ai/fighting-design.md`. Grabs went in on Eric's call (2026-10-04), reversing the old "no
+  grabs" rule.
 - Build a Smash-style shield. Blocking **reduces** damage and knockback; it never negates them,
   and its cost is paid in chip damage raising your percent. The shield does wear down - it
   cracks with every blocked hit and breaks at 45 damage, leaving him reeling (Eric's call,
@@ -246,6 +262,12 @@ something is unstated here, default to however that project does it.
 - Draw fire pointing down, as a ring of spikes, or onto a prop. Fire rises (`FlameFx`), and a
   burning prop names a `flame` point for the game to draw from. See `.ai/art-direction.md`.
 - Call game feel or animation verified when you have only run `dotnet build`.
+- Send a test fighter to ecec.dev. The drawing screen posts to the live intake, which files it on
+  the server and emails Eric. Test against a local copy instead: copy `intake/` out of the
+  website repo, `npm ci`, run `DATA_DIR=<somewhere> node server.js`, and start the game with
+  `DRAWFIGHT_INTAKE_URL=http://127.0.0.1:3000`.
+- Make the drawing screen smooth, straighten or tidy a stroke. Every dab goes exactly where the
+  pen went - rule 1 covers a drawing made in the game as much as one on paper.
 - Hand-edit a file in `assets/sfx/` or `assets/music/`, or pick a move's sound per move. Sounds
   are generated, and a move's sound is read off its data by `SfxCatalog.ForMove`; a move it
   gets wrong sets `MoveData.Sound`. See `.ai/audio-direction.md`.

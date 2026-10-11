@@ -283,7 +283,8 @@ match both work, not as the intended way to play.
 | **B**              | special — neutral, or `←` `→` `↑` `↓`      |
 | **LT** or **RT**   | block — reduces damage and knockback       |
 | **LT/RT** + stick  | dodge roll / spot dodge / air dodge        |
-| **LB** or **RB**   | taunt (on the ground)                      |
+| **RB**             | grab; holding an item, throw it            |
+| **LB**             | taunt (on the ground)                      |
 | hold `↓` + **A**    | drop through a soft platform               |
 | Start              | pause: resume, or back to fighter select   |
 
@@ -312,8 +313,9 @@ cheapest large win available on a pad. The victim's pad gets intensity scaled by
 hit confirms on both sides without the two buzzes competing. A KO gets the strongest rumble in
 the game.
 
-Keyboard fallback: P1 is the arrow keys + `A` jump, `Q` attack, `W` special, `S` block. P2 is
-all number pad: `8` `4` `5` `6` to move, `1` jump, `2` attack, `3` special, `0` block.
+Keyboard fallback: P1 is the arrow keys + `A` jump, `Q` attack, `W` special, `S` block, `D` grab,
+`E` taunt. P2 is all number pad: `8` `4` `5` `6` to move, `1` jump, `2` attack, `3` special, `0`
+block, `9` grab, `7` taunt. The Smash layout (F3) puts grab on LB and taunt on Back.
 
 ## Dropping through platforms
 
@@ -428,9 +430,10 @@ see `.ai/character-design.md`.
 
 ## Grabs and throws
 
-**Everyone grabs.** Block plus attack on the ground reaches just past the front of the body at
-about the middle of an ordinary fighter (so a giant's grab finds people too) and catches whoever
-is there - **blocking or not**. That is what grabs are for: the answer to someone who just holds
+**Everyone grabs**, with one button - RB, the way Smash's shoulder buttons grab - or with block
+plus attack, which still works (Eric, 2026-10-10). A grab on the ground reaches just past the
+front of the body at about the middle of an ordinary fighter (so a giant's grab finds people
+too) and catches whoever is there - **blocking or not**. That is what grabs are for: the answer to someone who just holds
 block. While he holds them, the stick picks one of four throws - forward, back, up, down - and
 with no choice for about two-thirds of a second he throws forward. Back turns him round to throw.
 A missed grab has a long recovery, which is how a grab is beaten. No pummel and no mashing out.
@@ -444,6 +447,50 @@ after them. Throws are not weight-scaled, like specials, and are in the KO table
 
 The `CommandGrab` special archetype still exists alongside: a fighter whose signature special is
 a grab (DoomBot's claw).
+
+## Items
+
+Thirty, all art supplies, on Eric's call (2026-10-10). Every one is an `ItemData` in
+`ItemCatalog.cs` - what it is used as (`ItemUse`), what it does when it lands (`ItemImpact`) or
+to whoever uses it (`ItemBoost`), and the `MoveData` its swing, throw and shot hit with - so a
+new item is an entry there and a drawing in `tools/art/items.py`, not new code, unless it
+needs a new kind of use or impact.
+
+| Kind | Items |
+|---|---|
+| swing | Giant Pencil, Big Pink Eraser, Paint Roller, Metre Stick, Paintbrush, Safety Scissors, Giant Rubber Stamp |
+| throw | Paint Bucket, Crayon Box, Glue Bottle, Ink Bottle, Paper Airplane, Scrunched-Up Drawing, Paint Palette |
+| use | Spray Paint Can, Paint Tube Blaster, Airbrush, Magic Marker, Sketchbook |
+| trap | Glitter Bomb, Paint Balloon, Thumbtacks, Rinse-Water Cup, Pop-Up Book |
+| summon | Pencil Case (spills two or three more), Blank Canvas (paints another fighter, who fights for you) |
+| boost | Gold Star Sticker, White-Out, Magnifying Glass, Tracing Paper |
+
+- **Getting one.** Items drop from above onto a platform wide enough to land on, trailing
+  sparkles so the drop is seen. Attack beside one on the ground picks it up - a quick bend, 11
+  frames; the gold star is taken by touching it. One lying about blinks for its last 3 seconds of
+  20 and goes.
+- **Using it.** With something in hand, attack uses it: swings it, throws it, sprays it while held,
+  squeezes it while held. The grab button always throws, the way the stick points; down on the
+  ground sets it down gently in front, which is how a trap is placed. Specials still work with
+  something in hand, and a fighter's own hand prop is put away while he holds one.
+- **Losing it.** A hit with 70 knockback or more knocks it out of his hand; a KO takes it away.
+  A swing item that lands wears down (the pencil is a stub at its last two uses) and is gone when
+  it is used up.
+- **Hitting with it.** Every item hit goes through the same `ReceiveHitFrom` as a move, so the
+  knockback formula, DI and hitlag all apply. A thrown item cannot hit its thrower for its first
+  12 frames, and a splash spares whoever threw it; a glitter bomb spares no one.
+- **Throws are let go of in front of him.** The arm may not have come round by the release frame,
+  and a throw that starts from behind his head reads as thrown backwards.
+- **How often** is off, low, medium or high - one item every 14, 8 or 4 seconds, with at most 1, 3
+  or 5 lying about - and each item can be switched off, from the Items button on the stage
+  select screen. Saved in `user://settings.cfg`. `--item=ID` drops only that item, for looking
+  at one; `--items=high` sets how often for one run without saving it.
+
+Boosts last 8 to 10 seconds. The gold star is invincibility; White-Out takes 25% off, counting
+down a point a frame; the magnifying glass grows him half again (bigger hits that reach further,
+and he is easier to hit); tracing paper makes him see-through - still knocked about, but nothing
+goes on his percent. A boost always shows itself on him the whole time it lasts - a glow, a
+see-through body - because a boost a player cannot see is one they cannot play around.
 
 ## Blocking reduces; it does not negate
 

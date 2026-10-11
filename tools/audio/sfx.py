@@ -504,6 +504,55 @@ def splash():
     return S.layer([(water, 0.0, 1.0), (blips, 0.0, 1.0)])
 
 
+# ---------------------------------------------------------------------------
+# items - see ItemCatalog.cs
+# ---------------------------------------------------------------------------
+
+def item_pickup():
+    """Something picked up off the floor: a quick paper rustle and a bright little pop."""
+    dur = 0.16
+    pop = S.env_mul(S.osc("sine", S.sweep(dur, 380, 900, 0.4), dur), S.ad(dur, 0.002, 4.0))
+    rustle = S.gain(slap(0.06, 2400, 35.0, seed=81), 0.5)
+    return S.mix(pop, rustle)
+
+
+def item_spray():
+    """A spray can hissing: bright, steady noise with a little rattle under it."""
+    dur = 0.2
+    hiss = S.highpass(S.osc("noise", 0, dur, seed=SEED + 82), 3500)
+    hiss = S.env_mul(hiss, S.adsr(dur, 0.01, 0.03, 0.8, 0.06))
+    rattle = S.gain(slap(0.03, 1200, 60.0, seed=83), 0.3)
+    return S.mix(hiss, rattle)
+
+
+def item_snip():
+    """Scissors closing: two tight metal ticks, the second brighter."""
+    return S.layer([(slap(0.03, 3800, 70.0, seed=84), 0.0, 0.8),
+                    (metal(2600, 0.08, k=40.0), 0.0, 0.3),
+                    (slap(0.03, 5000, 80.0, seed=85), 0.06, 1.0),
+                    (metal(3400, 0.08, k=40.0), 0.06, 0.35)])
+
+
+def item_heal():
+    """White-out painting over the damage: a soft brush stroke, then a rising, sparkly chime."""
+    brush = whoosh(0.22, 900, 2200, 1.2, seed=86, peak_at=0.4)
+    chime = S.layer([(bell(f, 0.5, 0.6), t, 0.55) for f, t in ((A5, 0.12), (CS6, 0.2), (E6, 0.28), (A6, 0.36))])
+    return S.layer([(brush, 0.0, 0.6), (chime, 0.0, 1.0)])
+
+
+def item_gust():
+    """The airbrush blowing: a soft, low rush of air."""
+    return S.mix(whoosh(0.3, 600, 1400, 0.9, seed=87, peak_at=0.35),
+                 S.gain(whoosh(0.3, 300, 500, 0.7, seed=88, peak_at=0.4), 0.6))
+
+
+def item_crumple():
+    """A scrunched-up page bouncing: a dry paper crackle."""
+    dur = 0.12
+    crackle = S.layer([(slap(0.025, 2000 + 500 * i, 55.0, seed=89 + i), 0.018 * i, 0.7 - 0.1 * i) for i in range(4)])
+    return S.mix(crackle, S.gain(thump(dur, 260, 140, 18.0), 0.25))
+
+
 def boing():
     """A trampoline throwing someone up: a springy sine that wobbles and rises."""
     dur = 0.5
@@ -581,4 +630,11 @@ REGISTRY = [
     ("minibot_pop", "special", -9.0, minibot_pop, False),
     ("splash", "special", -11.0, splash, False),
     ("boing", "special", -11.0, boing, False),
+
+    ("item_pickup", "ui", -13.0, item_pickup, False),
+    ("item_spray", "special", -15.0, item_spray, False),
+    ("item_snip", "hit", -11.0, item_snip, False),
+    ("item_heal", "special", -10.0, item_heal, False),
+    ("item_gust", "special", -13.0, item_gust, False),
+    ("item_crumple", "hit", -14.0, item_crumple, False),
 ]

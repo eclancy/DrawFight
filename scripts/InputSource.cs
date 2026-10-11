@@ -18,6 +18,10 @@ public struct InputState
 	public bool MoveFromDpad;
 
 	public bool JumpPressed;
+
+	/// <summary>The jump button's level. Only the drawing screen reads it: A held down draws.</summary>
+	public bool JumpHeld;
+
 	public bool AttackPressed;
 
 	/// <summary>The attack button's level, not its edge. Holding it charges a smash attack.</summary>
@@ -37,6 +41,12 @@ public struct InputState
 	/// <summary>The taunt button's edge. A taunt does nothing but show off.</summary>
 	public bool TauntPressed;
 
+	/// <summary>
+	/// The grab button's edge - one button that grabs, the way Smash's shoulder buttons do, as
+	/// well as block plus attack. Holding an item, it throws it (Eric, 2026-10-10).
+	/// </summary>
+	public bool GrabPressed;
+
 	public static InputState None => new InputState { Move = Vector2.Zero };
 }
 
@@ -55,15 +65,16 @@ public interface IInputSource
 /// </summary>
 public class KeyboardInputSource : IInputSource
 {
-	readonly Key left, right, up, down, jump, attack, special, block, taunt;
+	readonly Key left, right, up, down, jump, attack, special, block, taunt, grab;
 
-	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown;
+	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown, grabWasDown;
 
 	public KeyboardInputSource(
 		Key left, Key right, Key up, Key down,
-		Key jump, Key attack, Key special, Key block, Key taunt)
+		Key jump, Key attack, Key special, Key block, Key taunt, Key grab)
 	{
 		this.taunt = taunt;
+		this.grab = grab;
 		this.left = left;
 		this.right = right;
 		this.up = up;
@@ -74,18 +85,18 @@ public class KeyboardInputSource : IInputSource
 		this.block = block;
 	}
 
-	/// <summary>Player 1: arrow keys to move; A jump, Q attack, W special, S block, E taunt.</summary>
+	/// <summary>Player 1: arrow keys to move; A jump, Q attack, W special, S block, D grab, E taunt.</summary>
 	public static KeyboardInputSource Player1() => new KeyboardInputSource(
 		Key.Left, Key.Right, Key.Up, Key.Down,
-		Key.A, Key.Q, Key.W, Key.S, Key.E);
+		Key.A, Key.Q, Key.W, Key.S, Key.E, Key.D);
 
 	/// <summary>
 	/// Player 2, only when there is no second pad: all on the number pad, since player 1 has the
-	/// arrows. 8/4/5/6 move; 1 jump, 2 attack, 3 special, 0 block, 7 taunt.
+	/// arrows. 8/4/5/6 move; 1 jump, 2 attack, 3 special, 0 block, 9 grab, 7 taunt.
 	/// </summary>
 	public static KeyboardInputSource Player2() => new KeyboardInputSource(
 		Key.Kp4, Key.Kp6, Key.Kp8, Key.Kp5,
-		Key.Kp1, Key.Kp2, Key.Kp3, Key.Kp0, Key.Kp7);
+		Key.Kp1, Key.Kp2, Key.Kp3, Key.Kp0, Key.Kp7, Key.Kp9);
 
 	public InputState Poll()
 	{
@@ -94,6 +105,7 @@ public class KeyboardInputSource : IInputSource
 		bool specialDown = Input.IsPhysicalKeyPressed(special);
 		bool startDown = Input.IsPhysicalKeyPressed(Key.Enter) || Input.IsPhysicalKeyPressed(Key.Space);
 		bool tauntDown = Input.IsPhysicalKeyPressed(taunt);
+		bool grabDown = Input.IsPhysicalKeyPressed(grab);
 
 		var state = new InputState
 		{
@@ -101,6 +113,7 @@ public class KeyboardInputSource : IInputSource
 				(Input.IsPhysicalKeyPressed(right) ? 1.0f : 0.0f) - (Input.IsPhysicalKeyPressed(left) ? 1.0f : 0.0f),
 				(Input.IsPhysicalKeyPressed(down) ? 1.0f : 0.0f) - (Input.IsPhysicalKeyPressed(up) ? 1.0f : 0.0f)),
 			JumpPressed = jumpDown && !jumpWasDown,
+			JumpHeld = jumpDown,
 			AttackPressed = attackDown && !attackWasDown,
 			AttackHeld = attackDown,
 			SpecialPressed = specialDown && !specialWasDown,
@@ -108,8 +121,10 @@ public class KeyboardInputSource : IInputSource
 			SpecialHeld = specialDown,
 			StartPressed = startDown && !startWasDown,
 			TauntPressed = tauntDown && !tauntWasDown,
+			GrabPressed = grabDown && !grabWasDown,
 		};
 
+		grabWasDown = grabDown;
 		jumpWasDown = jumpDown;
 		attackWasDown = attackDown;
 		specialWasDown = specialDown;

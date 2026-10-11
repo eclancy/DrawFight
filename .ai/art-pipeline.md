@@ -266,6 +266,26 @@ The flow:
 5. **Generate.** Writes the sliced part PNGs and a `rig.json` manifest, plus a
    `FighterData_<Name>.tres` stub with default stats ready to be filled in.
 
+### Drawn in the game
+
+The game has its own drawing screen (`DrawScreen`), and what it sends in is Path A input already:
+
+- **Every picture is the whole page** - 1400x1050, see-through where nothing is drawn - so the
+  layers of a page line up exactly, the way a tablet app exports them.
+- **Fighter-page layers are named by button**, not typed: Head, Body, Front arm, Back arm, Front
+  leg, Back leg, Held thing. Those match bones by name with no guessing.
+- **Other pages say what they are**: something they shoot or throw (drawn flying right),
+  something they hold (drawn upright, handle at the bottom - the items' convention), or
+  something else.
+- It goes through the same intake as the website form, so it lands in `fighters/incoming/` like
+  any other submission. Each picture is saved as `photo-N-` and its page and layer name
+  (`photo-3-fighter-front-arm.png`), and the game appends a list to the "Anything else" answer
+  saying what each page is for, so that is in `sheet.md` and `answers.json` too. The server takes
+  **at most 24 pictures** (60 MB in all), so a kid can send any page as one flattened picture
+  instead of one per layer.
+
+The drawing screen never smooths, straightens or tidies a stroke - see rule 1.
+
 **Both paths converge on step 5.** They differ only in how the parts and pivots are obtained, so
 everything downstream - the manifest, the rig, the animation library - never learns which path a
 fighter came in on.

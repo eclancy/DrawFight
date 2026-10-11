@@ -22,12 +22,16 @@ public sealed class GamepadLayout
 	public JoyButton Taunt = JoyButton.Invalid;
 	public JoyButton AltTaunt = JoyButton.Invalid;
 
+	/// <summary>The button that grabs - and throws whatever item is in hand. Invalid means none.</summary>
+	public JoyButton Grab = JoyButton.Invalid;
+
 	/// <summary>A one-line binding summary for the HUD.</summary>
 	public string Describe()
 	{
 		string jump = Jump == AltJump ? $"{Jump} jump" : $"{Jump}/{AltJump} jump";
 		string block = BlockUsesLeftTrigger ? "LT/RT block" : BlockUsesRightTrigger ? $"{Block} or RT block" : $"{Block} block";
-		return $"{jump}   {Attack} attack   {Special} special   {block}   down+{Jump} drop through";
+		string grab = Grab != JoyButton.Invalid ? $"   {Grab} grab" : "";
+		return $"{jump}   {Attack} attack   {Special} special   {block}{grab}   down+{Jump} drop through";
 	}
 
 	/// <summary>Distinguishes the two presets without exposing every field.</summary>
@@ -47,7 +51,8 @@ public sealed class GamepadLayout
 		return new GamepadLayout
 		{
 			// Y jumps as well as A, so a thumb resting on either top button can jump. Either
-			// trigger blocks, and either bumper taunts.
+			// trigger blocks. The right bumper grabs, one button, as Smash's shoulder buttons do
+			// (Eric, 2026-10-10); the left bumper taunts.
 			Jump = JoyButton.A,
 			AltJump = JoyButton.Y,
 			Attack = JoyButton.X,
@@ -56,7 +61,7 @@ public sealed class GamepadLayout
 			BlockUsesRightTrigger = true,
 			BlockUsesLeftTrigger = true,
 			Taunt = JoyButton.LeftShoulder,
-			AltTaunt = JoyButton.RightShoulder,
+			Grab = JoyButton.RightShoulder,
 		};
 	}
 
@@ -73,7 +78,8 @@ public sealed class GamepadLayout
 			Jump = JoyButton.X,
 			AltJump = JoyButton.Y,
 			Block = JoyButton.RightShoulder,
-			Taunt = JoyButton.LeftShoulder,
+			Grab = JoyButton.LeftShoulder,
+			Taunt = JoyButton.Back,
 		};
 	}
 
@@ -112,7 +118,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 	readonly int device;
 	readonly GamepadLayout layout;
 
-	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown;
+	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown, grabWasDown;
 	bool smashStickWasOut;
 
 	bool Pressed(JoyButton button) => button != JoyButton.Invalid && Input.IsJoyButtonPressed(device, button);
@@ -151,6 +157,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			|| (layout.BlockUsesLeftTrigger
 				&& Input.GetJoyAxis(device, JoyAxis.TriggerLeft) > TriggerThreshold);
 		bool tauntDown = Pressed(layout.Taunt) || Pressed(layout.AltTaunt);
+		bool grabDown = Pressed(layout.Grab);
 
 		// The right stick is a smash stick, as in Smash: pushed out, it is a smash attack that way
 		// - held out, it charges - or an aerial that way in the air. Eric's call, 2026-10-04:
@@ -165,6 +172,7 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			Move = ReadDirection(out bool fromDpad),
 			MoveFromDpad = fromDpad,
 			JumpPressed = jumpDown && !jumpWasDown,
+			JumpHeld = jumpDown,
 			AttackPressed = attackDown && !attackWasDown,
 			AttackHeld = attackDown,
 			SpecialPressed = specialDown && !specialWasDown,
@@ -172,7 +180,9 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 			SpecialHeld = specialDown,
 			StartPressed = startDown && !startWasDown,
 			TauntPressed = tauntDown && !tauntWasDown,
+			GrabPressed = grabDown && !grabWasDown,
 		};
+		grabWasDown = grabDown;
 
 		if (smashOut && !smashStickWasOut)
 		{

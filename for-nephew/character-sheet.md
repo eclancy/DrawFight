@@ -93,6 +93,22 @@ invisible for a second, something that protects them.
 _______________________________________________
 ```
 
+### 7. What's their story?
+
+In DrawFight, every drawing is fighting for a place on the fridge. Why is yours fighting?
+
+Maybe they just want to stay up there. Maybe they want the best spot, or want to knock someone
+else off, or want the whole fridge to themselves. Who are their friends? Who can't they stand?
+Make up anything you like — this becomes their story in the game.
+
+```
+_______________________________________________
+
+_______________________________________________
+
+_______________________________________________
+```
+
 ---
 
 **Also:** if your character has a pet, a sidekick, or a smaller monster that hangs around with

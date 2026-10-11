@@ -1049,6 +1049,9 @@ public static class FighterAnimations
 		return Covered(Mathf.Clamp(t, 0.0f, 1.0f)) / Covered(1.0f);
 	}
 
+	/// <summary>A plain punch landing - what a drawing out of the canvas hits with.</summary>
+	public static Pose AttackStrikePose => AttackStrike;
+
 	/// <summary>
 	/// Curled up in a ball for a dodge roll: back rounded, chin tucked to the chest, knees pulled
 	/// up to it and heels to the seat, both arms wrapped round the shins - the way anyone rolls,

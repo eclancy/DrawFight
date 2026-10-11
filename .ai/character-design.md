@@ -5,14 +5,19 @@ designing any character's moveset or stats.
 
 ## The intake
 
-Every fighter starts from a filled-in character sheet — see `for-nephew/character-sheet.md`.
-It asks five things:
+Every fighter starts from a filled-in character sheet — see `for-nephew/character-sheet.md`,
+and the same questions on the ecec.dev/draw form and the game's own send screen. It asks:
 
 1. What is your fighter's **name**?
 2. What **is** it? (a robot, a wizard, a shark with legs)
 3. What is it **amazing** at?
 4. What is it **terrible** at?
 5. What is its **coolest move**, and what does that move look like?
+6. Three more specials, each with a job: reach someone far away, get back onto the stage,
+   protect themselves.
+7. What is their **story** - why are they fighting for a place on the fridge? Left wide open
+   on purpose (Eric, 2026-10-11): it is where a kid's imagination goes, and it becomes their
+   story in the game (below).
 
 Question 4 is the important one and it is doing balance work while disguised as a fun question.
 A kid asked to design a fighter will make it fast *and* strong *and* tough. A kid asked what his
@@ -411,6 +416,35 @@ floor), and check with the attack parade and a match, not the KO table, which ig
 **A taunt never does anything.** It is a pose and a line, nothing else: no hit, no summon, no
 buff, no heat. When a fun idea needs a home, it goes in a move slot - DoomBot's MiniBot is his
 down tilt and Lug's traffic cone is his, not their taunts.
+
+## Every fighter brings a story
+
+Story mode (`.ai/story-mode.md`) is every fighter fighting for a place on the fridge, and **a
+fighter is not finished until their story is in it.** When a fighter is added, write:
+
+- **Their own story** - playing as them: why they are fighting, who they fight on the way, and
+  how it ends. The motive comes from the sheet's story answer, in the kid's own words as far as
+  possible. A blank answer means building one from what they are, what they are amazing and
+  terrible at, and their moves - marked as ours, and shown to the kid to change.
+- **Their challenger scenes** - what happens when someone else's story reaches them: how they
+  meet a challenger, and what they say when they win or lose. This is what slots a new fighter
+  into everyone else's story without rewriting it; a scene for one particular pair (a rival, a
+  friend) is optional on top.
+- **Their roast of DoomBot** at the finale, and how they take him down.
+
+The rules for writing them:
+
+- **Their personality, their voice.** Lines come from how they were described and drawn: their
+  catchphrase, their taunt, the way they move. A fast fighter talks fast; a robot talks like one.
+- **Their moves and their weakness are the jokes.** DoomBot overheats when he is mocked, so the
+  roast starts his boss fight at full heat. A fighter's own specials, props and the items are
+  what a scene is staged with - nothing new is drawn for a story.
+- **A kid's fighter is built from what the kid gave them.** Their catchphrase and taunts are
+  their voice; anything written past that is ours, shown to the kid to change, and replaced by
+  their own story answer when it comes. How Circy and Triguy talk is still open - see
+  `.ai/story-mode.md`.
+- **Funny first.** These are short scenes between fights, for a 10-12 year old. A good one is
+  four to eight lines and one joke that lands.
 
 ## Working with him on this
 

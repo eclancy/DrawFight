@@ -32,6 +32,31 @@ public static class MenuTheme
 			Margin, 3.0f, 991, 2.0f);
 	}
 
+	/// <summary>
+	/// A crayon button: paper fill and an ink outline, a thicker coloured outline round it while
+	/// something points at it, and blue when it is the one chosen. A button that cannot be used
+	/// right now is greyed, but still drawn, so it can say why when it is pressed.
+	/// </summary>
+	public static void DrawButton(CanvasItem canvas, Rect2 rect, string text, int seed, bool hot = false,
+		bool chosen = false, bool enabled = true, int fontSize = 32, Color? hotTint = null)
+	{
+		Color fill = !enabled ? PaperEdge : chosen ? AccentTwo.Lightened(0.55f) : new Color(1.0f, 1.0f, 1.0f, 0.94f);
+		canvas.DrawRect(rect, fill);
+		Color ink = !enabled ? Rule : chosen ? AccentTwo.Darkened(0.25f) : Ink;
+		CrayonBrush.InkRect(canvas, rect, ink, chosen ? 5.0f : 3.5f, seed, 2.0f);
+		if (hot) CrayonBrush.InkRect(canvas, rect.Grow(6.0f), hotTint ?? Accent, 5.0f, seed + 50, 2.4f);
+		if (string.IsNullOrEmpty(text)) return;
+		DrawCentredText(canvas, rect, text, fontSize, enabled ? Text : Soft);
+	}
+
+	/// <summary>Text centred in a box, both ways.</summary>
+	public static void DrawCentredText(CanvasItem canvas, Rect2 rect, string text, int fontSize, Color colour)
+	{
+		Font font = ThemeDB.FallbackFont;
+		float baseline = rect.GetCenter().Y + (font.GetAscent(fontSize) - font.GetDescent(fontSize)) * 0.5f;
+		canvas.DrawString(font, new Vector2(rect.Position.X, baseline), text, HorizontalAlignment.Center, rect.Size.X, fontSize, colour);
+	}
+
 	public static Label MakeLabel(string text, Vector2 position, int size, Color colour)
 	{
 		var label = new Label { Text = text, Position = position };
@@ -71,6 +96,9 @@ public sealed class MenuNav
 	public bool Cancel { get; private set; }
 	public bool Start { get; private set; }
 
+	/// <summary>Confirm held down, not just pressed: on the drawing screen, A held draws.</summary>
+	public bool Held { get; private set; }
+
 	/// <summary>The raw stick this frame, for a cursor that moves with it rather than in steps.</summary>
 	public Vector2 Stick { get; private set; }
 
@@ -82,6 +110,7 @@ public sealed class MenuNav
 		InputState input = source?.Poll() ?? InputState.None;
 
 		Confirm = input.JumpPressed;
+		Held = input.JumpHeld;
 		Cancel = input.SpecialPressed;
 		Start = input.StartPressed;
 		Stick = input.Move;

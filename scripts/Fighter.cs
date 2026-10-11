@@ -229,7 +229,7 @@ public partial class Fighter : CharacterBody2D
 	int resizeStickDir;
 	readonly Dictionary<MoveData, MoveData> sizedMoves = new Dictionary<MoveData, MoveData>();
 
-	float RunSpeed => Data.RunSpeed * SizeLevels.Speed(sizeLevel);
+	float RunSpeed => Data.RunSpeed * SizeLevels.Speed(sizeLevel) * Stuck;
 
 	// --- Tumbling, for a fighter with TumblesWhenHit ---------------------------
 
@@ -526,6 +526,7 @@ public partial class Fighter : CharacterBody2D
 		{
 			TickHeld();
 			UpdateRig();
+			PlaceHeldItem();
 			UpdateRigTint();
 			Redraw();
 			return;
@@ -589,6 +590,7 @@ public partial class Fighter : CharacterBody2D
 
 		UpdateGroundInfo();
 		UpdateRig();
+		PlaceHeldItem();
 		RecordSmear();
 		UpdateRigTint();
 		Redraw();
@@ -760,12 +762,12 @@ public partial class Fighter : CharacterBody2D
 		string prop = State == FighterState.Attacking ? currentMove?.PropArt ?? "" : "";
 		rig.ShowProp(prop);
 		// Hanging from a ledge, both hands are on it - nothing in them.
-		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut && prop != "-" && State != FighterState.LedgeHang);
+		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut && prop != "-" && State != FighterState.LedgeHang && heldItem == null);
 		ShowTurnFrame(spinning);
 
-		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll(),
+		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter(),
 			State == FighterState.Dodging && groundRoll);
-		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth());
+		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth());
 		rig.SetFrontLegReach(LegReachNow());
 		// Standing still on flat feet (FighterRig.StandOnFeet) - turned on below for each pose
 		// that is just standing.
@@ -775,7 +777,7 @@ public partial class Fighter : CharacterBody2D
 		// rather than swinging through the floor.
 		// A back air looks behind him, where it hits.
 		rig.SetLookingBack(State == FighterState.Attacking && currentMove != null && currentMove.LooksBack);
-		rig.CarryOnShoulder = Data.ShouldersProp && (State == FighterState.Grounded
+		rig.CarryOnShoulder = Data.ShouldersProp && heldItem == null && (State == FighterState.Grounded
 			|| State == FighterState.Dodging && groundRoll
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
 		// A hand on his hip only while he is just standing; turned on below.
@@ -892,6 +894,7 @@ public partial class Fighter : CharacterBody2D
 		// A stretched kick: the leg pointed at the hit, as well as long enough to reach it.
 		float kick = LegStretchAmount();
 		if (kick > 0.0f) rig.AimFrontLeg(CurrentHitboxCentre(), kick);
+		HoldItemPose();
 	}
 
 	void UpdateRigTint()
@@ -946,7 +949,7 @@ public partial class Fighter : CharacterBody2D
 
 		if (invulnFrames > 0 && (invulnFrames / 4) % 2 == 0) tint.A = 0.4f;
 
-		rig.Modulate = tint;
+		rig.Modulate = ItemTint(tint);
 	}
 
 	// --- Timers --------------------------------------------------------------
@@ -954,6 +957,7 @@ public partial class Fighter : CharacterBody2D
 	void TickTimers(InputState input)
 	{
 		MendShield();
+		TickItemStatus(input);
 		if (invulnFrames > 0) invulnFrames--;
 		if (blockReleaseLagFrames > 0) blockReleaseLagFrames--;
 		if (coyoteFrames > 0) coyoteFrames--;
@@ -1020,8 +1024,19 @@ public partial class Fighter : CharacterBody2D
 		if (!standingOnBuilt) buildUsed = false;
 		IsCrouching = false;
 
+		// Items first: the grab button, and attack beside an item or with one in hand. Holding
+		// block, attack is still the grab (or throws what is in his hand), below.
+		if ((grabBufferFrames > 0 || !IsBlocking || stampModeFrames > 0) && TryItemInput(input)) return;
+
 		if (IsBlocking)
 		{
+			if (attackBufferFrames > 0 && heldItem != null)
+			{
+				attackBufferFrames = 0;
+				IsBlocking = false;
+				BeginItemThrow(input);
+				return;
+			}
 			// Attack out of a block is a grab - the answer to someone who just holds block.
 			if (attackBufferFrames > 0 && Data.Grab != null && Data.Throws.Length == 4)
 			{
@@ -1056,7 +1071,7 @@ public partial class Fighter : CharacterBody2D
 		if (jumpBufferFrames > 0)
 		{
 			jumpBufferFrames = 0;
-			Velocity = new Vector2(Velocity.X, -Data.JumpForce * Tuning.JumpScale);
+			Velocity = new Vector2(Velocity.X, -Data.JumpForce * Tuning.JumpScale * JumpStick);
 			jumpStretchFrames = JumpStretchFrames;
 			State = FighterState.Airborne;
 			return;
@@ -1131,6 +1146,7 @@ public partial class Fighter : CharacterBody2D
 		}
 
 		if (input.BlockHeld && TryStartDodge(input)) return;
+		if (TryItemInput(input)) return;
 		if (TryStartAttack(input)) return;
 
 		// Mid air dash: straight along the line, no drift and no gravity, until it runs out - then
@@ -1157,7 +1173,7 @@ public partial class Fighter : CharacterBody2D
 			{
 				jumpBufferFrames = 0;
 				coyoteFrames = 0;
-				Velocity = new Vector2(Velocity.X, -Data.JumpForce * Tuning.JumpScale);
+				Velocity = new Vector2(Velocity.X, -Data.JumpForce * Tuning.JumpScale * JumpStick);
 			jumpStretchFrames = JumpStretchFrames;
 			}
 			else if (airJumpsUsed < Data.AirJumps)
@@ -1173,7 +1189,7 @@ public partial class Fighter : CharacterBody2D
 					StartAirDash(input);
 					return;
 				}
-				Velocity = new Vector2(Velocity.X, -Data.AirJumpForce * Tuning.JumpScale);
+				Velocity = new Vector2(Velocity.X, -Data.AirJumpForce * Tuning.JumpScale * JumpStick);
 				jumpStretchFrames = JumpStretchFrames;
 			}
 		}
@@ -1255,6 +1271,9 @@ public partial class Fighter : CharacterBody2D
 		int activeEnd = currentMove.StartupFrames + currentMove.ActiveFrames;
 
 		bool active = moveFrame > activeStart && moveFrame <= activeEnd;
+
+		// What a move does with an item - picking it up, throwing it, a swing's own tricks.
+		if ((currentMove.ItemAction != ItemAction.None || heldItem != null) && TickItemMove(input, activeStart, activeEnd, dt)) return;
 
 		// A booster firing down kicks him up as it fires (DoomBot's jet blast).
 		if (moveFrame == activeStart + 1 && currentMove.BurstLift > 0.0f && !IsOnFloor())
@@ -2228,7 +2247,7 @@ public partial class Fighter : CharacterBody2D
 			jumpBufferFrames = 0;
 			ReleaseLedge();
 			GlobalPosition = heldLedge + new Vector2(-Facing * bodySize.X * 0.2f, -bodySize.Y * 0.35f);
-			Velocity = new Vector2(Facing * 160.0f, -Data.JumpForce * Tuning.JumpScale);
+			Velocity = new Vector2(Facing * 160.0f, -Data.JumpForce * Tuning.JumpScale * JumpStick);
 			jumpStretchFrames = JumpStretchFrames;
 			return;
 		}
@@ -2322,11 +2341,12 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	public Vector2 HitboxRoot()
 	{
+		if (currentMove != null && currentMove.AtItemHead && heldItem != null) return heldItem.GlobalPosition;
 		if (currentMove == null || !string.IsNullOrEmpty(currentMove.SwingArt) || currentMove.SweepDegrees != 0.0f)
 		{
 			return CurrentHitboxCentre();
 		}
-		Vector2 offset = currentMove.HitboxOffset;
+		Vector2 offset = currentMove.HitboxOffset * giantScale;
 		float side = Mathf.Abs(offset.X) < 1.0f ? 0.0f : Mathf.Sign(offset.X) * Facing;
 		return GlobalPosition + new Vector2(side * bodySize.X * 0.15f,
 			Mathf.Clamp(offset.Y, -bodySize.Y * 0.35f, bodySize.Y * 0.35f));
@@ -2381,9 +2401,11 @@ public partial class Fighter : CharacterBody2D
 			MoveData theirs = IsCharge(currentMove) ? other.ChargeUnderway() : null;
 			float theirScale = other.ChargeScale;
 
+			bool firstHit = !hitSomethingThisMove;
 			alreadyHitThisMove.Add(other);
 			hitSomethingThisMove = true;
-			other.ReceiveHit(this, hit, nearest, ChargeScale);
+			other.ReceiveHit(this, hit, nearest, ChargeScale * ItemPower);
+			OnItemSwingHit(other, firstHit);
 
 			// "He will also take some damage." Percent only - never knockback.
 			Percent += currentMove.SelfDamage;
@@ -2417,6 +2439,7 @@ public partial class Fighter : CharacterBody2D
 	public Vector2 CurrentHitboxCentre()
 	{
 		if (currentMove == null) return GlobalPosition;
+		if (currentMove.AtItemHead && heldItem != null) return heldItem.HeadGlobal();
 		if (!string.IsNullOrEmpty(currentMove.SwingArt))
 		{
 			return HookOrigin() + SwingDirection() * currentMove.SwingLength;
@@ -2428,11 +2451,11 @@ public partial class Fighter : CharacterBody2D
 			float reach = (currentMove.HitboxOffset - pivot).Length();
 			float a = Mathf.DegToRad(FighterAnimations.SweepAngle(currentMove, pivot,
 				FighterAnimations.SweepT(currentMove, moveFrame)));
-			return GlobalPosition + new Vector2(pivot.X * Facing + Mathf.Cos(a) * reach * Facing, pivot.Y + Mathf.Sin(a) * reach);
+			return GlobalPosition + new Vector2(pivot.X * Facing + Mathf.Cos(a) * reach * Facing, pivot.Y + Mathf.Sin(a) * reach) * giantScale;
 		}
 		return GlobalPosition + new Vector2(
 			currentMove.HitboxOffset.X * Facing,
-			currentMove.HitboxOffset.Y);
+			currentMove.HitboxOffset.Y) * giantScale;
 	}
 
 	/// <summary>
@@ -2445,7 +2468,7 @@ public partial class Fighter : CharacterBody2D
 		Vector2 centre = CurrentHitboxCentre();
 		if (currentMove == null) return (centre, 0.0f);
 		float reach = currentMove == grabKick ? 0.0f : SmearTrail.Reach(currentMove, ChargeScale);
-		return SmearTrail.Extend(HitboxRoot(), centre, currentMove.HitboxRadius, reach,
+		return SmearTrail.Extend(HitboxRoot(), centre, currentMove.HitboxRadius * giantScale, reach * giantScale,
 			GlobalPosition + new Vector2(0.0f, -bodySize.Y * 0.12f));
 	}
 
@@ -2455,12 +2478,13 @@ public partial class Fighter : CharacterBody2D
 		&& moveFrame > currentMove.StartupFrames
 		&& moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
 
-	public float CurrentHitboxRadius => currentMove?.HitboxRadius ?? 0.0f;
+	public float CurrentHitboxRadius => (currentMove?.HitboxRadius ?? 0.0f) * giantScale;
 
 	public bool CanBeHitByHazard => CanBeHit;
 
 	bool CanBeHit =>
 		invulnFrames <= 0
+		&& starFrames <= 0
 		&& !IsInvincibleMove
 		&& State != FighterState.Eliminated
 		&& State != FighterState.Respawning;
@@ -2515,7 +2539,8 @@ public partial class Fighter : CharacterBody2D
 		// A weak block (FighterData.BlockLeak) lets more through - never more than the whole hit.
 		float leak = Mathf.Min(1.0f, Tuning.BlockDamageMultiplier * Data.BlockLeak);
 		float damage = move.Damage * damageScale * (blocked ? leak : 1.0f);
-		Percent += damage;
+		// See-through under tracing paper: knocked about all the same, but nothing goes on his percent.
+		Percent += ghostFrames > 0 ? 0.0f : damage;
 
 		if (!blocked && move.BurnFrames > 0) Ignite(move.BurnFrames, move.BurnDamage);
 		// Glowing-hot steel: past his heat line, every normal he lands burns a little too.
@@ -2539,6 +2564,9 @@ public partial class Fighter : CharacterBody2D
 			Percent, damage, Data.BodyWeight, move.BaseKnockback, move.KnockbackGrowth);
 
 		if (blocked) knockback *= Mathf.Min(1.0f, Tuning.BlockKnockbackMultiplier * Data.BlockLeak);
+		// Drawn giant, he is heavier: knocked a good deal less far.
+		if (giantScale > 1.01f) knockback *= Mathf.Lerp(1.0f, 0.65f, (giantScale - 1.0f) / (GiantScale - 1.0f));
+		if (!blocked && knockback >= DropItemKnockback) DropHeldItem();
 
 		Velocity = Knockback.LaunchVelocity(knockback, move.LaunchAngleDegrees, attackerFacing, lastStick);
 		hitstunFrames = Knockback.HitstunFrames(knockback);
@@ -2700,6 +2728,7 @@ public partial class Fighter : CharacterBody2D
 		whiffExtraFrames = 0;
 		airDashFrames = 0;
 		spinVictimFrames = 0;
+		ClearItemStatus();
 		SetSizeLevel(SizeLevels.Normal);
 		CollisionMask = GroundMask;
 
@@ -2772,7 +2801,8 @@ public partial class Fighter : CharacterBody2D
 
 		// Going up is full gravity, so jumps keep their height. Coming down starts soft and
 		// builds, and tops out slower - see Tuning.FallSpeedScale.
-		float gravity = Data.Gravity * Tuning.GravityScale;
+		// Cut out flat as paper, he flutters down slowly.
+		float gravity = Data.Gravity * Tuning.GravityScale * (cutoutFrames > 0 ? 0.3f : 1.0f);
 		if (Velocity.Y > 0.0f)
 		{
 			fallFrames++;
@@ -2784,7 +2814,7 @@ public partial class Fighter : CharacterBody2D
 			fallFrames = 0;
 		}
 
-		float maxFall = Data.MaxFallSpeed * Tuning.FallSpeedScale;
+		float maxFall = Data.MaxFallSpeed * Tuning.FallSpeedScale * (cutoutFrames > 0 ? 0.35f : 1.0f);
 		if (Velocity.Y < maxFall)
 		{
 			Velocity = new Vector2(Velocity.X, Mathf.Min(maxFall, Velocity.Y + gravity * dt));
@@ -2928,7 +2958,7 @@ public partial class Fighter : CharacterBody2D
 			: Data.BodySize.Y * 0.4f * (stretch - 1.0f);
 
 		float oldHeight = bodySize.Y;
-		bodySize = new Vector2(Data.BodySize.X, Data.BodySize.Y + growth * 0.9f);
+		bodySize = new Vector2(Data.BodySize.X * giantScale, Data.BodySize.Y * giantScale + growth * 0.9f);
 		ShapeBody();
 		GlobalPosition -= new Vector2(0.0f, (bodySize.Y - oldHeight) * 0.5f);
 
@@ -2947,7 +2977,7 @@ public partial class Fighter : CharacterBody2D
 	void ShapeBody()
 	{
 		float half = bodySize.X * 0.5f;
-		float foot = Mathf.Clamp(footWidth, bodySize.X * 0.3f, bodySize.X) * 0.5f;
+		float foot = Mathf.Clamp(footWidth * giantScale, bodySize.X * 0.3f, bodySize.X) * 0.5f;
 		float top = -bodySize.Y * 0.5f;
 		float bottom = bodySize.Y * 0.5f;
 		// Steep enough to be a wall, not a floor (more than 45 degrees), and never above the waist.
@@ -4179,6 +4209,7 @@ public partial class Fighter : CharacterBody2D
 		DrawHeatSmoke(overlay);
 		DrawBurnFlames(overlay);
 		DrawHotClaws(overlay);
+		DrawItemOverlay(overlay);
 	}
 
 	/// <summary>
@@ -5311,6 +5342,7 @@ public partial class Fighter : CharacterBody2D
 		if (rig != null && rig.Loaded)
 		{
 			string pose = HeldPoseName();
+			DrawItemAuras();
 			DrawTrampoline();
 			DrawAura();
 			DrawResizeHint();
