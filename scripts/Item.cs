@@ -173,6 +173,7 @@ public partial class Item : CharacterBody2D
 		State = Phase.Thrown;
 		phaseFrames = 0;
 		hitSomeone = false;
+		flewPast = false;
 		lastHitAt.Clear();
 		// Out of the fighter's hand: drawn in front of everyone again.
 		GetParent()?.MoveChild(this, -1);
@@ -358,7 +359,7 @@ public partial class Item : CharacterBody2D
 		Velocity = heading * Data.ThrowSpeed + new Vector2(0.0f, Data.Gravity * dt * phaseFrames * 0.1f);
 	}
 
-	/// <summary>The palette: out, slowing to a stop, then back to whoever threw it - who catches it.</summary>
+	/// <summary>The palette: out, slowing to a stop, then back to whoever threw it - who has to catch it.</summary>
 	void SteerBoomerang(float dt)
 	{
 		int outFrames = Data.Duration / 3;
@@ -372,11 +373,26 @@ public partial class Item : CharacterBody2D
 			Velocity = new Vector2(Velocity.X * 0.9f, Velocity.Y + Data.Gravity * dt);
 			return;
 		}
+		// Back to him - and past him, if he does not catch it. Catching is pressing attack (or grab)
+		// as it comes in (Fighter.TryItemInput); miss, and it flies on by and drops (Eric,
+		// 2026-10-11: it caught itself).
+		if (flewPast)
+		{
+			Velocity = new Vector2(Velocity.X * 0.97f, Velocity.Y + Data.Gravity * 0.5f * dt);
+			return;
+		}
 		Vector2 home = OwnerFighter.GlobalPosition + new Vector2(0.0f, -20.0f);
 		Vector2 want = (home - GlobalPosition).Normalized() * Data.ThrowSpeed;
 		Velocity = Velocity.MoveToward(want, 3200.0f * dt);
-		if (GlobalPosition.DistanceTo(home) < 60.0f && OwnerFighter.CatchItem(this)) return;
+		if (GlobalPosition.DistanceTo(home) < 50.0f) flewPast = true;
 	}
+
+	bool flewPast;
+
+	/// <summary>On its way back to whoever threw it, and close enough for them to catch.</summary>
+	public bool CatchableBy(Fighter f, float reach) =>
+		State == Phase.Thrown && Data.Impact == ItemImpact.Boomerang && OwnerFighter == f
+		&& phaseFrames >= Data.Duration / 3 && GlobalPosition.DistanceTo(f.GlobalPosition) < reach;
 
 	/// <summary>It ran into the stage: the floor, a wall or a ceiling.</summary>
 	void Bumped(KinematicCollision2D bump)

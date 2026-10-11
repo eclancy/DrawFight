@@ -171,6 +171,60 @@ public partial class Fighter
 		return f;
 	}
 
+	// --- The wrist, for a sword ------------------------------------------------------------------
+
+	float wristNow = HeldWrist;
+
+	/// <summary>A sword held at rest: up at a right angle to the forearm, pointing ahead.</summary>
+	const float HeldWrist = -90.0f;
+
+	/// <summary>
+	/// A sword moves at the wrist the way a real one does (Eric, 2026-10-11: it always stuck
+	/// straight out of his fist). Held, it stands up at a right angle to his forearm; winding up
+	/// it cocks back further; as the hit comes it whips round to carry straight on along the arm,
+	/// reaching out; then it comes back up to held. Only for a fighter whose weapon is a blade
+	/// (FighterData.SlicesOnHit) - a hammer or a lighter keeps the hold its pose gives it.
+	/// </summary>
+	void UpdateWrist()
+	{
+		if (rig == null) return;
+		if (!Data.SlicesOnHit || heldItem != null)
+		{
+			rig.Wrist = null;
+			return;
+		}
+
+		float speed = 18.0f;
+		float want = State == FighterState.Attacking && currentMove != Data.Taunt
+			? SwordWrist(currentMove, moveFrame, out speed)
+			: State == FighterState.Hitstun || State == FighterState.Dodging ? -40.0f : HeldWrist;
+		wristNow = Mathf.MoveToward(wristNow, want, speed);
+		rig.Wrist = wristNow;
+	}
+
+	/// <summary>Where a sword's wrist is through a move - held, cocked back, whipped straight out, back to held - and how fast it gets there.</summary>
+	public static float SwordWrist(MoveData move, int moveFrame, out float speed)
+	{
+		speed = 18.0f;
+		if (move == null) return HeldWrist;
+		int startup = move.StartupFrames;
+		int activeEnd = startup + move.ActiveFrames;
+		// A sweep swings the blade round with the arm all the way - its tip starts on the floor.
+		if (move.SweepDegrees != 0.0f && moveFrame <= activeEnd + 3)
+		{
+			speed = 30.0f;
+			return -6.0f;
+		}
+		if (moveFrame <= startup) return HeldWrist - 30.0f * moveFrame / (float)Mathf.Max(1, startup);
+		if (moveFrame <= activeEnd + 3)
+		{
+			speed = 60.0f;
+			return -8.0f;
+		}
+		float t = (moveFrame - activeEnd - 3) / (float)Mathf.Max(1, move.EndlagFrames);
+		return Mathf.Lerp(-8.0f, HeldWrist, Mathf.Clamp(t * 1.4f, 0.0f, 1.0f));
+	}
+
 	// --- Twirling, for a story -----------------------------------------------------------------
 
 	int twirlFrames, twirlLength;

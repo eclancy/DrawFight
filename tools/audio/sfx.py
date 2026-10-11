@@ -291,6 +291,25 @@ def hit_heavy():
                          S.gain(slap(0.1, 1500, 20.0, seed=44), 0.6)), 3.0)
 
 
+def hit_slice():
+    """A blade going through: a fast bright zing - steel drawn across - with a soft cut-off thud
+    under it, so it still lands like a hit. Every one of EdgeLord's hits."""
+    zing = S.highpass(S.osc("noise", 0, 0.16, seed=SEED + 51), 3800)
+    zing = S.env_mul(zing, S.ad(0.16, 0.004, 10.0))
+    edge = S.env_mul(S.osc("sine", S.sweep(0.14, 5200, 2600, 0.6), 0.14), S.ad(0.14, 0.002, 14.0))
+    ring = S.highpass(S.partials(2900, [1.0, 1.48, 2.66], 0.2, amps=[1.0, 0.6, 0.35], decays=[14, 18, 22]), 1500)
+    return S.layer([(zing, 0.0, 0.9), (edge, 0.0, 0.45), (ring, 0.01, 0.25),
+                    (thump(0.12, 240, 110, 14.0), 0.0, 0.5)])
+
+
+def hit_slice_heavy():
+    """A big cut: the slice, longer and lower, with the heavy hit's crunch under it."""
+    zing = S.highpass(S.osc("noise", 0, 0.3, seed=SEED + 52), 2600)
+    zing = S.env_mul(zing, S.ad(0.3, 0.004, 6.0))
+    edge = S.env_mul(S.osc("sine", S.sweep(0.26, 4200, 1500, 0.5), 0.26), S.ad(0.26, 0.002, 8.0))
+    return S.layer([(zing, 0.0, 0.9), (edge, 0.0, 0.5), (hit_heavy(), 0.0, 0.6)])
+
+
 def hit_smash():
     """A hit at kill range: the heavy hit, plus a bright crack and a ring that hangs."""
     crack = S.gain(slap(0.05, 3500, 40.0, seed=45), 1.0)
@@ -601,6 +620,8 @@ REGISTRY = [
     ("hit_heavy", "hit", -6.0, hit_heavy, False),
     ("hit_smash", "hit", -4.0, hit_smash, False),
     ("hit_block", "hit", -11.0, hit_block, False),
+    ("hit_slice", "hit", -9.0, hit_slice, False),
+    ("hit_slice_heavy", "hit", -6.0, hit_slice_heavy, False),
 
     ("count_tick", "match", -8.0, count_tick, False),
     ("count_go", "match", -5.0, count_go, False),

@@ -103,8 +103,8 @@ public partial class Fighter
 	float ItemPower => giantScale > 1.01f ? 1.0f + 0.3f * (giantScale - 1.0f) / (GiantScale - 1.0f) : 1.0f;
 
 	/// <summary>Glue underfoot: slow on his feet, and his jumps barely leave the ground.</summary>
-	float Stuck => glueFrames > 0 ? 0.42f : 1.0f;
-	float JumpStick => glueFrames > 0 ? 0.6f : 1.0f;
+	float Stuck => glueFrames > 0 ? 0.14f : 1.0f;
+	float JumpStick => glueFrames > 0 ? 0.32f : 1.0f;
 
 	const float GiantScale = 1.45f;
 	const int GrowFrames = 24;
@@ -148,12 +148,42 @@ public partial class Fighter
 			return false;
 		}
 
+		// His own palette coming back: attack or grab as it arrives catches it.
+		if (heldItem == null && (attackBufferFrames > 0 || grabBufferFrames > 0) && Match != null)
+		{
+			foreach (Node child in Match.GetChildren())
+			{
+				if (child is not Item coming || !coming.CatchableBy(this, bodySize.Y * 0.5f + 90.0f)) continue;
+				attackBufferFrames = grabBufferFrames = 0;
+				CatchItem(coming);
+				SfxPlayer.At("item_pickup", GlobalPosition, 0.05f);
+				return true;
+			}
+		}
+
 		if (attackBufferFrames <= 0 || specialBufferFrames > 0) return false;
 
 		if (heldItem != null)
 		{
 			attackBufferFrames = 0;
 			BeginItemUse(input);
+			return true;
+		}
+
+		if (State == FighterState.Airborne)
+		{
+			// In the air, attack beside an item snatches it - no bend to the floor, it is just in
+			// his hand (Eric, 2026-10-11) - and a boost goes straight in.
+			Item caught = ItemWithinReach(true);
+			if (caught == null) return false;
+			attackBufferFrames = 0;
+			pendingPickup = caught;
+			FinishPickUp();
+			if (consumeAfterPickup && heldItem != null)
+			{
+				consumeAfterPickup = false;
+				BeginMove(ConsumeMove, MoveSlot.Jab);
+			}
 			return true;
 		}
 
@@ -167,15 +197,18 @@ public partial class Fighter
 		return true;
 	}
 
-	Item ItemWithinReach()
+	/// <summary>The nearest item he could take: by his feet on the ground, anywhere about his body in the air.</summary>
+	Item ItemWithinReach(bool inAir = false)
 	{
 		if (Match == null) return null;
 		Item best = null;
-		float bestDistance = PickUpReach * PickUpReach;
+		Vector2 from = inAir ? GlobalPosition + new Vector2(Facing * 20.0f, 0.0f) : Feet + new Vector2(Facing * 20.0f, -30.0f);
+		float reach = inAir ? bodySize.Y * 0.5f + 70.0f : PickUpReach;
+		float bestDistance = reach * reach;
 		foreach (Node child in Match.GetChildren())
 		{
 			if (child is not Item item || !item.CanBePickedUp || item.Data.TouchToCollect) continue;
-			float d = item.GlobalPosition.DistanceSquaredTo(Feet + new Vector2(Facing * 20.0f, -30.0f));
+			float d = item.GlobalPosition.DistanceSquaredTo(from);
 			if (d < bestDistance) { bestDistance = d; best = item; }
 		}
 		return best;
@@ -584,7 +617,10 @@ public partial class Fighter
 		paintFrames = Mathf.Max(paintFrames, frames);
 	}
 
-	public void Glue() => glueFrames = 2;
+	/// <summary>Stuck in glue - and still stuck for a little after stepping out of it.</summary>
+	public void Glue() => glueFrames = Mathf.Max(glueFrames, GlueLingerFrames);
+
+	const int GlueLingerFrames = 30;
 
 	/// <summary>Sprung up off a pop-up book.</summary>
 	public void SpringUp(float speed)
@@ -682,7 +718,12 @@ public partial class Fighter
 			paintFrames--;
 			Slip();
 		}
-		if (glueFrames > 0) glueFrames--;
+		if (glueFrames > 0)
+		{
+			glueFrames--;
+			// Stuck fast: whatever was carrying him along the floor is soaked up by the glue.
+			if (IsOnFloor()) Velocity = new Vector2(Velocity.X * 0.8f, Velocity.Y);
+		}
 		if (cutoutFrames > 0) cutoutFrames--;
 		if (cutoutImmuneFrames > 0) cutoutImmuneFrames--;
 		if (starFrames > 0) starFrames--;
@@ -1026,6 +1067,27 @@ public partial class Fighter
 					canvas.DrawCircle(nozzle + dir * 200.0f * t, 5.0f + 11.0f * t, new Color(heldItem.Data.Tint, 0.8f * (1.0f - t * t)));
 				}
 			}
+		}
+	}
+
+	/// <summary>
+	/// Holding someone: four little arrows round him, the ways he can throw them, so it is plain
+	/// the stick picks one. They shrink as the hold runs out.
+	/// </summary>
+	void DrawThrowArrows(CanvasItem canvas)
+	{
+		float left = grabHoldFrames / (float)GrabHoldFrames;
+		float pulse = 0.85f + 0.15f * Mathf.Sin(fxFrames * 0.4f);
+		Vector2 centre = new Vector2(0.0f, -bodySize.Y * 0.1f);
+		float radius = bodySize.Y * 0.95f;
+		Color ink = new Color(0.19f, 0.31f, 0.61f, 0.5f + 0.5f * left);
+		foreach (Vector2 way in new[] { Vector2.Up, Vector2.Down, Vector2.Left, Vector2.Right })
+		{
+			Vector2 tip = centre + way * radius * pulse;
+			Vector2 back = tip - way * 26.0f;
+			Vector2 side = way.Orthogonal() * 14.0f;
+			canvas.DrawColoredPolygon(new[] { tip, back + side, back - side }, new Color(1, 1, 1, 0.9f));
+			canvas.DrawPolyline(new[] { tip, back + side, back - side, tip }, ink, 3.0f, true);
 		}
 	}
 

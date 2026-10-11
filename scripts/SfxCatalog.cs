@@ -19,7 +19,7 @@ public static class SfxCatalog
 		"special_shot", "special_volley", "special_fire", "special_beam", "special_dash", "special_glint",
 		"special_blink", "special_rise", "special_wings", "special_hook", "special_trap",
 		"special_drop", "special_resize", "special_quake", "special_build", "bomb_fuse", "explosion",
-		"hit_light", "hit_medium", "hit_heavy", "hit_smash", "hit_block",
+		"hit_light", "hit_medium", "hit_heavy", "hit_smash", "hit_block", "hit_slice", "hit_slice_heavy",
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
 		"ui_move", "ui_select", "ui_back", "ui_ready", "pause",
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
@@ -157,9 +157,11 @@ public static class SfxCatalog
 	/// The hit sound, by knockback rather than damage: knockback is what the victim feels, and
 	/// it is what the rumble and the camera shake already scale with. Around 150 is kill range.
 	/// </summary>
-	public static string ForHit(float knockback, bool blocked)
+	public static string ForHit(float knockback, bool blocked, bool slices = false)
 	{
 		if (blocked) return "hit_block";
+		// A blade: every hit is a cut, a bigger one for a big hit (FighterData.SlicesOnHit).
+		if (slices) return knockback >= 80.0f ? "hit_slice_heavy" : "hit_slice";
 		if (knockback >= 125.0f) return "hit_smash";
 		if (knockback >= 80.0f) return "hit_heavy";
 		if (knockback >= 45.0f) return "hit_medium";

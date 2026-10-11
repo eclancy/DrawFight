@@ -322,34 +322,39 @@ public static class StageCatalog
 			GroundLine = 0.0f,
 		};
 
-		const float Width = 1520.0f;
+		// A big stage: wider and taller than the others, with the blast zones pushed out to match
+		// (Eric, 2026-10-11: it should be larger).
+		const float Width = 2200.0f;
+		data.BlastZone = new Rect2(-2000.0f, -1600.0f, 4000.0f, 2800.0f);
 		data.Platforms = new[]
 		{
 			new StagePlatform(new Rect2(-Width * 0.5f, 0.0f, Width, 52.0f), false, PlatformLook.StageDeck),
-			new StagePlatform(new Rect2(-620.0f, -230.0f, 210.0f, 26.0f), true, PlatformLook.AmpStack),
-			new StagePlatform(new Rect2(410.0f, -230.0f, 210.0f, 26.0f), true, PlatformLook.AmpStack),
+			new StagePlatform(new Rect2(-900.0f, -250.0f, 240.0f, 26.0f), true, PlatformLook.AmpStack),
+			new StagePlatform(new Rect2(660.0f, -250.0f, 240.0f, 26.0f), true, PlatformLook.AmpStack),
+			new StagePlatform(new Rect2(-380.0f, -250.0f, 240.0f, 26.0f), true, PlatformLook.AmpStack),
+			new StagePlatform(new Rect2(140.0f, -250.0f, 240.0f, 26.0f), true, PlatformLook.AmpStack),
 			// The girder: the same width as the deck under it.
-			new StagePlatform(new Rect2(-Width * 0.5f, -470.0f, Width, 30.0f), true, PlatformLook.Girder),
+			new StagePlatform(new Rect2(-Width * 0.5f, -560.0f, Width, 32.0f), true, PlatformLook.Girder),
 		};
 
 		data.Pages = new[]
 		{
-			new PinnedPage(new Rect2(-900.0f, -720.0f, 1800.0f, 920.0f), -0.6f, PaperKind.Plain, 2, 7),
+			new PinnedPage(new Rect2(-1300.0f, -840.0f, 2600.0f, 1100.0f), -0.5f, PaperKind.Plain, 2, 7),
 		};
 
 		data.Props = new[]
 		{
-			new StageProp(PropKind.TapedDrawing, new Rect2(-1080.0f, -1180.0f, 300.0f, 250.0f), 85),
-			new StageProp(PropKind.FridgeMagnet, new Rect2(-955.0f, -1205.0f, 50.0f, 50.0f), 86),
-			new StageProp(PropKind.FridgeHandle, new Rect2(1180.0f, -1100.0f, 56.0f, 1700.0f), 87),
+			new StageProp(PropKind.TapedDrawing, new Rect2(-1560.0f, -1400.0f, 320.0f, 260.0f), 85),
+			new StageProp(PropKind.FridgeMagnet, new Rect2(-1425.0f, -1425.0f, 50.0f, 50.0f), 86),
+			new StageProp(PropKind.FridgeHandle, new Rect2(1560.0f, -1300.0f, 56.0f, 2000.0f), 87),
 		};
 
 		data.SpawnPoints = new[]
 		{
-			new Vector2(-300.0f, -160.0f), new Vector2(300.0f, -160.0f),
-			new Vector2(-120.0f, -560.0f), new Vector2(120.0f, -560.0f),
+			new Vector2(-500.0f, -160.0f), new Vector2(500.0f, -160.0f),
+			new Vector2(-200.0f, -660.0f), new Vector2(200.0f, -660.0f),
 		};
-		data.RespawnPoint = new Vector2(0.0f, -660.0f);
+		data.RespawnPoint = new Vector2(0.0f, -760.0f);
 		return data;
 	}
 }

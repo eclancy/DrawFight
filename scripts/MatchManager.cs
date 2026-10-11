@@ -462,7 +462,7 @@ public partial class MatchManager : Node2D
 	{
 		lastKnockback = knockback;
 		fx.SpawnHitSpark(contactPoint, damage, blocked);
-		SfxPlayer.Hit(contactPoint, knockback, blocked);
+		SfxPlayer.Hit(contactPoint, knockback, blocked, attacker != null && attacker.Data.SlicesOnHit);
 		camera.AddShake(blocked ? knockback * 0.25f : knockback);
 
 		// Knockback around 150 is roughly kill range, so that is where rumble maxes out.

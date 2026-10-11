@@ -105,6 +105,9 @@ public partial class RigParade : Node2D
 		rig.SetPartVisible(RigBone.PropFront, true);
 
 		int moveFrame = frame - FilmLeadIn;
+		// A sword moves at the wrist (Fighter.UpdateWrist); here without the easing.
+		rig.Wrist = data.SlicesOnHit ? (move != null && moveFrame >= 0 && moveFrame <= move.TotalFrames
+			? Fighter.SwordWrist(move, moveFrame, out _) : -90.0f) : null;
 		if (move != null && moveFrame >= 0 && moveFrame <= move.TotalFrames)
 		{
 			bool aerial = IsAerial(move, data);

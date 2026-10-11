@@ -83,6 +83,14 @@ public partial class FighterRig : Node2D
 	/// (FighterAnimations.CarryOnShoulder). Whoever drives the rig sets it each frame.
 	/// </summary>
 	public bool CarryOnShoulder;
+
+	/// <summary>
+	/// The turn of the wrist, in degrees, for what the front hand holds: 0 carries straight on
+	/// along the forearm, -90 stands it up at a right angle to it, pointing the way he faces - a
+	/// sword held the way a sword is held. Null leaves the prop where the pose put it. Whoever
+	/// drives the rig sets it each frame (Fighter.UpdateWrist).
+	/// </summary>
+	public float? Wrist;
 	readonly Pose carried = new Pose();
 
 	/// <summary>
@@ -1823,6 +1831,11 @@ public partial class FighterRig : Node2D
 			float degrees = current[bone];
 			if (bone == RigBone.Torso || bone == RigBone.Head) degrees = -degrees;
 			bones[i].Rotation = Mathf.DegToRad(degrees);
+		}
+
+		if (Wrist is float wrist && !CarryOnShoulder && present[(int)RigBone.PropFront])
+		{
+			bones[(int)RigBone.PropFront].Rotation = Mathf.DegToRad(wrist);
 		}
 
 		ShowTurns();

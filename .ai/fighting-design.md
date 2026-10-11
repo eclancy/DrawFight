@@ -434,8 +434,10 @@ see `.ai/character-design.md`.
 plus attack, which still works (Eric, 2026-10-10). A grab on the ground reaches just past the
 front of the body at about the middle of an ordinary fighter (so a giant's grab finds people
 too) and catches whoever is there - **blocking or not**. That is what grabs are for: the answer to someone who just holds
-block. While he holds them, the stick picks one of four throws - forward, back, up, down - and
-with no choice for about two-thirds of a second he throws forward. Back turns him round to throw.
+block. While he holds them - four arrows round him say so - the stick picks one of four throws:
+forward, back, up, down. The stick has to be pushed after the catch: whatever it was held to as
+the grab landed (running in) does not count (Eric, 2026-10-11). Attack or grab throws forward,
+and with no choice for a second and a half he throws forward. Back turns him round to throw.
 A missed grab has a long recovery, which is how a grab is beaten. No pummel and no mashing out.
 Eric's call, 2026-10-04, reversing the earlier "grabs are out" decision.
 
@@ -467,7 +469,9 @@ needs a new kind of use or impact.
 
 - **Getting one.** Items drop from above onto a platform wide enough to land on, trailing
   sparkles so the drop is seen. Attack beside one on the ground picks it up - a quick bend, 11
-  frames; the gold star is taken by touching it. One lying about blinks for its last 3 seconds of
+  frames - and in the air, attack beside one snatches it straight into his hand; the gold star is
+  taken by touching it. A thrown palette comes back, and has to be caught with attack as it
+  arrives - miss, and it flies past and drops (Eric, 2026-10-11). One lying about blinks for its last 3 seconds of
   20 and goes.
 - **Using it.** With something in hand, attack uses it: swings it, throws it, sprays it while held,
   squeezes it while held. The grab button always throws, the way the stick points; down on the

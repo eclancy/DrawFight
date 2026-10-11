@@ -564,15 +564,16 @@ public static class CharacterNormals
 		m.StartupFrames = 18;
 		m.HitboxOffset = new Vector2(197.0f, 24.0f); m.HitboxRadius = 64.0f;
 
-		// A wide, slow arc: the greatsword drawn right back behind him, then swept up over his head
-		// and down in front. The hitbox travels the whole arc, so it covers behind, above and in
-		// front - but it comes slowly and stays out a long time, so it is easy to see coming and
-		// easy to punish.
+		// A rising cut: the greatsword's tip on the floor in front of him, then swept up and over
+		// until it is above his head (Eric, 2026-10-11). The hitbox travels the whole arc, from the
+		// floor in front to over his head, so it scoops up anyone in front and carries on into the
+		// air - but it comes slowly and stays out a long time, so it is easy to see coming and easy
+		// to punish. The middle of the arc is up and forward (HitboxOffset, from SweepPivot).
 		m = M(moves, MoveSlot.UpSmash);
-		m.MoveName = "Great Arc"; m.Anim = AttackAnim.WideArc; m.PropArt = "sword_greatsword";
+		m.MoveName = "Rising Cut"; m.Anim = AttackAnim.RisingArc; m.PropArt = "sword_greatsword";
 		m.StartupFrames = 18; m.ActiveFrames = 12; m.EndlagFrames = 32;
-		m.HitboxOffset = new Vector2(0.0f, -172.0f); m.HitboxRadius = 56.0f;
-		m.SweepDegrees = 150.0f;
+		m.HitboxOffset = new Vector2(150.0f, -117.0f); m.HitboxRadius = 56.0f;
+		m.SweepDegrees = -140.0f;
 		m.LaunchAngleDegrees = 80.0f;
 
 		// He throws his arms down and two axes burst up out of the floor, one either side of him:

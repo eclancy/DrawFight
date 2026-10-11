@@ -112,6 +112,9 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public float AirDashSpeed { get; set; } = 0.0f;
 
+	/// <summary>Every hit they land sounds like a blade cutting (SfxCatalog.ForHit) - EdgeLord, all swords.</summary>
+	[Export] public bool SlicesOnHit { get; set; } = false;
+
 	/// <summary>
 	/// How much of a hit a block lets through, as a multiple of what a block usually lets through
 	/// (Tuning.BlockDamageMultiplier and BlockKnockbackMultiplier). 1 is an ordinary block.
@@ -293,6 +296,7 @@ public partial class FighterData : Resource
 			// Wild and fast: every pose played further than the library's default.
 			AnimationDrama = 1.35f,
 			AirDashSpeed = 1500.0f,
+			SlicesOnHit = true,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.EdgeLord(),
 			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());

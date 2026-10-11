@@ -208,6 +208,6 @@ public partial class SfxPlayer : Node
 	/// <summary>A sound that belongs to the screen rather than a place: menus, the countdown.</summary>
 	public static void Ui(string name) => Get()?.PlayFlat(name, 0.0f);
 
-	public static void Hit(Vector2 position, float knockback, bool blocked) =>
-		Get()?.PlayAtPosition(SfxCatalog.ForHit(knockback, blocked), position, 0.06f);
+	public static void Hit(Vector2 position, float knockback, bool blocked, bool slices = false) =>
+		Get()?.PlayAtPosition(SfxCatalog.ForHit(knockback, blocked, slices), position, 0.06f);
 }

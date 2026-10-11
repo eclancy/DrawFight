@@ -31,6 +31,9 @@ fighter:
   also gets a crack and a ringing tail. A blocked hit sounds muffled, like hitting cardboard;
   a shield worn through shatters (`shield_break`: a crack, a spray of tinkling shards, and a low
   wobble as he reels).
+  A fighter whose weapon is a blade (`FighterData.SlicesOnHit`: EdgeLord) cuts instead of thuds,
+  every hit he lands: `hit_slice`, a fast bright zing of steel with a soft thud under it, and
+  `hit_slice_heavy` for a big one (Eric, 2026-10-11).
 - **Everything tonal is in A major**: the countdown ticks are A, FIGHT! is an A major chord, the
   win fanfare climbs A–C♯–E–A, and both music loops are in A. The countdown then resolves into the
   music it starts.

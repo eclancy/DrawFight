@@ -770,6 +770,7 @@ public partial class Fighter : CharacterBody2D
 			State == FighterState.Dodging && groundRoll);
 		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth());
 		UpdateFace();
+		UpdateWrist();
 		rig.SetFrontLegReach(LegReachNow());
 		// Standing still on flat feet (FighterRig.StandOnFeet) - turned on below for each pose
 		// that is just standing.
@@ -3465,8 +3466,18 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>How long he holds someone waiting for a throw to be picked, before throwing forward.</summary>
-	const int GrabHoldFrames = 40;
+	const int GrabHoldFrames = 90;
 	int grabHoldFrames;
+
+	/// <summary>
+	/// The stick has been let go of, or turned, since the catch. Whatever it was held to when the
+	/// grab landed - running in, say - is not a choice; a push after it is (Eric, 2026-10-11: the
+	/// throw went off before he could pick one).
+	/// </summary>
+	bool grabStickFree;
+	Vector2 grabStickAtCatch;
+
+	public bool IsHoldingGrab => State == FighterState.Attacking && currentMove == Data.Grab && grabbed != null;
 
 	/// <summary>
 	/// Where a grab catches: just past the front of his body, at about the middle of an ordinary
@@ -3489,7 +3500,12 @@ public partial class Fighter : CharacterBody2D
 			if (moveFrame > activeStart && moveFrame <= activeEnd)
 			{
 				CatchAt(GrabReach(), currentMove.HitboxRadius);
-				if (grabbed != null) grabHoldFrames = GrabHoldFrames;
+				if (grabbed != null)
+				{
+					grabHoldFrames = GrabHoldFrames;
+					grabStickAtCatch = input.Move;
+					grabStickFree = input.Move.Length() < 0.5f;
+				}
 			}
 			return false;
 		}
@@ -3497,14 +3513,19 @@ public partial class Fighter : CharacterBody2D
 		moveFrame = activeStart + 1;
 		grabbed.GlobalPosition = GrabHand();
 
+		if (!grabStickFree && (input.Move.Length() < 0.35f || input.Move.DistanceTo(grabStickAtCatch) > 0.9f)) grabStickFree = true;
 		int pick = -1;
-		if (input.Move.Y < -0.5f) pick = 2;
-		else if (input.Move.Y > 0.5f) pick = 3;
-		else if (input.Move.X * Facing > 0.5f) pick = 0;
-		else if (input.Move.X * Facing < -0.5f) pick = 1;
-		else if (attackBufferFrames > 0) pick = 0;
+		if (grabStickFree)
+		{
+			if (input.Move.Y < -0.5f) pick = 2;
+			else if (input.Move.Y > 0.5f) pick = 3;
+			else if (input.Move.X * Facing > 0.5f) pick = 0;
+			else if (input.Move.X * Facing < -0.5f) pick = 1;
+		}
+		if (pick < 0 && (attackBufferFrames > 0 || grabBufferFrames > 0)) pick = 0;
 		if (pick < 0 && --grabHoldFrames > 0) return false;
 		attackBufferFrames = 0;
+		grabBufferFrames = 0;
 		if (pick < 0) pick = 0;
 
 		if (pick == 1) Facing = -Facing;
@@ -4251,6 +4272,7 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>The four swords on offer, each pointing the way it sits, popping open around him.</summary>
 	void DrawChoiceMenu(CanvasItem canvas)
 	{
+		if (IsHoldingGrab) DrawThrowArrows(canvas);
 		if (State != FighterState.Attacking || currentMove == null || currentMove.Special != SpecialKind.Choice) return;
 		if (currentMove.Choices.Length < 4) return;
 
@@ -5166,7 +5188,8 @@ public partial class Fighter : CharacterBody2D
 
 	/// <summary>
 	/// The air jump, for a fighter with FighterData.AirDashSpeed: a burst along one of eight
-	/// directions - the way the stick points, or straight ahead with it centred.
+	/// directions - the way the stick points, or straight up with it centred, like any second
+	/// jump (Eric, 2026-10-11: it went sideways by default).
 	/// </summary>
 	void StartAirDash(InputState input)
 	{
@@ -5174,7 +5197,7 @@ public partial class Fighter : CharacterBody2D
 		const float Eighth = Mathf.Pi * 0.25f;
 		Vector2 dir = stick.Length() > 0.35f
 			? Vector2.Right.Rotated(Mathf.Round(stick.Angle() / Eighth) * Eighth)
-			: new Vector2(Facing, 0.0f);
+			: Vector2.Up;
 		if (Mathf.Abs(dir.X) > 0.1f) Facing = dir.X > 0.0f ? 1 : -1;
 		airDashFrames = AirDashFrames;
 		airDashFrom = GlobalPosition;

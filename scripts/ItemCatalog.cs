@@ -173,15 +173,15 @@ public static class ItemCatalog
 		new ItemData
 		{
 			Id = "glue_bottle", DisplayName = "Glue Bottle", Use = ItemUse.Throw, Impact = ItemImpact.Glue, Size = 80.0f,
-			Blurb = "Leaves a sticky puddle. Anyone in it walks slowly and cannot jump high.",
-			Hit = Hit("Glue Bottle", 4.0f, 22.0f, 0.3f, 40.0f), Radius = 130.0f, Duration = 360,
+			Blurb = "Leaves a sticky puddle. Anyone in it is stuck: they can barely shuffle or hop.",
+			Hit = Hit("Glue Bottle", 4.0f, 22.0f, 0.3f, 40.0f), Radius = 150.0f, Duration = 360,
 			Tint = new Color(0.97f, 0.97f, 0.94f),
 		},
 		new ItemData
 		{
 			Id = "ink_bottle", DisplayName = "Ink Bottle", Use = ItemUse.Throw, Impact = ItemImpact.Ink, Size = 70.0f,
 			Blurb = "Smashes into a big cloud of blue ink that hides everyone inside it.",
-			Hit = Hit("Ink Bottle", 4.0f, 22.0f, 0.3f, 40.0f), Radius = 200.0f, Duration = 300, Tint = InkBlue,
+			Hit = Hit("Ink Bottle", 4.0f, 22.0f, 0.3f, 40.0f), Radius = 330.0f, Duration = 360, Tint = InkBlue,
 		},
 		new ItemData
 		{
@@ -198,7 +198,7 @@ public static class ItemCatalog
 		new ItemData
 		{
 			Id = "palette", DisplayName = "Paint Palette", Use = ItemUse.Throw, Impact = ItemImpact.Boomerang, Size = 90.0f,
-			Blurb = "Thrown like a frisbee: it flies out and comes back, hitting both ways.",
+			Blurb = "Thrown like a frisbee: it flies out and comes back, hitting both ways. Press attack to catch it.",
 			Hit = Hit("Palette", 8.0f, 30.0f, 0.5f, 40.0f), ThrowSpeed = 1100.0f, Duration = 120,
 		},
 

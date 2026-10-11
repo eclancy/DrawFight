@@ -52,6 +52,14 @@ public enum AttackAnim
 	WideArc,
 
 	/// <summary>
+	/// A rising cut: crouched with the blade's tip on the floor in front of him, then swept up
+	/// and over until it is above his head, the arms following a hitbox on the same arc
+	/// (<see cref="MoveData.SweepDegrees"/>, negative - front to top). EdgeLord's up smash (Eric,
+	/// 2026-10-11).
+	/// </summary>
+	RisingArc,
+
+	/// <summary>
 	/// Standing on one leg with the other knee raised high, then that foot stamped down hard in
 	/// front - one foot always on the floor. DoomBot's stomp quake.
 	/// </summary>
@@ -937,6 +945,18 @@ public static class FighterAnimations
 		(AFU, -66), (AFL, -6), (ABU, -60), (ABL, -6),
 		(LFU, -44), (LFL, 30), (LBU, 36), (LBL, 30));
 
+	// Rising arc: crouched low over the blade, its tip on the floor in front; then stretched tall,
+	// arms up over his head. Between, RisingArc's arms follow the hitbox up the arc.
+	static readonly Pose RisingArcWindup = new Pose(new Vector2(4, 22),
+		(Torso, -26), (Head, 12),
+		(AFU, -34), (AFL, -10), (ABU, -28), (ABL, -10),
+		(LFU, -52), (LFL, 64), (LBU, 34), (LBL, 56));
+
+	static readonly Pose RisingArcStrike = new Pose(new Vector2(0, -6),
+		(Torso, 8), (Head, -14),
+		(AFU, -170), (AFL, -6), (ABU, -164), (ABL, -6),
+		(LFU, -16), (LFL, 10), (LBU, 18), (LBL, 12));
+
 	/// <summary>
 	/// Where a sweeping hitbox is pointing at <paramref name="t"/> (0 to 1 through the active
 	/// frames), in screen degrees for a fighter facing right: 0 forward, -90 straight up, -180
@@ -972,7 +992,8 @@ public static class FighterAnimations
 	static void WideArcAt(MoveData move, float moveFrame, Pose into)
 	{
 		float t = SweepT(move, moveFrame);
-		Pose.Blend(WideArcWindup, WideArcStrike, t, into);
+		if (move.Anim == AttackAnim.RisingArc) Pose.Blend(RisingArcWindup, RisingArcStrike, t, into);
+		else Pose.Blend(WideArcWindup, WideArcStrike, t, into);
 		// The pivot here only steers the angle; Fighter uses the same one for the hitbox itself.
 		float aim = SweepAngle(move, SweepPivot, t);
 		// Wrapped onto the side an arm can reach: straight up is up over the front, not on round
@@ -1248,6 +1269,7 @@ public static class FighterAnimations
 			case AttackAnim.Soar: return (SoarWindup, SoarStrike);
 			case AttackAnim.Windmill: return (WindmillWindup, WindmillStrike);
 			case AttackAnim.WideArc: return (WideArcWindup, WideArcStrike);
+			case AttackAnim.RisingArc: return (RisingArcWindup, RisingArcStrike);
 			case AttackAnim.Stomp: return (StompWindup, StompStrike);
 			case AttackAnim.Rocket: return (RocketWindup, RocketStrike);
 			case AttackAnim.SetDown: return (SetDownWindup, SetDownStrike);
@@ -1331,7 +1353,7 @@ public static class FighterAnimations
 			return;
 		}
 
-		if (moveFrame <= activeEnd && move.Anim == AttackAnim.WideArc)
+		if (moveFrame <= activeEnd && (move.Anim == AttackAnim.WideArc || move.Anim == AttackAnim.RisingArc))
 		{
 			WideArcAt(move, moveFrame, into);
 			return;
@@ -1581,7 +1603,7 @@ public static class FighterAnimations
 		// The coil: snapped to at once and held.
 		if (frame <= startup - RobotAttackSnap) return (startup, 0);
 		// A move that turns through its active frames (a windmill) clicks round in steps.
-		bool turning = move.Anim == AttackAnim.Windmill || move.Anim == AttackAnim.WideArc;
+		bool turning = move.Anim == AttackAnim.Windmill || move.Anim == AttackAnim.WideArc || move.Anim == AttackAnim.RisingArc;
 		if (turning && frame > startup && frame <= activeEnd)
 		{
 			int step = (frame - startup - 1) / 3;
