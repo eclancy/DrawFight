@@ -2569,9 +2569,10 @@ public partial class Fighter : CharacterBody2D
 		if (blocked) knockback *= Mathf.Min(1.0f, Tuning.BlockKnockbackMultiplier * Data.BlockLeak);
 		// Drawn giant, he is heavier: knocked a good deal less far.
 		if (giantScale > 1.01f) knockback *= Mathf.Lerp(1.0f, 0.65f, (giantScale - 1.0f) / (GiantScale - 1.0f));
-		if (!blocked && knockback >= DropItemKnockback) DropHeldItem();
+		Vector2 launch = Knockback.LaunchVelocity(knockback, move.LaunchAngleDegrees, attackerFacing, lastStick);
+		if (!blocked && knockback >= DropItemKnockback) DropHeldItem(false, launch);
 
-		Velocity = Knockback.LaunchVelocity(knockback, move.LaunchAngleDegrees, attackerFacing, lastStick);
+		Velocity = launch;
 		hitstunFrames = Knockback.HitstunFrames(knockback);
 		hitlagFrames = Knockback.HitlagFrames(damage);
 		State = FighterState.Hitstun;

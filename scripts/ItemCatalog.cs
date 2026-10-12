@@ -93,21 +93,21 @@ public static class ItemCatalog
 		// --- Swung ------------------------------------------------------------------
 		new ItemData
 		{
-			Id = "pencil", DisplayName = "Giant Pencil", Use = ItemUse.Swing, Size = 150.0f, Uses = 5,
+			Id = "pencil", DisplayName = "Giant Pencil", Use = ItemUse.Swing, Size = 150.0f, Uses = 5, Swings = 8, Cooldown = 18,
 			Blurb = "Jab with the point. It sharpens down with every hit, to a stub, then it is gone.",
 			Swing = Swing("Pencil Jab", AttackAnim.Thrust, 6, 3, 14, 9.0f, 30.0f, 0.7f, 35.0f, 34.0f),
 			Hit = Hit("Thrown Pencil", 8.0f, 30.0f, 0.5f, 35.0f),
 		},
 		new ItemData
 		{
-			Id = "eraser", DisplayName = "Big Pink Eraser", Use = ItemUse.Swing, Size = 90.0f,
+			Id = "eraser", DisplayName = "Big Pink Eraser", Use = ItemUse.Swing, Size = 90.0f, Swings = 8, Cooldown = 20,
 			Blurb = "A soft bonk - but whatever it rubs out is gone: fireballs, puddles, traps.",
 			Swing = Swing("Eraser Rub", AttackAnim.Slash, 7, 4, 16, 6.0f, 32.0f, 0.5f, 40.0f, 46.0f),
 			Hit = Hit("Thrown Eraser", 6.0f, 30.0f, 0.4f, 40.0f),
 		},
 		new ItemData
 		{
-			Id = "roller", DisplayName = "Paint Roller", Use = ItemUse.Swing, Size = 140.0f, Uses = 240,
+			Id = "roller", DisplayName = "Paint Roller", Use = ItemUse.Swing, Size = 140.0f, Uses = 240, Swings = 8, Cooldown = 24,
 			Blurb = "A wide swing. Run with it and it rolls a slippery stripe of wet paint.",
 			Swing = Swing("Roller Sweep", AttackAnim.LowSweep, 8, 4, 16, 8.0f, 32.0f, 0.6f, 30.0f, 48.0f),
 			Hit = Hit("Thrown Roller", 7.0f, 30.0f, 0.4f, 35.0f),
@@ -115,14 +115,14 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "metre_stick", DisplayName = "Metre Stick", Use = ItemUse.Swing, Size = 175.0f,
+			Id = "metre_stick", DisplayName = "Metre Stick", Use = ItemUse.Swing, Size = 175.0f, Swings = 4, Cooldown = 40,
 			Blurb = "A huge, slow, wound-up swing that knocks people right off the stage.",
 			Swing = Swing("Home Run", AttackAnim.SmashSwing, 22, 4, 26, 22.0f, 42.0f, 1.25f, 38.0f, 52.0f),
 			Hit = Hit("Thrown Metre Stick", 9.0f, 34.0f, 0.5f, 35.0f),
 		},
 		new ItemData
 		{
-			Id = "paintbrush", DisplayName = "Paintbrush", Use = ItemUse.Swing, Size = 140.0f,
+			Id = "paintbrush", DisplayName = "Paintbrush", Use = ItemUse.Swing, Size = 140.0f, Swings = 6, Cooldown = 40,
 			Blurb = "Every swing flicks a few blobs of paint on ahead, so it hits close and far.",
 			Swing = Swing("Brush Flick", AttackAnim.Slash, 6, 3, 14, 7.0f, 28.0f, 0.55f, 45.0f, 40.0f),
 			Hit = Hit("Thrown Paintbrush", 6.0f, 28.0f, 0.4f, 40.0f),
@@ -137,16 +137,16 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "scissors", DisplayName = "Safety Scissors", Use = ItemUse.Swing, Size = 95.0f, Uses = 3,
+			Id = "scissors", DisplayName = "Safety Scissors", Use = ItemUse.Swing, Size = 95.0f, Uses = 3, Swings = 5, Cooldown = 30,
 			Blurb = "Snip! Whoever it catches is cut out flat as paper and flutters, stunned.",
 			Swing = Swing("Snip", AttackAnim.Thrust, 5, 2, 12, 5.0f, 18.0f, 0.15f, 60.0f, 36.0f),
 			Hit = Hit("Thrown Scissors", 6.0f, 28.0f, 0.4f, 40.0f),
 		},
 		new ItemData
 		{
-			Id = "stamp", DisplayName = "Giant Rubber Stamp", Use = ItemUse.Stamp, Size = 110.0f, Duration = 480,
-			Blurb = "For eight seconds all you can do is stamp - and every stamp hits hard.",
-			Swing = Swing("Stamp", AttackAnim.OverheadSlam, 9, 3, 6, 12.0f, 36.0f, 0.75f, 70.0f, 50.0f),
+			Id = "stamp", DisplayName = "Giant Rubber Stamp", Use = ItemUse.Stamp, Size = 110.0f, Duration = 480, Cooldown = 14,
+			Blurb = "For eight seconds all you can do is stamp - press attack - and every stamp hits hard.",
+			Swing = Swing("Stamp", AttackAnim.StampDown, 10, 3, 12, 12.0f, 36.0f, 0.75f, 70.0f, 50.0f),
 			Hit = Hit("Thrown Stamp", 8.0f, 30.0f, 0.5f, 40.0f),
 		},
 
@@ -205,7 +205,7 @@ public static class ItemCatalog
 		// --- Held and used -----------------------------------------------------------
 		new ItemData
 		{
-			Id = "spray_can", DisplayName = "Spray Paint Can", Use = ItemUse.Spray, Size = 75.0f, Uses = 120,
+			Id = "spray_can", DisplayName = "Spray Paint Can", Use = ItemUse.Spray, Size = 75.0f, Uses = 120, Cooldown = 40,
 			Blurb = "Hold attack to spray a cone of paint - lots of tiny hits, until it runs out.",
 			Swing = new MoveData
 			{
@@ -218,7 +218,7 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "paint_tube", DisplayName = "Paint Tube Blaster", Use = ItemUse.ChargeShot, Size = 85.0f, Uses = 4,
+			Id = "paint_tube", DisplayName = "Paint Tube Blaster", Use = ItemUse.ChargeShot, Size = 85.0f, Uses = 4, Cooldown = 40,
 			Blurb = "Squeeze and hold to charge, then let go to fire a big paint blob.",
 			Shot = new MoveData
 			{
@@ -231,21 +231,21 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "airbrush", DisplayName = "Airbrush", Use = ItemUse.Gust, Size = 85.0f, Uses = 6,
+			Id = "airbrush", DisplayName = "Airbrush", Use = ItemUse.Gust, Size = 85.0f, Uses = 6, Cooldown = 60,
 			Blurb = "Blows a gust that pushes everyone ahead back - right off the edge.",
 			Hit = Hit("Thrown Airbrush", 6.0f, 28.0f, 0.4f, 40.0f), Radius = 320.0f, Duration = 26,
 			Tint = new Color(0.62f, 0.86f, 0.98f),
 		},
 		new ItemData
 		{
-			Id = "marker", DisplayName = "Magic Marker", Use = ItemUse.Draw, Size = 85.0f, Uses = 3,
+			Id = "marker", DisplayName = "Magic Marker", Use = ItemUse.Draw, Size = 85.0f, Uses = 3, Cooldown = 45,
 			Blurb = "Draw your own platform - for five seconds. Dashed, so you can drop through.",
 			Hit = Hit("Thrown Marker", 6.0f, 28.0f, 0.4f, 40.0f), Radius = 230.0f, Duration = 300, Tint = PaintPurple,
 		},
 		new ItemData
 		{
-			Id = "sketchbook", DisplayName = "Sketchbook", Use = ItemUse.Shield, Size = 95.0f,
-			Blurb = "While you hold it, anything thrown at you bounces straight back.",
+			Id = "sketchbook", DisplayName = "Sketchbook", Use = ItemUse.Shield, Size = 95.0f, Swings = 6, Cooldown = 30,
+			Blurb = "A shield: held up in front of you, anything shot or thrown at you bounces straight back. Attack bonks with it.",
 			Swing = Swing("Sketchbook Bonk", AttackAnim.Slash, 6, 3, 14, 6.0f, 30.0f, 0.4f, 40.0f, 46.0f),
 			Hit = Hit("Thrown Sketchbook", 7.0f, 30.0f, 0.45f, 40.0f),
 		},

@@ -78,7 +78,9 @@ public sealed class SmearTrail
 	/// </summary>
 	public static bool Smears(MoveData move) =>
 		move != null && move.Special == SpecialKind.None && move.HitboxRadius > 0.0f && !move.Spin
-		&& move.ActiveFx != ActiveFx.FireRing && move.ActiveFx != ActiveFx.Jets;
+		&& move.ActiveFx != ActiveFx.FireRing && move.ActiveFx != ActiveFx.Jets
+		// A stamp is pressed down, not swung: no swoosh behind it.
+		&& move.Anim != AttackAnim.StampDown;
 
 	/// <summary>
 	/// How strongly the smear shows at <paramref name="moveFrame"/>, 0 when it does not: coming in

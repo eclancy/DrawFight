@@ -33,6 +33,9 @@ public partial class Item : CharacterBody2D
 	/// <summary>Uses left: swings, frames of spray, shots, gusts, platforms. See ItemData.Uses.</summary>
 	public int UsesLeft;
 
+	/// <summary>Uses left before it is spent (ItemData.Swings); -1 for no limit.</summary>
+	public int SwingsLeft = -1;
+
 	MatchManager match;
 	int age;
 	int phaseFrames;
@@ -76,6 +79,7 @@ public partial class Item : CharacterBody2D
 		Art = ItemCatalog.Art(data.Id);
 		this.match = match;
 		UsesLeft = data.Uses;
+		SwingsLeft = data.Swings > 0 ? data.Swings : -1;
 		GlobalPosition = position;
 		Velocity = velocity;
 
@@ -139,7 +143,10 @@ public partial class Item : CharacterBody2D
 	bool CarriedUpright => Holder != null && (Data.Use is ItemUse.Throw or ItemUse.Consume or ItemUse.Open
 		|| Data.Use == ItemUse.Shield && !Holder.SwingingHeldItem);
 
-	Vector2 HeldUp => CarriedUpright ? Vector2.Up : heldDirection;
+	/// <summary>A rubber stamp hangs face down from the fist, whatever the arm does - ready to stamp.</summary>
+	bool HangsDown => Holder != null && Data.Use == ItemUse.Stamp;
+
+	Vector2 HeldUp => HangsDown ? Vector2.Down : CarriedUpright ? Vector2.Up : heldDirection;
 
 	/// <summary>Where its business end is right now, held: a swing hits here.</summary>
 	public Vector2 HeadGlobal()
@@ -152,7 +159,7 @@ public partial class Item : CharacterBody2D
 	public float LowestHeldY(Vector2 along)
 	{
 		if (Art == null) return HeadGlobal().Y;
-		Vector2 up = CarriedUpright ? Vector2.Up : along.Normalized();
+		Vector2 up = HangsDown ? Vector2.Down : CarriedUpright ? Vector2.Up : along.Normalized();
 		float s = ArtScale;
 		var place = new Transform2D(up.Angle() + Mathf.Pi * 0.5f, new Vector2(heldFacing * s, s), 0.0f, GlobalPosition);
 		float lowest = float.NegativeInfinity;

@@ -477,7 +477,16 @@ needs a new kind of use or impact.
   squeezes it while held. The grab button always throws, the way the stick points; down on the
   ground sets it down gently in front, which is how a trap is placed. Specials still work with
   something in hand, and a fighter's own hand prop is put away while he holds one.
-- **Losing it.** A hit with 70 knockback or more knocks it out of his hand; a KO takes it away.
+- **Limits, so nothing is spammed** (Eric, 2026-10-11). Each item can be used a set number of
+  times (`ItemData.Swings`, or its `Uses` of paint or shots) and has a wait between uses
+  (`Cooldown`): the paintbrush six swings, 40 frames apart. Dots over his head count what is
+  left, pale while it cools down; pressing attack before then does nothing.
+- **The rubber stamp** is pressed, not swung: for its eight seconds, each press of attack lifts
+  it to his chest and presses it straight down onto the floor in front of him, hanging face down,
+  printing its star.
+- **Losing it.** A hit with 70 knockback or more knocks it out of his hand - and something made
+  to be thrown flies off the way he was hit and does what it does when it lands, so a paint
+  bucket knocked loose still splashes. A KO takes it away.
   A swing item that lands wears down (the pencil is a stub at its last two uses) and is gone when
   it is used up.
 - **Hitting with it.** Every item hit goes through the same `ReceiveHitFrom` as a move, so the

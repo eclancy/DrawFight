@@ -60,6 +60,13 @@ public enum AttackAnim
 	RisingArc,
 
 	/// <summary>
+	/// Using a rubber stamp: the fist lifted up in front of his face, then pushed straight down to
+	/// the floor in front of him, leaning over it - pressed, not swung. The stamp hangs face down
+	/// from the fist throughout (Item.HangsDown).
+	/// </summary>
+	StampDown,
+
+	/// <summary>
 	/// Standing on one leg with the other knee raised high, then that foot stamped down hard in
 	/// front - one foot always on the floor. DoomBot's stomp quake.
 	/// </summary>
@@ -945,6 +952,18 @@ public static class FighterAnimations
 		(AFU, -66), (AFL, -6), (ABU, -60), (ABL, -6),
 		(LFU, -44), (LFL, 30), (LBU, 36), (LBL, 30));
 
+	// Stamping: the fist up by his face, then pushed straight down to the floor in front, bent
+	// over it with the knees giving.
+	static readonly Pose StampDownWindup = new Pose(new Vector2(0, -4),
+		(Torso, 6), (Head, -6),
+		(AFU, -96), (AFL, -40), (ABU, -20), (ABL, -30),
+		(LFU, -10), (LFL, 8), (LBU, 12), (LBL, 8));
+
+	static readonly Pose StampDownStrike = new Pose(new Vector2(2, 12),
+		(Torso, -22), (Head, 12),
+		(AFU, -64), (AFL, -36), (ABU, 10), (ABL, -40),
+		(LFU, -30), (LFL, 40), (LBU, 24), (LBL, 36));
+
 	// Rising arc: crouched low over the blade, its tip on the floor in front; then stretched tall,
 	// arms up over his head. Between, RisingArc's arms follow the hitbox up the arc.
 	static readonly Pose RisingArcWindup = new Pose(new Vector2(4, 22),
@@ -1270,6 +1289,7 @@ public static class FighterAnimations
 			case AttackAnim.Windmill: return (WindmillWindup, WindmillStrike);
 			case AttackAnim.WideArc: return (WideArcWindup, WideArcStrike);
 			case AttackAnim.RisingArc: return (RisingArcWindup, RisingArcStrike);
+			case AttackAnim.StampDown: return (StampDownWindup, StampDownStrike);
 			case AttackAnim.Stomp: return (StompWindup, StompStrike);
 			case AttackAnim.Rocket: return (RocketWindup, RocketStrike);
 			case AttackAnim.SetDown: return (SetDownWindup, SetDownStrike);

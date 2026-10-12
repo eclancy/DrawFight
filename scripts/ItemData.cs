@@ -104,6 +104,15 @@ public partial class ItemData : Resource
 	[Export] public float Size { get; set; } = 100.0f;
 
 	/// <summary>
+	/// How many times it can be used - swung, sprayed, fired - before it is spent; 0 for no limit
+	/// (Eric, 2026-10-11: the paintbrush was too spammable). Counts every use, hit or miss.
+	/// </summary>
+	[Export] public int Swings { get; set; } = 0;
+
+	/// <summary>Frames after one use before the next can start, so it cannot be mashed.</summary>
+	[Export] public int Cooldown { get; set; } = 0;
+
+	/// <summary>
 	/// How much use is in it before it is used up: swings that land (the pencil sharpens down),
 	/// frames of spray, shots, gusts, platforms, snips. Zero never runs out.
 	/// </summary>

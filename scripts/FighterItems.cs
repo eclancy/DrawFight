@@ -120,10 +120,13 @@ public partial class Fighter
 	{
 		if (stampModeFrames > 0)
 		{
-			// Stamping: nothing else, until it is over.
+			// Stamping: nothing else, until it is over - and a stamp only when attack is pressed,
+			// pressed down onto the floor in front of him, never swung (Eric, 2026-10-11).
+			bool stamp = attackBufferFrames > 0;
 			attackBufferFrames = specialBufferFrames = grabBufferFrames = 0;
-			if (heldItem?.Data.Swing != null)
+			if (stamp && heldItem?.Data.Swing != null && itemCooldownFrames <= 0)
 			{
+				itemCooldownFrames = heldItem.Data.Cooldown;
 				BeginMove(heldItem.Data.Swing, MoveSlot.ForwardTilt);
 				return true;
 			}
@@ -166,6 +169,11 @@ public partial class Fighter
 		if (heldItem != null)
 		{
 			attackBufferFrames = 0;
+			// Still recovering from the last use: nothing, not a normal attack instead.
+			if (itemCooldownFrames > 0 && heldItem.Data.Use != ItemUse.Throw && heldItem.Data.Use != ItemUse.Consume)
+			{
+				return true;
+			}
 			BeginItemUse(input);
 			return true;
 		}
@@ -214,9 +222,17 @@ public partial class Fighter
 		return best;
 	}
 
+	/// <summary>Frames before the held item can be used again (ItemData.Cooldown).</summary>
+	int itemCooldownFrames;
+
 	void BeginItemUse(InputState input)
 	{
 		ItemData data = heldItem.Data;
+		if (data.Use is not (ItemUse.Throw or ItemUse.Consume or ItemUse.Open))
+		{
+			itemCooldownFrames = data.Cooldown;
+			if (heldItem.SwingsLeft > 0) heldItem.SwingsLeft--;
+		}
 		switch (data.Use)
 		{
 			case ItemUse.Swing:
@@ -376,7 +392,9 @@ public partial class Fighter
 	{
 		bool active = moveFrame > activeStart && moveFrame <= activeEnd;
 		if (active) QueryHits();
-		if (moveFrame == activeStart + 1)
+		// The thump and the print as the stamp meets the floor: the last of the active frames, once
+		// it is all the way down.
+		if (moveFrame == activeEnd)
 		{
 			SfxPlayer.At("stomp", GlobalPosition, 0.05f);
 			if (IsOnFloor())
@@ -405,15 +423,11 @@ public partial class Fighter
 		if (moveFrame >= currentMove.TotalFrames)
 		{
 			alreadyHitThisMove.Clear();
-			if (stampModeFrames > 0)
-			{
-				moveFrame = 0;
-			}
-			else
+			EndMove();
+			if (stampModeFrames <= 0)
 			{
 				heldItem?.UsedUp();
 				heldItem = null;
-				EndMove();
 			}
 		}
 		return true;
@@ -680,16 +694,23 @@ public partial class Fighter
 		heldItem = item;
 		item.PickedUp(this);
 		Match?.MoveChild(item, GetIndex());
+		if (item.Data.Use == ItemUse.Stamp) stampModeFrames = item.Data.Duration;
 		return true;
 	}
 
 	/// <summary>Knocked out of his hand - or, KO'd, gone.</summary>
-	void DropHeldItem(bool remove = false)
+	/// <summary>
+	/// Knocked out of his hand - or, KO'd, gone. Something made to be thrown flies off the way he
+	/// was hit, as if he had thrown it, and does whatever it does when it lands: a paint bucket
+	/// knocked loose still splashes (Eric, 2026-10-11). Anything else just drops.
+	/// </summary>
+	void DropHeldItem(bool remove = false, Vector2 knockedAway = default)
 	{
 		if (heldItem == null) return;
 		Item item = heldItem;
 		heldItem = null;
 		if (stampModeFrames > 0 || remove) item.Poof();
+		else if (item.Data.Use == ItemUse.Throw) item.Thrown(this, knockedAway * 0.7f + new Vector2(0.0f, -250.0f));
 		else item.Dropped();
 		stampModeFrames = 0;
 	}
@@ -732,7 +753,17 @@ public partial class Fighter
 		if (reflectFlashFrames > 0) reflectFlashFrames--;
 		if (boostFlashFrames > 0) boostFlashFrames--;
 		if (springFrames > 0) springFrames--;
-		if (stampModeFrames > 0) stampModeFrames--;
+		if (stampModeFrames > 0)
+		{
+			stampModeFrames--;
+			// Time up between stamps: the stamp is gone.
+			if (stampModeFrames == 0 && heldItem?.Data.Use == ItemUse.Stamp && State != FighterState.Attacking)
+			{
+				heldItem.UsedUp();
+				heldItem = null;
+			}
+		}
+		if (itemCooldownFrames > 0) itemCooldownFrames--;
 		crumbs.RemoveAll(c => fxFrames - c.frame > 24);
 		if (heldLayer != null && IsInstanceValid(heldLayer)) heldLayer.QueueRedraw();
 		prints.RemoveAll(p => fxFrames - p.frame > PrintFrames);
@@ -759,8 +790,9 @@ public partial class Fighter
 			SetGiantScale(Mathf.MoveToward(giantScale, 1.0f, (GiantScale - 1.0f) / GrowFrames));
 		}
 
-		// A swing item worn right down is gone.
-		if (heldItem != null && heldItem.Data.Uses > 0 && heldItem.UsesLeft <= 0 && State != FighterState.Attacking)
+		// A swing item worn right down, or used as many times as it can be, is gone.
+		if (heldItem != null && State != FighterState.Attacking
+			&& (heldItem.Data.Uses > 0 && heldItem.UsesLeft <= 0 || heldItem.SwingsLeft == 0))
 		{
 			heldItem.UsedUp();
 			heldItem = null;
@@ -805,6 +837,9 @@ public partial class Fighter
 			layer.Connect(CanvasItem.SignalName.Draw, new Callable(this, nameof(DrawHeldLayer)));
 		}
 		heldItem.DrawnBy = layer;
+
+		// A stamp hangs face down and is pressed down onto the floor by its pose.
+		if (heldItem.Data.Use == ItemUse.Stamp) return;
 
 		// Swung low on the ground, it comes down onto the floor and scrapes along it rather than
 		// through it: tipped up until no corner of the drawing is below the floor. Every corner,
@@ -880,6 +915,7 @@ public partial class Fighter
 	/// <summary>In front of him: everything items show happening to him.</summary>
 	void DrawItemOverlay(CanvasItem canvas)
 	{
+		DrawItemUses(canvas);
 		Vector2 top = new Vector2(0.0f, -bodySize.Y * 0.5f);
 		Vector2 feet = new Vector2(0.0f, bodySize.Y * 0.5f);
 
@@ -1088,6 +1124,28 @@ public partial class Fighter
 			Vector2 side = way.Orthogonal() * 14.0f;
 			canvas.DrawColoredPolygon(new[] { tip, back + side, back - side }, new Color(1, 1, 1, 0.9f));
 			canvas.DrawPolyline(new[] { tip, back + side, back - side, tip }, ink, 3.0f, true);
+		}
+	}
+
+	/// <summary>
+	/// Over his head while he holds something with a limited number of uses: a dot for each one
+	/// left, pale while it is still cooling down from the last - so how much is left, and when it
+	/// is ready again, can be seen at a glance.
+	/// </summary>
+	void DrawItemUses(CanvasItem canvas)
+	{
+		if (heldItem == null || State == FighterState.Eliminated) return;
+		int left = heldItem.SwingsLeft >= 0 ? heldItem.SwingsLeft
+			: heldItem.Data.Uses > 0 && heldItem.Data.Uses <= 10 ? heldItem.UsesLeft : -1;
+		if (left < 0) return;
+		bool ready = itemCooldownFrames <= 0;
+		const float Gap = 14.0f;
+		var start = new Vector2(-(left - 1) * Gap * 0.5f, -bodySize.Y * 0.5f - 34.0f);
+		for (int i = 0; i < left; i++)
+		{
+			Vector2 at = start + new Vector2(i * Gap, 0.0f);
+			canvas.DrawCircle(at, 6.5f, new Color(0.19f, 0.31f, 0.61f, ready ? 0.9f : 0.35f));
+			canvas.DrawCircle(at, 4.0f, ready ? heldItem.Data.Tint.Lerp(Colors.White, 0.2f) : new Color(1, 1, 1, 0.6f));
 		}
 	}
 
