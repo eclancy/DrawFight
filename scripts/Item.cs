@@ -962,6 +962,9 @@ public partial class Item : CharacterBody2D
 		DrawHeldOn(layer, toLayer);
 	}
 
+	/// <summary>How far a shield has turned side-on, 0 face on to 1 edge on.</summary>
+	float sideOn;
+
 	void DrawHeldOn(CanvasItem canvas, Transform2D toCanvas)
 	{
 		if (Art == null || Holder == null) return;
@@ -969,7 +972,18 @@ public partial class Item : CharacterBody2D
 		float swell = Holder.ItemCharge;
 		float s = ArtScale * (1.0f + 0.25f * swell);
 		float angle = HeldUp.Angle() + Mathf.Pi * 0.5f;
-		canvas.DrawSetTransformMatrix(toCanvas * new Transform2D(angle, new Vector2(heldFacing * s, s), 0.0f, Vector2.Zero));
+		// A shield held up turns side-on, edge toward the camera, so which way he is guarding reads
+		// at a glance: a narrow oval out in front of his fist, his hand on its back (Eric,
+		// 2026-10-11). Turning, it eases round rather than snapping.
+		float width = 1.0f;
+		Vector2 shift = Vector2.Zero;
+		if (Data.Use == ItemUse.Shield)
+		{
+			sideOn = Mathf.MoveToward(sideOn, Holder.ShieldRaised ? 1.0f : 0.0f, 0.2f);
+			width = Mathf.Lerp(1.0f, 0.26f, sideOn);
+			shift = new Vector2(heldFacing * Art.Size.X * s * width * 0.5f * sideOn, 0.0f);
+		}
+		canvas.DrawSetTransformMatrix(toCanvas * new Transform2D(angle, new Vector2(heldFacing * s * width, s), 0.0f, shift));
 		Texture2D texture = Art.Texture;
 		// Held up as a shield, a book is gripped at its middle, in front of his chest - not by
 		// the edge it is swung with, which held it up over his face.

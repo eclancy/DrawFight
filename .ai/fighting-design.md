@@ -484,7 +484,7 @@ needs a new kind of use or impact.
 - **The tinfoil shield** (a paper plate in kitchen foil - a shield and a mirror at once) is held
   up while attack or block is held: he crouches behind it, knees bent, and edges along at a
   fifth of his speed without turning. Hits from in front are blocked, without wearing his block
-  down, and anything shot at its front bounces straight back. Specials still work; grab throws
+  down, and anything shot at its front bounces straight back. Raised, it turns edge on - a narrow oval out in front of his fist - so you can see which way it faces. Specials still work; grab throws
   it. It replaced the sketchbook, which read as something to hit with (Eric, 2026-10-11).
 - **The rubber stamp** is pressed, not swung: for its eight seconds, each press of attack lifts
   it to his chest and presses it straight down onto the floor in front of him, hanging face down,
