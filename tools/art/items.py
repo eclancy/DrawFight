@@ -537,8 +537,7 @@ def marker():
 def foil_shield():
     """
     A paper plate wrapped in kitchen foil - the shield every kid has made - so it is a shield and
-    a mirror at once: crinkled silver, a fluted rim, a gleam across it, and a gold star stuck on
-    the middle. Seen face on, held up in front of him.
+    a mirror at once: crinkled silver, a fluted rim and a gleam across it. Seen face on, held up in front of him.
     """
     cx = cy = 84.0
     rim = []
@@ -564,10 +563,9 @@ def foil_shield():
         a = 2 * math.pi * (i + 0.5) / 18
         s += L('M %s,%s L %s,%s' % (num(cx + 58 * math.cos(a)), num(cy + 58 * math.sin(a)),
                                     num(cx + 72 * math.cos(a)), num(cy + 72 * math.sin(a))), 2.5, 'silver_dark')
-    # The gleam, and a star stuck on the middle.
+    # The gleam.
     s += L('M 44,62 C 50,46 62,38 78,34', 10, 'white')
     s += L('M 40,80 C 40,76 41,73 42,70', 8, 'white')
-    s += P(star(cx, cy + 4, 24, 11), 'gold', 'wi')
     return s, (168, 168), (cx, cy), (cx, cy)
 
 
