@@ -22,7 +22,7 @@ public partial class Fighter
 
 	public Item HeldItem => heldItem;
 
-	/// <summary>In the middle of the held item's own swing - a sketchbook bonk, not held up as a shield.</summary>
+	/// <summary>In the middle of the held item's own swing.</summary>
 	public bool SwingingHeldItem => State == FighterState.Attacking && heldItem != null && currentMove == heldItem.Data.Swing;
 
 	/// <summary>The bottom of his body box: where his feet are.</summary>
@@ -95,6 +95,13 @@ public partial class Fighter
 	/// <summary>How far a paint tube has been squeezed, 0 to 1, for its swelling.</summary>
 	public float ItemCharge { get; private set; }
 
+	/// <summary>A shield held up, with attack or block (ItemUse.Shield).</summary>
+	bool shieldRaised;
+	public bool ShieldRaised => shieldRaised;
+
+	/// <summary>How fast he edges along behind a shield, of his run.</summary>
+	const float ShieldWalk = 0.22f;
+
 	/// <summary>The scissors are mid-snip, open.</summary>
 	public bool ItemSnipping => State == FighterState.Attacking && currentMove == heldItem?.Data.Swing && heldItem?.Data.Id == "scissors"
 		&& moveFrame >= currentMove.StartupFrames - 2 && moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
@@ -166,6 +173,14 @@ public partial class Fighter
 
 		if (attackBufferFrames <= 0 || specialBufferFrames > 0) return false;
 
+		// A shield is held up while attack is held, not swung: the press only raises it, and he
+		// carries on moving (and can still use his specials).
+		if (heldItem != null && heldItem.Data.Use == ItemUse.Shield)
+		{
+			attackBufferFrames = 0;
+			return false;
+		}
+
 		if (heldItem != null)
 		{
 			attackBufferFrames = 0;
@@ -236,8 +251,9 @@ public partial class Fighter
 		switch (data.Use)
 		{
 			case ItemUse.Swing:
-			case ItemUse.Shield:
 				BeginMove(data.Swing, MoveSlot.ForwardTilt);
+				break;
+			case ItemUse.Shield:
 				break;
 			case ItemUse.Spray:
 				BeginMove(data.Swing, MoveSlot.ForwardTilt);
@@ -672,10 +688,10 @@ public partial class Fighter
 		if (!IsOnFloor()) Velocity = new Vector2(Mathf.Lerp(Velocity.X, push.X, 0.1f), Velocity.Y);
 	}
 
-	/// <summary>Holding a sketchbook up toward where a shot is coming from: it bounces back.</summary>
+	/// <summary>Holding a shield up toward where a shot is coming from: it bounces back.</summary>
 	public bool ReflectsFrom(Vector2 from)
 	{
-		if (heldItem == null || heldItem.Data.Use != ItemUse.Shield) return false;
+		if (!shieldRaised || heldItem == null || heldItem.Data.Use != ItemUse.Shield) return false;
 		if (State == FighterState.Hitstun) return false;
 		return Mathf.Sign(from.X - GlobalPosition.X) == Facing;
 	}
@@ -838,6 +854,13 @@ public partial class Fighter
 		}
 		heldItem.DrawnBy = layer;
 
+		// A shield is held from behind: it goes in front of his fist and him, not under the hand.
+		if (heldItem.Data.Use == ItemUse.Shield)
+		{
+			heldItem.DrawnBy = null;
+			if (Match != null && heldItem.GetIndex() < GetIndex()) Match.MoveChild(heldItem, -1);
+		}
+
 		// A stamp hangs face down and is pressed down onto the floor by its pose.
 		if (heldItem.Data.Use == ItemUse.Stamp) return;
 
@@ -864,7 +887,10 @@ public partial class Fighter
 		if (heldItem != null && IsInstanceValid(heldItem) && heldItem.DrawnBy == heldLayer) heldItem.DrawHeldInto(heldLayer);
 	}
 
-	/// <summary>Not swinging it, he holds it up in front of him, not trailing along the floor.</summary>
+	/// <summary>
+	/// Not swinging it, he holds it up in front of him, not trailing along the floor - and a shield
+	/// held up goes out in front of his chest, between him and whoever he faces.
+	/// </summary>
 	void HoldItemPose()
 	{
 		if (heldItem == null || rig == null || !rig.Loaded) return;
@@ -872,7 +898,8 @@ public partial class Fighter
 		Vector2? shoulder = rig.JointGlobal(RigBone.ArmFrontUpper);
 		float length = rig.ArmLength(RigBone.ArmFrontUpper, RigBone.ArmFrontLower);
 		if (shoulder == null || length <= 0.0f) return;
-		rig.ReachArm(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, shoulder.Value + new Vector2(Facing * length * 0.62f, length * 0.42f), 0.85f);
+		Vector2 hold = shieldRaised ? new Vector2(Facing * length * 0.8f, length * 0.15f) : new Vector2(Facing * length * 0.62f, length * 0.42f);
+		rig.ReachArm(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, shoulder.Value + hold, shieldRaised ? 1.0f : 0.85f);
 	}
 
 	/// <summary>Cut out: a paper doll turning over and over as it flutters, edge-on and then flat.</summary>
@@ -1019,7 +1046,7 @@ public partial class Fighter
 			Item.DrawStarOn(canvas, new Vector2(0.0f, -bodySize.Y * 0.05f), 22.0f, new Color(0.95f, 0.35f, 0.3f, 0.85f * a));
 		}
 
-		// The sketchbook bouncing something back: a flash where it struck the page.
+		// The shield bouncing something back, or taking a hit: a flash where it struck the foil.
 		if (reflectFlashFrames > 0)
 		{
 			Vector2 at = canvas is Node2D n ? n.ToLocal(reflectAt) : Vector2.Zero;

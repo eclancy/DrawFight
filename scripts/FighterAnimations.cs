@@ -952,6 +952,15 @@ public static class FighterAnimations
 		(AFU, -66), (AFL, -6), (ABU, -60), (ABL, -6),
 		(LFU, -44), (LFL, 30), (LBU, 36), (LBL, 30));
 
+	/// <summary>
+	/// Crouched behind a held-up shield: knees bent, head down behind it, the shield arm out in
+	/// front at his chest and the other hand tucked behind it (Fighter.shieldRaised).
+	/// </summary>
+	public static readonly Pose ShieldCrouch = new Pose(new Vector2(-2, 16),
+		(Torso, -10), (Head, 10),
+		(AFU, -70), (AFL, -50), (ABU, -40), (ABL, -70),
+		(LFU, -40), (LFL, 56), (LBU, 26), (LBL, 50));
+
 	// Stamping: the fist up by his face, then pushed straight down to the floor in front, bent
 	// over it with the knees giving.
 	static readonly Pose StampDownWindup = new Pose(new Vector2(0, -4),

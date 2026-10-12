@@ -462,7 +462,7 @@ public partial class Item : CharacterBody2D
 			Rect2 body = f.BodyRect();
 			if (!body.Grow(Radius).HasPoint(GlobalPosition)) continue;
 
-			// A sketchbook held up toward it sends it straight back the way it came.
+			// A shield held up toward it sends it straight back the way it came.
 			if (f.ReflectsFrom(GlobalPosition))
 			{
 				Velocity = new Vector2(-Velocity.X, Mathf.Min(Velocity.Y, -200.0f));

@@ -462,7 +462,7 @@ needs a new kind of use or impact.
 |---|---|
 | swing | Giant Pencil, Big Pink Eraser, Paint Roller, Metre Stick, Paintbrush, Safety Scissors, Giant Rubber Stamp |
 | throw | Paint Bucket, Crayon Box, Glue Bottle, Ink Bottle, Paper Airplane, Scrunched-Up Drawing, Paint Palette |
-| use | Spray Paint Can, Paint Tube Blaster, Airbrush, Magic Marker, Sketchbook |
+| use | Spray Paint Can, Paint Tube Blaster, Airbrush, Magic Marker, Tinfoil Shield |
 | trap | Glitter Bomb, Paint Balloon, Thumbtacks, Rinse-Water Cup, Pop-Up Book |
 | summon | Pencil Case (spills two or three more), Blank Canvas (paints another fighter, who fights for you) |
 | boost | Gold Star Sticker, White-Out, Magnifying Glass, Tracing Paper |
@@ -481,6 +481,11 @@ needs a new kind of use or impact.
   times (`ItemData.Swings`, or its `Uses` of paint or shots) and has a wait between uses
   (`Cooldown`): the paintbrush six swings, 40 frames apart. Dots over his head count what is
   left, pale while it cools down; pressing attack before then does nothing.
+- **The tinfoil shield** (a paper plate in kitchen foil - a shield and a mirror at once) is held
+  up while attack or block is held: he crouches behind it, knees bent, and edges along at a
+  fifth of his speed without turning. Hits from in front are blocked, without wearing his block
+  down, and anything shot at its front bounces straight back. Specials still work; grab throws
+  it. It replaced the sketchbook, which read as something to hit with (Eric, 2026-10-11).
 - **The rubber stamp** is pressed, not swung: for its eight seconds, each press of attack lifts
   it to his chest and presses it straight down onto the floor in front of him, hanging face down,
   printing its star.

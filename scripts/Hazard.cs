@@ -620,7 +620,7 @@ public partial class Hazard : Node2D
 
 			if (!Touches(other.BodyRect(), out Vector2 nearest)) continue;
 
-			// A sketchbook held up toward a shot sends it straight back, his now.
+			// A shield held up toward a shot sends it straight back, his now.
 			if (move.Special == SpecialKind.Projectile && !move.Beam && other.ReflectsFrom(GlobalPosition))
 			{
 				owner = other;

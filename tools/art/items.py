@@ -534,6 +534,43 @@ def marker():
     return s, (90, 232), (45, 186), (45, 10)
 
 
+def foil_shield():
+    """
+    A paper plate wrapped in kitchen foil - the shield every kid has made - so it is a shield and
+    a mirror at once: crinkled silver, a fluted rim, a gleam across it, and a gold star stuck on
+    the middle. Seen face on, held up in front of him.
+    """
+    cx = cy = 84.0
+    rim = []
+    for i in range(36):
+        a = 2 * math.pi * i / 36
+        r = 76.0 if i % 2 == 0 else 71.0
+        rim.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    s = P(smooth(rim), 'silver')
+    s += P(ellipse(cx, cy, 56), 'silver_light', 'wi')
+    # Crinkles in the foil: short zigzags, the same every time.
+    rnd = random.Random(77)
+    for i in range(14):
+        a = rnd.uniform(0, 2 * math.pi)
+        r0 = rnd.uniform(14, 48)
+        x, y = cx + r0 * math.cos(a), cy + r0 * math.sin(a)
+        pts = [(x, y)]
+        for k in range(3):
+            x += rnd.uniform(-9, 9)
+            y += rnd.uniform(-9, 9)
+            pts.append((x, y))
+        s += L(poly(pts, False), 2.5, 'silver_dark')
+    for i in range(18):
+        a = 2 * math.pi * (i + 0.5) / 18
+        s += L('M %s,%s L %s,%s' % (num(cx + 58 * math.cos(a)), num(cy + 58 * math.sin(a)),
+                                    num(cx + 72 * math.cos(a)), num(cy + 72 * math.sin(a))), 2.5, 'silver_dark')
+    # The gleam, and a star stuck on the middle.
+    s += L('M 44,62 C 50,46 62,38 78,34', 10, 'white')
+    s += L('M 40,80 C 40,76 41,73 42,70', 8, 'white')
+    s += P(star(cx, cy + 4, 24, 11), 'gold', 'wi')
+    return s, (168, 168), (cx, cy), (cx, cy)
+
+
 def sketchbook():
     """A closed spiral-bound sketchbook standing up, a smiley drawn on the cover."""
     s = P(rect(22, 14, 138, 178, 4), 'cream')
@@ -771,7 +808,7 @@ ITEMS = [
     ('paint_tube', paint_tube()),
     ('airbrush', airbrush()),
     ('marker', marker()),
-    ('sketchbook', sketchbook()),
+    ('foil_shield', foil_shield()),
     ('glitter_bomb', glitter_bomb()),
     ('paint_balloon', paint_balloon()),
     ('thumbtacks', thumbtacks()), ('tack', tack()),

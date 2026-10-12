@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://uekvaga3m0wg"
-path="res://.godot/imported/sketchbook.png-8aae5b84988be173be73d05a0721e76c.ctex"
+uid="uid://lo1eh3taxbpd"
+path="res://.godot/imported/foil_shield.png-09a445f631c820a62efb9e2e0445af28.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/items/sketchbook.png"
-dest_files=["res://.godot/imported/sketchbook.png-8aae5b84988be173be73d05a0721e76c.ctex"]
+source_file="res://assets/items/foil_shield.png"
+dest_files=["res://.godot/imported/foil_shield.png-09a445f631c820a62efb9e2e0445af28.ctex"]
 
 [params]
 

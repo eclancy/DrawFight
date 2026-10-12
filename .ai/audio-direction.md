@@ -73,7 +73,7 @@ swing is a move like any other and gets its whoosh from the rules. Their own: `i
 `splash` for paint and water, `boing` for the pop-up book, `stomp` for the rubber stamp,
 `explosion` for the glitter bomb, `creak` for the thumbtacks, `special_volley` for the crayons,
 `special_shot` for the paint tube, `special_build` for the marker's platform, `clang` for the
-sketchbook sending something back, and the resize, blink and glint sounds for the boosts.
+tinfoil shield sending something back or taking a hit, and the resize, blink and glint sounds for the boosts.
 
 The whoosh starts 4 frames early on purpose. A whoosh is loudest about a third of the way through,
 so starting early puts the rush of air on the hit, not after it.

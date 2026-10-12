@@ -22,7 +22,10 @@ public enum ItemUse
 	/// <summary>Each press draws a platform, for a few seconds. The magic marker.</summary>
 	Draw,
 
-	/// <summary>While held, anything thrown at its front bounces back; attack bonks with it. The sketchbook.</summary>
+	/// <summary>
+	/// Held up with attack or block: he crouches behind it and edges along, hits from the front
+	/// are blocked and anything shot at its front bounces back. The tinfoil shield.
+	/// </summary>
 	Shield,
 
 	/// <summary>Takes over: he stamps, over and over, and can do nothing else for a while. The rubber stamp.</summary>
@@ -137,7 +140,7 @@ public partial class ItemData : Resource
 	/// <summary>A boost's size: how much damage it heals.</summary>
 	[Export] public float Amount { get; set; } = 0.0f;
 
-	/// <summary>Swung with attack - the swing items, the sketchbook's bonk and the stamp.</summary>
+	/// <summary>Swung with attack - the swing items and the stamp.</summary>
 	public MoveData Swing;
 
 	/// <summary>What it does to whoever it hits when thrown, splashes, explodes or trips them.</summary>

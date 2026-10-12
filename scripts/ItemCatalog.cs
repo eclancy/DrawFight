@@ -244,10 +244,9 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "sketchbook", DisplayName = "Sketchbook", Use = ItemUse.Shield, Size = 95.0f, Swings = 6, Cooldown = 30,
-			Blurb = "A shield: held up in front of you, anything shot or thrown at you bounces straight back. Attack bonks with it.",
-			Swing = Swing("Sketchbook Bonk", AttackAnim.Slash, 6, 3, 14, 6.0f, 30.0f, 0.4f, 40.0f, 46.0f),
-			Hit = Hit("Thrown Sketchbook", 7.0f, 30.0f, 0.45f, 40.0f),
+			Id = "foil_shield", DisplayName = "Tinfoil Shield", Use = ItemUse.Shield, Size = 125.0f,
+			Blurb = "Hold attack (or block) to crouch behind it. Hits from the front are blocked, and anything shot at you bounces straight back.",
+			Hit = Hit("Thrown Shield", 7.0f, 30.0f, 0.45f, 40.0f),
 		},
 
 		// --- Traps and explosives ----------------------------------------------------

@@ -897,6 +897,12 @@ public partial class Fighter : CharacterBody2D
 		// A stretched kick: the leg pointed at the hit, as well as long enough to reach it.
 		float kick = LegStretchAmount();
 		if (kick > 0.0f) rig.AimFrontLeg(CurrentHitboxCentre(), kick);
+		if (shieldRaised && State != FighterState.Attacking)
+		{
+			rig.SetStanding(false);
+			rig.HandOnHip = false;
+			rig.ApplyDirect(FighterAnimations.ShieldCrouch, 0.5f);
+		}
 		HoldItemPose();
 	}
 
@@ -992,7 +998,13 @@ public partial class Fighter : CharacterBody2D
 		if (input.AttackPressed) attackBufferFrames = Tuning.AttackBufferFrames;
 		if (input.SpecialPressed) specialBufferFrames = Tuning.AttackBufferFrames;
 
+		// With a shield in hand, attack or block holds it up instead of the usual block.
+		bool holdsShield = heldItem != null && heldItem.Data.Use == ItemUse.Shield;
+		shieldRaised = holdsShield && (input.AttackHeld || input.BlockHeld)
+			&& (State == FighterState.Grounded || State == FighterState.Airborne);
+
 		bool wantsBlock = input.BlockHeld
+			&& !holdsShield
 			&& State == FighterState.Grounded
 			&& dodgeFrames == 0
 			&& blockReleaseLagFrames == 0;
@@ -1077,6 +1089,14 @@ public partial class Fighter : CharacterBody2D
 			Velocity = new Vector2(Velocity.X, -Data.JumpForce * Tuning.JumpScale * JumpStick);
 			jumpStretchFrames = JumpStretchFrames;
 			State = FighterState.Airborne;
+			return;
+		}
+
+		// Behind a shield: edging along slowly, still facing the way he was, crouched behind it.
+		if (shieldRaised)
+		{
+			float edge = Mathf.Abs(input.Move.X) > MoveDeadzone ? input.Move.X * RunSpeed * ShieldWalk : 0.0f;
+			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, edge, GroundAcceleration * dt), Velocity.Y);
 			return;
 		}
 
@@ -2529,7 +2549,9 @@ public partial class Fighter : CharacterBody2D
 		ReleaseGrabbed();
 		heldBy = null;
 
-		bool blocked = IsBlocking && !move.Unblockable;
+		// A shield held up takes a hit from in front like a block - without wearing the block down.
+		bool shieldBlocked = shieldRaised && !move.Unblockable && attackerFacing == -Facing;
+		bool blocked = (IsBlocking || shieldBlocked) && !move.Unblockable;
 
 		// A blast in every direction sends people away from it, whichever side they are on.
 		if (move.LaunchAway && attacker != null)
@@ -2620,7 +2642,8 @@ public partial class Fighter : CharacterBody2D
 
 		Match.OnHitLanded(attacker, this, contactPoint, knockback, damage, blocked);
 
-		if (blocked) WearShield(move.Damage * damageScale, contactPoint);
+		if (blocked && !shieldBlocked) WearShield(move.Damage * damageScale, contactPoint);
+		if (shieldBlocked) ShowReflect(contactPoint);
 	}
 
 	// --- The shield wears down ------------------------------------------------------------
