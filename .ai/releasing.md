@@ -58,10 +58,12 @@ straight to the title.
 ## Making a release
 
 ```sh
-bash tools/release/release.sh 0.2.0
+bash tools/release/release.sh 0.2.0 "New fighter: DoomBot. Ledge grabs are easier."
 ```
 
-This needs a clean working tree. The script sets the version, builds, exports, packages, commits
+The quoted text is optional: it is what players see under "What's new" on
+`ecec.dev/games/drawfight`, so write it for them. Leave it out and the release just says how to
+download. This needs a clean working tree. The script sets the version, builds, exports, packages, commits
 "Release v0.2.0", tags it, pushes, and runs `gh release create`. It takes about a minute.
 
 Version numbers: bump the last number for fixes and balance changes, and the middle one for a new

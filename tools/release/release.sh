@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Publish a new version of DrawFight. Every copy of the game picks it up the next time it starts.
 #
-#   bash tools/release/release.sh 0.2.0
+#   bash tools/release/release.sh 0.2.0 ["What changed, for players"]
+#
+# The optional second argument heads the release notes, and ecec.dev/games/drawfight shows it
+# under "What's new". The download instructions are always appended below it.
 #
 # Commits the version bump, tags it, exports the Windows build, and makes a GitHub Release with
 # the full zip, the small patch zip and version.json. ecec.dev/drawfight/version.json redirects
@@ -10,8 +13,10 @@
 set -euo pipefail
 
 VERSION="${1:-}"
+CHANGES="${2:-}"
+HOW_TO="Download **DrawFight-windows.zip**, unzip it, and run DrawFight.exe. It keeps itself up to date from then on. Download page: https://ecec.dev/drawfight/download"
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-	echo "usage: bash tools/release/release.sh X.Y.Z" >&2
+	echo "usage: bash tools/release/release.sh X.Y.Z [\"what changed\"]" >&2
 	exit 1
 fi
 
@@ -51,6 +56,8 @@ git push -q origin HEAD "v$VERSION"
 gh release create "v$VERSION" \
 	build/release/DrawFight-windows.zip build/release/DrawFight-patch.zip build/release/version.json \
 	--title "DrawFight $VERSION" \
-	--notes "Download **DrawFight-windows.zip**, unzip it, and run DrawFight.exe. It keeps itself up to date from then on. Download page: https://ecec.dev/drawfight/download"
+	--notes "${CHANGES:+$CHANGES
+
+}$HOW_TO"
 
 echo "Released v$VERSION - every copy updates the next time it starts."
