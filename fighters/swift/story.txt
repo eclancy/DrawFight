@@ -1,0 +1,18 @@
+# Flambe's story: The Headliner. How a script reads is at the top of fighters/doombot/story.txt.
+# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+
+== roast
+player (hot): The fridge is not yours, mon ami.
+player: Even if you do look so alike that I almost grabbed your handle to put the butter away.
+camera on doombot zoom 1.35 fast
+doombot look angry
+wait 30
+doombot (slam): THAT. IS. AN. ARM.
+camera two player doombot
+
+== answer
+player look happy
+player (happy): You know what fixes a meltdown, mon ami? Dessert.
+doombot: ...DOOMBOT DOES NOT EAT.
+player: Then you can hold the lighter.
+doombot look happy

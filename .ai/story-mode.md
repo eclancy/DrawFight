@@ -1,8 +1,9 @@
 # Story mode
 
-Every fighter fighting for a place on the fridge. Planned 2026-10-11 from Eric's brief; **not
-built yet** - this is the plan to build from, and the stories to build. Read it before writing or
-changing any story.
+Every fighter fighting for a place on the fridge. Planned 2026-10-11 from Eric's brief; **being
+built** - the scene runner, the script format and the DoomBot finale went in 2026-10-15 ("What
+has to be built" says what is done). This is the plan to build from, and the stories to build.
+Read it before writing or changing any story.
 
 ## The premise
 
@@ -301,14 +302,33 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
 
 In order, each step usable before the next:
 
-1. **The scene runner.** A script drives a match: actors through a scripted input source (the
-   same seam as the CPU), the camera through direction overrides on `GameCamera`, speech bubbles
-   and the narrator on an overlay, items and effects through the calls the match already has,
-   music cues. Skip and retry. One scene end to end first: the DoomBot finale.
-2. **The script format.** One plain-text script per fighter, `fighters/<name>/story.txt`, beside
-   their sheet: their opening, challenger scenes, pair scenes, roast and ending. Readable enough
-   for Eric to change a line himself. Every script is checked at startup by `RegressionChecks`
-   (an unknown fighter, item, pose or sound fails loudly), the way up-specials are.
+1. **The scene runner** - **built, 2026-10-15.** `StoryDirector` drives a match: actors through
+   `ScriptedInput` (the same `IInputSource` seam as a pad or the CPU), the camera through
+   `GameCamera.FrameOn`/`CutTo`, bubbles, the narrator strip and the bars on `StoryOverlay`, and
+   DoomBot's laser-written plan on `StoryBoard` (on the fridge, behind the fighters). A story
+   match opens on its scene instead of the 3-2-1; `fight` hands the fighters back (the player to
+   their pad, everyone else to the CPU) and the fight starts on FIGHT!, in place. Won, the scene
+   after plays where they stand (a KO'd loser is put back, `Fighter.ReviveForScene`); lost, the
+   chapter starts again. **A** hurries a line; **holding B** skips the scene by running it at
+   eight times speed under a sheet of paper, so everyone still ends up where the scene leaves
+   them. The DoomBot finale and the scene after it play end to end for all five fighters.
+2. **The script format** - **built, 2026-10-15.** One plain-text script per fighter,
+   `story.txt` beside their `rig.json` (Flambé's is `fighters/swift/`, Lugnut's `fighters/lug/`):
+   their opening, challenger scenes, pair scenes, roast and ending, each under an `== name`
+   heading. The whole language is written out at the top of `fighters/doombot/story.txt`, which
+   also holds the shared finale (`== finale`, `== beaten`); each fighter's own file has their
+   `== roast` and `== answer`, pulled in with `include player roast`. Every line waits until it is
+   done; a line ending in `&` lets the next start alongside it. `StoryScript.Check` reads every
+   script at startup (`RegressionChecks: stories`): an unknown fighter, verb, face, mood,
+   picture, item or sound, or an include with nothing to include, fails loudly. The scripts ship
+   in the build through the export preset's include filter (`fighters/*/story.txt`).
+   Talking is a blip per few letters, the one generated `voice` sound pitched per fighter
+   (`FighterData.VoicePitch`). The text moods are in: shout (a burst, shaking, a thump), whisper
+   (small, grey, a dotted bubble), scared (wobbling letters), happy (bouncing), hot (flickering
+   orange) and slam (a word at a time, each with a clang and a shake, red when he is hot). So are
+   picture bubbles (`StoryPictures`: crayon doodles in the UI's own hand).
+   **Not yet:** a chapter list per fighter - `StoryRun.For` only knows the finale so far - and
+   the openings, challenger scenes, pair scenes and endings themselves.
 3. **Feeling.** Faces (eyes and mouths cut from every drawing, in every fight too) and the paper
    turn - built first, 2026-10-11 - then the emotion poses and head marks; text moods and
    per-fighter voices; story sounds; three new music pieces (story, DoomBot, victory sting) -
@@ -320,12 +340,22 @@ In order, each step usable before the next:
 5. **CPU difficulty,** so a story ramps from gentle to the boss. Boss rules for DoomBot: more
    stocks, starting heat, the last-stock phase, MiniBots.
 6. **The story screens.** Main menu Story → pick a fighter (with gold stars for finished
-   stories) → the fridge as a chapter map, a magnet per fight → play. Progress saved.
+   stories) → the fridge as a chapter map, a magnet per fight → play. Progress saved. *So far:*
+   Story on the main menu opens the fighter select screen as "Whose story?" (one player, no CPU;
+   DoomBot cannot be picked until his own story exists), and a finished story goes back to the
+   main menu. No map, no saving, no stars yet.
 7. **Write all six stories,** then a full play through each, watched, not just built.
 
-Checking it: `--story=<fighter>` boots into a fighter's story, `--story=<fighter>:<n>` into one
-scene; scenes screenshot like matches (`--shot=N`). Pacing and jokes have to be watched -
-a build verifies none of it.
+Checking it: `--story=<fighter>` boots into a fighter's story, `--story=<fighter>:<n>` into its
+chapter n (from 0), and `--story=<fighter>:<n>:after` into the scene after that chapter's fight;
+`--storyselect` opens "Whose story?". `--shots=60,400,900` takes a screenshot at each of those
+frames, then quits - a scene is checked by looking at it all the way through. Pacing and jokes
+have to be watched; a build verifies none of it.
+
+What the finale cannot show yet: the fridge door is the stage, so "the camera pans from DoomBot
+to the fridge beside him - the same shape" pans to the door's handle, not a whole fridge; and
+the pile of taken-down drawings behind him, the nearly bare fridge and the red eye opening in the
+dark are not drawn. Each wants a stage prop or a story-only stage state.
 
 ## Open questions
 

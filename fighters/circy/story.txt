@@ -1,0 +1,20 @@
+# Circy's story: First on the Fridge. How a script reads is at the top of fighters/doombot/story.txt.
+# Circy talks in pictures for now - Elim never said how he talks, and his real story is Elim's
+# to tell (.ai/story-mode.md, "The two kids' fighters").
+# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+
+== roast
+camera on player zoom 1.2
+player: [fridge] [=] [doombot]
+camera on doombot zoom 1.3 fast
+wait 40
+doombot: ...IS THAT. AN EQUALS SIGN.
+wait 30
+doombot look angry
+doombot (shout): I AM NOT A FRIDGE.
+
+== answer
+player: [doombot] [heart]
+wait 30
+doombot look happy
+doombot: ...

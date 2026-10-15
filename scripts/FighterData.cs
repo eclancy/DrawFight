@@ -13,6 +13,12 @@ public partial class FighterData : Resource
 {
 	[Export] public string DisplayName { get; set; } = "Fighter";
 
+	/// <summary>
+	/// How high his voice blips while a story types out what he says: the one "voice" sound,
+	/// pitched per fighter - DoomBot low, Triguy high (.ai/story-mode.md, text moods and voices).
+	/// </summary>
+	[Export] public float VoicePitch { get; set; } = 1.0f;
+
 	/// <summary>M1 placeholder tint. Replaced by the rigged drawing at M2.</summary>
 	[Export] public Color PlaceholderColor { get; set; } = new Color(0.9f, 0.9f, 0.9f);
 
@@ -215,6 +221,7 @@ public partial class FighterData : Resource
 		{
 			// Flambe: a fire punk who is also, somehow, a French chef.
 			DisplayName = "Flambé",
+			VoicePitch = 1.12f,
 			PlaceholderColor = new Color(0.36f, 0.72f, 0.98f),
 			Weight = WeightClass.Light,
 			RunSpeed = 980.0f,
@@ -243,6 +250,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "Lugnut",
+			VoicePitch = 0.78f,
 			PlaceholderColor = new Color(0.97f, 0.55f, 0.29f),
 			Weight = WeightClass.Heavy,
 			RunSpeed = 740.0f,
@@ -281,6 +289,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "EdgeLord",
+			VoicePitch = 0.92f,
 			Artist = "Eric",
 			PlaceholderColor = new Color(0.81f, 0.15f, 0.15f),
 			Weight = WeightClass.Light,
@@ -323,6 +332,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "DoomBot",
+			VoicePitch = 0.6f,
 			Artist = "Eric",
 			PlaceholderColor = new Color(0.86f, 0.28f, 0.26f),
 			Weight = WeightClass.Heavy,
@@ -373,6 +383,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "Circy",
+			VoicePitch = 1.3f,
 			Artist = "Elim",
 			PlaceholderColor = new Color(0.98f, 0.86f, 0.30f),
 			Weight = WeightClass.Medium,
@@ -414,6 +425,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "Triguy",
+			VoicePitch = 1.45f,
 			Artist = "Elim",
 			// The blue Elim drew his tears and his trampoline in.
 			PlaceholderColor = new Color(0.10f, 0.40f, 1.0f),

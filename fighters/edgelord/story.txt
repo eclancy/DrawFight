@@ -1,0 +1,18 @@
+# EdgeLord's story: A Cut Above. How a script reads is at the top of fighters/doombot/story.txt.
+# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+
+== roast
+player look smug
+player: Looking like the fridge doesn't make it yours.
+player: You're not cool, DoomBot.
+wait 40
+camera on player zoom 1.3 fast
+player: You're just cold.
+
+== answer
+player look normal
+player: ...Fine.
+wait 30
+player turn
+player look smug
+player: Behind me.

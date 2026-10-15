@@ -25,6 +25,13 @@ public partial class MatchManager : Node2D
 	public bool[] CpuPlayers = { false, false };
 	CpuInputSource[] cpus;
 
+	/// <summary>
+	/// A story chapter, or null for a versus match. A story match opens on its scene instead of
+	/// the 3-2-1, and the fight starts in place when the scene says so (StoryDirector).
+	/// </summary>
+	public StoryRun Story;
+	StoryDirector director;
+
 	Stage stage;
 	GameCamera camera;
 	HitFx fx;
@@ -179,6 +186,44 @@ public partial class MatchManager : Node2D
 		hud.Build(Fighters);
 
 		countdownFrames = CountdownStepFrames * 3 + FightBannerFrames;
+
+		if (Story?.Chapter != null)
+		{
+			countdownFrames = 0;
+			director = new StoryDirector();
+			AddChild(director);
+			director.Setup(this, Story, stage, camera);
+			if (Story.StartAfter && Story.Chapter.After != "") director.PlayAfter();
+			else director.Play(Story.Chapter.Before);
+			Story.StartAfter = false;
+		}
+	}
+
+	/// <summary>The HUD is put away while a story scene plays.</summary>
+	public void ShowHud(bool on) => hud.Visible = on;
+
+	/// <summary>
+	/// The scene before the fight is over: the fight starts where everyone is standing, on
+	/// FIGHT! - no 3-2-1, nobody carrying damage in, the CPU and the player back on their sticks.
+	/// </summary>
+	public void BeginStoryFight()
+	{
+		foreach (Fighter fighter in Fighters) fighter.ReadyForFight();
+		ShowHud(true);
+		cpus = null;
+		AssignControllers();
+		countdownFrames = FightBannerFrames;
+	}
+
+	/// <summary>The top of the ground under x: the lowest floor there, so a scene stands people on the stage, not a platform.</summary>
+	public float FloorAt(float x)
+	{
+		float best = float.NegativeInfinity;
+		foreach (Rect2 platform in stage.Platforms)
+		{
+			if (x >= platform.Position.X && x <= platform.End.X) best = Mathf.Max(best, platform.Position.Y);
+		}
+		return float.IsNegativeInfinity(best) ? stage.Platforms[0].Position.Y : best;
 	}
 
 	void SpawnFighter(FighterData data, int index)
@@ -207,6 +252,13 @@ public partial class MatchManager : Node2D
 	/// <summary>Rebuilds every player's controller. Called on hot-plug by GameRoot.</summary>
 	public void ReassignControllers()
 	{
+		// Mid-scene the script has the fighters; it only needs to hear the new pad.
+		if (director != null && director.InScene)
+		{
+			director.RefreshControllers();
+			return;
+		}
+
 		// A CPU keeps its slot through hot-plugging: plugging in a pad should not replace the
 		// computer player, and the humans still get pads in connection order.
 		cpus ??= new CpuInputSource[Fighters.Count];
@@ -293,6 +345,7 @@ public partial class MatchManager : Node2D
 			countdownFrames--;
 		}
 		if (matchOver) return;
+		if (director != null && director.InScene) return;
 		if (countdownFrames <= FightBannerFrames) TickItems();
 
 		foreach (Fighter fighter in Fighters)
@@ -355,6 +408,7 @@ public partial class MatchManager : Node2D
 			MusicPlayer.Stop();
 			SfxPlayer.Ui("game_set");
 			winner = last != null ? $"{last.Data.DisplayName} wins!" : "Draw!";
+			director?.OnFightOver(last);
 		}
 	}
 
@@ -372,7 +426,8 @@ public partial class MatchManager : Node2D
 			return;
 		}
 
-		camera.FrameFighters(Fighters, (float)delta);
+		if (director != null && director.DrivesCamera) director.DriveCamera((float)delta);
+		else camera.FrameFighters(Fighters, (float)delta);
 
 		if (shotAfterFrames > 0 && framesElapsed >= shotAfterFrames)
 		{
@@ -390,7 +445,9 @@ public partial class MatchManager : Node2D
 		if (matchOver)
 		{
 			hud.SetCountdown("", Colors.White, 0.0f, 0.0f);
-			hud.SetBanner(winner, "Press Start to pick fighters");
+			// In a story the next scene says who won.
+			if (director != null) hud.SetBanner("");
+			else hud.SetBanner(winner, "Press Start to pick fighters");
 			return;
 		}
 
@@ -541,10 +598,11 @@ public partial class MatchManager : Node2D
 	{
 		if (matchOver)
 		{
-			GameRoot.Instance.GoCharacterSelect();
+			if (director == null) GameRoot.Instance.GoCharacterSelect();
 			return;
 		}
 		if (pauseMenu != null) return;
+		if (director != null && director.InScene) return;
 
 		var humans = new List<IInputSource>();
 		for (int i = 0; i < Fighters.Count; i++)
@@ -557,7 +615,8 @@ public partial class MatchManager : Node2D
 		{
 			GetTree().Paused = false;
 			MusicPlayer.SetPaused(false);
-			GameRoot.Instance.GoCharacterSelect();
+			if (director != null) GameRoot.Instance.GoMainMenu();
+			else GameRoot.Instance.GoCharacterSelect();
 		});
 		AddChild(pauseMenu);
 		GetTree().Paused = true;
@@ -602,6 +661,7 @@ public partial class MatchManager : Node2D
 
 		// The CPUs drove the fighters that were just freed; new fighters need new CPUs.
 		cpus = null;
+		director = null;
 		pauseMenu = null;
 		GetTree().Paused = false;
 		matchOver = false;

@@ -28,6 +28,9 @@ public partial class GameRoot : Node2D
 	/// <summary>Only this item drops in a match (--item=ID), for looking at one at a time.</summary>
 	public string OnlyItem = "";
 
+	/// <summary>The story being played, or null.</summary>
+	public StoryRun Story;
+
 	Node currentScreen;
 
 	public override void _Ready()
@@ -55,6 +58,14 @@ public partial class GameRoot : Node2D
 		foreach (string arg in OS.GetCmdlineUserArgs())
 		{
 			if (arg.StartsWith("--shot=")) shotAfter = Mathf.Max(2, arg.Substring(7).ToInt());
+			if (arg.StartsWith("--shots="))
+			{
+				// "--shots=120,400,900": a screenshot at each, then quit - a story scene is checked
+				// by looking at it all the way through, not at one frame.
+				foreach (string at in arg.Substring(8).Split(',')) ShotFrames.Add(at.ToInt());
+				ShotFrames.Sort();
+				shotAfter = ShotFrames[^1] + 2;
+			}
 			if (arg.StartsWith("--stage=")) SelectedStage = arg.Substring(8).ToInt();
 			if (arg.StartsWith("--fighters="))
 			{
@@ -72,12 +83,23 @@ public partial class GameRoot : Node2D
 			if (arg.StartsWith("--film=")) paradeFilm = arg.Substring(7);
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
+			if (arg == "--storyselect") startAt = "storyselect";
 			if (arg == "--stages") startAt = "stages";
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--drawings") startAt = "drawings";
 			if (arg == "--draw") startAt = "draw";
 			if (arg == "--send") startAt = "send";
+			if (arg.StartsWith("--story="))
+			{
+				// "--story=edgelord" plays EdgeLord's story; "--story=edgelord:2" from its third
+				// chapter; "--story=edgelord:2:after" from the scene after that chapter's fight.
+				string[] parts = arg.Substring(8).Split(':');
+				Story = StoryRun.For(parts[0]);
+				if (parts.Length > 1) Story.At = parts[1].ToInt();
+				Story.StartAfter = parts.Length > 2 && parts[2] == "after";
+				startAt = "story";
+			}
 			if (arg.StartsWith("--item=")) OnlyItem = arg.Substring(7);
 			if (arg.StartsWith("--items="))
 			{
@@ -112,9 +134,11 @@ public partial class GameRoot : Node2D
 				break;
 			case "match": GoMatch(); break;
 			case "select": GoCharacterSelect(); break;
+			case "storyselect": GoStorySelect(); break;
 			case "stages": GoStageSelect(); break;
 			case "items": GoItemSettings(); break;
 			case "menu": GoMainMenu(); break;
+			case "story": GoStoryChapter(); break;
 			case "drawings": GoDrawings(); break;
 			// The newest saved drawing, or a new one: for looking at the drawing screens.
 			case "draw":
@@ -145,7 +169,11 @@ public partial class GameRoot : Node2D
 		// Menus build their input sources once, on entry, so the simplest correct response to
 		// a pad appearing is to rebuild the screen that is up. A match reassigns in place.
 		if (currentScreen is MatchManager match) match.ReassignControllers();
-		else if (currentScreen is CharacterSelectScreen) GoCharacterSelect();
+		else if (currentScreen is CharacterSelectScreen select)
+		{
+			if (select.ForStory) GoStorySelect();
+			else GoCharacterSelect();
+		}
 		else if (currentScreen is TitleScreen) GoTitle();
 		else if (currentScreen is MainMenuScreen) GoMainMenu();
 	}
@@ -158,8 +186,64 @@ public partial class GameRoot : Node2D
 	public void OpenDrawing(Drawing drawing) => Show(new DrawScreen { Doc = drawing });
 	public void GoSendFighter(Drawing drawing) => Show(new SendFighterScreen { Doc = drawing });
 	public void GoCharacterSelect() => Show(new CharacterSelectScreen());
+	public void GoStorySelect() => Show(new CharacterSelectScreen { ForStory = true });
 	public void GoStageSelect() => Show(new StageSelectScreen());
 	public void GoItemSettings() => Show(new ItemSettingsScreen());
+
+	// --- Story -----------------------------------------------------------------------
+
+	/// <summary>Starts a fighter's story from its first chapter.</summary>
+	public void GoStory(string fighterId)
+	{
+		Story = StoryRun.For(fighterId);
+		GoStoryChapter();
+	}
+
+	/// <summary>The chapter the story is on: its stage, the player against whoever it is, its scene first.</summary>
+	public void GoStoryChapter()
+	{
+		StoryChapter chapter = Story?.Chapter;
+		int player = Story != null ? StoryScript.IndexOf(Story.PlayerId) : -1;
+		if (chapter == null || player < 0)
+		{
+			if (Story != null) GD.Print($"GameRoot: {Story.PlayerId}'s story is over (or has no chapters yet)");
+			Story = null;
+			GoMainMenu();
+			return;
+		}
+
+		var fighters = new List<int> { player };
+		var cpu = new List<bool> { false };
+		foreach (string id in chapter.Opponents)
+		{
+			fighters.Add(StoryScript.IndexOf(id));
+			cpu.Add(true);
+		}
+		Show(new MatchManager
+		{
+			StageIndex = chapter.Stage,
+			FighterIndices = fighters.ToArray(),
+			CpuPlayers = cpu.ToArray(),
+			Story = Story,
+		});
+	}
+
+	/// <summary>A chapter won: on to the next.</summary>
+	public void StoryNext()
+	{
+		if (Story == null) { GoMainMenu(); return; }
+		Story.At++;
+		Story.Tries = 0;
+		GoStoryChapter();
+	}
+
+	/// <summary>A fight lost: straight back in, the same chapter.</summary>
+	public void StoryRetry()
+	{
+		if (Story == null) { GoMainMenu(); return; }
+		Story.Tries++;
+		GoStoryChapter();
+	}
 
 	public void GoMatch()
 	{
@@ -200,9 +284,13 @@ public partial class GameRoot : Node2D
 	public int ScreenshotRequestFrames = -1;
 	int framesElapsed;
 
+	/// <summary>Frames to screenshot along the way (--shots), each written as shot_FRAME.</summary>
+	readonly List<int> ShotFrames = new List<int>();
+
 	public override void _Process(double delta)
 	{
 		framesElapsed++;
+		if (ShotFrames.Contains(framesElapsed)) CallDeferred(nameof(Capture), $"shot_{framesElapsed:00000}");
 		if (ScreenshotRequestFrames > 0 && framesElapsed >= ScreenshotRequestFrames)
 		{
 			ScreenshotRequestFrames = -1;

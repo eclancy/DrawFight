@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Godot;
 
 /// <summary>
-/// After PRESS START: what to do. Fight (versus), the story (not built yet), or draw a fighter
+/// After PRESS START: what to do. Fight (versus), play a story, or draw a fighter
 /// and send it in. Three big cards and a cursor, like every other menu - and the mouse works too,
 /// because the drawing screen is a mouse-and-tablet place and a kid heading there has one in hand.
 ///
@@ -25,8 +25,6 @@ public partial class MainMenuScreen : Node2D
 	Vector2 mouse = new Vector2(-100.0f, -100.0f);
 	int hovered = -1;
 	int frame;
-	int noteFrames;
-	string note = "";
 	bool leaving;
 
 	public override void _Ready()
@@ -100,7 +98,6 @@ public partial class MainMenuScreen : Node2D
 	public override void _PhysicsProcess(double delta)
 	{
 		frame++;
-		if (noteFrames > 0) noteFrames--;
 		foreach (FighterRig rig in rigs) if (rig.Loaded) rig.Advance();
 
 		Vector2 viewport = GetViewportRect().Size;
@@ -149,9 +146,9 @@ public partial class MainMenuScreen : Node2D
 				GameRoot.Instance.GoDrawings();
 				break;
 			case Choice.Story:
-				SfxPlayer.Ui("ui_back");
-				note = "Story mode isn't built yet. It's coming!";
-				noteFrames = 150;
+				leaving = true;
+				SfxPlayer.Ui("ui_select");
+				GameRoot.Instance.GoStorySelect();
 				break;
 		}
 	}
@@ -164,21 +161,12 @@ public partial class MainMenuScreen : Node2D
 		DrawString(font, new Vector2(190.0f, 170.0f), "DrawFight", HorizontalAlignment.Left, -1, 96, MenuTheme.Text);
 
 		DrawCard(Choice.Versus, "Versus", "Fight a friend, or the computer.");
-		DrawCard(Choice.Story, "Story", "");
+		DrawCard(Choice.Story, "Story", "Fight for a place on the fridge.");
 		DrawCard(Choice.Draw, "Draw a fighter", "Draw your own and send it in.");
 
 		bool quitHot = QuitBox.HasPoint(mouse);
 		foreach (MenuCursor cursor in cursors) quitHot |= QuitBox.HasPoint(cursor.Position);
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, quitHot, fontSize: 38);
-
-		if (noteFrames > 0)
-		{
-			float alpha = Mathf.Min(1.0f, noteFrames / 20.0f);
-			var box = new Rect2(560.0f, 900.0f, 800.0f, 70.0f);
-			DrawRect(box, new Color(1.0f, 0.97f, 0.80f, alpha));
-			CrayonBrush.InkRect(this, box, new Color(MenuTheme.Accent, alpha), 4.0f, 501, 2.0f);
-			MenuTheme.DrawCentredText(this, box, note, 32, new Color(MenuTheme.Text, alpha));
-		}
 
 		DrawString(font, new Vector2(190.0f, 1050.0f), $"v{UpdateScreen.CurrentVersion}", HorizontalAlignment.Left, -1, 26, MenuTheme.Soft);
 	}
@@ -188,12 +176,11 @@ public partial class MainMenuScreen : Node2D
 		Rect2 card = CardRect(choice);
 		bool hot = hovered == (int)choice;
 		foreach (MenuCursor cursor in cursors) hot |= card.HasPoint(cursor.Position);
-		bool soon = choice == Choice.Story;
 
 		DrawRect(new Rect2(card.Position + new Vector2(8.0f, 10.0f), card.Size), new Color(0.0f, 0.0f, 0.0f, 0.06f));
-		DrawRect(card, soon ? MenuTheme.PaperEdge : new Color(1.0f, 1.0f, 0.99f));
-		CrayonBrush.InkRect(this, card, soon ? MenuTheme.Rule : MenuTheme.Ink, 5.0f, 600 + (int)choice * 9, 2.4f);
-		if (hot) CrayonBrush.InkRect(this, card.Grow(10.0f), soon ? MenuTheme.Rule : MenuTheme.Accent, 7.0f, 640 + (int)choice * 9, 2.8f);
+		DrawRect(card, new Color(1.0f, 1.0f, 0.99f));
+		CrayonBrush.InkRect(this, card, MenuTheme.Ink, 5.0f, 600 + (int)choice * 9, 2.4f);
+		if (hot) CrayonBrush.InkRect(this, card.Grow(10.0f), MenuTheme.Accent, 7.0f, 640 + (int)choice * 9, 2.8f);
 
 		var art = new Rect2(card.Position + new Vector2(20.0f, 20.0f), new Vector2(card.Size.X - 40.0f, 340.0f));
 		switch (choice)
@@ -202,8 +189,7 @@ public partial class MainMenuScreen : Node2D
 				CrayonBrush.PencilFill(this, new Rect2(art.Position.X, art.End.Y - 40.0f, art.Size.X, 18.0f), new Color(0.45f, 0.75f, 0.42f), 611);
 				break;
 			case Choice.Story:
-				DrawItem("popup_book_open", art.GetCenter() + new Vector2(0.0f, 10.0f), 300.0f, 0.0f, 0.45f);
-				DrawSticky(art.GetCenter() + new Vector2(10.0f, 40.0f));
+				DrawItem("popup_book_open", art.GetCenter() + new Vector2(0.0f, 10.0f), 300.0f, 0.0f, 1.0f);
 				break;
 			case Choice.Draw:
 				DrawItem("canvas", art.GetCenter() + new Vector2(-50.0f, 0.0f), 300.0f, 0.0f, 1.0f);
@@ -212,7 +198,7 @@ public partial class MainMenuScreen : Node2D
 				break;
 		}
 
-		Color text = soon ? MenuTheme.Soft : MenuTheme.Text;
+		Color text = MenuTheme.Text;
 		DrawString(ThemeDB.FallbackFont, new Vector2(card.Position.X, card.Position.Y + 440.0f), title,
 			HorizontalAlignment.Center, card.Size.X, 60, text);
 		if (blurb != "")
@@ -230,17 +216,6 @@ public partial class MainMenuScreen : Node2D
 		float s = longest / Mathf.Max(art.Size.X, art.Size.Y);
 		DrawSetTransformMatrix(new Transform2D(angle, new Vector2(s, s), 0.0f, centre));
 		DrawTexture(art.Texture, -art.Size * 0.5f, new Color(1.0f, 1.0f, 1.0f, alpha));
-		DrawSetTransformMatrix(Transform2D.Identity);
-	}
-
-	/// <summary>A yellow sticky note slapped on the story card.</summary>
-	void DrawSticky(Vector2 centre)
-	{
-		DrawSetTransformMatrix(new Transform2D(-0.08f, centre));
-		var note = new Rect2(-150.0f, -48.0f, 300.0f, 96.0f);
-		DrawRect(new Rect2(note.Position + new Vector2(5.0f, 6.0f), note.Size), new Color(0.0f, 0.0f, 0.0f, 0.08f));
-		DrawRect(note, new Color(1.0f, 0.92f, 0.45f));
-		MenuTheme.DrawCentredText(this, note, "Coming soon", 40, MenuTheme.Text);
 		DrawSetTransformMatrix(Transform2D.Identity);
 	}
 }

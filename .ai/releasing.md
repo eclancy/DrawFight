@@ -26,7 +26,9 @@ release**.
 
 - **`DrawFight-windows.zip`** (about 70 MB): everything, in a `DrawFight/` folder, with a
   `How to play.txt`. This is the file a new player downloads.
-- **`DrawFight-patch.zip`** (about 5 MB): `DrawFight.pck` (every image, sound, setting and scene)
+- **`DrawFight-patch.zip`** (about 5 MB): `DrawFight.pck` (every image, sound, setting and scene,
+  and the story scripts - `fighters/*/story.txt` is not a Godot resource, so the export preset's
+  include filter names it; a new kind of plain file the game reads needs the same)
   and `DrawFight.dll` with its two JSON files (all the C#). These are the only files that change
   when the game changes and Godot does not. The rest of the full zip is the Godot engine and the
   .NET runtime.

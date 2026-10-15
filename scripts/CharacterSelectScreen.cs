@@ -42,6 +42,12 @@ public partial class CharacterSelectScreen : Node2D
 		public FighterRig Rig;
 	}
 
+	/// <summary>
+	/// Picking whose story to play (Story, on the main menu): one player, no CPU seat, and Start
+	/// begins that fighter's story. A fighter whose story is not written yet cannot be picked.
+	/// </summary>
+	public bool ForStory;
+
 	readonly Slot[] slots = new Slot[2];
 	readonly Card[] cards = new Card[FighterCatalog.Count];
 
@@ -74,7 +80,7 @@ public partial class CharacterSelectScreen : Node2D
 		var root = new Control { AnchorsPreset = (int)Control.LayoutPreset.FullRect };
 		layer.AddChild(root);
 
-		root.AddChild(MenuTheme.MakeLabel("Pick your fighter", new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
+		root.AddChild(MenuTheme.MakeLabel(ForStory ? "Whose story?" : "Pick your fighter", new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
 
 		float rowWidth = cards.Length * CardWidth + (cards.Length - 1) * CardGap;
 		float rowLeft = (viewport.X - rowWidth) * 0.5f;
@@ -127,7 +133,7 @@ public partial class CharacterSelectScreen : Node2D
 			cards[i] = new Card { Box = box, Rig = rig };
 		}
 
-		startPrompt = MenuTheme.MakeLabel("Press Start to fight!", new Vector2(0.0f, 948.0f), 64, MenuTheme.Accent);
+		startPrompt = MenuTheme.MakeLabel(ForStory ? "Press Start to begin!" : "Press Start to fight!", new Vector2(0.0f, 948.0f), 64, MenuTheme.Accent);
 		startPrompt.Size = new Vector2(viewport.X, 90.0f);
 		startPrompt.HorizontalAlignment = HorizontalAlignment.Center;
 		startPrompt.AddThemeColorOverride("font_outline_color", MenuTheme.Text);
@@ -147,7 +153,7 @@ public partial class CharacterSelectScreen : Node2D
 				Tint = tint,
 			};
 
-			root.AddChild(MenuTheme.MakeLabel($"Player {i + 1}", panel.Position + new Vector2(36.0f, 22.0f), 34, tint));
+			if (!ForStory || i == 0) root.AddChild(MenuTheme.MakeLabel($"Player {i + 1}", panel.Position + new Vector2(36.0f, 22.0f), 34, tint));
 
 			var column = new VBoxContainer
 			{
@@ -178,6 +184,13 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			slots[i] = slot;
+
+			// A story is one player's: already in.
+			if (ForStory)
+			{
+				slot.Joined = i == 0;
+				continue;
+			}
 
 			// Coming back from stage select, a CPU picked earlier is still sitting there.
 			if (GameRoot.Instance.CpuPlayers[i])
@@ -228,9 +241,10 @@ public partial class CharacterSelectScreen : Node2D
 		holder.Position = new Vector2(window.X * 0.5f - body.GetCenter().X * scale, window.Y - 4.0f - body.End.Y * scale);
 	}
 
-	static Rect2 PanelRect(int player, Vector2 viewport)
+	Rect2 PanelRect(int player, Vector2 viewport)
 	{
 		const float Gap = 60.0f;
+		if (ForStory) return new Rect2((viewport.X - PanelWidth) * 0.5f, PanelTop, PanelWidth, PanelHeight);
 		float left = (viewport.X - (PanelWidth * 2.0f + Gap)) * 0.5f;
 		return new Rect2(left + player * (PanelWidth + Gap), PanelTop, PanelWidth, PanelHeight);
 	}
@@ -319,6 +333,7 @@ public partial class CharacterSelectScreen : Node2D
 	/// <summary>Every seat is filled and picked, and at least one of them is a person.</summary>
 	bool EveryoneReady()
 	{
+		if (ForStory) return slots[0].Locked;
 		bool ready = true;
 		bool anyHuman = false;
 		foreach (Slot slot in slots)
@@ -337,6 +352,7 @@ public partial class CharacterSelectScreen : Node2D
 
 		foreach (Slot slot in slots)
 		{
+			if (ForStory && slot != slots[0]) continue;
 			MenuCursor cursor = slot.Cursor;
 			cursor.Update(viewport);
 
@@ -385,13 +401,18 @@ public partial class CharacterSelectScreen : Node2D
 				return;
 			}
 
-			if (TryCpuButtons(cursor.Position))
+			if (!ForStory && TryCpuButtons(cursor.Position))
 			{
 				SfxPlayer.Ui("ui_select");
 				continue;
 			}
 
 			int picked = CardUnder(cursor.Position);
+			if (picked >= 0 && ForStory && !HasStory(picked))
+			{
+				SfxPlayer.Ui("ui_back");
+				continue;
+			}
 			if (picked >= 0)
 			{
 				slot.Index = picked;
@@ -422,6 +443,12 @@ public partial class CharacterSelectScreen : Node2D
 
 		SfxPlayer.Ui("ui_select");
 
+		if (ForStory)
+		{
+			GameRoot.Instance.GoStory(StoryScript.IdOf(FighterCatalog.Get(slots[0].Index)));
+			return;
+		}
+
 		for (int i = 0; i < slots.Length; i++)
 		{
 			GameRoot.Instance.SelectedFighters[i] = slots[i].Index;
@@ -430,10 +457,19 @@ public partial class CharacterSelectScreen : Node2D
 		GameRoot.Instance.GoStageSelect();
 	}
 
+	/// <summary>Whether a fighter's story can be played yet.</summary>
+	static bool HasStory(int index) => StoryRun.For(StoryScript.IdOf(FighterCatalog.Get(index))).Chapters.Count > 0;
+
 	void RefreshPanels()
 	{
 		foreach (Slot slot in slots)
 		{
+			if (ForStory && slot != slots[0])
+			{
+				slot.State.Text = "";
+				continue;
+			}
+
 			if (!slot.Joined)
 			{
 				slot.Name.Text = "";
@@ -459,6 +495,10 @@ public partial class CharacterSelectScreen : Node2D
 			slot.Credit.Text = shown >= 0 ? FighterCatalog.CreditOf(shown) : "";
 			slot.Blurb.Text = shown >= 0 ? FighterCatalog.BlurbOf(shown) : "";
 			slot.State.Text = slot.Locked ? "READY" : "";
+			if (ForStory && !slot.Locked && shown >= 0 && !HasStory(shown))
+			{
+				slot.State.Text = $"{FighterCatalog.NameOf(shown)}'s own story is coming soon.";
+			}
 		}
 	}
 
@@ -488,13 +528,14 @@ public partial class CharacterSelectScreen : Node2D
 		for (int i = 0; i < slots.Length; i++)
 		{
 			Slot slot = slots[i];
+			if (ForStory && i > 0) continue;
 			Rect2 panel = PanelRect(i, viewport);
 			DrawRect(panel, new Color(1.0f, 1.0f, 1.0f, slot.Joined ? 0.55f : 0.3f));
 			CrayonBrush.InkRect(this, panel, slot.Locked ? slot.Tint : MenuTheme.Rule,
 				slot.Locked ? 6.0f : 3.0f, 51 + i * 7, 2.6f);
 		}
 
-		for (int i = 0; i < slots.Length; i++)
+		for (int i = 0; i < slots.Length && !ForStory; i++)
 		{
 			Slot seat = slots[i];
 			if (seat.Human) continue;

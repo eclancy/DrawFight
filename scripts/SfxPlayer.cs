@@ -168,7 +168,7 @@ public partial class SfxPlayer : Node
 		voice.Play();
 	}
 
-	void PlayFlat(string name, float pitchJitter)
+	void PlayFlat(string name, float pitchJitter, float pitch = 1.0f)
 	{
 		if (!CanPlay(name, out AudioStream stream)) return;
 		AudioStreamPlayer voice = global[nextGlobal];
@@ -184,7 +184,7 @@ public partial class SfxPlayer : Node
 		}
 		nextGlobal = (nextGlobal + 1) % global.Length;
 		voice.Stream = stream;
-		voice.PitchScale = Jitter(pitchJitter);
+		voice.PitchScale = pitch * Jitter(pitchJitter);
 		voice.Play();
 	}
 
@@ -207,6 +207,9 @@ public partial class SfxPlayer : Node
 
 	/// <summary>A sound that belongs to the screen rather than a place: menus, the countdown.</summary>
 	public static void Ui(string name) => Get()?.PlayFlat(name, 0.0f);
+
+	/// <summary>A story's talking blip, at a speaker's own pitch (FighterData.VoicePitch).</summary>
+	public static void Voice(string name, float pitch) => Get()?.PlayFlat(name, 0.04f, pitch);
 
 	public static void Hit(Vector2 position, float knockback, bool blocked, bool slices = false) =>
 		Get()?.PlayAtPosition(SfxCatalog.ForHit(knockback, blocked, slices), position, 0.06f);

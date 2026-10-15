@@ -69,7 +69,16 @@ public partial class GameCamera : Camera2D
 		float fit = Mathf.Min(viewport.X / Mathf.Max(span.X, 1.0f), viewport.Y / Mathf.Max(span.Y, 1.0f));
 		float target = Mathf.Clamp(fit, MinZoom, MaxZoom);
 
-		float t = 1.0f - Mathf.Exp(-FollowSharpness * dt);
+		FrameOn(centre, target, FollowSharpness, dt);
+	}
+
+	/// <summary>
+	/// Eases toward a centre and zoom of a story's choosing - a push in on whoever is talking, a
+	/// two-shot, a slow pan up the fridge - at its own speed. The shake carries on as in a fight.
+	/// </summary>
+	public void FrameOn(Vector2 centre, float target, float sharpness, float dt)
+	{
+		float t = 1.0f - Mathf.Exp(-sharpness * dt);
 		Vector2 smoothed = GlobalPosition.Lerp(centre, t);
 		float z = Mathf.Lerp(Zoom.X, target, t);
 
@@ -80,5 +89,12 @@ public partial class GameCamera : Camera2D
 
 		Zoom = new Vector2(z, z);
 		GlobalPosition = smoothed + shakeOffset;
+	}
+
+	/// <summary>A cut: there at once, no easing.</summary>
+	public void CutTo(Vector2 centre, float zoom)
+	{
+		Zoom = new Vector2(zoom, zoom);
+		GlobalPosition = centre + shakeOffset;
 	}
 }

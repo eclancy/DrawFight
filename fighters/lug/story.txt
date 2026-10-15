@@ -1,0 +1,19 @@
+# Lugnut's story: Room for Everybody. How a script reads is at the top of fighters/doombot/story.txt.
+# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+
+== roast
+player: Pal, I've installed plenty of fridges.
+player: You look like one, sure. Doesn't make it yours.
+player hold metre_stick
+player look squint
+wait 50
+camera on player zoom 1.3 fast
+player: ...And you're not even level.
+
+== answer
+player walk to doombot
+player: Pal. There's room for everybody on that fridge.
+player: Even you. I'll build you a spot.
+wait 30
+doombot look happy
+doombot: ...A SPOT.

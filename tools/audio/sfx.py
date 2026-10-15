@@ -397,6 +397,16 @@ def ui_ready():
     return S.layer([(bell(E6, 0.35), 0.0, 0.8), (bell(A6, 0.45), 0.08, 1.0)])
 
 
+def voice():
+    """A story's talking blip: a soft rounded "bup" on A, rising a touch like a syllable. One
+    sound for everyone, pitched per fighter at play time (FighterData.VoicePitch) - never a voice
+    or an imitation of one (see .ai/audio-direction.md)."""
+    dur = 0.06
+    body = S.env_mul(S.osc("tri", S.sweep(dur, A4, A4 * 1.18, 0.5), dur), S.ad(dur, 0.003, 3.0))
+    edge = S.gain(S.env_mul(S.lowpass(S.osc("square", S.sweep(dur, A4, A4 * 1.18, 0.5), dur), 1400.0), S.ad(dur, 0.002, 5.0)), 0.25)
+    return S.mix(body, edge)
+
+
 def pause():
     return S.layer([(tone("tri", A5, 0.18, 4000, 0.003, 2.0), 0.0, 1.0),
                     (tone("tri", E5, 0.25, 4000, 0.003, 2.0), 0.09, 1.0)])
@@ -634,6 +644,8 @@ REGISTRY = [
     ("ui_back", "ui", -14.0, ui_back, False),
     ("ui_ready", "ui", -11.0, ui_ready, False),
     ("pause", "ui", -12.0, pause, False),
+    # Every few letters while anyone in a story talks: as far down as the menu tick.
+    ("voice", "ui", -19.0, voice, False),
 
     ("zap", "special", -10.0, zap, False),
     ("jets", "special", -11.0, jets, False),

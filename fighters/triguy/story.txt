@@ -1,0 +1,25 @@
+# Triguy's story: Can't Stand Still. How a script reads is at the top of fighters/doombot/story.txt.
+# Triguy says very little for now - his catchphrase, every way it can be said - and his real
+# story is Elim's to tell (.ai/story-mode.md, "The two kids' fighters").
+# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+
+== roast
+player look shocked
+camera on doombot zoom 1.2 whip
+wait 20
+camera at 1100 -560 zoom 1.0 whip
+wait 20
+camera on doombot zoom 1.2 whip
+wait 20
+camera on player zoom 1.3 whip
+wait 40
+camera two player doombot
+doombot look angry
+doombot: DO NOT. MAKE. THAT FACE.
+player look normal
+player (whisper): not kewl.
+
+== answer
+player look sad
+player (whisper): that's, really kewl.
+doombot look happy

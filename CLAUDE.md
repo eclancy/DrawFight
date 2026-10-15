@@ -25,9 +25,10 @@ needed one yet.
 
 **Screen flow** is owned by `GameRoot`, which swaps screens as its own children rather than
 changing Godot scenes: title → main menu, then either versus (character select → stage select
-(→ item settings) → match → title) or draw a fighter (your drawings → the drawing screen →
-sending it in). Selections live in ordinary fields on `GameRoot`, so there is no global for a
-screen to forget to write.
+(→ item settings) → match → title), a story ("Whose story?" → each chapter a match that opens
+on its scene → main menu), or draw a fighter (your drawings → the drawing screen → sending it
+in). Selections live in ordinary fields on `GameRoot`, so there is no global for a screen to
+forget to write.
 `ControllerAssignment` hands out pads for menus and matches alike — a pad that works in a fight
 has to work on the select screen without a second mapping to keep in step.
 
@@ -159,6 +160,12 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   sending screen. **`--fighters=2,0`**
   picks the matchup (player one, player two) by catalog index, and **`--cpu`** makes player two
   the computer.
+- **`"$GODOT_BIN" --path . -- --story=edgelord --shots=60,400,900`** — play a fighter's story
+  (`--story=edgelord:0:after` starts at the scene after chapter 0's fight; `--storyselect` opens
+  "Whose story?") and screenshot it at each frame listed, then quit. **This is how a story scene
+  gets checked** - all the way through, not at one frame. A scene's lines live in
+  `fighters/<name>/story.txt`; the language is at the top of `fighters/doombot/story.txt`, and
+  `RegressionChecks: stories` says whether every script reads. See `.ai/story-mode.md`.
 - **`"$GODOT_BIN" --headless --path . --quit-after 120`** — boot the match headless and read
   the `RegressionChecks:` calibration table it prints. This is how you find out what percent a
   move KOs at without picking up a controller. **Read it before and after changing any

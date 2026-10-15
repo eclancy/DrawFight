@@ -21,7 +21,7 @@ public static class SfxCatalog
 		"special_drop", "special_resize", "special_quake", "special_build", "bomb_fuse", "explosion",
 		"hit_light", "hit_medium", "hit_heavy", "hit_smash", "hit_block", "hit_slice", "hit_slice_heavy",
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
-		"ui_move", "ui_select", "ui_back", "ui_ready", "pause",
+		"ui_move", "ui_select", "ui_back", "ui_ready", "pause", "voice",
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
 		"clang", "shield_break", "minibot_pop", "splash", "boing", "stomp",
 		"item_pickup", "item_spray", "item_snip", "item_heal", "item_gust", "item_crumple",

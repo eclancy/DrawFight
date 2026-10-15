@@ -37,6 +37,10 @@ fighter:
 - **Everything tonal is in A major**: the countdown ticks are A, FIGHT! is an A major chord, the
   win fanfare climbs A–C♯–E–A, and both music loops are in A. The countdown then resolves into the
   music it starts.
+- **Talking in a story** is `voice`, a soft rounded blip on A, played every few letters as a
+  line types out - one sound for everyone, pitched per fighter at play time
+  (`FighterData.VoicePitch`: DoomBot 0.6, Triguy 1.45). It is a blip, never a voice: nothing here
+  imitates speech. DoomBot's slammed words use `clang` instead, one per word.
 
 ## How a move gets its sound
 

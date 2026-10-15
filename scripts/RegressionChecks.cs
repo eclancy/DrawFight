@@ -21,7 +21,19 @@ public static class RegressionChecks
 		CheckNoMoveIsAlwaysCorrect();
 		CheckSounds();
 		CheckWeakerIsFaster();
+		CheckStories();
 		PrintCalibrationTable();
+	}
+
+	/// <summary>
+	/// Every story.txt read and checked: a misspelt fighter, face, item or sound fails here, at
+	/// startup, rather than as a line silently skipped in the middle of someone's story.
+	/// </summary>
+	static void CheckStories()
+	{
+		var problems = StoryScript.Check();
+		foreach (string problem in problems) GD.PushError($"RegressionChecks: story {problem}");
+		GD.Print($"RegressionChecks: stories - {(problems.Count == 0 ? "all scripts read cleanly" : $"{problems.Count} problem(s)")}");
 	}
 
 	/// <summary>The moves that are swung over and over, for the speed check: everything but the specials.</summary>

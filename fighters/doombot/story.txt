@@ -1,0 +1,114 @@
+# DoomBot's story - and the finale every other story ends with.
+#
+# How a story script reads (the whole language - .ai/story-mode.md has the rest):
+#
+#   == finale                       a scene, by name, down to the next == heading
+#   doombot: HELLO.                 someone says something, in a speech bubble
+#   doombot (shout): MINE.          ...said a certain way: shout, whisper, scared, happy, hot, slam
+#   circy: [fridge] [=] [doombot]   a picture in the bubble (heart, fridge, doombot, =, ?, !, star,
+#                                   magnet, bomb, flame, nofire, square)
+#   narrator: One by one...         the narrator, on a strip of paper along the bottom
+#   doombot writes: 1. FRIDGE.      burned onto the fridge door with his eye laser (see "board")
+#
+#   player                          whoever's story it is; anyone else by name (flambe, lugnut,
+#                                   edgelord, circy, triguy, doombot)
+#   cast player at -400             where someone stands when the scene starts
+#   cast doombot offstage           ...or hidden, until they "drop" in
+#   doombot drop at 260             falls in from above, onto the stage at x = 260
+#   player walk to 100 / run to doombot / at 0
+#   player face right / face doombot / turn
+#   player look angry               a face: normal, closed, squint, angry, shout, hurt, shocked,
+#                                   happy, sad, smug
+#   player jump / attack forward / smash up / special down / taunt / block 60 / crouch 40
+#   player twirl / roll             a paper turn on the spot, or a spin in the page
+#   player hold metre_stick         an item in their hand
+#   doombot heat 100 / doombot stocks 4
+#
+#   camera wide / on doombot / two player doombot / at 0 -900    then any of: zoom 1.3, slow,
+#                                   fast, whip, cut
+#   wait 30                         frames - sixty is a second
+#   shake 40 / sound steam / music stop / music battle / music menu
+#   board at -560 -820 / board clear      where "writes" lines go on the fridge
+#   include player roast            plays the scene called "roast" from the player's own story
+#   fight                           the scene ends and the fight starts, right where they stand
+#   end                             the scene ends, no fight
+#
+# Every line waits until it is done before the next one starts. End a line with & and the next
+# one starts straight away, at the same time.
+
+== finale
+cast player at -430
+cast doombot offstage
+music stop
+camera on player zoom 1.0 cut
+narrator: One by one, the drawings had been coming down.
+narrator: And not because of the fights.
+player look shocked
+camera at 0 -760 zoom 0.7 slow
+wait 50
+sound stomp
+shake 30
+wait 30
+sound stomp
+shake 45
+wait 30
+sound stomp
+shake 60
+wait 24
+doombot drop at 300
+sound special_quake
+shake 110
+player look normal
+doombot face player
+camera two player doombot
+doombot: GREETINGS, SMALL DRAWING.
+doombot: YOU HAVE MET MY... DISTRACTION.
+doombot: EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING.
+doombot: YOU BLAMED EACH OTHER. NOBODY SUSPECTED...
+wait 30
+camera on doombot zoom 1.3 fast
+doombot: ...THE ROBOT.
+board at -620 -820
+camera at -120 -680 zoom 0.72
+doombot writes: 1. REMOVE DRAWINGS.
+doombot writes: 2. REMOVE MAGNETS.
+doombot writes: 3. FRIDGE.
+camera two player doombot
+doombot: THE FRIDGE IS A MACHINE. I AM A MACHINE.
+doombot: WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL BE RETURNED TO FACTORY SETTINGS.
+doombot: SHINY. CLEAN.
+camera on doombot zoom 1.45 fast
+doombot (shout): MINE.
+camera two player doombot
+include player roast
+camera on doombot zoom 1.3 fast
+sound steam
+doombot heat 100
+doombot look angry
+wait 30
+doombot (slam): I. DO. NOT. LOOK. LIKE. THE. FRIDGE.
+camera at 1100 -560 zoom 0.9 slow
+wait 80
+camera on doombot zoom 1.1 slow
+wait 70
+doombot stocks 4
+camera wide
+fight
+
+== beaten
+player at -260
+player face right
+doombot drop at 300
+sound special_quake
+shake 70
+sound steam
+doombot heat 0
+doombot look sad
+camera two player doombot slow
+wait 70
+doombot (whisper): ...i just wanted to be on the fridge.
+wait 40
+include player answer
+wait 50
+narrator: The end. (For now - the rest of the story is still being drawn.)
+end
