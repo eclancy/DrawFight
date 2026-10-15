@@ -8,6 +8,55 @@ using Godot;
 /// </summary>
 public partial class Fighter
 {
+	/// <summary>
+	/// A pose a story has him strike and hold - "cheer", "slump", "point", "shrug", "laugh",
+	/// "stomp", "tremble", "crossarms" (FighterAnimations.StoryPose) - over whatever standing would
+	/// show; "" for none.
+	/// </summary>
+	public string StoryPose = "";
+
+	/// <summary>One of his own whole drawings shown instead of his puppet - Triguy's surprised face
+	/// (rig.json "poses") - for as long as a story holds it; "" for none.</summary>
+	public string StoryShow = "";
+
+	/// <summary>A mark over his head while a story holds it: anger, sweat, sparkle, heart, "!", "?", steam, tears.</summary>
+	public string Mark = "";
+
+	/// <summary>A boss on his last stock: flashing red, MiniBots coming out (StoryDirector).</summary>
+	public bool Raging;
+
+	/// <summary>The story pose struck on the rig, after the fight's own pose - and its motion, for the ones that move.</summary>
+	void ApplyStoryPose()
+	{
+		Pose pose = FighterAnimations.StoryPose(StoryPose);
+		if (pose == null || rig == null) return;
+		rig.HandOnHip = false;
+		float amount = 0.9f;
+		switch (StoryPose)
+		{
+			case "laugh":
+				// Rocking back and forward with it.
+				amount = 0.75f + 0.25f * Mathf.Sin(fxFrames * 0.45f);
+				break;
+			case "cheer":
+				amount = 0.8f + 0.2f * Mathf.Abs(Mathf.Sin(fxFrames * 0.25f));
+				break;
+			case "stomp":
+				// The foot up, and slammed down, and up again.
+				amount = (fxFrames / 14) % 2 == 0 ? 0.95f : 0.15f;
+				if (fxFrames % 28 == 14 && IsOnFloor())
+				{
+					Match?.Shake(12.0f);
+					SfxPlayer.At("stomp", GlobalPosition, 0.05f);
+				}
+				break;
+		}
+		rig.ApplyDirect(pose, amount);
+	}
+
+	/// <summary>A trembling fighter's shiver, as a tiny roll this way and that.</summary>
+	float TrembleRoll() => StoryPose == "tremble" ? CrayonBrush.Noise(fxFrames, PlayerIndex * 5 + 1) * 0.06f : 0.0f;
+
 	/// <summary>Turns to face a way - as a turn round, the paper turn and all, not a snap.</summary>
 	public void TurnTo(int direction) => Facing = direction < 0 ? -1 : 1;
 
@@ -61,7 +110,16 @@ public partial class Fighter
 	public void ReadyForFight()
 	{
 		Percent = 0.0f;
+		ClearStoryLook();
+	}
+
+	/// <summary>Whatever a scene had him doing with his face, his body and over his head, let go of.</summary>
+	public void ClearStoryLook()
+	{
 		Expression = "";
 		Talking = false;
+		StoryPose = "";
+		StoryShow = "";
+		Mark = "";
 	}
 }

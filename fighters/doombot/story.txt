@@ -1,51 +1,317 @@
-# DoomBot's story - and the finale every other story ends with.
+# DoomBot's story - PROTOCOL: CLEAN FRIDGE - and the finale every other story ends with.
 #
 # How a story script reads (the whole language - .ai/story-mode.md has the rest):
 #
-#   == finale                       a scene, by name, down to the next == heading
+#   == chapters                     the story, in order, one chapter a line (see below)
+#   == opening                      a scene, by name, down to the next == heading
 #   doombot: HELLO.                 someone says something, in a speech bubble
 #   doombot (shout): MINE.          ...said a certain way: shout, whisper, scared, happy, hot, slam
 #   circy: [fridge] [=] [doombot]   a picture in the bubble (heart, fridge, doombot, =, ?, !, star,
 #                                   magnet, bomb, flame, nofire, square)
 #   narrator: One by one...         the narrator, on a strip of paper along the bottom
+#   narrator (shout): IF THAT...    the grown-up in the kitchen
 #   doombot writes: 1. FRIDGE.      burned onto the fridge door with his eye laser (see "board")
 #
 #   player                          whoever's story it is; anyone else by name (flambe, lugnut,
-#                                   edgelord, circy, triguy, doombot)
-#   cast player at -400             where someone stands when the scene starts
+#                                   edgelord, circy, triguy, doombot, and mk2 - DoomBot Mk. II)
+#   cast player at -400             where someone stands when the scene starts (on the solid
+#                                   ground there); add "facing left" or "facing right"
 #   cast doombot offstage           ...or hidden, until they "drop" in
-#   doombot drop at 260             falls in from above, onto the stage at x = 260
+#   doombot drop at 260             falls in from above, onto the floor at x = 260
 #   player walk to 100 / run to doombot / at 0
 #   player face right / face doombot / turn
 #   player look angry               a face: normal, closed, squint, angry, shout, hurt, shocked,
 #                                   happy, sad, smug
+#   player pose cheer               a pose: cheer, slump, point, shrug, laugh, stomp, tremble,
+#                                   crossarms - or none
+#   triguy show taunt_surprised     one of his own whole drawings instead - or none
+#   player mark anger               over the head: anger, sweat, sparkle, heart, !, ?, steam,
+#                                   tears - or none
 #   player jump / attack forward / smash up / special down / taunt / block 60 / crouch 40
+#   player hold scissors / throw back     an item in hand, and thrown
 #   player twirl / roll             a paper turn on the spot, or a spin in the page
-#   player hold metre_stick         an item in their hand
 #   doombot heat 100 / doombot stocks 4
 #
 #   camera wide / on doombot / two player doombot / at 0 -900    then any of: zoom 1.3, slow,
 #                                   fast, whip, cut
 #   wait 30                         frames - sixty is a second
-#   shake 40 / sound steam / music stop / music battle / music menu
+#   shake 40 / sound steam / music stop
+#   music story / doombot / battle / menu / victory
 #   board at -560 -820 / board clear      where "writes" lines go on the fridge
+#   stage bare / stage full         the other drawings off the fridge door, or back on it
+#   pile at 520 / pile clear        a heap of taken-down drawings on the floor
+#   dark on / dark off              the lights down
+#   eye at 0 -900 / eye close       a red eye opening up there in the dark
+#   page at 380 -560 / page clear   a new drawing pinned up on the door, with a magnet
 #   include player roast            plays the scene called "roast" from the player's own story
 #   fight                           the scene ends and the fight starts, right where they stand
 #   end                             the scene ends, no fight
 #
 # Every line waits until it is done before the next one starts. End a line with & and the next
 # one starts straight away, at the same time.
+#
+# A chapter list, one line each:
+#   title The Headliner                       the story's name, on its map
+#   opening [with WHO] [at STAGE]             "== opening", no fight
+#   fight WHO [WHO] [at STAGE] [level N] [boss]
+#   finale                                    DoomBot on the fridge: "== finale" here, then "== beaten"
+#   ending [with WHO] [at STAGE]              "== ending", no fight
+# Stages: fridge, plains, rooftops, bigshow. A fight's scene before is the player's own
+# "== vs WHO" if they wrote one, or else that fighter's "== challenger" (two of them: "== team");
+# the scene after is the player's "== beat WHO", or their "== won", or that fighter's
+# "== defeated" ("== team defeated").
+#
+# Circy only ever talks in pictures and Triguy only in his catchphrases - and whoever answers
+# them understands exactly what they meant and answers it the way you would, so what they said
+# is obvious from the answer. Nobody translates them (Eric, 2026-10-15).
+
+== chapters
+title PROTOCOL: CLEAN FRIDGE
+opening at fridge
+fight triguy at plains
+fight circy at fridge
+fight edgelord at rooftops
+fight lugnut at fridge
+fight lugnut flambe at bigshow
+fight mk2 at fridge boss
+ending at fridge
+
+== opening
+cast player offstage
+music stop
+dark on
+camera at -300 -300 zoom 0.85 cut
+sound fridge_hum
+wait 50
+eye at -300 -260
+narrator: A factory hum. A red eye flickers on beside the fridge.
+wait 30
+player drop at -300
+eye close
+dark off
+shake 60
+player face right
+camera on player zoom 1.1
+player (slam): SCANNING.
+player special
+wait 30
+music story
+player: TARGET: FRIDGE.
+player: STATUS: COVERED IN... DRAWINGS.
+player look angry
+player mark anger
+player (shout): UNACCEPTABLE.
+player mark none
+end
+
+== won
+player look smug
+player: YOU HAVE BEEN... PROCESSED.
+wait 30
+player: YOU ARE ON THE FLOOR NOW.
+end
+
+== vs triguy
+cast player at -400
+cast triguy at 400 facing left
+music story
+camera two player triguy
+player: SMALL TRIANGLE. YOU ARE ON MY FRIDGE.
+triguy show taunt_surprised
+triguy: that's, really kewl.
+player: IT IS NOT KEWL. IT IS TRESPASSING.
+triguy show none
+triguy look sad
+triguy (whisper): not kewl.
+player: AGREED.
+player (slam): REMOVING.
+camera wide
+fight
+
+== vs circy
+cast player at -400
+cast circy at 380 facing left
+music story
+camera two player circy
+player: ROUND DRAWING. OLDEST PAGE ON THE FRIDGE. FIRST TO GO.
+circy: [fridge] [heart]
+player: I ALSO LOVE THE FRIDGE. ONLY ONE OF US IS A MACHINE.
+circy: [bomb]
+player look shocked
+player mark !
+player: ...THAT IS A BOMB. NOTED.
+player mark none
+camera wide
+fight
+
+== vs edgelord
+cast player at -780
+cast edgelord at 520 facing left
+music story
+camera two player edgelord
+edgelord look smug
+edgelord: Nice robot. Bit rusty.
+player look angry
+player: I AM NOT RUSTY. I AM... VINTAGE.
+edgelord twirl
+edgelord: Rust never sleeps. Neither do I. Try to keep up.
+player (slam): I. WILL. KEEP. UP.
+camera wide
+fight
+
+== vs lugnut
+cast player at -400
+cast lugnut at 400 facing left
+music story
+camera two player lugnut
+lugnut look shocked
+lugnut: Whoa, whoa. You're taking drawings down? Pal, there's room for everybody.
+player: THERE IS ROOM FOR ONE. ME.
+lugnut pose crossarms
+lugnut: That's not up to code.
+player: I AM THE CODE.
+lugnut pose none
+lugnut look angry
+lugnut: Break's over.
+camera wide
+fight
+
+== vs lugnut flambe
+cast player at -420
+cast lugnut at 260 facing left
+cast flambe offstage
+music story
+camera two player lugnut
+lugnut: Round two, robot. And this time I brought a friend.
+flambe drop at 480
+shake 30
+flambe face player
+flambe look smug
+flambe (hot): Order up.
+player look angry
+player: TWO TARGETS. EFFICIENT.
+camera wide
+fight
+
+== vs mk2
+cast player at -420
+cast mk2 offstage
+stage bare
+music stop
+camera on player zoom 1.1 cut
+narrator: The fridge was clean. Shiny. His.
+player look happy
+player: VICTORY.
+sound fridge_hum
+wait 50
+mk2 drop at 380
+sound special_quake
+shake 90
+mk2 face player
+camera two player mk2
+mk2: GREETINGS, OLD MODEL.
+player mark !
+player look shocked
+player: OLD?
+player mark none
+mk2: THE FACTORY HAS SENT A NEWER, BETTER DOOMBOT.
+mk2: THE FRIDGE BELONGS TO THE NEWEST MACHINE.
+player: I WAS MADE ON TUESDAY.
+mk2: I WAS MADE ON WEDNESDAY.
+wait 70
+player mark steam
+sound steam
+player (slam): ...NO.
+camera on player zoom 1.3 fast
+player: YOU LOOK LIKE A FRIDGE.
+camera on mk2 zoom 1.3 whip
+mk2: SO DO YOU.
+mk2 mark steam
+sound steam_whistle
+camera two player mk2
+wait 30
+player look angry
+mk2 look angry
+player (shout): THIS CONVERSATION IS OVER.
+player mark none
+mk2 mark none
+mk2 heat 100
+mk2 stocks 4
+camera wide
+fight
+
+== beat mk2
+cast player at -300
+cast mk2 at 300 facing left
+music story
+mk2 heat 0
+mk2 look sad
+mk2 pose slump
+sound steam
+mk2 (whisper): ...i was only made on wednesday.
+wait 30
+player face mk2
+player: I KNOW. BEING NEW IS VERY CONFUSING.
+end
+
+== ending
+cast player at -150
+music stop
+stage bare
+camera on player zoom 1.0 cut
+narrator: An empty fridge.
+player look happy
+player: VICTORY.
+sound fridge_hum
+wait 60
+player look sad
+player: ...IT IS VERY QUIET.
+wait 50
+page at 360 -520
+narrator: Clink. Someone had put up a new drawing.
+camera at 360 -520 zoom 1.0
+wait 60
+camera at 120 -360 zoom 0.8
+player face right
+player look shocked
+player mark !
+player: ...SOMEONE. DREW. ME?
+player mark none
+player heat 100
+player look happy
+player: WARNING. CORE TEMPERATURE RISING. FROM AN UNKNOWN CAUSE.
+music story
+narrator: One by one, he put the others back up.
+camera at 0 -900 zoom 0.62 slow
+wait 50
+stage full
+sound magnet_clink
+wait 15
+sound magnet_clink
+wait 15
+sound magnet_clink
+wait 50
+camera on player zoom 1.0
+player: THE FRIDGE IS... A LITTLE BIT MINE.
+wait 60
+end
 
 == finale
+# Every story but DoomBot's own ends here, on the fridge door, with the player's own lines
+# (their "== roast" and "== answer").
 cast player at -430
 cast doombot offstage
 music stop
+stage bare
+dark on
 camera on player zoom 1.0 cut
 narrator: One by one, the drawings had been coming down.
 narrator: And not because of the fights.
 player look shocked
 camera at 0 -760 zoom 0.7 slow
-wait 50
+eye at 120 -980
+sound fridge_hum
+wait 60
 sound stomp
 shake 30
 wait 30
@@ -55,15 +321,20 @@ wait 30
 sound stomp
 shake 60
 wait 24
-doombot drop at 300
+eye close
+doombot drop at 200
 sound special_quake
 shake 110
+dark off
+pile at 560
 player look normal
 doombot face player
 camera two player doombot
 doombot: GREETINGS, SMALL DRAWING.
 doombot: YOU HAVE MET MY... DISTRACTION.
+doombot pose point
 doombot: EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING.
+doombot pose none
 doombot: YOU BLAMED EACH OTHER. NOBODY SUSPECTED...
 wait 30
 camera on doombot zoom 1.3 fast
@@ -82,33 +353,38 @@ doombot (shout): MINE.
 camera two player doombot
 include player roast
 camera on doombot zoom 1.3 fast
-sound steam
+sound steam_whistle
 doombot heat 100
 doombot look angry
+doombot mark steam
 wait 30
+doombot pose stomp
 doombot (slam): I. DO. NOT. LOOK. LIKE. THE. FRIDGE.
+doombot pose none
 camera at 1100 -560 zoom 0.9 slow
 wait 80
 camera on doombot zoom 1.1 slow
 wait 70
+doombot mark none
 doombot stocks 4
 camera wide
 fight
 
 == beaten
-player at -260
-player face right
-doombot drop at 300
+cast player at -260 facing right
+cast doombot offstage
+music story
+doombot drop at 200
 sound special_quake
 shake 70
 sound steam
 doombot heat 0
 doombot look sad
+doombot pose slump
 camera two player doombot slow
 wait 70
 doombot (whisper): ...i just wanted to be on the fridge.
 wait 40
 include player answer
-wait 50
-narrator: The end. (For now - the rest of the story is still being drawn.)
+wait 30
 end

@@ -1,5 +1,193 @@
 # Flambe's story: The Headliner. How a script reads is at the top of fighters/doombot/story.txt.
-# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+# He wants the middle of the fridge: eye level, the headliner spot. He talks in rock and kitchen.
+
+== chapters
+title The Headliner
+opening at bigshow
+fight triguy at plains
+fight circy at fridge
+fight edgelord at rooftops
+fight lugnut at bigshow
+fight edgelord triguy at rooftops
+finale
+ending with lugnut at bigshow
+
+== opening
+cast player at 0 facing right
+music story
+camera on player zoom 1.1 cut
+narrator: The fridge was full. And when the fridge is full, drawings start coming down.
+narrator: Flambe had no plans to come down.
+player taunt
+wait 20
+player look smug
+player (hot): Every show needs a headliner.
+player: And this kitchen is my stage.
+player special
+wait 20
+player (hot): Let's turn up the heat.
+camera wide slow
+wait 40
+end
+
+# --- How he meets someone, in their stories ------------------------------------------------
+
+== challenger
+cast player at -400
+cast flambe at 400 facing left
+music story
+camera on flambe zoom 1.2
+narrator: Flambe was cooking. Of course he was.
+flambe mark steam
+wait 30
+flambe face player
+flambe look smug
+flambe: You're just in time.
+flambe mark none
+wait 20
+flambe (hot): ...To get roasted.
+camera wide
+fight
+
+== defeated
+cast player at -300
+cast flambe at 300 facing left
+music story
+flambe pose slump
+flambe: Too hot for me? ...That's new.
+end
+
+# Flambe and Lugnut on their lunch break, the two of them against whoever walks up.
+== team
+cast player at -620
+cast flambe at 300 facing right
+cast lugnut at 520 facing left
+music story
+camera two flambe lugnut
+narrator: Up on the roof, Flambe and Lugnut were sharing lunch.
+wait 30
+player walk to -100
+flambe face player
+lugnut face player
+flambe look shocked
+lugnut look shocked
+wait 20
+lugnut look happy
+lugnut: You hungry?
+flambe look smug
+flambe (hot): For a fight.
+lugnut look sad
+lugnut: ...I was gonna offer half a sandwich.
+lugnut look angry
+lugnut: Break's over.
+camera wide
+fight
+
+== team defeated
+cast player at -300
+cast flambe at 200 facing left
+cast lugnut at 420 facing left
+music story
+flambe pose slump
+lugnut: Well. Lunch is ruined.
+flambe: Mon ami, lunch was ruined when you brought egg salad.
+end
+
+# --- His own fights --------------------------------------------------------------------------
+
+== vs lugnut
+cast player at -620 facing right
+cast lugnut at 220 facing right
+music stop
+camera at 0 -420 zoom 0.7 cut
+sound clang
+shake 15
+wait 20
+sound clang
+shake 15
+narrator: Clang. Clang.
+player walk to -200
+player look shocked
+camera two player lugnut
+player: Lug. Buddy. What are you doing to my stage.
+lugnut face player
+lugnut: Lighting rig. Your stage wasn't up to code.
+player (shout): It's ROCK AND ROLL. Nothing is up to code!
+lugnut pose crossarms
+lugnut: Then nobody plays till it passes inspection.
+player mark anger
+player look angry
+player (hot): You're cancelling my SHOW?!
+lugnut pose none
+lugnut: ...Break's over, I guess.
+player mark none
+camera wide
+fight
+
+== beat lugnut
+cast player at -200 facing right
+cast lugnut at 200 facing left
+music story
+camera two player lugnut
+lugnut: ...Okay. It passed.
+player: Inspection?
+lugnut: Stress test.
+player look happy
+player: So I can play?
+lugnut look happy
+lugnut: With pyro, even.
+player walk to lugnut
+sound clang
+player pose cheer
+player special down
+narrator: A fist bump, and Fire Rain off the girder, like fireworks.
+wait 70
+player pose none
+end
+
+== vs edgelord triguy
+cast player at -780 facing right
+cast edgelord at 420 facing left
+cast triguy at 640 facing left
+music story
+camera two edgelord triguy
+edgelord: Speed and edge, kid. We're unstoppable.
+triguy show taunt_pose
+triguy: that's, really kewl.
+edgelord look smug
+edgelord: Exactly. Stick with me.
+triguy show none
+triguy face edgelord
+triguy mark sparkle
+triguy: that's, really kewl.
+edgelord look angry
+edgelord: Hands off the sword.
+triguy mark none
+triguy look sad
+triguy (whisper): not kewl.
+camera on player zoom 1.2
+player look smug
+player (hot): Order up.
+camera wide
+fight
+
+== beat edgelord triguy
+cast player at -200 facing right
+cast edgelord at 200 facing left
+cast triguy at 420 facing left
+music story
+edgelord pose crossarms
+edgelord: That was me letting you win.
+triguy show crying
+triguy: not kewl.
+player look smug
+player: Even your sidekick isn't buying that, mon ami.
+edgelord look angry
+edgelord: Whose side are you on?
+triguy show none
+end
+
+# --- The finale -------------------------------------------------------------------------------
 
 == roast
 player (hot): The fridge is not yours, mon ami.
@@ -16,3 +204,26 @@ player (happy): You know what fixes a meltdown, mon ami? Dessert.
 doombot: ...DOOMBOT DOES NOT EAT.
 player: Then you can hold the lighter.
 doombot look happy
+
+== ending
+cast player at 0 facing right
+cast lugnut at 560 facing left
+music story
+camera on player zoom 1.0 cut
+narrator: The Big Show. The middle of the fridge. Eye level.
+player taunt
+player special down
+narrator: Lugnut's lights up on the girder. Fire Rain for fireworks.
+camera two player lugnut
+lugnut pose cheer
+lugnut (shout): ENCORE!
+player: I don't do encores.
+wait 40
+player look happy
+player: ...Okay. One encore.
+player taunt
+lugnut pose none
+wait 40
+narrator: The Headliner. Top of the bill. Middle of the fridge.
+wait 40
+end

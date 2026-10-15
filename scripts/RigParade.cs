@@ -275,13 +275,16 @@ public partial class RigParade : Node2D
 	/// <summary>
 	/// --film=face: one fighter's face in every expression, big - the drawn eyes, brows and mouth
 	/// moved by FighterRig.SetFace. --film=turn: the paper turn about the upright axis, then a roll
-	/// round in the plane of the page (Fighter.Twirl).
+	/// round in the plane of the page (Fighter.Twirl). --film=story: every pose a story can have
+	/// him strike (FighterAnimations.StoryPose), held where a scene holds it.
 	/// </summary>
 	void BuildFaceFilm()
 	{
 		FighterData data = FighterCatalog.Get(Mathf.Max(0, Only));
 		bool turn = Film == "turn";
-		string[] names = { "rest", "closed", "squint", "angry", "shout", "hurt", "shocked", "happy", "sad", "talking" };
+		bool story = Film == "story";
+		string[] names = story ? FighterAnimations.StoryPoses
+			: new[] { "rest", "closed", "squint", "angry", "shout", "hurt", "shocked", "happy", "sad", "talking" };
 		int cells = turn ? 12 : names.Length;
 		const float Column = 380.0f;
 		const float Row = 560.0f;
@@ -308,6 +311,12 @@ public partial class RigParade : Node2D
 				if (i < 6) rig.SetSpinWidth(FighterRig.PaperTurnWidth(angle));
 				else rig.SetRoll(angle);
 				label = (i < 6 ? "turn " : "roll ") + Mathf.RoundToInt(Mathf.RadToDeg(angle));
+			}
+			else if (story)
+			{
+				rig.HandOnHip = false;
+				rig.ApplyDirect(FighterAnimations.StoryPose(names[i]), 0.9f);
+				label = names[i];
 			}
 			else
 			{
@@ -340,7 +349,7 @@ public partial class RigParade : Node2D
 
 	void BuildFilm()
 	{
-		if (Film == "face" || Film == "turn")
+		if (Film == "face" || Film == "turn" || Film == "story")
 		{
 			BuildFaceFilm();
 			return;

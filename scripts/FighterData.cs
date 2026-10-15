@@ -19,6 +19,12 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public float VoicePitch { get; set; } = 1.0f;
 
+	/// <summary>Multiplied over his whole drawing: DoomBot Mk. II is DoomBot, newer and shinier.</summary>
+	[Export] public Color RigTint { get; set; } = Colors.White;
+
+	/// <summary>What a story script calls him, when it is not just his name (StoryScript.IdOf).</summary>
+	[Export] public string StoryId { get; set; } = "";
+
 	/// <summary>M1 placeholder tint. Replaced by the rigged drawing at M2.</summary>
 	[Export] public Color PlaceholderColor { get; set; } = new Color(0.9f, 0.9f, 0.9f);
 
@@ -326,6 +332,22 @@ public partial class FighterData : Resource
 	///   - "big windups": startups a few frames past the baseline, and a higher AnimationDrama so
 	///     every windup is drawn big enough to see coming
 	/// </summary>
+	/// <summary>
+	/// DoomBot Mk. II, the final boss of DoomBot's own story (Eric's call, 2026-10-15): the
+	/// factory's newer model - the same drawing, every move his, in a cooler, shinier steel. Not
+	/// on the roster; only a story can field him (FighterCatalog.StoryOnly).
+	/// </summary>
+	public static FighterData DoomBotMk2()
+	{
+		FighterData data = DoomBot();
+		data.DisplayName = "DoomBot Mk. II";
+		data.StoryId = "mk2";
+		data.VoicePitch = 0.68f;
+		data.PlaceholderColor = new Color(0.36f, 0.62f, 0.92f);
+		data.RigTint = new Color(0.78f, 0.92f, 1.12f);
+		return data;
+	}
+
 	public static FighterData DoomBot()
 	{
 		const float Size = 1.75f;

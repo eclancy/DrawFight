@@ -1,10 +1,141 @@
 # Triguy's story: Can't Stand Still. How a script reads is at the top of fighters/doombot/story.txt.
-# Triguy says very little for now - his catchphrase, every way it can be said - and his real
-# story is Elim's to tell (.ai/story-mode.md, "The two kids' fighters").
-# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+# Triguy only ever talks in his catchphrases (Eric, 2026-10-15) - "that's, really kewl", "not
+# kewl", said every way they can be - and whoever answers him understands exactly what he meant
+# and answers it the way you would, so what he said is obvious from the answer. Nobody
+# translates him. He got put on the fridge yesterday and has slid off it eleven times since.
+
+== chapters
+title Can't Stand Still
+opening at fridge
+fight circy at fridge
+fight edgelord at rooftops
+fight lugnut at plains
+fight flambe at bigshow
+fight flambe lugnut at rooftops
+finale
+ending at fridge
+
+== opening
+cast player at -300 facing right
+music story
+camera wide cut
+narrator: Triguy got put on the fridge yesterday.
+narrator: He has slid off it eleven times since.
+player run to 500
+player run to -500
+player special down
+narrator: Twelve.
+wait 30
+player special up
+wait 50
+player run to 300
+camera on player zoom 1.2
+narrator: Then he saw everyone fighting for a spot.
+player show taunt_surprised
+player: that's, really kewl.
+player show none
+player run to 900
+narrator: Triguy wanted a spot of his own.
+end
+
+# --- How he meets someone, in their stories ------------------------------------------------
+
+== challenger
+cast player at -400
+cast triguy at 900 facing left
+music story
+triguy run to 300
+triguy show taunt_pose
+camera two player triguy
+triguy: that's, really kewl.
+player: Yeah, it's a great spot. And no, you can't have it.
+triguy show taunt_pog
+triguy (shout): THAT'S, REALLY KEWL.
+player: ...Fine. Fight me for it.
+triguy show none
+camera wide
+fight
+
+== defeated
+cast player at -300
+cast triguy at 300 facing left
+music story
+triguy show crying
+triguy (whisper): not kewl.
+player: Yeah. I know. You'll find a spot. Somewhere that isn't mine.
+triguy show none
+end
+
+# --- His own fights ----------------------------------------------------------------------------
+
+== vs edgelord
+cast player at -780 facing right
+cast edgelord at 520 facing left
+music story
+camera two player edgelord
+edgelord: Another speedster. How original.
+player: that's, really kewl.
+edgelord look smug
+edgelord: Faster than me? Please.
+player: that's, really kewl.
+edgelord look angry
+edgelord: Say it one more time.
+player show taunt_pog
+player: that's, really kewl.
+edgelord look sad
+edgelord: ...I walked into that.
+player show none
+camera wide
+fight
+
+== beat edgelord
+cast player at -200 facing right
+cast edgelord at 200 facing left
+music story
+edgelord pose crossarms
+edgelord: Fine. You're fast.
+player show taunt_pose
+player (happy): that's, really kewl.
+edgelord: Yes, I know you know. You don't have to say it.
+player show none
+end
+
+== vs lugnut
+cast player at -400 facing right
+cast lugnut at 400 facing left
+music story
+camera two player lugnut
+lugnut: Easy there, speedy. You're gonna slide right off.
+player show taunt_surprised
+player: not kewl.
+lugnut: Been sliding off all day, huh? Then you need a spot that's built right.
+lugnut look angry
+lugnut: Soon as I've stopped you running around. Break's over.
+player show none
+camera wide
+fight
+
+== vs flambe
+cast player at -400 facing right
+cast flambe at 400 facing left
+music story
+camera two player flambe
+flambe taunt
+player show taunt_pog
+player (shout): THAT'S, REALLY KEWL.
+flambe look smug
+flambe: A fan! Of course. Where do I sign?
+player show none
+player: not kewl.
+flambe look shocked
+flambe: ...Oh. Not my autograph. My STAGE. Then we have a problem, mon ami.
+camera wide
+fight
+
+# --- The finale -------------------------------------------------------------------------------
 
 == roast
-player look shocked
+player show taunt_surprised
 camera on doombot zoom 1.2 whip
 wait 20
 camera at 1100 -560 zoom 1.0 whip
@@ -16,10 +147,35 @@ wait 40
 camera two player doombot
 doombot look angry
 doombot: DO NOT. MAKE. THAT FACE.
-player look normal
+player show none
 player (whisper): not kewl.
 
 == answer
 player look sad
 player (whisper): that's, really kewl.
+doombot look shocked
+doombot: ...THANK YOU. SMALL TRIANGLE.
 doombot look happy
+
+== ending
+cast player at 0 facing right
+music story
+camera on player zoom 1.2 cut
+narrator: A Glue Bottle.
+player hold glue_bottle
+player throw down
+wait 30
+player walk to 90
+narrator: Triguy, glued to his page. Finally standing still.
+player look shocked
+player crouch 20
+wait 10
+player crouch 20
+player look happy
+player: that's... really kewl.
+wait 30
+player show taunt_pog
+player (shout): THAT'S, REALLY KEWL.
+wait 50
+player show none
+end

@@ -775,7 +775,7 @@ public partial class Fighter : CharacterBody2D
 		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut && prop != "-" && State != FighterState.LedgeHang && heldItem == null);
 		ShowTurnFrame(spinning);
 
-		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll(),
+		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll() + TrembleRoll(),
 			State == FighterState.Dodging && groundRoll);
 		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth());
 		UpdateFace();
@@ -906,6 +906,10 @@ public partial class Fighter : CharacterBody2D
 		// A stretched kick: the leg pointed at the hit, as well as long enough to reach it.
 		float kick = LegStretchAmount();
 		if (kick > 0.0f) rig.AimFrontLeg(CurrentHitboxCentre(), kick);
+		if (!string.IsNullOrEmpty(StoryPose) && (State == FighterState.Grounded || State == FighterState.Airborne))
+		{
+			ApplyStoryPose();
+		}
 		if (shieldRaised && State != FighterState.Attacking)
 		{
 			rig.SetStanding(false);
@@ -966,8 +970,10 @@ public partial class Fighter : CharacterBody2D
 		}
 
 		if (invulnFrames > 0 && (invulnFrames / 4) % 2 == 0) tint.A = 0.4f;
+		// A boss on his last stock flashes red (StoryDirector's last stand).
+		if (Raging && (fxFrames / 6) % 2 == 0) tint *= new Color(1.5f, 0.55f, 0.5f);
 
-		rig.Modulate = ItemTint(tint);
+		rig.Modulate = ItemTint(tint * Data.RigTint);
 	}
 
 	// --- Timers --------------------------------------------------------------
@@ -2416,7 +2422,7 @@ public partial class Fighter : CharacterBody2D
 
 		foreach (Fighter other in Match.Fighters)
 		{
-			if (other == this || alreadyHitThisMove.Contains(other)) continue;
+			if (other == this || alreadyHitThisMove.Contains(other) || Match.Allies(this, other)) continue;
 			if (!other.CanBeHit) continue;
 
 			if (!CapsuleTouches(root, centre, radius, other.BodyRect(), out Vector2 nearest)) continue;
@@ -3362,7 +3368,7 @@ public partial class Fighter : CharacterBody2D
 	{
 		foreach (Fighter other in Match.Fighters)
 		{
-			if (other == this || !other.CanBeHit || other.heldBy != null) continue;
+			if (other == this || !other.CanBeHit || other.heldBy != null || Match.Allies(this, other)) continue;
 			// A bomb is not something you pick up.
 			if (other.CurrentMove != null && other.CurrentMove.Special == SpecialKind.Bomb) continue;
 
@@ -4592,6 +4598,9 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	string HeldPoseName()
 	{
+		// A story holding up one of his own drawings - not in a move, not flying from a hit.
+		if (!string.IsNullOrEmpty(StoryShow) && rig != null && rig.Loaded && State != FighterState.Attacking
+			&& rig.PoseArtFor(StoryShow) != null) return StoryShow;
 		if (rig == null || !rig.Loaded || State != FighterState.Attacking || currentMove == null) return null;
 
 		// A move that strikes one of several drawn poses holds the one picked for it, start to end.

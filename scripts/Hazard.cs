@@ -264,7 +264,7 @@ public partial class Hazard : Node2D
 		Fighter wading = null;
 		foreach (Fighter other in match.Fighters)
 		{
-			if (other == owner || !other.IsInPlay || !other.IsOnFloor()) continue;
+			if (other == owner || !other.IsInPlay || !other.IsOnFloor() || match.Allies(owner, other)) continue;
 			Rect2 body = other.BodyRect();
 			if (Mathf.Abs(body.End.Y - GlobalPosition.Y) > 14.0f) continue;
 			if (body.End.X < GlobalPosition.X - puddleLeft || body.Position.X > GlobalPosition.X + puddleRight) continue;
@@ -618,7 +618,7 @@ public partial class Hazard : Node2D
 			// The MiniBot never hits anyone: it goes off, and the blast does.
 			foreach (Fighter other in match.Fighters)
 			{
-				if (other == owner || !other.CanBeHitByHazard) continue;
+				if (other == owner || !other.CanBeHitByHazard || match.Allies(owner, other)) continue;
 				if (Touches(other.BodyRect(), out _))
 				{
 					Detonate();
@@ -633,7 +633,7 @@ public partial class Hazard : Node2D
 		foreach (Fighter other in match.Fighters)
 		{
 			if (other == owner && ageFrames < OwnerGraceFrames) continue;
-			if (other == owner) continue;
+			if (other == owner || match.Allies(owner, other)) continue;
 			if (alreadyHit.Contains(other)) continue;
 			if (!other.CanBeHitByHazard) continue;
 

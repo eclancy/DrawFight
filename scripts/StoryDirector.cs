@@ -1,61 +1,6 @@
 using System.Collections.Generic;
 using Godot;
 
-/// <summary>One fight in a story, with the scene before it and the scene after.</summary>
-public class StoryChapter
-{
-	public int Stage;
-
-	/// <summary>Story ids of who the player fights, by roster - "doombot".</summary>
-	public string[] Opponents = System.Array.Empty<string>();
-
-	/// <summary>The scene before the fight, as "owner/scene" - "doombot/finale". It ends in "fight".</summary>
-	public string Before = "";
-
-	/// <summary>The scene once the fight is won, or "" to go straight on.</summary>
-	public string After = "";
-}
-
-/// <summary>
-/// One player's way through a story: whose story it is, the chapters, how far they have got.
-/// Kept by GameRoot, so a lost fight is retried with the same chapter and a won one moves on.
-/// </summary>
-public class StoryRun
-{
-	public string PlayerId = "";
-	public readonly List<StoryChapter> Chapters = new List<StoryChapter>();
-	public int At;
-
-	/// <summary>How many times the current chapter has been tried, so a retry can say so.</summary>
-	public int Tries;
-
-	/// <summary>Open on the scene after the fight, for looking at it (--story=WHO:N:after).</summary>
-	public bool StartAfter;
-
-	public bool Done => At >= Chapters.Count;
-	public StoryChapter Chapter => Done ? null : Chapters[At];
-
-	/// <summary>
-	/// A fighter's story, as far as it is built: so far, only the finale against DoomBot. The
-	/// rest of the chapters come with the scripts (.ai/story-mode.md, "What has to be built").
-	/// </summary>
-	public static StoryRun For(string playerId)
-	{
-		var run = new StoryRun { PlayerId = playerId };
-		if (playerId != "doombot" && StoryScript.Has("doombot", "finale"))
-		{
-			run.Chapters.Add(new StoryChapter
-			{
-				Stage = 0,
-				Opponents = new[] { "doombot" },
-				Before = "doombot/finale",
-				After = StoryScript.Has("doombot", "beaten") ? "doombot/beaten" : "",
-			});
-		}
-		return run;
-	}
-}
-
 /// <summary>
 /// Drives a fighter the way a controller does - a story's hands on the stick. The director
 /// sets what is pressed each frame; a press is an edge for one poll, as from any pad.
@@ -245,7 +190,11 @@ public partial class StoryDirector : Node
 			if (++fightOverFrames == 100) AfterFight();
 			return;
 		}
-		if (!InScene) return;
+		if (!InScene)
+		{
+			TickBoss();
+			return;
+		}
 
 		ReadHumans();
 		foreach (ScriptedInput input in inputs.Values) input.Next.Move = Vector2.Zero;
@@ -354,7 +303,7 @@ public partial class StoryDirector : Node
 				return true;
 
 			case "narrate":
-				if (first) run.Line = overlay.Narrate(step.Text);
+				if (first) run.Line = overlay.Narrate(step.Text, step.Mood);
 				if (!run.Line.Finished) return false;
 				overlay.Close(run.Line);
 				return true;
@@ -377,7 +326,8 @@ public partial class StoryDirector : Node
 
 			case "music":
 				if (step.Arg(0) == "stop") MusicPlayer.Stop();
-				else MusicPlayer.Play(step.Arg(0) == "battle" ? MusicPlayer.Battle : MusicPlayer.Menu);
+				else if (step.Arg(0) == "victory") MusicPlayer.PlayOnce(MusicPlayer.Victory);
+				else MusicPlayer.Play(step.Arg(0));
 				return true;
 
 			case "sound":
@@ -387,6 +337,32 @@ public partial class StoryDirector : Node
 			case "board":
 				if (step.Arg(0) == "clear") board.Clear();
 				else board.At(new Vector2(step.Number(1, 0), step.Number(2, 0)));
+				return true;
+
+			case "stage":
+				Match.Stage.Bare = step.Arg(0) == "bare";
+				return true;
+
+			case "pile":
+				board.Pile(step.Arg(0) == "clear" ? (float?)null : step.Number(1, 0), Match.FloorAt(step.Number(1, 0)));
+				return true;
+
+			case "dark":
+				board.Dark = step.Arg(0) == "on";
+				return true;
+
+			case "eye":
+				if (step.Arg(0) == "close") board.CloseEye();
+				else board.OpenEye(new Vector2(step.Number(1, 0), step.Number(2, 0)));
+				return true;
+
+			case "page":
+				if (step.Arg(0) == "clear") board.Page(null);
+				else
+				{
+					board.Page(new Vector2(step.Number(1, 0), step.Number(2, 0)));
+					if (!skipping) SfxPlayer.Ui("magnet_clink");
+				}
 				return true;
 
 			case "cast":
@@ -444,6 +420,18 @@ public partial class StoryDirector : Node
 				actor.Expression = step.Arg(0) == "normal" ? "" : step.Arg(0);
 				return true;
 
+			case "pose":
+				actor.StoryPose = step.Arg(0) == "none" ? "" : step.Arg(0);
+				return true;
+
+			case "show":
+				actor.StoryShow = step.Arg(0) == "none" ? "" : step.Arg(0);
+				return true;
+
+			case "mark":
+				actor.Mark = step.Arg(0) == "none" ? "" : step.Arg(0);
+				return true;
+
 			case "jump":
 				if (first) input.Next.JumpPressed = true;
 				return run.Frames > 6 && actor.IsOnFloor() || run.Frames > 150;
@@ -478,6 +466,21 @@ public partial class StoryDirector : Node
 				return false;
 			}
 
+			case "throw":
+				// Whatever is in his hand, thrown the way the stick says: the grab button, as in a fight.
+				if (first)
+				{
+					input.Next.GrabPressed = true;
+					input.Next.Move = step.Arg(0) switch
+					{
+						"back" => new Vector2(-actor.Facing, 0.0f),
+						"up" => Vector2.Up,
+						"down" => Vector2.Down,
+						_ => Vector2.Zero,
+					};
+				}
+				return run.Frames > 20;
+
 			case "block":
 				input.Next.BlockHeld = true;
 				return run.Frames >= step.Number(0, 60);
@@ -489,7 +492,7 @@ public partial class StoryDirector : Node
 			case "drop":
 				if (first)
 				{
-					float x = step.Arg(0) == "at" ? PlaceX(step.Arg(1), actor) : actor.GlobalPosition.X;
+					float x = Match.GroundNear(step.Arg(0) == "at" ? PlaceX(step.Arg(1), actor) : actor.GlobalPosition.X);
 					actor.ReviveForScene(new Vector2(x, camera.VisibleRect().Position.Y - 300.0f));
 				}
 				// Down past the platforms, onto the floor - a scene drops someone onto the stage.
@@ -538,9 +541,10 @@ public partial class StoryDirector : Node
 		return dx < 0.0f ? -1 : 1;
 	}
 
-	/// <summary>Stood on the floor at x, at once.</summary>
+	/// <summary>Stood on the floor at x - or the nearest solid ground to it - at once.</summary>
 	void Place(Fighter actor, float x)
 	{
+		x = Match.GroundNear(x);
 		float floor = Match.FloorAt(x);
 		actor.ReviveForScene(new Vector2(x, floor - actor.Data.BodySize.Y * 0.5f - 1.0f));
 	}
@@ -643,11 +647,9 @@ public partial class StoryDirector : Node
 		overlay.CloseAll();
 		overlay.ShowBars(false);
 		board.Clear();
-		foreach (Fighter fighter in Match.Fighters)
-		{
-			fighter.Talking = false;
-			fighter.Expression = "";
-		}
+		foreach (Fighter fighter in Match.Fighters) fighter.ClearStoryLook();
+		board.Dark = false;
+		board.CloseEye();
 
 		if (how == "fight" && !afterFight)
 		{
@@ -656,6 +658,56 @@ public partial class StoryDirector : Node
 		}
 		// The scene after a fight - or one with no fight in it - is over: on to the next.
 		GameRoot.Instance.StoryNext();
+	}
+
+	// --- The boss's last stand -------------------------------------------------------------
+	// On his last stock the boss - DoomBot, or Mk. II in DoomBot's own story - goes critical: he
+	// says so, flashes red, runs hot for the rest of the fight, sends MiniBots out after you every
+	// few seconds, and the music speeds up (.ai/story-mode.md, the finale).
+
+	bool lastStand;
+	int lastStandFrames;
+	StoryOverlay.Line lastStandLine;
+
+	/// <summary>How often a raging boss sends out a MiniBot.</summary>
+	const int MiniBotEvery = 220;
+
+	void TickBoss()
+	{
+		if (Match.BossPlayer < 0 || Match.BossPlayer >= Match.Fighters.Count) return;
+		Fighter boss = Match.Fighters[Match.BossPlayer];
+		if (lastStandLine != null && lastStandLine.Finished)
+		{
+			overlay.Close(lastStandLine);
+			lastStandLine = null;
+		}
+		if (!lastStand)
+		{
+			if (boss.Stocks != 1 || !boss.IsInPlay || Match.InputLocked) return;
+			lastStand = true;
+			boss.Raging = true;
+			boss.SetHeat(Heat.Max);
+			lastStandLine = overlay.Say(boss, "slam", "CORE TEMPERATURE CRITICAL.");
+			SfxPlayer.Ui("steam");
+			MusicPlayer.SetSpeed(1.25f);
+			return;
+		}
+		if (!boss.IsInPlay) return;
+		if (++lastStandFrames % MiniBotEvery != 0) return;
+
+		// A MiniBot set down at his feet, marching at whoever is nearest.
+		MoveData bot = boss.Data.Move(MoveSlot.DownTilt);
+		if (bot == null || bot.Special != SpecialKind.Walker) return;
+		Fighter target = null;
+		foreach (Fighter f in Match.Fighters)
+		{
+			if (!Match.Allies(boss, f) && f != boss && f.IsInPlay) target = f;
+		}
+		if (target == null) return;
+		int way = target.GlobalPosition.X >= boss.GlobalPosition.X ? 1 : -1;
+		Vector2 at = boss.Feet + new Vector2(way * boss.Data.BodySize.X * 0.7f, -bot.FxArtSize * 0.5f);
+		Match.SpawnHazard(boss, bot, at, new Vector2(way * bot.SpecialSpeed, 0.0f));
+		SfxPlayer.At("minibot_pop", at, 0.05f);
 	}
 
 	/// <summary>The fight is over: the match says who is left.</summary>
@@ -668,11 +720,13 @@ public partial class StoryDirector : Node
 	void AfterFight()
 	{
 		fightOverFrames = -1;
-		if (winner == null || winner != Match.Fighters[0])
+		// Won by the player's side - in a two-on-one, the player is a side of one.
+		if (winner == null || Match.TeamOf(winner) != Match.TeamOf(Match.Fighters[0]))
 		{
 			GameRoot.Instance.StoryRetry();
 			return;
 		}
+		MusicPlayer.PlayOnce(MusicPlayer.Victory);
 		string after = Run.Chapter?.After ?? "";
 		if (after == "")
 		{

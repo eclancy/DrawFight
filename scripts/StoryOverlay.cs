@@ -91,10 +91,14 @@ public partial class StoryOverlay : CanvasLayer
 		return line;
 	}
 
-	/// <summary>Starts the narrator's strip. One narrator line at a time.</summary>
-	public Line Narrate(string text)
+	/// <summary>
+	/// Starts the narrator's strip. One narrator line at a time. Shouted, it is the grown-up's
+	/// voice from the kitchen in Lugnut's story: bigger, red, and the strip shakes.
+	/// </summary>
+	public Line Narrate(string text, string mood = "")
 	{
-		narration = Layout(new Line { Mood = "narrator", Text = text, Seed = text.Length * 7 });
+		narration = Layout(new Line { Mood = mood == "shout" ? "narrator shout" : "narrator", Text = text, Seed = text.Length * 7 });
+		if (mood == "shout") SfxPlayer.Ui("stomp");
 		return narration;
 	}
 
@@ -125,6 +129,7 @@ public partial class StoryOverlay : CanvasLayer
 		"slam" => 52,
 		"whisper" => 28,
 		"narrator" => 38,
+		"narrator shout" => 46,
 		_ => 36,
 	};
 
@@ -136,7 +141,7 @@ public partial class StoryOverlay : CanvasLayer
 		float picture = size * 2.7f;
 		line.LineHeight = pictures ? picture + 10.0f : size * 1.3f;
 		float space = font.GetCharSize(' ', size).X;
-		float max = line.Mood == "narrator" ? 1300.0f : MaxWidth;
+		float max = line.Mood.StartsWith("narrator") ? 1300.0f : MaxWidth;
 
 		// Words, and [pictures] as words of their own.
 		var words = new List<string>();
@@ -200,6 +205,7 @@ public partial class StoryOverlay : CanvasLayer
 		"whisper" => 0.5f,
 		"scared" => 0.55f,
 		"narrator" => 0.8f,
+		"narrator shout" => 1.2f,
 		_ => 0.75f,
 	};
 
@@ -286,6 +292,7 @@ public partial class StoryOverlay : CanvasLayer
 	{
 		Vector2 screen = canvas.GetViewportRect().Size;
 
+		if (Match != null) foreach (Fighter f in Match.Fighters) if (!string.IsNullOrEmpty(f.Mark) && f.Visible) DrawMark(f);
 		foreach (Line line in lines) DrawBubble(line, screen);
 		DrawBars(screen);
 		if (narration != null) DrawNarration(narration, screen);
@@ -360,6 +367,7 @@ public partial class StoryOverlay : CanvasLayer
 		{
 			"whisper" => Whisper,
 			"narrator" => Pencil,
+			"narrator shout" => Overheated,
 			_ => MenuTheme.Text,
 		};
 		// Red-hot when he is: DoomBot's words glow with his heat.
@@ -479,6 +487,127 @@ public partial class StoryOverlay : CanvasLayer
 		}
 	}
 
+	// --- Marks over a head --------------------------------------------------------------------
+
+	static readonly Color MarkRed = new Color(0.92f, 0.28f, 0.28f);
+	static readonly Color MarkBlue = new Color(0.42f, 0.68f, 0.98f);
+	static readonly Color MarkGold = new Color(1.0f, 0.84f, 0.3f);
+
+	/// <summary>
+	/// The cartoon mark a story has put on someone: an anger vein, a sweat drop, sparkles, a heart,
+	/// a "!" or "?", steam, tears. Crayon-bright, outlined in the stage's ink so it reads on any
+	/// page, and always moving a little - a mark that sits still reads as a sticker.
+	/// </summary>
+	void DrawMark(Fighter f)
+	{
+		Vector2 head = ToScreen(f.HeadGlobal());
+		float zoom = Match.GetViewport().CanvasTransform.X.X;
+		float s = Mathf.Clamp(zoom, 0.6f, 1.4f);
+		Color ink = MenuTheme.Ink;
+		int t = frames;
+		Vector2 side = head + new Vector2(f.Facing * 46.0f * s, -12.0f * s);
+		switch (f.Mark)
+		{
+			case "anger":
+			{
+				// The four curved prongs of a throbbing vein.
+				float pulse = 1.0f + 0.15f * Mathf.Sin(t * 0.4f);
+				for (int i = 0; i < 4; i++)
+				{
+					float a = Mathf.Pi * 0.25f + Mathf.Pi * 0.5f * i;
+					Vector2 dir = Vector2.Right.Rotated(a);
+					Vector2 from = side + dir * 8.0f * s * pulse;
+					Vector2 to = side + dir * 22.0f * s * pulse;
+					Vector2 bend = (from + to) * 0.5f + dir.Orthogonal() * 6.0f * s;
+					canvas.DrawPolyline(new[] { from, bend, to }, ink, 9.0f * s, true);
+					canvas.DrawPolyline(new[] { from, bend, to }, MarkRed, 5.0f * s, true);
+				}
+				break;
+			}
+			case "sweat":
+			{
+				Vector2 at = side + new Vector2(0.0f, 10.0f * s + (t % 40) * 0.6f * s);
+				DrawDrop(at, 13.0f * s, MarkBlue, ink);
+				break;
+			}
+			case "tears":
+			{
+				for (int i = 0; i < 2; i++)
+				{
+					float k = ((t + i * 17) % 34) / 34.0f;
+					Vector2 at = head + new Vector2((i == 0 ? 20.0f : 34.0f) * f.Facing * s, 30.0f * s + 60.0f * s * k);
+					DrawDrop(at, 9.0f * s * (1.0f - 0.4f * k), MarkBlue, ink);
+				}
+				break;
+			}
+			case "sparkle":
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					float tw = Mathf.Abs(Mathf.Sin(t * 0.15f + i * 2.1f));
+					Vector2 at = head + new Vector2((i - 1) * 34.0f * s, -26.0f * s - (i == 1 ? 18.0f * s : 0.0f));
+					DrawSparkle(at, (8.0f + 10.0f * tw) * s, MarkGold, ink);
+				}
+				break;
+			}
+			case "heart":
+			{
+				float beat = 1.0f + 0.18f * Mathf.Max(0.0f, Mathf.Sin(t * 0.3f));
+				Vector2 at = head + new Vector2(0.0f, -40.0f * s - (t % 60) * 0.3f * s);
+				StoryPictures.Draw(canvas, "heart", at, 44.0f * s * beat, ink, 1.0f, 77);
+				break;
+			}
+			case "!":
+			case "?":
+			{
+				float hop = Mathf.Abs(Mathf.Sin(t * 0.2f)) * 6.0f * s;
+				Vector2 at = head + new Vector2(-12.0f * s, -24.0f * s - hop);
+				int size = (int)(64 * s);
+				canvas.DrawStringOutline(ThemeDB.FallbackFont, at, f.Mark, HorizontalAlignment.Left, -1, size, (int)(10 * s), MenuTheme.Paper);
+				canvas.DrawString(ThemeDB.FallbackFont, at, f.Mark, HorizontalAlignment.Left, -1, size, f.Mark == "!" ? MarkRed : MenuTheme.Ink);
+				break;
+			}
+			case "steam":
+			{
+				for (int i = 0; i < 5; i++)
+				{
+					float k = ((t + i * 11) % 50) / 50.0f;
+					Vector2 at = head + new Vector2((i - 2) * 16.0f * s + Mathf.Sin(t * 0.1f + i) * 6.0f, -10.0f * s - 70.0f * s * k);
+					canvas.DrawCircle(at, (8.0f + 14.0f * k) * s, new Color(0.95f, 0.95f, 0.98f, 0.85f * (1.0f - k)));
+				}
+				break;
+			}
+		}
+	}
+
+	void DrawDrop(Vector2 at, float r, Color fill, Color ink)
+	{
+		var pts = new Vector2[13];
+		for (int i = 0; i < 12; i++)
+		{
+			float a = Mathf.Pi * 2.0f * i / 12.0f;
+			pts[i] = at + new Vector2(Mathf.Cos(a) * r, Mathf.Sin(a) * r);
+		}
+		pts[0] = at + new Vector2(0.0f, -r * 2.2f);
+		pts[12] = pts[0];
+		canvas.DrawColoredPolygon(pts[..12], fill);
+		canvas.DrawPolyline(pts, ink, 3.0f, true);
+		canvas.DrawCircle(at + new Vector2(-r * 0.35f, -r * 0.2f), r * 0.25f, new Color(1, 1, 1, 0.8f));
+	}
+
+	void DrawSparkle(Vector2 at, float r, Color fill, Color ink)
+	{
+		var pts = new Vector2[9];
+		for (int i = 0; i < 8; i++)
+		{
+			float a = Mathf.Pi * 0.25f * i;
+			pts[i] = at + Vector2.Right.Rotated(a) * (i % 2 == 0 ? r : r * 0.28f);
+		}
+		pts[8] = pts[0];
+		canvas.DrawColoredPolygon(pts[..8], fill);
+		canvas.DrawPolyline(pts, ink, 2.5f, true);
+	}
+
 	void DrawBars(Vector2 screen)
 	{
 		if (bars <= 0.0f) return;
@@ -504,6 +633,7 @@ public partial class StoryOverlay : CanvasLayer
 		float width = Mathf.Max(700.0f, line.Size.X + 120.0f);
 		float height = line.Size.Y + 46.0f;
 		Vector2 centre = new Vector2(screen.X * 0.5f, screen.Y - BarHeight - height * 0.5f + 30.0f);
+		if (line.Mood == "narrator shout" && !line.Typed) centre += new Vector2(CrayonBrush.Noise(frames, 13), CrayonBrush.Noise(frames, 17)) * 6.0f;
 		CurrentTransform = new Transform2D(-0.012f, new Vector2(1.0f, pop), 0.0f, centre);
 		canvas.DrawSetTransformMatrix(CurrentTransform);
 

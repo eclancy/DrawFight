@@ -1,7 +1,157 @@
 # Circy's story: First on the Fridge. How a script reads is at the top of fighters/doombot/story.txt.
-# Circy talks in pictures for now - Elim never said how he talks, and his real story is Elim's
-# to tell (.ai/story-mode.md, "The two kids' fighters").
-# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+# Circy only ever talks in pictures (Eric, 2026-10-15) - and whoever answers him understands
+# exactly what he meant, and answers it the way you would, so what he said is obvious from the
+# answer. Nobody translates him. He was the first drawing ever put on this fridge, and he is
+# staying.
+
+== chapters
+title First on the Fridge
+opening at fridge
+fight triguy at plains
+fight edgelord at rooftops
+fight flambe at bigshow
+fight lugnut at fridge
+fight flambe lugnut at rooftops
+finale
+ending at fridge
+
+== opening
+cast player at 0 facing right
+music story
+camera on player zoom 1.2 cut
+narrator: Circy was the first drawing ever put on this fridge.
+narrator: His page is the oldest. Its corners curl.
+sound magnet_clink
+shake 10
+narrator: And somebody had just pinned a new page halfway over his.
+player look shocked
+player mark !
+wait 20
+player mark none
+player look angry
+player: [fridge] [heart] [!]
+player special
+wait 40
+narrator: He wasn't going anywhere.
+end
+
+# --- How he meets someone, in their stories ------------------------------------------------
+
+== challenger
+cast player at -400
+cast circy at 400 facing left
+music story
+camera two player circy
+circy: [fridge] [heart] [!]
+player: I know, I know. You were here first. Everybody knows.
+circy look angry
+circy: [bomb]
+player look shocked
+player: Whoa. Okay. Nobody's touching your page. ...Except me.
+camera wide
+fight
+
+== defeated
+cast player at -300
+cast circy at 300 facing left
+music story
+circy look sad
+circy: [heart] [?]
+player: Course you're staying. You were here first.
+circy look happy
+end
+
+# --- His own fights ----------------------------------------------------------------------------
+
+== vs triguy
+cast player at -400 facing right
+cast triguy at 900 facing left
+music story
+triguy run to 300
+triguy show taunt_surprised
+camera two player triguy
+narrator: Triguy had his eye on the oldest page on the fridge.
+triguy: that's, really kewl.
+player: [?]
+triguy show taunt_pose
+triguy (shout): THAT'S, REALLY KEWL.
+player look angry
+player: [bomb] [!]
+triguy show none
+triguy look shocked
+camera wide
+fight
+
+== beat triguy
+cast player at -200 facing right
+cast triguy at 200 facing left
+music story
+triguy show crying
+triguy (whisper): not kewl.
+player: [fridge] [heart] [star]
+triguy show none
+triguy look happy
+triguy: that's, really kewl.
+end
+
+== vs edgelord
+cast player at -780 facing right
+cast edgelord at 520 facing left
+music story
+camera two player edgelord
+edgelord: A circle. You don't even have edges.
+player: [square] [?]
+edgelord look squint
+edgelord: Better as a square? ...Yes. Obviously.
+player look angry
+player: [bomb]
+edgelord look shocked
+edgelord: Okay, put that away. ...Fair.
+camera wide
+fight
+
+== vs flambe
+cast player at -400 facing right
+cast flambe at 400 facing left
+music story
+camera two player flambe
+flambe (hot): Little circle! Want to see a trick?
+player: [nofire] [fridge]
+flambe look shocked
+flambe: No fire? Near the fridge? ...After last time.
+flambe: That's fair. That's actually very fair.
+flambe look smug
+flambe (hot): I'll just kick you instead.
+camera wide
+fight
+
+== vs lugnut
+cast player at -400 facing right
+cast lugnut at 400 facing left
+music story
+camera two player lugnut
+player: [magnet] [heart] [fridge]
+lugnut look happy
+lugnut: Strong enough you never come down again, huh?
+lugnut: Pal, I've got just the one. Strongest on the site.
+wait 30
+lugnut look angry
+lugnut: Right after I stop you fighting. Break's over.
+camera wide
+fight
+
+== beat lugnut
+cast player at -200 facing right
+cast lugnut at 200 facing left
+music story
+lugnut: Still want that magnet?
+player: [magnet] [heart]
+lugnut look happy
+lugnut: The big red one it is.
+sound magnet_clink
+end
+
+# --- The finale -------------------------------------------------------------------------------
 
 == roast
 camera on player zoom 1.2
@@ -16,5 +166,26 @@ doombot (shout): I AM NOT A FRIDGE.
 == answer
 player: [doombot] [heart]
 wait 30
+doombot look shocked
+doombot: ...YOU. LIKE. ME?
 doombot look happy
-doombot: ...
+doombot mark heart
+wait 40
+doombot mark none
+
+== ending
+cast player at 0 facing right
+music story
+camera on player zoom 1.2 cut
+narrator: A Gold Star Sticker drifted down.
+player look shocked
+player mark sparkle
+sound magnet_clink
+narrator: It stuck to his page.
+player mark none
+player look happy
+player: [heart]
+player pose cheer
+narrator: First on the fridge. Still on the fridge.
+wait 60
+end

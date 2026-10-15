@@ -5,7 +5,7 @@ Run from the repo root:
 
     python tools/audio/build.py                 # every sound effect (about 20 s)
     python tools/audio/build.py hit_ swing_     # only names containing these
-    python tools/audio/build.py --music         # the two music loops too (a few minutes)
+    python tools/audio/build.py --music         # the music too, all five pieces (a few minutes)
     python tools/audio/build.py --preview       # also write per-category audition reels
 
 The generators are the source, the .wav files are output. Never hand-edit a file in

@@ -593,6 +593,86 @@ def boing():
 
 
 # ---------------------------------------------------------------------------
+# story - the kitchen a story is staged in: the fridge door, its magnets, the smoke alarm, and
+# DoomBot boiling over. See .ai/story-mode.md.
+# ---------------------------------------------------------------------------
+
+def magnet_clink():
+    """A fridge magnet snapping onto the door: a hard little click, a short dull ring from the
+    steel, and the knock of the magnet's plastic back. A door is a big sheet, so it rings low for
+    metal and stops fast - a tink, not a bell. Short enough that a script can put three up a
+    quarter of a second apart without them running together."""
+    click = slap(0.012, cutoff=4500.0, k=50.0, seed=100)
+    ring = S.highpass(S.partials(A6, [1.0, 1.53, 2.31, 3.17], 0.16,
+                                 amps=[1.0, 0.6, 0.35, 0.2], decays=[20, 26, 32, 40]), 900)
+    knock = thump(0.05, 560, 320, 18.0)
+    return S.layer([(click, 0.0, 0.9), (ring, 0.002, 0.5), (knock, 0.0, 0.45)])
+
+
+def fridge_hum():
+    """The fridge's compressor running: a low electrical hum with a buzz in it, swelling in and
+    dying away. It hums on A, and its overtones are only A and E - a bare fifth, no third - so it
+    agrees with the story theme in A major and with DoomBot's in A minor. Weighted to the
+    overtones rather than the 55 Hz fundamental: a TV speaker cannot play that, and the ear
+    hears the hum from its harmonics anyway. Two of them a fraction apart give it the slow beat
+    a real motor has."""
+    dur = 2.0
+    f0 = 55.0
+    hum = S.mix(*[S.gain(S.osc("sine", f0 * h * detune, dur, phase=0.13 * h), a)
+                  for h, a, detune in ((1, 0.4, 1.0), (2, 1.0, 1.0), (3, 0.7, 1.0), (4, 0.45, 1.003),
+                                       (6, 0.22, 1.0), (8, 0.1, 1.0))])
+    # The electrical edge: a little saturation, and a narrow buzz an octave up, kept dark.
+    buzz = S.lowpass(S.osc("pulse", 110.0, dur, duty=0.12), 900.0)
+    v = S.drive(S.mix(hum, S.gain(S.dc_block(buzz), 0.12)), 1.4)
+    v = S.tremolo(v, 0.7, 0.12)
+    return S.env_mul(v, S.adsr(dur, 0.35, 0.0, 1.0, 0.7))
+
+
+def smoke_alarm():
+    """A smoke alarm going off: three shrill beeps. A real one beeps at about 3.2 kHz; this one
+    beeps on A7 (3520 Hz), so even the kitchen is in A. Nearly pure, with a little of the odd
+    overtone that makes a piezo grate, and hard on and off - an alarm does not fade - with only
+    a few milliseconds of edge so the switch is not a click. The kitchen gives it a short tail."""
+    on = 0.2
+    n = S.n_samples(on)
+    k = S.n_samples(0.004)
+    tone = S.mix(S.osc("sine", 3520.0, on), S.gain(S.osc("sine", 7040.0, on), 0.06),
+                 S.gain(S.osc("sine", 10560.0, on), 0.15))
+    beep = S.env_mul(tone, S.ramp(k, 0.0, 1.0) + [1.0] * (n - 2 * k) + S.ramp(k, 1.0, 0.0))
+    v = S.layer([(beep, 0.0, 1.0), (beep, 0.32, 1.0), (beep, 0.64, 1.0)])
+    return S.reverb(S.pad(v, 1.1), size=0.35, damp=0.5, mix=0.12)
+
+
+def steam_whistle():
+    """A steam whistle, for DoomBot's meltdown: steam first, then a shriek climbing up out of it
+    as the pressure builds, wavering while it screams, and sagging as it runs out. Two pipes a
+    fifth apart, A5 and E6, like a factory whistle. A bare fifth again: it lands between a story
+    in A major and his theme in A minor and belongs to both."""
+    dur = 1.5
+    n = S.n_samples(dur)
+    rise = S.n_samples(0.3)
+    sag = S.n_samples(0.35)
+    bend = S.ramp(rise, 0.8, 1.0, 0.45) + [1.0] * (n - rise - sag) + S.ramp(sag, 1.0, 0.93, 1.6)
+    # The waver: steam is never steady. Noise held down to a flutter, plus a slower wobble.
+    flutter = S.normalize(S.lowpass(S.osc("noise", 0, dur, seed=SEED + 101), 22.0, 0.6), 1.0)
+    wobble = S.osc("sine", 5.3, dur)
+    shape = [bend[i] * (1.0 + 0.006 * flutter[i] + 0.004 * wobble[i]) for i in xrange(n)]
+
+    def pipe(freq, seed):
+        f = [freq * s for s in shape]
+        tone = S.mix(S.osc("sine", f, dur, phase=(freq * 0.618) % 1.0),
+                     S.gain(S.osc("sine", [x * 2.0 for x in f], dur), 0.12))
+        breath = S.bandpass(S.osc("noise", 0, dur, seed=SEED + seed), freq, 7.0)
+        return S.mix(tone, S.gain(breath, 1.6))
+
+    pipes = S.mix(pipe(880.0, 102), S.gain(pipe(1318.5, 103), 0.75))
+    pipes = S.env_mul(pipes, S.ramp(S.n_samples(0.06), 0.0, 0.0) + S.adsr(dur - 0.06, 0.2, 0.05, 0.85, 0.3))
+    hiss = S.highpass(S.osc("noise", 0, dur, seed=SEED + 104), 3000)
+    hiss = S.env_mul(hiss, S.ramp(S.n_samples(0.04), 0.0, 1.0) + S.decay(n - S.n_samples(0.04), 1.5))
+    return S.drive(S.mix(pipes, S.gain(hiss, 0.35)), 1.3)
+
+
+# ---------------------------------------------------------------------------
 # REGISTRY - (name, category, peak target dBFS, builder, loops)
 #
 # The targets ARE the mix: the game plays every file at unity. Loudness follows how often a
@@ -670,4 +750,16 @@ REGISTRY = [
     ("item_heal", "special", -10.0, item_heal, False),
     ("item_gust", "special", -13.0, item_gust, False),
     ("item_crumple", "hit", -14.0, item_crumple, False),
+
+    # Story sounds play a handful of times a scene, and nothing else is playing but the story
+    # theme and the talking blips. A clink can come three in a row, so it sits with the swings.
+    ("magnet_clink", "story", -11.0, magnet_clink, False),
+    # The sustained three are set by loudness, A-weighted, not by peak: with no transient, a
+    # peak says little. The hum is all low end, which the ear (and a TV) barely hears, so its
+    # peak is high for how quietly it sits under a narrator - about as loud as a talking blip.
+    ("fridge_hum", "story", -12.0, fridge_hum, False),
+    # A pure tone where the ear is most sensitive: as loud as the FIGHT! chord, no louder.
+    ("smoke_alarm", "story", -15.0, smoke_alarm, False),
+    # Once a story, at the meltdown: as loud as the win fanfare, the biggest sustained sound.
+    ("steam_whistle", "story", -11.0, steam_whistle, False),
 ]

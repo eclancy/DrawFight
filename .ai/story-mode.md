@@ -1,9 +1,9 @@
 # Story mode
 
-Every fighter fighting for a place on the fridge. Planned 2026-10-11 from Eric's brief; **being
-built** - the scene runner, the script format and the DoomBot finale went in 2026-10-15 ("What
-has to be built" says what is done). This is the plan to build from, and the stories to build.
-Read it before writing or changing any story.
+Every fighter fighting for a place on the fridge. Planned 2026-10-11 from Eric's brief; **built**
+2026-10-15 - all six stories, chapter by chapter, from opening to ending ("What has to be built"
+says what is done and what is not). The scripts themselves live in each fighter's `story.txt`;
+this is what they are built from. Read it before writing or changing any story.
 
 ## The premise
 
@@ -77,22 +77,28 @@ in the same place. Nothing is drawn new for a story; it is staged with what the 
 
 ### The two kids' fighters
 
-Circy and Triguy are Elim's. **Elim never said how they talk.** Circy's taunt has no line
-because Elim did not give him one (a comment in `FighterData.Circy`), and Triguy's sheet gives a
-catchphrase and three poses. Building on that, the stories below are written - for now - with:
+Circy and Triguy are Elim's. Elim never said how they talk; Eric's call (2026-10-15) is that:
 
-- **Circy speaking in pictures.** His bubbles hold little drawings - a fridge, a heart, a magnet,
-  a star, a question mark, a bomb (his own) - and everyone else gets them slightly wrong.
-- **Triguy saying very little** - his catchphrase, "that's, really kewl", in every mood, and the
-  odd variation ("not kewl") - plus his three show-off poses and his crying.
+- **Circy always speaks in pictures.** His bubbles hold little drawings - a fridge, a heart, a
+  magnet, a star, a question mark, a bomb (his own) - and nothing else, ever.
+- **Triguy always speaks in his catchphrases** - "that's, really kewl", in every mood, and its
+  variations ("not kewl", "THAT'S, REALLY KEWL.") - plus his three show-off poses and his crying,
+  which are his own drawings (`show taunt_surprised`).
+- **Whoever answers them understands exactly what they meant, and answers it** - the way you
+  answer a friend, so what was said is obvious from the reply. Nobody translates: no "You're
+  saying...", no narrator "(He meant...)" (Eric, 2026-10-15). Triguy's "that's, really kewl."
+  at EdgeLord's sword gets "Hands off the sword."; Circy's "[bomb]" gets "Whoa. Okay. Nobody's
+  touching your page." Where nobody else is in the scene, the scene around him carries it - a
+  pose, a mark, the narrator setting it up beforehand.
 
-That is Eric's call to change (see the open questions), and their stories get rewritten from
-Elim's own words when he answers the new story question on the form.
+That keeps them Elim's - nothing put in their mouths - and the scene still tells the story.
 
 ## The stories
 
-What follows is each fighter's motive, voice, fights and the key lines of each scene. The full
-scripts are written when the scenes are built; these are what they are built from.
+What follows is each fighter's motive, voice, fights and the key lines of each scene - what the
+scripts were built from. The scripts themselves (`fighters/<name>/story.txt`: Flambé's is in
+`swift/`, Lugnut's in `lug/`) are the truth where the two differ, and add the scenes this does
+not list: each fighter's challenger and defeated scenes, and the scenes after the pair fights.
 
 ### Flambé - The Headliner
 
@@ -191,9 +197,11 @@ his page is the oldest, its corners curled - and a new page has just been pinned
   put on this fridge." A page slides over his. A picture bubble: the fridge, and a heart. He
   stretches tall (his Stretch). Narrator: "He wasn't going anywhere."
 - **Fights:** Triguy, EdgeLord, Flambé, Lugnut, then Flambé and Lugnut together, then DoomBot.
-- **The running gag:** everyone reads his pictures wrong. Flambé, shown a flame crossed out: "No
-  fire? NO FIRE? That's my whole thing!" Lugnut, shown a magnet: "You want my magnet? Pal, that's
-  company property."
+- **The running gag:** everyone reads his pictures exactly right, and says what he meant, in
+  full. Flambé, shown a flame crossed out and the fridge: "No fire near the fridge - because the
+  last fire got three drawings taken down. ...That's fair. That's actually very fair." Lugnut,
+  shown a magnet, a heart and the fridge: "You love the fridge, and you want a magnet strong
+  enough you never come down again. Pal, one's yours."
 - **Ending.** A Gold Star Sticker drifts down and sticks to his page. A picture bubble: one
   enormous heart. Narrator: "First on the fridge. Still on the fridge."
 
@@ -327,24 +335,40 @@ In order, each step usable before the next:
    (small, grey, a dotted bubble), scared (wobbling letters), happy (bouncing), hot (flickering
    orange) and slam (a word at a time, each with a clang and a shake, red when he is hot). So are
    picture bubbles (`StoryPictures`: crayon doodles in the UI's own hand).
-   **Not yet:** a chapter list per fighter - `StoryRun.For` only knows the finale so far - and
-   the openings, challenger scenes, pair scenes and endings themselves.
-3. **Feeling.** Faces (eyes and mouths cut from every drawing, in every fight too) and the paper
-   turn - built first, 2026-10-11 - then the emotion poses and head marks; text moods and
-   per-fighter voices; story sounds; three new music pieces (story, DoomBot, victory sting) -
-   read `.ai/audio-direction.md`. The Big Show stage, for Flambé's story, is built and in the
-   stage list.
-4. **Two-on-one.** Three fighters in a match, on teams: no hitting a teammate, the CPU picks only
-   opponents, the HUD and camera take three, a team is out when both are. This is a piece of M6
-   (three and four players), done early.
-5. **CPU difficulty,** so a story ramps from gentle to the boss. Boss rules for DoomBot: more
-   stocks, starting heat, the last-stock phase, MiniBots.
-6. **The story screens.** Main menu Story → pick a fighter (with gold stars for finished
-   stories) → the fridge as a chapter map, a magnet per fight → play. Progress saved. *So far:*
-   Story on the main menu opens the fighter select screen as "Whose story?" (one player, no CPU;
-   DoomBot cannot be picked until his own story exists), and a finished story goes back to the
-   main menu. No map, no saving, no stars yet.
-7. **Write all six stories,** then a full play through each, watched, not just built.
+   **Chapters** - **built, 2026-10-15.** Each story.txt opens with a `== chapters` list, one
+   chapter a line (the grammar is at the top of `fighters/doombot/story.txt`; `StoryChapters`
+   reads it). A fight's scene before is the player's own `== vs WHO`, else that fighter's
+   `== challenger` (`== team` for two); its scene after is the player's `== beat WHO`, else their
+   `== won`, else that fighter's `== defeated`. `StoryScript.Check` reads every chapter list too:
+   a chapter with no scene to start it fails at startup.
+3. **Feeling** - **built, 2026-10-15.** Faces and the paper turn (2026-10-11); the shared story
+   poses (`pose cheer`, slump, point, shrug, laugh, stomp, tremble, crossarms -
+   `FighterAnimations.StoryPose`), a fighter's own whole drawings (`show taunt_surprised`), and
+   marks over the head (`mark anger`, sweat, sparkle, heart, !, ?, steam, tears - `StoryOverlay`);
+   text moods and per-fighter voices; story sounds (magnet clink, fridge hum, smoke alarm, steam
+   whistle) and three new music pieces (story, DoomBot's theme, the victory sting) -
+   `.ai/audio-direction.md`. The reveal is staged: `stage bare` takes the other drawings off the
+   door, `dark on` dims it to night lavender, `eye at` opens his red eye up in the dark, `pile at`
+   heaps the taken-down drawings behind him, and `page at` pins up the drawing of DoomBot in his
+   ending (`StoryBoard`).
+4. **Two-on-one** - **built, 2026-10-15.** `MatchManager.Teams`: teammates cannot hit, grab,
+   splash or trap each other, a CPU only goes after the other side, and a side is out when
+   everyone on it is. The HUD and camera already take any number. A piece of M6, done early.
+5. **CPU difficulty** - **built, 2026-10-15.** `CpuInputSource.Level`, 1 to 9: reaction time,
+   how often it hesitates, blocks, swings and closes in. Level 4 is the versus CPU, unchanged. A
+   story's fights climb from 2 to 5 down the chapter list, and the boss plays at 6. **Boss rules**
+   (`MatchManager.BossPlayer`, `StoryDirector.TickBoss`): more stocks and full heat from the
+   scene; his own theme on FIGHT!; on his last stock "CORE TEMPERATURE CRITICAL", he flashes red,
+   runs hot, sends a MiniBot after you every few seconds, and the music speeds up. DoomBot Mk. II
+   (`FighterData.DoomBotMk2`, story id `mk2`) is DoomBot in a cooler, shinier tint, fielded only
+   by a story (`FighterCatalog.StoryOnlyFrom`).
+6. **The story screens** - **built, 2026-10-15.** Main menu Story → "Whose story?" (a gold star
+   on every story finished) → the story's map (`StoryMapScreen`: the fridge door, a magnet per
+   chapter, a star on each played, the next one glowing) → play. After every chapter the story
+   comes back to its map. Progress is saved per fighter in `user://story.cfg`; a finished story
+   starts again from the top.
+7. **All six stories are written** (2026-10-15). **Not yet:** a full play through each, watched
+   and listened to - pacing, the jokes, the CPU levels and the boss fight all need playing.
 
 Checking it: `--story=<fighter>` boots into a fighter's story, `--story=<fighter>:<n>` into its
 chapter n (from 0), and `--story=<fighter>:<n>:after` into the scene after that chapter's fight;
@@ -352,17 +376,15 @@ chapter n (from 0), and `--story=<fighter>:<n>:after` into the scene after that 
 frames, then quits - a scene is checked by looking at it all the way through. Pacing and jokes
 have to be watched; a build verifies none of it.
 
-What the finale cannot show yet: the fridge door is the stage, so "the camera pans from DoomBot
-to the fridge beside him - the same shape" pans to the door's handle, not a whole fridge; and
-the pile of taken-down drawings behind him, the nearly bare fridge and the red eye opening in the
-dark are not drawn. Each wants a stage prop or a story-only stage state.
+What the finale still cannot show: the fridge door is the stage, so "the camera pans from
+DoomBot to the fridge beside him - the same shape" pans to the door's handle, not a whole fridge.
 
-## Open questions
+## Decided (Eric, 2026-10-15)
 
-- **Circy and Triguy.** Elim never said how they talk. Written for now in pictures and a few
-  words, and Elim asked the new story question for both, so their real stories are his. The
-  alternative is that they talk like everyone else, in lines written for them from his sheets.
-- **DoomBot Mk. II.** His own story needs a final boss who isn't him. Recommended: a newer
-  model, the same drawing in a new tint - nothing drawn that Eric didn't.
-- **The voice from the kitchen** in Lugnut's story is a grown-up, unseen, on the narrator's
-  strip. Fine for the tone?
+- **Circy always talks in pictures, Triguy always in catchphrases,** and whoever answers says
+  what they meant (see "The two kids' fighters").
+- **DoomBot Mk. II** is the final boss of DoomBot's own story: a newer model, the same drawing in
+  a new tint - nothing drawn that Eric didn't.
+- **The voice from the kitchen** in Lugnut's story is a grown-up, unseen, shouting on the
+  narrator's strip (`narrator (shout):`).
+- **EdgeLord's colouring is final.** Eric is not colouring him himself.

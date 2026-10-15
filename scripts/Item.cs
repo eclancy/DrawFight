@@ -535,7 +535,7 @@ public partial class Item : CharacterBody2D
 		if (match == null) return;
 		foreach (Fighter f in match.Fighters)
 		{
-			if (!f.IsInPlay || !f.CanBeHitByHazard) continue;
+			if (!f.IsInPlay || !f.CanBeHitByHazard || match.Allies(OwnerFighter, f)) continue;
 			if (f == OwnerFighter && (phaseFrames < OwnerGraceFrames || Data.Impact == ItemImpact.Boomerang)) continue;
 			if (lastHitAt.TryGetValue(f, out int when) && age - when < 40) continue;
 			if (hitSomeone && Data.Impact == ItemImpact.None) continue;
@@ -596,7 +596,7 @@ public partial class Item : CharacterBody2D
 		float bestDistance = float.MaxValue;
 		foreach (Fighter f in match.Fighters)
 		{
-			if (f == OwnerFighter || !f.IsInPlay) continue;
+			if (f == OwnerFighter || !f.IsInPlay || match.Allies(OwnerFighter, f)) continue;
 			float d = f.GlobalPosition.DistanceSquaredTo(from);
 			if (d < bestDistance) { bestDistance = d; best = f; }
 		}
@@ -709,7 +709,7 @@ public partial class Item : CharacterBody2D
 		if (match == null) return found;
 		foreach (Fighter f in match.Fighters)
 		{
-			if (f == spare || !f.IsInPlay || !f.CanBeHitByHazard) continue;
+			if (f == spare || !f.IsInPlay || !f.CanBeHitByHazard || match.Allies(spare, f)) continue;
 			Rect2 body = f.BodyRect();
 			Vector2 nearest = new Vector2(Mathf.Clamp(at.X, body.Position.X, body.End.X), Mathf.Clamp(at.Y, body.Position.Y, body.End.Y));
 			if (nearest.DistanceTo(at) <= radius) found.Add(f);
@@ -912,7 +912,7 @@ public partial class Item : CharacterBody2D
 				Rect2 jaws = new Rect2(popFacing > 0 ? hinge.X - 20.0f : hinge.X - reach, hinge.Y - 120.0f, reach + 20.0f, floorY - hinge.Y + 125.0f);
 				foreach (Fighter f in match.Fighters)
 				{
-					if (f == OwnerFighter || !f.IsInPlay || !f.CanBeHitByHazard || !f.BodyRect().Intersects(jaws)) continue;
+					if (f == OwnerFighter || match.Allies(OwnerFighter, f) || !f.IsInPlay || !f.CanBeHitByHazard || !f.BodyRect().Intersects(jaws)) continue;
 					f.ReceiveItemHit(OwnerFighter, CrocodileSnap, popFacing, f.GlobalPosition);
 				}
 				break;
@@ -927,7 +927,7 @@ public partial class Item : CharacterBody2D
 				Rect2 below = new Rect2(under.X - width, under.Y, width * 2.0f, floorY - under.Y + 10.0f);
 				foreach (Fighter f in match.Fighters)
 				{
-					if (f == OwnerFighter || !f.IsInPlay || !f.CanBeHitByHazard || !f.BodyRect().Intersects(below)) continue;
+					if (f == OwnerFighter || match.Allies(OwnerFighter, f) || !f.IsInPlay || !f.CanBeHitByHazard || !f.BodyRect().Intersects(below)) continue;
 					zapTo = f.GlobalPosition;
 					f.ReceiveItemHit(OwnerFighter, CloudZap, f.GlobalPosition.X >= under.X ? 1 : -1, f.GlobalPosition);
 					break;

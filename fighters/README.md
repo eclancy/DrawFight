@@ -140,11 +140,11 @@ Two things about Elim's art that the code works around rather than changes:
   and `source/` is untouched. `LINE_BOOST = 0` and a re-cut gives Elim's line exactly as drawn.
   Triguy gets the same, with a larger boost because he is drawn on a bigger canvas.
 
-## `edgelord/` - drawn by Eric, with stand-in colour and move art
+## `edgelord/` - drawn by Eric, coloured by us
 
 EdgeLord ("stretchy arms, super speed, infinite swords" - the stretchy arms became a dagger on
-a chain, since stretching is Circy's) plays in the game now, but most of what you see is a
-**placeholder** until the finished drawings arrive:
+a chain, since stretching is Circy's). His pencil drawing is Eric's; the colouring and every
+sword are ours - and are his final art (Eric's call, 2026-10-15: he is not colouring him himself):
 
 - **`source/edgelord.webp`** is the photographed pencil drawing - the master copy, never edited.
 - **`source/edgelord_colored.png`** is our colouring of it (`tools/art/color_edgelord.py`),
@@ -153,10 +153,6 @@ a chain, since stretching is Circy's) plays in the game now, but most of what yo
   `python tools/art/cut_edgelord.py` (about a minute). The V is the Torso, as Circy's ball is;
   the turning frames for his spin hang on the Torso as extras (`turn0`..`turn4`); every sword
   is ours (`tools/art/edgelord_extras.py`, which also writes review sheets to `draft/`).
-
-When his own coloured drawing and move drawings arrive, they replace all of this. The cut
-follows shapes traced from **this** drawing, so the new art needs its own cut - ideally sent
-as layered PNGs, one part per layer.
 
 **He is drawn facing left.** Fighters face right in their own space, so the cut mirrors the
 whole drawing first (mirroring the rig instead would mirror every pose too, and he would run

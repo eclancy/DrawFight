@@ -82,7 +82,7 @@ public partial class BuiltPlatform : AnimatableBody2D
 
 		foreach (Fighter other in match.Fighters)
 		{
-			if (other == owner || alreadyHit.Contains(other) || !other.CanBeHitByHazard) continue;
+			if (other == owner || alreadyHit.Contains(other) || !other.CanBeHitByHazard || match.Allies(owner, other)) continue;
 
 			Rect2 body = other.BodyRect();
 			if (!beam.Intersects(body)) continue;

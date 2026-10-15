@@ -6,7 +6,7 @@ using Godot;
 ///
 /// Swift and Lug are generated test scaffolding - see fighters/README.md - and are deleted once
 /// real drawings replace them. Circy is the first kid-designed fighter, from Elim's sheet.
-/// EdgeLord plays with placeholder colouring and move art until his own drawings arrive.
+/// EdgeLord is Eric's pencil drawing, coloured by us; that colouring is his final art.
 /// Triguy is Elim's second, from a sheet sent in through ecec.dev/draw.
 /// </summary>
 public static class FighterCatalog
@@ -19,8 +19,19 @@ public static class FighterCatalog
 	// FighterData is read-only once built, so sharing an instance between players is safe.
 	static readonly FighterData[] cache = new FighterData[Count];
 
+	/// <summary>
+	/// Fighters a story fields who are not on the roster - DoomBot Mk. II - at indices from
+	/// StoryOnlyFrom up. Never on a select screen; Count does not include them.
+	/// </summary>
+	public const int StoryOnlyFrom = 100;
+	static readonly FighterData[] storyOnly = new FighterData[1];
+
 	public static FighterData Get(int index)
 	{
+		if (index >= StoryOnlyFrom && index - StoryOnlyFrom < storyOnly.Length)
+		{
+			return storyOnly[index - StoryOnlyFrom] ??= FighterData.DoomBotMk2();
+		}
 		int i = ((index % Count) + Count) % Count;
 		if (cache[i] != null) return cache[i];
 

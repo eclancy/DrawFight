@@ -136,7 +136,8 @@ public static class RegressionChecks
 		}
 
 		foreach (string path in new[] { SfxCatalog.PathFor("smash_charge"), $"res://assets/music/{MusicPlayer.Menu}.wav",
-			$"res://assets/music/{MusicPlayer.Battle}.wav" })
+			$"res://assets/music/{MusicPlayer.Battle}.wav", $"res://assets/music/{MusicPlayer.Story}.wav",
+			$"res://assets/music/{MusicPlayer.Boss}.wav" })
 		{
 			if (!ResourceLoader.Exists(path))
 			{
@@ -150,6 +151,17 @@ public static class RegressionChecks
 				GD.PushWarning($"RegressionChecks: {path} imported without its loop - SfxPlayer.Load "
 					+ "patches it, but check edit/loop_mode in its .import file");
 			}
+		}
+		// The sting is the one track that must not loop: looped, a story's every win plays forever.
+		string sting = $"res://assets/music/{MusicPlayer.Victory}.wav";
+		if (!ResourceLoader.Exists(sting))
+		{
+			GD.PushError($"RegressionChecks: {sting} is missing - run python tools/audio/build.py --music");
+		}
+		else if (ResourceLoader.Load<AudioStream>(sting) is AudioStreamWav stingWav
+			&& stingWav.LoopMode != AudioStreamWav.LoopModeEnum.Disabled)
+		{
+			GD.PushError($"RegressionChecks: {sting} loops - check edit/loop_mode in its .import file");
 		}
 
 		for (int i = 0; i < FighterCatalog.Count; i++)

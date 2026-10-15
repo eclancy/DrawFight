@@ -30,6 +30,7 @@ public partial class GameRoot : Node2D
 
 	/// <summary>The story being played, or null.</summary>
 	public StoryRun Story;
+	string storyMapFor = "";
 
 	Node currentScreen;
 
@@ -84,6 +85,12 @@ public partial class GameRoot : Node2D
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
 			if (arg == "--storyselect") startAt = "storyselect";
+			if (arg.StartsWith("--storymap="))
+			{
+				// "--storymap=lugnut": a story's map, where its saved progress has got to.
+				storyMapFor = arg.Substring(11);
+				startAt = "storymap";
+			}
 			if (arg == "--stages") startAt = "stages";
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
@@ -98,6 +105,7 @@ public partial class GameRoot : Node2D
 				Story = StoryRun.For(parts[0]);
 				if (parts.Length > 1) Story.At = parts[1].ToInt();
 				Story.StartAfter = parts.Length > 2 && parts[2] == "after";
+				StoryDirectStart = true;
 				startAt = "story";
 			}
 			if (arg.StartsWith("--item=")) OnlyItem = arg.Substring(7);
@@ -135,6 +143,7 @@ public partial class GameRoot : Node2D
 			case "match": GoMatch(); break;
 			case "select": GoCharacterSelect(); break;
 			case "storyselect": GoStorySelect(); break;
+			case "storymap": GoStory(storyMapFor); break;
 			case "stages": GoStageSelect(); break;
 			case "items": GoItemSettings(); break;
 			case "menu": GoMainMenu(); break;
@@ -192,14 +201,22 @@ public partial class GameRoot : Node2D
 
 	// --- Story -----------------------------------------------------------------------
 
-	/// <summary>Starts a fighter's story from its first chapter.</summary>
+	/// <summary>A fighter's story, at the chapter it had got to: its map first.</summary>
 	public void GoStory(string fighterId)
 	{
 		Story = StoryRun.For(fighterId);
-		GoStoryChapter();
+		Story.At = Mathf.Clamp(StoryProgress.ChapterReached(fighterId), 0, Mathf.Max(0, Story.Chapters.Count - 1));
+		GoStoryMap();
 	}
 
-	/// <summary>The chapter the story is on: its stage, the player against whoever it is, its scene first.</summary>
+	/// <summary>The story's chapters on the fridge door (StoryMapScreen).</summary>
+	public void GoStoryMap() => Show(new StoryMapScreen { Run = Story });
+
+	/// <summary>
+	/// The chapter the story is on: its stage, the player and everyone else in it, its scene
+	/// first. In a fight, everyone else is one side against the player - a two-on-one is two CPUs
+	/// on a team - at the chapter's level, and the boss, if there is one, gets a last stand.
+	/// </summary>
 	public void GoStoryChapter()
 	{
 		StoryChapter chapter = Story?.Chapter;
@@ -214,28 +231,57 @@ public partial class GameRoot : Node2D
 
 		var fighters = new List<int> { player };
 		var cpu = new List<bool> { false };
+		var teams = new List<int> { 0 };
+		var levels = new List<int> { 0 };
+		int boss = -1;
 		foreach (string id in chapter.Opponents)
 		{
+			if (id == chapter.Boss) boss = fighters.Count;
 			fighters.Add(StoryScript.IndexOf(id));
 			cpu.Add(true);
+			teams.Add(1);
+			levels.Add(Mathf.Max(1, chapter.Level));
 		}
 		Show(new MatchManager
 		{
 			StageIndex = chapter.Stage,
 			FighterIndices = fighters.ToArray(),
 			CpuPlayers = cpu.ToArray(),
+			Teams = teams.ToArray(),
+			CpuLevels = levels.ToArray(),
+			BossPlayer = boss,
 			Story = Story,
 		});
 	}
 
-	/// <summary>A chapter won: on to the next.</summary>
+	/// <summary>
+	/// A chapter done: remembered, and back to the map with the next one glowing - or, the
+	/// story over, with its gold star. Started straight into one chapter (--story), it plays on.
+	/// </summary>
 	public void StoryNext()
 	{
 		if (Story == null) { GoMainMenu(); return; }
 		Story.At++;
 		Story.Tries = 0;
-		GoStoryChapter();
+		if (Story.At > StoryProgress.ChapterReached(Story.PlayerId) || Story.Done)
+		{
+			StoryProgress.Save(Story.PlayerId, Story.At, Story.Chapters.Count);
+		}
+		if (StoryDirectStart && !Story.Done)
+		{
+			GoStoryChapter();
+			return;
+		}
+		if (Story.Done)
+		{
+			// Finished: it starts again from the top next time, gold star and all.
+			Story.At = 0;
+		}
+		GoStoryMap();
 	}
+
+	/// <summary>Booted straight into a story chapter (--story) to look at it: chapter after chapter, no map.</summary>
+	public bool StoryDirectStart;
 
 	/// <summary>A fight lost: straight back in, the same chapter.</summary>
 	public void StoryRetry()

@@ -952,6 +952,74 @@ public static class FighterAnimations
 		(AFU, -66), (AFL, -6), (ABU, -60), (ABL, -6),
 		(LFU, -44), (LFL, 30), (LBU, 36), (LBL, 30));
 
+	// --- Story poses -----------------------------------------------------------------------
+	// Struck and held in a story scene (Fighter.StoryPose), shared by everyone like every other
+	// clip. Laugh, cheer and stomp move (Fighter.ApplyStoryPose); tremble shakes.
+
+	/// <summary>A pose a story can name, or null.</summary>
+	public static Pose StoryPose(string name) => name switch
+	{
+		"cheer" => Cheer,
+		"slump" => Slump,
+		"point" => Point,
+		"shrug" => Shrug,
+		"laugh" => Laugh,
+		"stomp" => Stomp,
+		"tremble" => Tremble,
+		"crossarms" => CrossArms,
+		_ => null,
+	};
+
+	public static readonly string[] StoryPoses = { "cheer", "slump", "point", "shrug", "laugh", "stomp", "tremble", "crossarms" };
+
+	/// <summary>Both arms flung up over his head, up on his toes.</summary>
+	static readonly Pose Cheer = new Pose(new Vector2(0, -8),
+		(Torso, 6), (Head, -14),
+		(AFU, -150), (AFL, -14), (ABU, -138), (ABL, -14),
+		(LFU, -6), (LFL, 4), (LBU, 6), (LBL, 4));
+
+	/// <summary>Hunched forward, head hanging, arms dangling, knees giving.</summary>
+	static readonly Pose Slump = new Pose(new Vector2(0, 14),
+		(Torso, -20), (Head, 24),
+		(AFU, 10), (AFL, -6), (ABU, 12), (ABL, -6),
+		(LFU, -16), (LFL, 22), (LBU, 6), (LBL, 22));
+
+	/// <summary>Front arm out straight at someone, the other at his side.</summary>
+	static readonly Pose Point = new Pose(new Vector2(2, 0),
+		(Torso, -4), (Head, -4),
+		(AFU, -88), (AFL, -2), (ABU, 18), (ABL, -18),
+		(LFU, -10), (LFL, 8), (LBU, 10), (LBL, 8));
+
+	/// <summary>Elbows in, hands up and out, head on one side.</summary>
+	static readonly Pose Shrug = new Pose(new Vector2(0, -4),
+		(Torso, 2), (Head, 12),
+		(AFU, 24), (AFL, -96), (ABU, 26), (ABL, -96),
+		(LFU, -6), (LFL, 4), (LBU, 6), (LBL, 4));
+
+	/// <summary>Leaning back, head thrown back, hands on his belly.</summary>
+	static readonly Pose Laugh = new Pose(new Vector2(-2, 4),
+		(Torso, 16), (Head, -18),
+		(AFU, 18), (AFL, -110), (ABU, 22), (ABL, -100),
+		(LFU, -10), (LFL, 10), (LBU, 10), (LBL, 10));
+
+	/// <summary>A knee pulled up high to stamp, fists balled at his sides.</summary>
+	static readonly Pose Stomp = new Pose(new Vector2(0, 4),
+		(Torso, 8), (Head, 6),
+		(AFU, 22), (AFL, -46), (ABU, 30), (ABL, -46),
+		(LFU, -74), (LFL, 72), (LBU, 6), (LBL, 10));
+
+	/// <summary>Knees knocking, hands up in front of his face.</summary>
+	static readonly Pose Tremble = new Pose(new Vector2(0, 12),
+		(Torso, -6), (Head, 12),
+		(AFU, -46), (AFL, -96), (ABU, -36), (ABL, -96),
+		(LFU, -16), (LFL, 28), (LBU, 10), (LBL, 28));
+
+	/// <summary>Arms folded across his chest, leaning back a touch, chin up.</summary>
+	static readonly Pose CrossArms = new Pose(new Vector2(-2, 0),
+		(Torso, 6), (Head, -8),
+		(AFU, 24), (AFL, -128), (ABU, 30), (ABL, -124),
+		(LFU, -8), (LFL, 6), (LBU, 8), (LBL, 6));
+
 	/// <summary>
 	/// Crouched behind a held-up shield: knees bent, head down behind it, the shield arm out in
 	/// front at his chest and the other hand tucked behind it (Fighter.shieldRaised).

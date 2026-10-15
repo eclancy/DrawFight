@@ -4,11 +4,9 @@ Cuts EdgeLord into a rig. Run with the only Python on this machine:
 
     python tools/art/cut_edgelord.py
 
-PLACEHOLDER ART. The colouring this cuts is ours (tools/art/color_edgelord.py), and so are the
-swords and the turning frames (tools/art/edgelord_extras.py). The coloured drawing and all of
-his move art are being redrawn by hand; when they arrive they replace everything this script
-makes. The shapes it cuts along are traced from THIS drawing, so the new art will want its own
-cut - ideally as layered PNGs, one part per layer, per .ai/art-pipeline.md.
+The colouring this cuts is ours (tools/art/color_edgelord.py), and so are the swords and the
+turning frames (tools/art/edgelord_extras.py) - all of it his final art: Eric is not colouring
+him himself (his call, 2026-10-15). The shapes it cuts along are traced from THIS drawing.
 
 Emits:
     fighters/edgelord/parts/*.png   the body, the four limbs and the sword in his hand

@@ -32,6 +32,27 @@ public partial class MatchManager : Node2D
 	public StoryRun Story;
 	StoryDirector director;
 
+	/// <summary>
+	/// Which side each player is on, or null for everyone on their own - a two-on-one in a story,
+	/// two CPUs on one side (Eric's call, 2026-10-15). Teammates cannot hurt or grab each other,
+	/// a CPU only goes after the other side, and a side is out when everyone on it is.
+	/// </summary>
+	public int[] Teams;
+
+	/// <summary>How well each CPU plays, 1 to 9 (CpuInputSource.Level); null for the usual 4.</summary>
+	public int[] CpuLevels;
+
+	/// <summary>Which player is a story's boss, whose last stock is a last stand; -1 for none.</summary>
+	public int BossPlayer = -1;
+
+	/// <summary>The stage, for a story scene to strip the drawings off (Stage.Bare).</summary>
+	public Stage Stage => stage;
+
+	public int TeamOf(Fighter f) => Teams != null && f.PlayerIndex < Teams.Length ? Teams[f.PlayerIndex] : f.PlayerIndex;
+
+	/// <summary>Two different fighters on the same side.</summary>
+	public bool Allies(Fighter a, Fighter b) => a != null && b != null && a != b && TeamOf(a) == TeamOf(b);
+
 	Stage stage;
 	GameCamera camera;
 	HitFx fx;
@@ -227,15 +248,42 @@ public partial class MatchManager : Node2D
 		countdownFrames = FightBannerFrames;
 	}
 
-	/// <summary>The top of the ground under x: the lowest floor there, so a scene stands people on the stage, not a platform.</summary>
+	/// <summary>
+	/// The top of the solid ground under x - a roof, not the street under it, and never a platform
+	/// that can be dropped through - so a scene stands people on the stage itself.
+	/// </summary>
 	public float FloorAt(float x)
 	{
-		float best = float.NegativeInfinity;
-		foreach (Rect2 platform in stage.Platforms)
+		float best = SolidTop(x);
+		return float.IsPositiveInfinity(best) ? stage.Platforms[0].Position.Y : best;
+	}
+
+	float SolidTop(float x)
+	{
+		float best = float.PositiveInfinity;
+		foreach (StagePlatform platform in stage.Data.Platforms)
 		{
-			if (x >= platform.Position.X && x <= platform.End.X) best = Mathf.Max(best, platform.Position.Y);
+			if (!platform.OneWay && x >= platform.Rect.Position.X && x <= platform.Rect.End.X) best = Mathf.Min(best, platform.Rect.Position.Y);
 		}
-		return float.IsNegativeInfinity(best) ? stage.Platforms[0].Position.Y : best;
+		return best;
+	}
+
+	/// <summary>
+	/// The nearest spot to x with solid ground under it, a little in from any edge - so a scene
+	/// written for one stage stands people on the roofs of City Rooftops, not in the gaps.
+	/// </summary>
+	public float GroundNear(float x)
+	{
+		const float Margin = 50.0f;
+		for (float d = 0.0f; d < 2000.0f; d += 10.0f)
+		{
+			foreach (float at in new[] { x + d, x - d })
+			{
+				if (!float.IsPositiveInfinity(SolidTop(at)) && !float.IsPositiveInfinity(SolidTop(at - Margin))
+					&& !float.IsPositiveInfinity(SolidTop(at + Margin))) return at;
+			}
+		}
+		return x;
 	}
 
 	void SpawnFighter(FighterData data, int index)
@@ -285,7 +333,7 @@ public partial class MatchManager : Node2D
 			{
 				if (cpus[i] == null)
 				{
-					cpus[i] = new CpuInputSource(this, i);
+					cpus[i] = new CpuInputSource(this, i) { Level = CpuLevels != null && i < CpuLevels.Length ? CpuLevels[i] : 4 };
 					cpus[i].Drive(Fighters[i]);
 				}
 				Fighters[i].Controller = cpus[i];
@@ -442,17 +490,19 @@ public partial class MatchManager : Node2D
 
 	void CheckForWinner()
 	{
-		int alive = 0;
+		// Sides still standing - every fighter is a side of one, unless there are teams.
+		var sides = new HashSet<int>();
 		Fighter last = null;
 
 		foreach (Fighter fighter in Fighters)
 		{
 			if (fighter.Stocks > 0)
 			{
-				alive++;
+				sides.Add(TeamOf(fighter));
 				last = fighter;
 			}
 		}
+		int alive = sides.Count;
 
 		if (alive <= 1)
 		{
@@ -541,7 +591,8 @@ public partial class MatchManager : Node2D
 		else if (intoNumbers == 0)
 		{
 			SfxPlayer.Ui("count_go");
-			MusicPlayer.Play(MusicPlayer.Battle);
+			// A story's boss fights to his own theme.
+			MusicPlayer.Play(BossPlayer >= 0 ? MusicPlayer.Boss : MusicPlayer.Battle);
 		}
 	}
 

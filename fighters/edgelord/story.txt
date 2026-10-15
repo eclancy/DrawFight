@@ -1,5 +1,173 @@
 # EdgeLord's story: A Cut Above. How a script reads is at the top of fighters/doombot/story.txt.
-# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+# He wants to be the coolest drawing on the fridge, and cuts anyone who isn't out of the
+# picture. He talks in edge puns, and cares a lot more than he lets on.
+
+== chapters
+title A Cut Above
+opening at rooftops
+fight triguy at plains
+fight circy at fridge
+fight lugnut at rooftops
+fight flambe at bigshow
+fight flambe lugnut at rooftops
+finale
+ending with flambe at fridge
+
+== opening
+cast player at 520 facing left
+music stop
+dark on
+camera on player zoom 1.2 cut
+narrator: EdgeLord. The coolest drawing on the fridge.
+wait 20
+narrator: (He said so.)
+dark off
+music story
+player: This fridge has too many drawings. And not enough... edge.
+player look smug
+player: Anyone who isn't cool gets cut out of the picture.
+player hold scissors
+player twirl
+player look squint
+wait 30
+player: ...Round tips.
+player throw back
+wait 20
+player look smug
+player: I'll use my swords.
+end
+
+# --- How he meets someone, in their stories ------------------------------------------------
+
+== challenger
+cast player at -400
+cast edgelord at 400 facing left
+music story
+camera on edgelord zoom 1.2
+edgelord look smug
+edgelord twirl
+edgelord: On the cutting edge of the fridge. And you're... not.
+edgelord pose point
+edgelord: Try to keep up.
+edgelord pose none
+camera wide
+fight
+
+== defeated
+cast player at -300
+cast edgelord at 300 facing left
+music story
+edgelord pose crossarms
+edgelord: I let you win. ...Point taken.
+end
+
+# --- His own fights ----------------------------------------------------------------------------
+
+== vs triguy
+cast player at -400 facing right
+cast triguy at 900 facing left
+music story
+triguy run to 300
+triguy show taunt_pose
+camera two player triguy
+player: You're fast. I'm faster.
+triguy: that's, really kewl.
+player look smug
+player: A race? You're on.
+triguy show none
+triguy: that's, really kewl.
+player look angry
+player: It IS really cool. Stop saying it like that.
+camera wide
+fight
+
+== beat triguy
+cast player at -200 facing right
+cast triguy at 200 facing left
+music story
+triguy pose slump
+triguy (whisper): that's... really kewl.
+player look normal
+player: ...Yeah. It was a good race.
+player look smug
+player: Try to keep up next time.
+end
+
+== vs circy
+cast player at -400 facing right
+cast circy at 400 facing left
+music story
+camera two player circy
+player: A circle. You don't even have edges.
+circy: [bomb]
+player look shocked
+player: Was that a threat?
+circy: [bomb] [heart]
+player look squint
+player: A nice explosion. Because you like me.
+player: I genuinely cannot tell if that's worse.
+camera wide
+fight
+
+== beat circy
+cast player at -200 facing right
+cast circy at 200 facing left
+music story
+circy: [heart] [?]
+player look normal
+player: ...Fine. Yes. I still like you. Don't tell anyone.
+end
+
+== vs lugnut
+cast player at -400 facing right
+cast lugnut at 400 facing left
+music story
+camera two player lugnut
+player: A hard hat? Against swords?
+lugnut block 40
+narrator: He tapped it.
+lugnut: Safety first.
+wait 40
+player look normal
+player: ...Respect.
+camera wide
+fight
+
+== vs flambe
+cast player at -400 facing right
+cast flambe at 400 facing left
+music story
+camera two player flambe
+player: Nice mohawk. Is it... on fire?
+flambe: Always.
+player: Cool. I mean - hot. Whatever.
+flambe look smug
+flambe (hot): Too hot for you?
+player: Nothing is too hot for -
+player mark !
+player look hurt
+player (shout): OW.
+player mark none
+narrator: (The mohawk.)
+camera wide
+fight
+
+== vs flambe lugnut
+cast player at -780 facing right
+cast flambe at 420 facing left
+cast lugnut at 640 facing left
+music story
+camera two flambe lugnut
+lugnut: Heard you've been cutting people out of the picture.
+flambe: So we're putting you back in it.
+lugnut: Face first.
+camera on player zoom 1.2
+player look smug
+player: Two against one. Finally, a challenge worthy of my edge.
+camera wide
+fight
+
+# --- The finale -------------------------------------------------------------------------------
 
 == roast
 player look smug
@@ -16,3 +184,27 @@ wait 30
 player turn
 player look smug
 player: Behind me.
+
+== ending
+cast player at 0 facing right
+cast flambe offstage
+music story
+camera on player zoom 1.1 cut
+narrator: Alone on top of the fridge. Cape blowing.
+player taunt
+player look smug
+camera wide slow
+wait 60
+narrator: Nobody was watching.
+player look sad
+player: ...Cool.
+wait 50
+flambe drop at -450
+flambe face player
+flambe: Dude. Come sit with us.
+player face flambe
+player: Only because it's cooler over there.
+player look happy
+narrator: Still the coolest. Now with company. A cut above.
+wait 40
+end

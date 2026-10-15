@@ -349,8 +349,8 @@ public static class Specials
 	// the stretchy arms went on 2026-10-04 - stretching is Circy's thing - and his grapple became a
 	// chain blade.
 	//
-	// His art here is a placeholder: every sword and effect is ours, standing in until his own
-	// drawings of the moves arrive (see tools/art/cut_edgelord.py).
+	// Every sword and effect is ours (tools/art/edgelord_extras.py), drawn round his pencil
+	// drawing - and final (Eric's call, 2026-10-15).
 	// =========================================================================
 
 	public static MoveData[] EdgeLord()

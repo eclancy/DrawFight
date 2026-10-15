@@ -65,22 +65,46 @@ public sealed class CpuInputSource : IInputSource
 	readonly System.Collections.Generic.List<Option> options = new System.Collections.Generic.List<Option>();
 
 	// These are the difficulty. Tuned down after the first version was too hard to beat - it
-	// reacted in a sixth of a second and swung at every chance it got.
+	// reacted in a sixth of a second and swung at every chance it got. They are set by Level:
+	// level 4 is that tuning, and what versus plays; a story ramps from gentle to the boss.
 
-	/// <summary>Frames between decisions: the CPU's reaction time. About a third of a second.</summary>
-	const int ReactionFrames = 20;
+	/// <summary>
+	/// How well it plays, 1 (barely tries) to 9 (quick and relentless). 4 is the versus CPU. Set
+	/// before the match starts.
+	/// </summary>
+	public int Level
+	{
+		get => level;
+		set
+		{
+			level = Mathf.Clamp(value, 1, 9);
+			// Each knob from level 1 through 4 (the versus tuning) to 9.
+			float At(float one, float four, float nine) => level <= 4
+				? Mathf.Lerp(one, four, (level - 1) / 3.0f)
+				: Mathf.Lerp(four, nine, (level - 4) / 5.0f);
+			ReactionFrames = Mathf.RoundToInt(At(32.0f, 20.0f, 9.0f));
+			IdleChance = At(0.6f, 0.35f, 0.06f);
+			BlockChance = At(0.04f, 0.15f, 0.35f);
+			AttackChance = At(0.35f, 0.6f, 0.9f);
+			SideSpecialChance = At(0.05f, 0.12f, 0.2f);
+		}
+	}
+	int level = 4;
+
+	/// <summary>Frames between decisions: the CPU's reaction time. About a third of a second at level 4.</summary>
+	int ReactionFrames = 20;
 	const int ReactionJitter = 6;
 
 	/// <summary>How often a decision is simply "do nothing" - the main thing keeping it beatable.</summary>
-	const float IdleChance = 0.35f;
+	float IdleChance = 0.35f;
 
-	const float BlockChance = 0.15f;
+	float BlockChance = 0.15f;
 
 	/// <summary>In reach, how often it actually swings rather than hesitating.</summary>
-	const float AttackChance = 0.6f;
+	float AttackChance = 0.6f;
 
 	/// <summary>A long way off, how often it reaches for a side special to close the gap.</summary>
-	const float SideSpecialChance = 0.12f;
+	float SideSpecialChance = 0.12f;
 
 	/// <summary>
 	/// Within this much of its preferred gap it walks rather than runs, so it arrives able to throw
@@ -449,6 +473,14 @@ public sealed class CpuInputSource : IInputSource
 			return;
 		}
 
+		// Well above, standing on a platform: in under them, near enough to jump up after them.
+		// Keeping a forward tilt's distance from down here, a big fighter only stands and watches.
+		if (grounded && below < -140.0f && target.IsOnFloor() && distance > 200.0f && !NearBlastZone(toward))
+		{
+			heldStick = new Vector2(toward * 0.6f, 0.0f);
+			return;
+		}
+
 		// Backing off is a slow walk, and only with plenty of floor behind: it is held until the
 		// next decision, and a fast fighter walking backwards for that long would go off the edge.
 		// Only from someone on about our level - one below or above is not in the way.
@@ -562,7 +594,7 @@ public sealed class CpuInputSource : IInputSource
 		float bestDistance = float.MaxValue;
 		foreach (Fighter other in match.Fighters)
 		{
-			if (other == self || !other.IsInPlay) continue;
+			if (other == self || !other.IsInPlay || match.Allies(self, other)) continue;
 			float d = other.GlobalPosition.DistanceSquaredTo(self.GlobalPosition);
 			if (d < bestDistance)
 			{

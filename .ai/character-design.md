@@ -434,6 +434,13 @@ fighter is not finished until their story is in it.** When a fighter is added, w
   friend) is optional on top.
 - **Their roast of DoomBot** at the finale, and how they take him down.
 
+In their `story.txt` that is: `== chapters` (their story, a chapter a line), `== opening`,
+`== ending`, `== challenger` and `== defeated` (how they meet a challenger and how they take
+losing, in everyone else's story), `== roast` and `== answer` (the finale), and any `== vs WHO`
+/ `== beat WHO` they want for a particular rival or friend. Every other fighter's chapter list
+reaches them through their challenger scene, so nobody else's story is rewritten.
+`RegressionChecks: stories` fails at startup if a chapter has no scene to start it.
+
 The rules for writing them:
 
 - **Their personality, their voice.** Lines come from how they were described and drawn: their

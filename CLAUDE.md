@@ -10,8 +10,8 @@ Godot 4.5.1 Mono (.NET 9), C#, 2D. **M0, M1 and M2 are built** — the fight run
 and rigged cutout puppets play the shared animation library. M2's last piece, a rig built from
 a **real drawing**, is **Circy**: designed and drawn by Elim, cut from Elim's drawings by
 `tools/art/cut_circy.py`. **EdgeLord** and **DoomBot** are drawn by Eric (the kids' uncle and
-the project owner); EdgeLord plays with our placeholder colouring and sword art until the
-finished drawings arrive. DoomBot's moves come from Eric's own sheet (`fighters/doombot/sheet.md`).
+the project owner); EdgeLord's colouring and sword art are ours, from his pencil drawing, and are
+his final art (Eric's call, 2026-10-15). DoomBot's moves come from Eric's own sheet (`fighters/doombot/sheet.md`).
 **Triguy** is Elim's second, the first fighter sent in through the ecec.dev/draw form, cut by
 `tools/art/cut_triguy.py`. `fighters/` also holds two stand-ins we drew ourselves, in code -
 Swift (Flambé), a punk rocker, and Lug (Lugnut), a muscle-bound construction worker Eric will
@@ -46,7 +46,7 @@ content decision. Do not restate its contents here.
 - `.ai/art-direction.md` — the visual contract for everything the kids do NOT draw: the value
   ladder, the two crayon styles, what an outline means, and why night is lavender. **Read
   before adding any stage, prop, effect or UI colour.**
-- `.ai/audio-direction.md` — how every sound and both music loops are generated, how a move
+- `.ai/audio-direction.md` — how every sound and all the music are generated, how a move
   gets its sound, and the mix. **Read before adding or changing any sound.**
 - `.ai/character-design.md` — how a kid's description becomes a balanced moveset, the special
   archetype library, the weakness rule, and the story every fighter brings. **Read before
@@ -112,8 +112,8 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   `fsmash`, `nair`...), smears included. **`--film=ground`**, **`smash`** or **`air`** shows every
   move of that kind at its key moments. A pose can look right and move wrong - **this is how
   motion gets checked**. See "Moving like a body" in `.ai/art-pipeline.md`. **`--film=face`**
-  shows one fighter's face in every expression, and **`--film=turn`** the paper turn and the roll
-  a story twirls a drawing with.
+  shows one fighter's face in every expression, **`--film=turn`** the paper turn and the roll
+  a story twirls a drawing with, and **`--film=story`** every pose a story can strike.
 - **`python tools/art/flambe.py`** and **`python tools/art/lugnut.py`** — redraw and re-rig
   the two stand-ins we drew ourselves, Flambé and Lugnut, with their tools and props. Their parts
   are SVG coloured in pencil (`tools/art/drawn.py`), so they need `$GODOT_BIN` to rasterise them
@@ -122,9 +122,8 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   `fighters/circy/source/`. Takes about 20 seconds; Python 2.7 without numpy is slow per pixel.
 - **`python tools/art/cut_triguy.py`** — re-cut Triguy's parts, poses and effects from Elim's
   drawings in `fighters/triguy/source/`, and colours him in. About two minutes.
-- **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's placeholder rig: colours his
-  drawing, cuts it, and draws the swords and turning frames. About a minute. Replaced
-  wholesale when his own coloured art arrives - see `fighters/README.md`.
+- **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's rig: colours his
+  drawing, cuts it, and draws the swords and turning frames. About a minute.
 - **`python tools/art/cut_doombot.py`** — re-cut DoomBot from the photo of his drawing,
   including the patch of body filled in behind his arm. About 10 seconds.
 - Every cut script ends by lifting the fighter's eyes and mouth out of the drawing so they can
@@ -136,8 +135,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   deliberately made into a fighter. The form and server live in the EricClancyEngineeringAndCrafts
   repo (`public/draw/`, `intake/`, `docs/DEPLOYMENT.md`).
 - **`python tools/audio/build.py`** — regenerate every sound effect into `assets/sfx/` (about
-  5 seconds). Add **`--music`** for the two music loops in `assets/music/` (about 30 seconds),
-  or name sounds to build only those. Then `"$GODOT_BIN" --headless --path . --import`.
+  5 seconds). Add **`--music`** for the music in `assets/music/` - the menu, battle, story and
+  DoomBot loops and the victory sting (about 85 seconds) - or name sounds to build only those.
+  Then `"$GODOT_BIN" --headless --path . --import`.
   Nobody on this project can hear the result, so `RegressionChecks` prints which sound each
   fighter's moves were given - check it after adding a fighter.
 - **`bash tools/release/release.sh X.Y.Z`** — publish a version: exports the Windows build and
@@ -162,8 +162,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   picks the matchup (player one, player two) by catalog index, and **`--cpu`** makes player two
   the computer.
 - **`"$GODOT_BIN" --path . -- --story=edgelord --shots=60,400,900`** — play a fighter's story
-  (`--story=edgelord:0:after` starts at the scene after chapter 0's fight; `--storyselect` opens
-  "Whose story?") and screenshot it at each frame listed, then quit. **This is how a story scene
+  (`--story=edgelord:2` from its third chapter, counting the opening as 0;
+  `--story=edgelord:0:after` at the scene after chapter 0's fight; `--storyselect` opens
+  "Whose story?" and `--storymap=edgelord` its chapter map) and screenshot it at each frame listed, then quit. **This is how a story scene
   gets checked** - all the way through, not at one frame. A scene's lines live in
   `fighters/<name>/story.txt`; the language is at the top of `fighters/doombot/story.txt`, and
   `RegressionChecks: stories` says whether every script reads. See `.ai/story-mode.md`.

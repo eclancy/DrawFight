@@ -47,6 +47,9 @@ public class StoryScene
 	public string Name = "";
 	public string Owner = "";
 	public readonly List<StoryStep> Steps = new List<StoryStep>();
+
+	/// <summary>Its lines as written - what a "== chapters" list is read from (StoryChapters).</summary>
+	public readonly List<string> Raw = new List<string>();
 }
 
 /// <summary>
@@ -62,13 +65,21 @@ public static class StoryScript
 	{
 		"walk", "run", "face", "turn", "look", "jump", "attack", "smash", "special", "taunt",
 		"block", "crouch", "drop", "at", "heat", "stocks", "twirl", "roll", "hold",
+		"pose", "show", "mark", "throw",
 	};
+
+	/// <summary>What a story can put over someone's head (StoryOverlay draws them).</summary>
+	public static readonly string[] Marks = { "anger", "sweat", "sparkle", "heart", "!", "?", "steam", "tears", "none" };
+
+	/// <summary>The music a scene can call for.</summary>
+	public static readonly string[] Musics = { "stop", "battle", "menu", "story", "doombot", "victory" };
 
 	public static readonly string[] Moods = { "shout", "whisper", "scared", "happy", "hot", "slam" };
 
 	static readonly string[] SceneWords =
 	{
 		"wait", "camera", "shake", "music", "sound", "board", "include", "cast", "fight", "end",
+		"stage", "pile", "dark", "eye", "page",
 	};
 
 	static Dictionary<string, Dictionary<string, StoryScene>> scripts;
@@ -76,6 +87,7 @@ public static class StoryScript
 	/// <summary>A fighter's story id: their name, lower case, letters only - "flambe", "edgelord".</summary>
 	public static string IdOf(FighterData data)
 	{
+		if (!string.IsNullOrEmpty(data.StoryId)) return data.StoryId;
 		var id = new System.Text.StringBuilder();
 		foreach (char c in data.DisplayName.ToLowerInvariant())
 		{
@@ -92,6 +104,8 @@ public static class StoryScript
 		{
 			if (IdOf(FighterCatalog.Get(i)) == id) return i;
 		}
+		// Not on the roster, but a story can field him: DoomBot Mk. II.
+		if (IdOf(FighterCatalog.Get(FighterCatalog.StoryOnlyFrom)) == id) return FighterCatalog.StoryOnlyFrom;
 		return -1;
 	}
 
@@ -140,6 +154,7 @@ public static class StoryScript
 				continue;
 			}
 
+			if (scene != null) scene.Raw.Add(line);
 			var step = new StoryStep { Source = $"{file}:{n + 1}" };
 			if (line.EndsWith(" &"))
 			{
@@ -226,8 +241,13 @@ public static class StoryScript
 			foreach (StoryScene scene in scenes.Values)
 			{
 				if (scene.Name == "" && scene.Steps.Count > 0) problems.Add($"{scene.Steps[0].Source}: a line before the first == scene heading");
+				// The chapter list is not a scene; StoryChapters reads it, below.
+				if (scene.Name == "chapters") continue;
 				foreach (StoryStep step in scene.Steps) CheckStep(step, owner, problems);
 			}
+			var chapterProblems = new List<string>();
+			StoryChapters.Read(owner, chapterProblems, out _);
+			foreach (string problem in chapterProblems) problems.Add($"{owner}'s chapters: {problem}");
 		}
 		return problems;
 	}
@@ -239,6 +259,7 @@ public static class StoryScript
 		switch (step.Verb)
 		{
 			case "narrate":
+				if (step.Mood is not ("" or "shout")) Bad("the narrator only shouts - \"narrator (shout):\"");
 				return;
 			case "say":
 			case "write":
@@ -256,7 +277,22 @@ public static class StoryScript
 				if (!step.Arg(0).IsValidFloat()) Bad("shake needs a number");
 				return;
 			case "music":
-				if (step.Arg(0) is not ("stop" or "battle" or "menu")) Bad("music is stop, battle or menu");
+				if (System.Array.IndexOf(Musics, step.Arg(0)) < 0) Bad($"music is {string.Join(", ", Musics)}");
+				return;
+			case "stage":
+				if (step.Arg(0) is not ("bare" or "full")) Bad("stage is \"stage bare\" (the drawings off the fridge) or \"stage full\"");
+				return;
+			case "pile":
+				if (!(step.Arg(0) == "clear" || step.Arg(0) == "at" && step.Arg(1).IsValidFloat())) Bad("pile is \"pile at X\" or \"pile clear\"");
+				return;
+			case "dark":
+				if (step.Arg(0) is not ("on" or "off")) Bad("dark is \"dark on\" or \"dark off\"");
+				return;
+			case "eye":
+				if (!(step.Arg(0) == "close" || step.Arg(0) == "at" && step.Arg(1).IsValidFloat() && step.Arg(2).IsValidFloat())) Bad("eye is \"eye at X Y\" or \"eye close\"");
+				return;
+			case "page":
+				if (!(step.Arg(0) == "clear" || step.Arg(0) == "at" && step.Arg(1).IsValidFloat() && step.Arg(2).IsValidFloat())) Bad("page is \"page at X Y\" or \"page clear\"");
 				return;
 			case "sound":
 				if (System.Array.IndexOf(SfxCatalog.AllNames, step.Arg(0)) < 0) Bad($"no sound \"{step.Arg(0)}\"");
@@ -322,6 +358,26 @@ public static class StoryScript
 			case "hold":
 				if (ItemCatalog.IndexOf(step.Arg(0)) < 0) Bad($"no item \"{step.Arg(0)}\"");
 				break;
+			case "pose":
+				if (step.Arg(0) != "none" && System.Array.IndexOf(FighterAnimations.StoryPoses, step.Arg(0)) < 0)
+				{
+					Bad($"no pose \"{step.Arg(0)}\" (try {string.Join(", ", FighterAnimations.StoryPoses)}, none)");
+				}
+				break;
+			case "show":
+				List<string> drawn = DrawnPoses(step.Who);
+				if (step.Arg(0) != "none" && drawn != null && !drawn.Contains(step.Arg(0)))
+				{
+					drawn ??= new List<string>();
+					Bad($"{step.Who} has no drawing \"{step.Arg(0)}\" (try {string.Join(", ", drawn)}, none)");
+				}
+				break;
+			case "mark":
+				if (System.Array.IndexOf(Marks, step.Arg(0)) < 0) Bad($"no mark \"{step.Arg(0)}\" (try {string.Join(", ", Marks)})");
+				break;
+			case "throw":
+				if (step.Arg(0) is not ("" or "forward" or "back" or "up" or "down")) Bad("throw goes forward, back, up or down");
+				break;
 			case "turn":
 			case "jump":
 			case "taunt":
@@ -332,6 +388,21 @@ public static class StoryScript
 				Bad($"{step.Who} can't \"{step.Verb}\" (try {string.Join(", ", ActorVerbs)})");
 				break;
 		}
+	}
+
+	/// <summary>The whole drawings of him a story can show: the "poses" in his rig.json. "player" could be anyone, so anything goes.</summary>
+	static List<string> DrawnPoses(string who)
+	{
+		var names = new List<string>();
+		int index = IndexOf(who);
+		if (who == "player") return null;
+		if (index < 0) return names;
+		string text = FileAccess.GetFileAsString(FighterCatalog.Get(index).RigPath);
+		if (Json.ParseString(text).AsGodotDictionary() is Godot.Collections.Dictionary root && root.ContainsKey("poses"))
+		{
+			foreach (var key in ((Godot.Collections.Dictionary)root["poses"]).Keys) names.Add((string)key);
+		}
+		return names;
 	}
 
 	static void CheckCamera(StoryStep step, System.Action<string> bad)

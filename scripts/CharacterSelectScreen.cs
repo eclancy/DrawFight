@@ -523,6 +523,12 @@ public partial class CharacterSelectScreen : Node2D
 				picked = true;
 			}
 			if (!picked) CrayonBrush.InkRect(this, cards[i].Box, MenuTheme.Rule, 3.0f, 31 + i * 7, 2.6f);
+
+			// A story played to the end wears a gold star.
+			if (ForStory && StoryProgress.Finished(StoryScript.IdOf(FighterCatalog.Get(i))))
+			{
+				Item.DrawStarOn(this, cards[i].Box.Position + new Vector2(cards[i].Box.Size.X - 26.0f, 26.0f), 30.0f, new Color(1.0f, 0.82f, 0.25f));
+			}
 		}
 
 		for (int i = 0; i < slots.Length; i++)

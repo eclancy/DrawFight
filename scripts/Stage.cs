@@ -87,6 +87,21 @@ public partial class Stage : Node2D
 		QueueRedraw();
 	}
 
+	/// <summary>
+	/// The other drawings taken off the fridge door, for DoomBot's reveal: "the fridge is nearly
+	/// bare". Only the props come off; the pages the fight is on stay.
+	/// </summary>
+	public bool Bare
+	{
+		get => bare;
+		set
+		{
+			bare = value;
+			QueueRedraw();
+		}
+	}
+	bool bare;
+
 	/// <summary>Everything painted behind the stage. The camera never looks past it (GameCamera.Limits).</summary>
 	public Rect2 Backdrop => Data.BlastZone.Grow(BackdropPad);
 
@@ -98,7 +113,11 @@ public partial class Stage : Node2D
 		if (Data.Style == StageStyle.TapedPage || Data.Style == StageStyle.PinnedPages) DrawBrushedMetal();
 		DrawPaperSubstrate();
 
-		foreach (StageProp prop in Data.Props) DrawProp(prop);
+		foreach (StageProp prop in Data.Props)
+		{
+			if (bare && (prop.Kind == PropKind.TapedDrawing || prop.Kind == PropKind.FridgeMagnet)) continue;
+			DrawProp(prop);
+		}
 		if (Data.Style == StageStyle.TapedPage) DrawTapedPage(Data.PageRect);
 		if (Data.Style == StageStyle.PinnedPages) foreach (PinnedPage page in Data.Pages) DrawPinnedPage(page);
 		foreach (StagePlatform platform in Data.Platforms) DrawPlatform(platform);

@@ -1,5 +1,151 @@
 # Lugnut's story: Room for Everybody. How a script reads is at the top of fighters/doombot/story.txt.
-# So far only his part of the finale is written - his roast, and what he says once DoomBot falls.
+# He doesn't want anyone in the bin. He has measured the fridge: moved round and stuck on
+# properly, every drawing fits. But everyone is too busy fighting to listen.
+
+== chapters
+title Room for Everybody
+opening at fridge
+fight circy at plains
+fight triguy at fridge
+fight edgelord at rooftops
+fight flambe at fridge
+fight circy triguy at plains
+finale
+ending with flambe at fridge
+
+== opening
+cast player at -260 facing right
+music story
+camera on player zoom 1.1 cut
+player hold metre_stick
+narrator: Lugnut was measuring the fridge door.
+player walk to 220
+player look squint
+wait 30
+player: Fridge is full. Folks are getting knocked off left and right.
+player look normal
+player face left
+player: But if everybody scooches over, there's room for all of us.
+sound hit_heavy
+shake 25
+narrator: Somewhere nearby, somebody was fighting.
+player look angry
+player: ...Right after I stop all that.
+player taunt
+wait 20
+player (shout): Break's over!
+end
+
+# --- How he meets someone, in their stories ------------------------------------------------
+
+== challenger
+cast player at -420
+cast lugnut at 380 facing left
+music story
+camera on lugnut zoom 1.2
+narrator: Lugnut was on his break. Half a sandwich to go.
+lugnut look happy
+wait 30
+lugnut face player
+lugnut look sad
+wait 20
+narrator: He put the sandwich down. Carefully.
+lugnut crouch 20
+lugnut look angry
+lugnut (shout): Break's over.
+camera wide
+fight
+
+== defeated
+cast player at -300
+cast lugnut at 300 facing left
+music story
+lugnut pose slump
+lugnut: Should've stayed on break.
+end
+
+# --- His own fights ----------------------------------------------------------------------------
+
+== vs flambe
+cast player at -450 facing right
+cast flambe at 300 facing left
+music stop
+camera on flambe zoom 1.2 cut
+flambe mark steam
+narrator: Smoke. Sizzling. Flambe was making creme brulee. On the fridge. With his lighter.
+sound smoke_alarm
+shake 10
+wait 40
+narrator (shout): IF THAT ALARM GOES OFF ONE MORE TIME, THOSE DRAWINGS ARE COMING DOWN.
+player look shocked
+player mark sweat
+camera two player flambe
+player walk to flambe
+player: Buddy. Pal. Put the lighter down.
+flambe (hot): It's creme brulee! It NEEDS fire!
+player: It needs to not get us all recycled.
+flambe pose crossarms
+flambe: Mon ami. You do not rush a dessert.
+player mark none
+player look angry
+player: Then I'm on overtime.
+flambe pose none
+flambe mark none
+camera wide
+fight
+
+== beat flambe
+cast player at -200 facing right
+cast flambe at 160 facing left
+music story
+camera two player flambe
+narrator: After, they sat together. Flambe handed it over.
+player look normal
+wait 30
+player look happy
+player: ...Okay. That's actually really good.
+flambe look smug
+flambe (hot): I KNOW.
+end
+
+== vs circy triguy
+cast player at -480 facing right
+cast circy at 260 facing left
+cast triguy at 460 facing left
+music story
+camera two circy triguy
+player: A circle and a triangle.
+circy: [square]
+player look squint
+player: Ha. That's me, all right.
+player: ...Pal, I'm a rectangle at most.
+triguy show taunt_pog
+triguy mark sparkle
+triguy: that's, really kewl.
+player look happy
+player block 20
+player: Thanks, kid. Safety's always in style.
+triguy mark none
+triguy show none
+player look angry
+player: Still got to stop you two. Hard hats on.
+camera wide
+fight
+
+== beat circy triguy
+cast player at -200 facing right
+cast circy at 200 facing left
+cast triguy at 420 facing left
+music story
+circy: [fridge] [?]
+player: Yes. There's room on the fridge for you. For both of you.
+triguy show taunt_pose
+triguy (shout): THAT'S, REALLY KEWL.
+player: You're welcome.
+triguy show none
+end
+
+# --- The finale -------------------------------------------------------------------------------
 
 == roast
 player: Pal, I've installed plenty of fridges.
@@ -17,3 +163,22 @@ player: Even you. I'll build you a spot.
 wait 30
 doombot look happy
 doombot: ...A SPOT.
+
+== ending
+cast player at -220 facing right
+cast flambe at 260 facing left
+music story
+camera wide cut
+narrator: Every drawing back on the fridge. Moved round, stuck on straight, a magnet on each.
+sound magnet_clink
+wait 20
+sound magnet_clink
+narrator: Room for everybody. Even a little spot for a MiniBot.
+camera two player flambe
+player look happy
+player: Built to code.
+flambe look angry
+flambe: Why am I behind DoomBot?
+player: Structural reasons.
+wait 50
+end
