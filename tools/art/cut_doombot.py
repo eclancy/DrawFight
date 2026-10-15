@@ -6,7 +6,8 @@ Cuts DoomBot out of the photo of his drawing. Run with the only Python on this m
 
 Reads  fighters/doombot/source/doombot.jpg   (the photo: the master copy, never edited)
 Writes fighters/doombot/parts/*.png          the head, body and four limbs, in canonical orientation
-       fighters/doombot/rig.json             bone tree, offsets and pivots
+       fighters/doombot/rig.json             bone tree, offsets and pivots - and Mk. II's armour put
+                                             back on it (mk2_armour.py draws that; this only hangs it)
 
 The drawing is a boxy robot on a photographed sheet of paper, facing the viewer. Every part is
 a traced shape (coordinates below, in pixels of the photo at half size) with the paper removed:
@@ -55,6 +56,7 @@ import os
 from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter
 
 import faces
+import mk2_armour
 from face_specs import FACES
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -518,6 +520,8 @@ def main():
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
     # Last: the eyes and mouth lifted out so the game can move them (faces.py, face_specs.py).
     faces.apply(ROOT, *FACES['doombot'])
+    # Then Mk. II's scrap armour, hung back on the new cut (drawn by mk2_armour.py, not redrawn here).
+    mk2_armour.apply(ROOT)
     print('head %s  torso %s  covered patch %d px' % (hbox, tbox, sum(arm_over_body.histogram()[128:])))
 
 

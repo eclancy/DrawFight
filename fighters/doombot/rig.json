@@ -204,6 +204,106 @@
       "part": "FaceMouth", 
       "stretch": 0.12, 
       "tilt": 1
+    }, 
+    {
+      "behind": true, 
+      "bone": "Torso", 
+      "name": "mk2Stacks", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Stacks"
+    }, 
+    {
+      "bone": "Torso", 
+      "name": "mk2Belly", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Belly"
+    }, 
+    {
+      "bone": "Head", 
+      "name": "mk2Helmet", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Helmet"
+    }, 
+    {
+      "bone": "ArmBack_Upper", 
+      "name": "mk2Pauldron", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Pauldron"
+    }, 
+    {
+      "bone": "ArmFront_Upper", 
+      "name": "mk2Band", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Band"
+    }, 
+    {
+      "bone": "ArmFront_Lower", 
+      "name": "mk2BracerFront", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2BracerFront"
+    }, 
+    {
+      "bone": "ArmBack_Lower", 
+      "name": "mk2BracerBack", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2BracerBack"
+    }, 
+    {
+      "bone": "LegFront_Lower", 
+      "name": "mk2GreaveFront", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Greave"
+    }, 
+    {
+      "bone": "LegBack_Lower", 
+      "name": "mk2GreaveBack", 
+      "offset": [
+        0, 
+        0
+      ], 
+      "onPart": true, 
+      "outfit": "mk2", 
+      "part": "Mk2Greave"
     }
   ], 
   "legLength": 660, 
@@ -323,6 +423,62 @@
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
+    "Mk2Band": {
+      "pivot": [
+        165.0, 
+        -100.0
+      ], 
+      "texture": "parts/Mk2Band.png"
+    }, 
+    "Mk2Belly": {
+      "pivot": [
+        305.0, 
+        155.0
+      ], 
+      "texture": "parts/Mk2Belly.png"
+    }, 
+    "Mk2BracerBack": {
+      "pivot": [
+        95.0, 
+        -50.0
+      ], 
+      "texture": "parts/Mk2BracerBack.png"
+    }, 
+    "Mk2BracerFront": {
+      "pivot": [
+        165.0, 
+        -55.0
+      ], 
+      "texture": "parts/Mk2BracerFront.png"
+    }, 
+    "Mk2Greave": {
+      "pivot": [
+        95.0, 
+        70.0
+      ], 
+      "texture": "parts/Mk2Greave.png"
+    }, 
+    "Mk2Helmet": {
+      "pivot": [
+        185.0, 
+        470.0
+      ], 
+      "texture": "parts/Mk2Helmet.png"
+    }, 
+    "Mk2Pauldron": {
+      "pivot": [
+        115.0, 
+        165.0
+      ], 
+      "texture": "parts/Mk2Pauldron.png"
+    }, 
+    "Mk2Stacks": {
+      "pivot": [
+        370.0, 
+        980.0
+      ], 
+      "texture": "parts/Mk2Stacks.png"
+    }, 
     "Socket": {
       "pivot": [
         151, 
@@ -370,6 +526,24 @@
         184, 
         -409
       ]
+    }, 
+    {
+      "bone": "Torso", 
+      "name": "exhaust", 
+      "offset": [
+        -252, 
+        -934
+      ], 
+      "outfit": "mk2"
+    }, 
+    {
+      "bone": "Torso", 
+      "name": "exhaust2", 
+      "offset": [
+        -324, 
+        -846
+      ], 
+      "outfit": "mk2"
     }
   ]
 }

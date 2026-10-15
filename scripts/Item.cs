@@ -966,7 +966,7 @@ public partial class Item : CharacterBody2D
 		FighterData data = FighterCatalog.Get(pick);
 		figure = new FighterRig();
 		AddChild(figure);
-		if (figure.Load(data.RigPath))
+		if (figure.Load(data))
 		{
 			figure.Normalise(150.0f, 60.0f, 1.0f);
 			figure.SetPlanted(true);

@@ -422,7 +422,7 @@ public partial class Fighter : CharacterBody2D
 		{
 			rig = new FighterRig();
 			AddChild(rig);
-			if (rig.Load(data.RigPath))
+			if (rig.Load(data))
 			{
 				// The puppet is drawn a little taller than the hurtbox so the art reads at full
 				// size while the box a player has to hit stays honest.
@@ -5097,6 +5097,9 @@ public partial class Fighter : CharacterBody2D
 		int puffs = steaming ? 9 : 2 + Mathf.RoundToInt(4.0f * strength);
 		int period = steaming ? 36 : 54;
 		float top = -bodySize.Y * 0.5f - bodySize.Y * 0.1f;
+		// Mk. II blows his smoke out of his exhaust stacks; anyone else's rises off his head.
+		Vector2? stackA = rig != null && rig.Loaded ? rig.PointGlobal("exhaust") : null;
+		Vector2? stackB = rig != null && rig.Loaded ? rig.PointGlobal("exhaust2") : null;
 
 		for (int i = 0; i < puffs; i++)
 		{
@@ -5106,6 +5109,11 @@ public partial class Fighter : CharacterBody2D
 			float x = CrayonBrush.Noise(cycle * 17 + i, 3) * bodySize.X * (steaming ? 0.8f : 0.4f);
 			float y = steaming ? Mathf.Lerp(bodySize.Y * 0.3f, top, Mathf.Abs(CrayonBrush.Noise(cycle, i + 9))) : top;
 			Vector2 at = new Vector2(x + CrayonBrush.Noise(cycle, i) * 18.0f * t, y - (steaming ? 90.0f : 130.0f) * t);
+			if (!steaming && stackA != null)
+			{
+				Vector2 stack = overlay.ToLocal(i % 2 == 1 && stackB != null ? stackB.Value : stackA.Value);
+				at = stack + new Vector2(CrayonBrush.Noise(cycle, i) * 18.0f * t, -130.0f * t);
+			}
 			float radius = (steaming ? 18.0f : 12.0f) + (steaming ? 30.0f : 24.0f) * t;
 			float alpha = (1.0f - t) * (steaming ? 0.6f : 0.25f + 0.25f * strength);
 			Color puff = steaming ? new Color(0.97f, 0.97f, 0.98f, alpha) : new Color(0.78f, 0.78f, 0.80f, alpha);

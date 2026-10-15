@@ -22,6 +22,12 @@ public partial class FighterData : Resource
 	/// <summary>Multiplied over his whole drawing: DoomBot Mk. II is DoomBot, newer and shinier.</summary>
 	[Export] public Color RigTint { get; set; } = Colors.White;
 
+	/// <summary>
+	/// The extras of his drawing he wears (rig.json "outfit"): DoomBot Mk. II is DoomBot's drawing
+	/// with the scrap armour bolted on (tools/art/mk2_armour.py). Empty for none.
+	/// </summary>
+	[Export] public string Outfit { get; set; } = "";
+
 	/// <summary>What a story script calls him, when it is not just his name (StoryScript.IdOf).</summary>
 	[Export] public string StoryId { get; set; } = "";
 
@@ -322,6 +328,25 @@ public partial class FighterData : Resource
 	}
 
 	/// <summary>
+	/// DoomBot Mk. II, the final boss of DoomBot's own story (Eric's call, 2026-10-15): the
+	/// factory's newer model - the same drawing, every move his, with scrap armour bolted on
+	/// (tools/art/mk2_armour.py). Not on the roster; only a story can field him
+	/// (FighterCatalog.StoryOnly).
+	/// </summary>
+	public static FighterData DoomBotMk2()
+	{
+		FighterData data = DoomBot();
+		data.DisplayName = "DoomBot Mk. II";
+		data.StoryId = "mk2";
+		data.Outfit = "mk2";
+		data.VoicePitch = 0.68f;
+		data.PlaceholderColor = new Color(0.36f, 0.62f, 0.92f);
+		// A touch cooler: newer steel. The armour is what tells him apart.
+		data.RigTint = new Color(0.9f, 0.96f, 1.05f);
+		return data;
+	}
+
+	/// <summary>
 	/// DoomBot, drawn and designed by Eric: "a factory robot that went rogue", cut from the drawing
 	/// by tools/art/cut_doombot.py. His sheet is fighters/doombot/sheet.md. What he asked for,
 	/// in stats:
@@ -332,22 +357,6 @@ public partial class FighterData : Resource
 	///   - "big windups": startups a few frames past the baseline, and a higher AnimationDrama so
 	///     every windup is drawn big enough to see coming
 	/// </summary>
-	/// <summary>
-	/// DoomBot Mk. II, the final boss of DoomBot's own story (Eric's call, 2026-10-15): the
-	/// factory's newer model - the same drawing, every move his, in a cooler, shinier steel. Not
-	/// on the roster; only a story can field him (FighterCatalog.StoryOnly).
-	/// </summary>
-	public static FighterData DoomBotMk2()
-	{
-		FighterData data = DoomBot();
-		data.DisplayName = "DoomBot Mk. II";
-		data.StoryId = "mk2";
-		data.VoicePitch = 0.68f;
-		data.PlaceholderColor = new Color(0.36f, 0.62f, 0.92f);
-		data.RigTint = new Color(0.78f, 0.92f, 1.12f);
-		return data;
-	}
-
 	public static FighterData DoomBot()
 	{
 		const float Size = 1.75f;

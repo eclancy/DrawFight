@@ -215,6 +215,14 @@ public partial class FighterRig : Node2D
 
 	public bool Loaded { get; private set; }
 
+	/// <summary>A fighter's own drawing, wearing whatever his data says he wears (FighterData.Outfit).</summary>
+	public bool Load(FighterData data)
+	{
+		if (!Load(data.RigPath)) return false;
+		Wear(data.Outfit);
+		return true;
+	}
+
 	/// <summary>
 	/// Builds the puppet. Returns false rather than throwing if the manifest is missing, so a
 	/// fighter with no art still plays as a rectangle instead of taking the match down.
@@ -352,6 +360,8 @@ public partial class FighterRig : Node2D
 	void LoadExtras(Godot.Collections.Dictionary root, Godot.Collections.Dictionary parts, string baseDir)
 	{
 		extras.Clear();
+		outfitOf.Clear();
+		worn.Clear();
 		face.Clear();
 		mouthOpen = null;
 		if (!root.ContainsKey("extras")) return;
@@ -381,6 +391,12 @@ public partial class FighterRig : Node2D
 			// One that is part of the drawing it hangs on ("onPart") goes on that drawing, not only
 			// its bone, so it turns round with it when he looks back - Triguy's hat on his triangle.
 			bool onPart = entry.ContainsKey("onPart") && (bool)entry["onPart"] && sprites[(int)bone] != null;
+			// One only some fighters on this drawing wear ("outfit"), hidden until one puts it on:
+			// Mk. II's scrap armour on DoomBot (Wear).
+			if (entry.ContainsKey("outfit")) outfitOf[(string)entry["name"]] = (string)entry["outfit"];
+			// One that goes under the drawing it hangs on ("behind"): Mk. II's exhaust stacks, behind
+			// his body.
+			if (entry.ContainsKey("behind") && (bool)entry["behind"]) sprite.ShowBehindParent = true;
 			// An eye, a brow or a mouth lifted out of the drawing (tools/art/faces.py), hung back on
 			// it exactly where it was drawn, so SetFace can move it.
 			string faceKind = entry.ContainsKey("face") ? (string)entry["face"] : null;
@@ -1052,14 +1068,20 @@ public partial class FighterRig : Node2D
 	void LoadPoints(Godot.Collections.Dictionary root)
 	{
 		points.Clear();
+		pointOutfit.Clear();
 		if (!root.ContainsKey("points")) return;
 		foreach (Godot.Collections.Dictionary entry in (Godot.Collections.Array)root["points"])
 		{
 			if (!RigBones.TryParse((string)entry["bone"], out RigBone bone) || !present[(int)bone]) continue;
 			var offset = (Godot.Collections.Array)entry["offset"];
 			points[(string)entry["name"]] = (bone, new Vector2((float)offset[0], (float)offset[1]));
+			// A spot on an outfit - the top of one of Mk. II's exhaust stacks - is only there while
+			// the outfit is worn.
+			if (entry.ContainsKey("outfit")) pointOutfit[(string)entry["name"]] = (string)entry["outfit"];
 		}
 	}
+
+	readonly Dictionary<string, string> pointOutfit = new Dictionary<string, string>();
 
 	/// <summary>
 	/// Where a named spot on the drawing is right now, in global coordinates - DoomBot's eye, the
@@ -1069,6 +1091,7 @@ public partial class FighterRig : Node2D
 	public Vector2? PointGlobal(string name)
 	{
 		if (string.IsNullOrEmpty(name) || !points.TryGetValue(name, out var point)) return null;
+		if (pointOutfit.TryGetValue(name, out string outfit) && !worn.Contains(outfit)) return null;
 		return bones[(int)point.bone].GlobalTransform * point.offset;
 	}
 
@@ -1163,6 +1186,22 @@ public partial class FighterRig : Node2D
 	}
 
 	public bool HasExtra(string name) => extras.ContainsKey(name);
+
+	/// <summary>Which outfit each extra belongs to, for the ones that belong to one (rig.json "outfit").</summary>
+	readonly Dictionary<string, string> outfitOf = new Dictionary<string, string>();
+
+	readonly HashSet<string> worn = new HashSet<string>();
+
+	/// <summary>Puts on every extra of an outfit: Mk. II's armour on DoomBot's drawing. Empty puts on nothing.</summary>
+	public void Wear(string outfit)
+	{
+		if (string.IsNullOrEmpty(outfit)) return;
+		worn.Add(outfit);
+		foreach (KeyValuePair<string, string> pair in outfitOf)
+		{
+			if (pair.Value == outfit && extras.TryGetValue(pair.Key, out Sprite2D sprite)) sprite.Visible = true;
+		}
+	}
 
 	/// <summary>
 	/// Hides one bone's own drawing and nothing else - the bone still moves, and whatever hangs

@@ -238,7 +238,8 @@ His own story is the villain's side:
 - **Fights:** Triguy, Circy, EdgeLord, Lugnut - then Flambé arrives to help his friend, and it
   is the two of them - then the finale.
 - **After every win:** "YOU HAVE BEEN... PROCESSED." Beat. "YOU ARE ON THE FLOOR NOW."
-- **His finale: DoomBot Mk. II.** A shinier DoomBot (the same rig, a cooler, newer tint) rolls in.
+- **His finale: DoomBot Mk. II.** DoomBot upgraded - the same rig, with scrap armour bolted on
+  (a saw-blade crest, exhaust stacks, spikes, a II on his belly plate) - rolls in.
   "GREETINGS, OLD MODEL." - "OLD?" - "THE FACTORY HAS SENT A NEWER, BETTER DOOMBOT. THE FRIDGE
   BELONGS TO THE NEWEST MACHINE." - "I WAS MADE ON TUESDAY." - "I WAS MADE ON WEDNESDAY." A very
   long pause. Steam. "...NO." His own fridge joke, said to the only one it fits: "YOU LOOK LIKE A
@@ -360,8 +361,9 @@ In order, each step usable before the next:
    (`MatchManager.BossPlayer`, `StoryDirector.TickBoss`): more stocks and full heat from the
    scene; his own theme on FIGHT!; on his last stock "CORE TEMPERATURE CRITICAL", he flashes red,
    runs hot, sends a MiniBot after you every few seconds, and the music speeds up. DoomBot Mk. II
-   (`FighterData.DoomBotMk2`, story id `mk2`) is DoomBot in a cooler, shinier tint, fielded only
-   by a story (`FighterCatalog.StoryOnlyFrom`).
+   (`FighterData.DoomBotMk2`, story id `mk2`) is DoomBot wearing the outfit `mk2` - scrap armour
+   drawn by `tools/art/mk2_armour.py` and hung on DoomBot's own rig - fielded only by a story
+   (`FighterCatalog.StoryOnlyFrom`).
 6. **The story screens** - **built, 2026-10-15.** Main menu Story → "Whose story?" (a gold star
    on every story finished) → the story's map (`StoryMapScreen`: the fridge door, a magnet per
    chapter, a star on each played, the next one glowing) → play. After every chapter the story
@@ -383,8 +385,9 @@ DoomBot to the fridge beside him - the same shape" pans to the door's handle, no
 
 - **Circy always talks in pictures, Triguy always in catchphrases,** and whoever answers says
   what they meant (see "The two kids' fighters").
-- **DoomBot Mk. II** is the final boss of DoomBot's own story: a newer model, the same drawing in
-  a new tint - nothing drawn that Eric didn't.
+- **DoomBot Mk. II** is the final boss of DoomBot's own story: a newer model, Eric's drawing
+  with scrap armour bolted on - mismatched upgrades, drawn as separate pieces, so not a line of
+  DoomBot is redrawn and DoomBot himself wears none of it (Eric, 2026-10-15).
 - **The voice from the kitchen** in Lugnut's story is a grown-up, unseen, shouting on the
   narrator's strip (`narrator (shout):`).
 - **EdgeLord's colouring is final.** Eric is not colouring him himself.

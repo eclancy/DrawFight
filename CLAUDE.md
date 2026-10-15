@@ -125,7 +125,11 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's rig: colours his
   drawing, cuts it, and draws the swords and turning frames. About a minute.
 - **`python tools/art/cut_doombot.py`** — re-cut DoomBot from the photo of his drawing,
-  including the patch of body filled in behind his arm. About 10 seconds.
+  including the patch of body filled in behind his arm. About 25 seconds.
+- **`python tools/art/mk2_armour.py`** — redraw DoomBot Mk. II's scrap armour: separate
+  pieces in coloured pencil, hung on DoomBot's rig as the outfit `mk2`, which only Mk. II wears
+  (`FighterData.Outfit`). Needs `$GODOT_BIN`; a few seconds. A re-cut of DoomBot hangs it back on
+  by itself. Check it with `--parade --only=100`.
 - Every cut script ends by lifting the fighter's eyes and mouth out of the drawing so they can
   move (`tools/art/faces.py`, the boxes in `tools/art/face_specs.py`); Flambé's and Lugnut's are
   drawn as separate parts in their own scripts (`FACE`). See "Faces" in `.ai/art-pipeline.md`.

@@ -111,7 +111,7 @@ public partial class CharacterSelectScreen : Node2D
 			window.AddChild(holder);
 			var rig = new FighterRig();
 			holder.AddChild(rig);
-			if (rig.Load(data.RigPath))
+			if (rig.Load(data))
 			{
 				rig.Normalise(230.0f, 115.0f, data.VisualScale);
 				rig.SetFacing(facing[i]);

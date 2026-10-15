@@ -54,7 +54,7 @@ public partial class MainMenuScreen : Node2D
 		AddChild(holder);
 		var rig = new FighterRig();
 		holder.AddChild(rig);
-		if (!rig.Load(data.RigPath)) return rig;
+		if (!rig.Load(data)) return rig;
 		rig.ArmBackLimit = data.ArmReachBack;
 		rig.Normalise(170.0f, 85.0f, 1.0f);
 		rig.SetFacing(facing);

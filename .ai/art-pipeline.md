@@ -493,6 +493,16 @@ small path rather than bending the rig.
   (`"onPart": true` in rig.json), so it turns round with the body when he looks back and counts
   as body for framing. Its pixels are his; it is only kept apart, never redrawn. A copy goes in
   `poses/` for the thrown one.
+- **An outfit** - something worn over a drawing by only some fighters who use it: DoomBot Mk. II
+  is DoomBot's rig with scrap armour bolted on (Eric, 2026-10-15). The armour is our drawing,
+  in separate pieces (`tools/art/mk2_armour.py`), each drawn about the joint of the part it goes
+  on so it hangs at offset zero; rig.json extras with `"outfit": "mk2"` stay hidden until a
+  fighter's data wears them (`FighterData.Outfit`, `FighterRig.Wear`). `"behind": true` puts one
+  under the part it hangs on (his exhaust stacks, behind his body), and a rig point with an
+  outfit (the stack tops, where his heat smoke comes out) is only there while it is worn. It
+  covers part of the drawing it is worn over, so keep it off the face and anything a move comes
+  out of - his armour skips the socket on his chest - and never paint it into the artist's
+  parts.
 - **Specks are not part of a piece.** A fleck of pencil on the paper beside a cut piece, not
   joined to it, gets its own outline ring and shows as a dark nugget stuck to the part - DoomBot's
   boots and shins (Eric, 2026-10-10). `solid` in `tools/art/cut_doombot.py` drops any blot not

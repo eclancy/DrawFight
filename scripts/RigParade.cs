@@ -234,7 +234,7 @@ public partial class RigParade : Node2D
 				AddChild(holder);
 				var rig = new FighterRig();
 				holder.AddChild(rig);
-				if (!rig.Load(data.RigPath)) return;
+				if (!rig.Load(data)) return;
 				rig.Normalise(300.0f, 150.0f, 1.0f);
 				rig.DramaScale = data.AnimationDrama;
 				rig.Robotic = data.Robotic;
@@ -294,7 +294,7 @@ public partial class RigParade : Node2D
 			AddChild(holder);
 			var rig = new FighterRig();
 			holder.AddChild(rig);
-			if (!rig.Load(data.RigPath)) return;
+			if (!rig.Load(data)) return;
 			rig.Normalise(440.0f, 220.0f, 1.0f);
 			rig.ArmBackLimit = data.ArmReachBack;
 			rig.SetPlanted(true);
@@ -379,7 +379,7 @@ public partial class RigParade : Node2D
 			AddChild(holder);
 			var rig = new FighterRig();
 			holder.AddChild(rig);
-			if (!rig.Load(data.RigPath)) return;
+			if (!rig.Load(data)) return;
 			rig.Normalise(300.0f, 150.0f, 1.0f);
 			rig.DramaScale = data.AnimationDrama;
 			rig.Robotic = data.Robotic;
@@ -659,7 +659,7 @@ public partial class RigParade : Node2D
 				var rig = new FighterRig();
 				holder.AddChild(rig);
 
-				if (!rig.Load(data.RigPath))
+				if (!rig.Load(data))
 				{
 					GD.PushError($"RigParade: {data.DisplayName} failed to load {data.RigPath}");
 					continue;

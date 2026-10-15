@@ -81,7 +81,7 @@ public partial class TitleScreen : Node2D
 		var rig = new FighterRig();
 		holder.AddChild(rig);
 
-		if (!rig.Load(data.RigPath)) return rig;
+		if (!rig.Load(data)) return rig;
 		rig.ArmBackLimit = data.ArmReachBack;
 
 		rig.Normalise(380.0f, 190.0f, 1.0f);
