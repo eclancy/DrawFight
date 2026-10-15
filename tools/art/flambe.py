@@ -305,7 +305,9 @@ def rocking(colours=C):
         place(boot, along(near_knee, near_shin, SHIN_LEN)),
         fill(TORSO, colours), fill(HEAD, colours),
         place(mirrored(arm), SHOULDER_NEAR, 140),
-        place(mirrored(forearm), near_elbow, 175),
+        # Not mirrored: a fist punched up has its thumb curled toward his head, the way Lugnut's
+        # flexed fists do - mirrored, it curled on the outside of the fist.
+        place(forearm, near_elbow, 175),
     ]
     return '\n'.join(out)
 
