@@ -110,6 +110,14 @@ public partial class MatchHud : CanvasLayer
 	/// The big centre text: "3", "2", "1", "FIGHT!", or the winner. <paramref name="punch"/>
 	/// runs 1 to 0 over a number's time on screen, so each one lands big and settles.
 	/// </summary>
+	/// <summary>The banner up at the top of the screen, or back in the middle where the countdown is.</summary>
+	public void SetBannerHigh(bool high)
+	{
+		if (bannerLabel == null) return;
+		bannerLabel.Position = new Vector2(0.0f, high ? 20.0f : 300.0f);
+		subBannerLabel.Position = new Vector2(0.0f, high ? 250.0f : 540.0f);
+	}
+
 	public void SetBanner(string text, string subText = "", float punch = 0.0f)
 	{
 		if (bannerLabel == null) return;

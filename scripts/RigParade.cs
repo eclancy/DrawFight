@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 /// <summary>
@@ -276,14 +277,18 @@ public partial class RigParade : Node2D
 	/// --film=face: one fighter's face in every expression, big - the drawn eyes, brows and mouth
 	/// moved by FighterRig.SetFace. --film=turn: the paper turn about the upright axis, then a roll
 	/// round in the plane of the page (Fighter.Twirl). --film=story: every pose a story can have
-	/// him strike (FighterAnimations.StoryPose), held where a scene holds it.
+	/// him strike (FighterAnimations.StoryPose), held where a scene holds it - face on, for a
+	/// fighter drawn face on, as he stands in a scene. --film=talk: his body talking, at the height
+	/// of a gesture, for each way a line is said.
 	/// </summary>
 	void BuildFaceFilm()
 	{
 		FighterData data = FighterCatalog.Get(Mathf.Max(0, Only));
 		bool turn = Film == "turn";
 		bool story = Film == "story";
-		string[] names = story ? FighterAnimations.StoryPoses
+		bool talk = Film == "talk";
+		string[] names = story ? (data.FrontOn ? new[] { "as drawn" } : new string[0]).Concat(FighterAnimations.StoryPoses).ToArray()
+			: talk ? new[] { "talk", "shout", "whisper", "happy", "scared", "hot", "slam" }
 			: new[] { "rest", "closed", "squint", "angry", "shout", "hurt", "shocked", "happy", "sad", "talking" };
 		int cells = turn ? 12 : names.Length;
 		const float Column = 380.0f;
@@ -312,10 +317,30 @@ public partial class RigParade : Node2D
 				else rig.SetRoll(angle);
 				label = (i < 6 ? "turn " : "roll ") + Mathf.RoundToInt(Mathf.RadToDeg(angle));
 			}
-			else if (story)
+			else if (story || talk)
 			{
 				rig.HandOnHip = false;
-				rig.ApplyDirect(FighterAnimations.StoryPose(names[i]), 0.9f);
+				var pose = new Pose();
+				rig.SetFrontOn(data.FrontOn);
+				if (talk)
+				{
+					string mood = names[i] == "talk" ? "" : names[i];
+					if (data.FrontOn) FighterAnimations.FrontTalkPose(mood, 1.0f, pose);
+					else FighterAnimations.TalkPose(mood, 1.0f, pose);
+					var face = FaceState.Talking;
+					face.Open = 0.85f;
+					rig.SetFace(face);
+				}
+				else if (names[i] == "as drawn") pose.CopyFrom(FighterAnimations.FrontIdle);
+				else if (data.FrontOn) FighterAnimations.FaceOn(names[i], pose);
+				else pose.CopyFrom(FighterAnimations.StoryPose(names[i]));
+				// A pose puts a hammer carried on the shoulder down, as in a scene (Fighter.ApplyStoryLayer).
+				if (!talk && data.ShouldersProp)
+				{
+					rig.CarryOnShoulder = false;
+					rig.SetPartVisible(RigBone.PropFront, false);
+				}
+				rig.ApplyDirect(pose, 0.9f);
 				label = names[i];
 			}
 			else
@@ -334,7 +359,10 @@ public partial class RigParade : Node2D
 		title.AddThemeFontSizeOverride("font_size", 36);
 		title.AddThemeColorOverride("font_color", new Color(0.16f, 0.16f, 0.20f));
 		AddChild(title);
-		var camera = new Camera2D { Position = new Vector2(Column * 2.5f, Row * 0.5f - 160.0f), Zoom = Vector2.One * 0.82f };
+		// Two rows fill the screen; more are drawn smaller to fit.
+		int rows = (cells + 5) / 6;
+		float zoom = rows <= 2 ? 0.82f : 1080.0f / (rows * Row + 360.0f);
+		var camera = new Camera2D { Position = new Vector2(Column * 2.5f, rows <= 2 ? Row * 0.5f - 160.0f : rows * Row * 0.5f - 330.0f), Zoom = Vector2.One * zoom };
 		AddChild(camera);
 		camera.MakeCurrent();
 	}
@@ -349,7 +377,7 @@ public partial class RigParade : Node2D
 
 	void BuildFilm()
 	{
-		if (Film == "face" || Film == "turn" || Film == "story")
+		if (Film == "face" || Film == "turn" || Film == "story" || Film == "talk")
 		{
 			BuildFaceFilm();
 			return;

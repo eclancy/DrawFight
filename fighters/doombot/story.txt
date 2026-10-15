@@ -22,8 +22,12 @@
 #   player face right / face doombot / turn
 #   player look angry               a face: normal, closed, squint, angry, shout, hurt, shocked,
 #                                   happy, sad, smug
-#   player pose cheer               a pose: cheer, slump, point, shrug, laugh, stomp, tremble,
-#                                   crossarms - or none
+#   player pose cheer               a pose, held until "pose none": cheer, slump, point, shrug,
+#                                   laugh, stomp, tremble, crossarms, wave, fist, flex, hips,
+#                                   think, facepalm, present, beckon, nod, bow. Whoever is talking
+#                                   talks with their hands anyway, in the way the line is said;
+#                                   a pose is for the moment that needs more. DoomBot, standing,
+#                                   turns to face you, the way Eric drew him.
 #   triguy show taunt_surprised     one of his own whole drawings instead - or none
 #   player mark anger               over the head: anger, sweat, sparkle, heart, !, ?, steam,
 #                                   tears - or none
@@ -96,18 +100,24 @@ player (slam): SCANNING.
 player special
 wait 30
 music story
+player pose point
 player: TARGET: FRIDGE.
 player: STATUS: COVERED IN... DRAWINGS.
+player pose none
 player look angry
 player mark anger
+player pose stomp
 player (shout): UNACCEPTABLE.
+player pose none
 player mark none
 end
 
 == won
 player look smug
+player pose crossarms
 player: YOU HAVE BEEN... PROCESSED.
 wait 30
+player pose point
 player: YOU ARE ON THE FLOOR NOW.
 end
 
@@ -116,14 +126,19 @@ cast player at -400
 cast triguy at 400 facing left
 music story
 camera two player triguy
+player pose point
 player: SMALL TRIANGLE. YOU ARE ON MY FRIDGE.
+player pose none
 triguy show taunt_surprised
 triguy: that's, really kewl.
+player pose crossarms
 player: IT IS NOT KEWL. IT IS TRESPASSING.
 triguy show none
 triguy look sad
 triguy (whisper): not kewl.
+player pose nod
 player: AGREED.
+player pose none
 player (slam): REMOVING.
 camera wide
 fight
@@ -133,13 +148,21 @@ cast player at -400
 cast circy at 380 facing left
 music story
 camera two player circy
+player pose point
 player: ROUND DRAWING. OLDEST PAGE ON THE FRIDGE. FIRST TO GO.
+player pose none
 circy: [fridge] [heart]
+player pose hips
 player: I ALSO LOVE THE FRIDGE. ONLY ONE OF US IS A MACHINE.
+player pose none
+circy pose stomp
 circy: [bomb]
+circy pose none
 player look shocked
 player mark !
+player pose tremble
 player: ...THAT IS A BOMB. NOTED.
+player pose none
 player mark none
 camera wide
 fight
@@ -150,12 +173,20 @@ cast edgelord at 520 facing left
 music story
 camera two player edgelord
 edgelord look smug
+edgelord pose hips
 edgelord: Nice robot. Bit rusty.
+edgelord pose none
 player look angry
+player pose present
 player: I AM NOT RUSTY. I AM... VINTAGE.
+player pose none
 edgelord twirl
+edgelord pose point
 edgelord: Rust never sleeps. Neither do I. Try to keep up.
+edgelord pose none
+player pose stomp
 player (slam): I. WILL. KEEP. UP.
+player pose none
 camera wide
 fight
 
@@ -165,14 +196,22 @@ cast lugnut at 400 facing left
 music story
 camera two player lugnut
 lugnut look shocked
+lugnut pose present
 lugnut: Whoa, whoa. You're taking drawings down? Pal, there's room for everybody.
+lugnut pose none
+player pose hips
 player: THERE IS ROOM FOR ONE. ME.
+player pose none
 lugnut pose crossarms
 lugnut: That's not up to code.
+player pose fist
 player: I AM THE CODE.
+player pose none
 lugnut pose none
 lugnut look angry
+lugnut pose flex
 lugnut: Break's over.
+lugnut pose none
 camera wide
 fight
 
@@ -182,14 +221,20 @@ cast lugnut at 260 facing left
 cast flambe offstage
 music story
 camera two player lugnut
+lugnut pose beckon
 lugnut: Round two, robot. And this time I brought a friend.
+lugnut pose none
 flambe drop at 480
 shake 30
 flambe face player
 flambe look smug
+flambe pose bow
 flambe (hot): Order up.
+flambe pose none
 player look angry
+player pose point
 player: TWO TARGETS. EFFICIENT.
+player pose none
 camera wide
 fight
 
@@ -201,7 +246,9 @@ music stop
 camera on player zoom 1.1 cut
 narrator: The fridge was clean. Shiny. His.
 player look happy
+player pose cheer
 player: VICTORY.
+player pose none
 sound fridge_hum
 wait 50
 mk2 drop at 380
@@ -211,23 +258,34 @@ mk2 face player
 camera on mk2 zoom 1.3 fast
 mk2 (slam): SCANNING.
 wait 20
+mk2 pose point
 mk2: TARGET: FRIDGE.
 mk2: STATUS: COVERED IN... DOOMBOT.
+mk2 pose none
 mk2 look angry
+mk2 pose stomp
 mk2 (shout): UNACCEPTABLE.
+mk2 pose none
 camera two player mk2
 player look shocked
 player mark !
+player pose point
 player: ...THAT IS MY LINE.
+player pose none
 player mark none
 mk2 look smug
+mk2 pose bow
 mk2: GREETINGS, OLD MODEL. I AM DOOMBOT MARK TWO.
+mk2 pose flex
 mk2: NEW SAW BLADE. NEW EXHAUST PIPES. NEW SPIKES.
 camera on player zoom 1.3
 player look sad
 wait 40
+player pose shrug
 player: ...I HAVE SOME BUTTONS.
+player pose none
 camera two player mk2
+mk2 pose nod
 mk2 look normal
 mk2: YOU TOOK DOWN THE OLD DRAWINGS. GOOD WORK.
 mk2 pose point
@@ -289,11 +347,15 @@ camera at 120 -360 zoom 0.8
 player face right
 player look shocked
 player mark !
+player pose point
 player: ...SOMEONE. DREW. ME?
+player pose none
 player mark none
 player heat 100
 player look happy
+player pose facepalm
 player: WARNING. CORE TEMPERATURE RISING. FROM AN UNKNOWN CAUSE.
+player pose none
 music story
 narrator: One by one, he put the others back up.
 camera at 0 -900 zoom 0.62 slow
@@ -306,6 +368,7 @@ wait 15
 sound magnet_clink
 wait 50
 camera on player zoom 1.0
+player pose hips
 player: THE FRIDGE IS... A LITTLE BIT MINE.
 wait 60
 end
@@ -344,26 +407,35 @@ pile at 560
 player look normal
 doombot face player
 camera two player doombot
+doombot pose bow
 doombot: GREETINGS, SMALL DRAWING.
+doombot pose hips
 doombot: YOU HAVE MET MY... DISTRACTION.
 doombot pose point
 doombot: EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING.
-doombot pose none
+doombot pose laugh
 doombot: YOU BLAMED EACH OTHER. NOBODY SUSPECTED...
+doombot pose none
 wait 30
 camera on doombot zoom 1.3 fast
+doombot pose present
 doombot: ...THE ROBOT.
+doombot pose none
 board at -620 -820
 camera at -120 -680 zoom 0.72
 doombot writes: 1. REMOVE DRAWINGS.
 doombot writes: 2. REMOVE MAGNETS.
 doombot writes: 3. FRIDGE.
 camera two player doombot
+doombot pose crossarms
 doombot: THE FRIDGE IS A MACHINE. I AM A MACHINE.
+doombot pose none
 doombot: WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL BE RETURNED TO FACTORY SETTINGS.
 doombot: SHINY. CLEAN.
 camera on doombot zoom 1.45 fast
+doombot pose fist
 doombot (shout): MINE.
+doombot pose none
 camera two player doombot
 include player roast
 camera on doombot zoom 1.3 fast

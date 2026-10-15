@@ -23,18 +23,26 @@ wait 20
 narrator: (He said so.)
 dark off
 music story
+player pose present
 player: This fridge has too many drawings. And not enough... edge.
+player pose none
 player look smug
+player pose point
 player: Anyone who isn't cool gets cut out of the picture.
+player pose none
 player hold scissors
 player twirl
 player look squint
 wait 30
+player pose facepalm
 player: ...Round tips.
+player pose none
 player throw back
 wait 20
 player look smug
+player pose hips
 player: I'll use my swords.
+player pose none
 end
 
 # --- How he meets someone, in their stories ------------------------------------------------
@@ -46,7 +54,9 @@ music story
 camera on edgelord zoom 1.2
 edgelord look smug
 edgelord twirl
+edgelord pose hips
 edgelord: On the cutting edge of the fridge. And you're... not.
+edgelord pose none
 edgelord pose point
 edgelord: Try to keep up.
 edgelord pose none
@@ -70,14 +80,20 @@ music story
 triguy run to 300
 triguy show taunt_pose
 camera two player triguy
+player pose hips
 player: You're fast. I'm faster.
+player pose none
 triguy: that's, really kewl.
 player look smug
+player pose point
 player: A race? You're on.
+player pose none
 triguy show none
 triguy: that's, really kewl.
 player look angry
+player pose facepalm
 player: It IS really cool. Stop saying it like that.
+player pose none
 camera wide
 fight
 
@@ -88,9 +104,13 @@ music story
 triguy pose slump
 triguy (whisper): that's... really kewl.
 player look normal
+player pose nod
 player: ...Yeah. It was a good race.
+player pose none
 player look smug
+player pose point
 player: Try to keep up next time.
+player pose none
 end
 
 == vs circy
@@ -98,14 +118,22 @@ cast player at -400 facing right
 cast circy at 400 facing left
 music story
 camera two player circy
+player pose point
 player: A circle. You don't even have edges.
+player pose none
 circy: [bomb]
 player look shocked
+player pose tremble
 player: Was that a threat?
+player pose none
 circy: [bomb] [heart]
 player look squint
+player pose think
 player: A nice explosion. Because you like me.
+player pose none
+player pose shrug
 player: I genuinely cannot tell if that's worse.
+player pose none
 camera wide
 fight
 
@@ -115,7 +143,9 @@ cast circy at 200 facing left
 music story
 circy: [heart] [?]
 player look normal
+player pose crossarms
 player: ...Fine. Yes. I still like you. Don't tell anyone.
+player pose none
 end
 
 == vs lugnut
@@ -123,13 +153,19 @@ cast player at -400 facing right
 cast lugnut at 400 facing left
 music story
 camera two player lugnut
+player pose laugh
 player: A hard hat? Against swords?
+player pose none
 lugnut block 40
 narrator: He tapped it.
+lugnut pose hips
 lugnut: Safety first.
+lugnut pose none
 wait 40
 player look normal
+player pose nod
 player: ...Respect.
+player pose none
 camera wide
 fight
 
@@ -138,11 +174,19 @@ cast player at -400 facing right
 cast flambe at 400 facing left
 music story
 camera two player flambe
+player pose point
 player: Nice mohawk. Is it... on fire?
+player pose none
+flambe pose hips
 flambe: Always.
+flambe pose none
+player pose shrug
 player: Cool. I mean - hot. Whatever.
+player pose none
 flambe look smug
+flambe pose beckon
 flambe (hot): Too hot for you?
+flambe pose none
 player: Nothing is too hot for -
 player mark !
 player look hurt
@@ -158,12 +202,20 @@ cast flambe at 420 facing left
 cast lugnut at 640 facing left
 music story
 camera two flambe lugnut
+lugnut pose crossarms
 lugnut: Heard you've been cutting people out of the picture.
+lugnut pose none
+flambe pose point
 flambe: So we're putting you back in it.
+flambe pose none
+lugnut pose flex
 lugnut: Face first.
+lugnut pose none
 camera on player zoom 1.2
 player look smug
+player pose beckon
 player: Two against one. Finally, a challenge worthy of my edge.
+player pose none
 camera wide
 fight
 
@@ -171,19 +223,29 @@ fight
 
 == roast
 player look smug
+player pose hips
 player: Looking like the fridge doesn't make it yours.
+player pose none
+player pose point
 player: You're not cool, DoomBot.
+player pose none
 wait 40
 camera on player zoom 1.3 fast
+player pose crossarms
 player: You're just cold.
+player pose none
 
 == answer
 player look normal
+player pose shrug
 player: ...Fine.
+player pose none
 wait 30
 player turn
 player look smug
+player pose point
 player: Behind me.
+player pose none
 
 == ending
 cast player at 0 facing right
@@ -197,13 +259,19 @@ camera wide slow
 wait 60
 narrator: Nobody was watching.
 player look sad
+player pose slump
 player: ...Cool.
+player pose none
 wait 50
 flambe drop at -450
 flambe face player
+flambe pose beckon
 flambe: Dude. Come sit with us.
+flambe pose none
 player face flambe
+player pose crossarms
 player: Only because it's cooler over there.
+player pose none
 player look happy
 narrator: Still the coolest. Now with company. A cut above.
 wait 40

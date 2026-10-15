@@ -4,7 +4,7 @@ Draws Lugnut - a stand-in until Eric draws him - and rigs him:
 
     python tools/art/lugnut.py
 
-A cartoon muscle man of a construction worker, three-quarter view facing right: hard hat, open
+A cartoon muscle man of a construction worker, three-quarter view facing right, face turned to the camera: hard hat, open
 hi-vis vest over a tank top, tool belt, jeans, work gloves, steel-toe boots, and a scowl, coloured
 in coloured pencil inside a black marker outline. Huge up top and short in the leg, because he
 fights with his arms and his tools, almost never his feet. Eric picked this look from a drawn
@@ -152,9 +152,12 @@ TORSO = '''
 <path d="M 312,604 L 374,604 L 372,628 C 352,636 334,636 314,628 Z" fill="{belt}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
 '''
 
-HEAD_PATH = ('M 362,150 C 362,105 405,88 440,92 C 478,96 498,124 497,156 L 500,166 '
-             'C 508,172 512,180 512,186 L 528,198 L 503,207 C 506,218 510,230 512,242 '
-             'C 514,262 494,276 462,276 C 428,276 398,266 384,248 C 368,236 358,200 362,150 Z')
+# Turned three-quarters toward the camera, so the whole face shows when he talks (Eric,
+# 2026-10-15): a broad square jaw with the face across the front of it, both eyes on it, and only
+# the end of his nose breaking the outline, which is what still says he faces right.
+HEAD_PATH = ('M 366,156 C 366,110 404,92 440,92 C 480,92 506,116 508,150 '
+             'L 510,176 L 522,198 L 508,206 C 512,222 514,240 510,256 '
+             'C 504,274 480,284 452,284 C 420,284 396,272 384,252 C 370,234 364,198 366,156 Z')
 # The tough guy: a heavy brow angled down at the nose, squinting eyes looking where he faces,
 # gritted teeth pulled down at the near corner, a stubbled jaw, and a proper ear. The brows, eyes
 # and mouth are FACE, below, each its own part so the game can move them; HEAD_BASE is the head
@@ -165,32 +168,33 @@ HEAD_BASE = '''
 <path d="M 386,310 L 390,246 M 464,246 L 468,310" fill="none" stroke="{ink}" stroke-width="{wo}" stroke-linecap="round"/>
 <path d="{hp}" fill="{skin}"/>
 <g clip-path="url(#head)">
-  <path d="M 376,212 C 398,236 432,248 470,246 C 488,244 498,232 502,214 L 540,214 L 540,290 L 360,290 Z" fill="{stubble}"/>
+  <path d="M 372,210 C 394,236 430,248 468,246 C 490,244 504,232 512,214 L 540,214 L 540,300 L 360,300 Z" fill="{stubble}"/>
   <path d="M 362,172 C 356,112 400,86 442,90 C 482,94 500,120 498,148 C 470,134 430,132 404,142 L 386,180 Z" fill="{buzz}"/>
 </g>
 <path d="{hp}" fill="none" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
-<path d="M 404,178 C 396,168 380,170 376,184 C 373,195 378,205 381,214 C 384,222 390,226 397,223
-         C 401,220 402,214 403,208 C 404,198 406,188 404,178 Z" fill="{skin}"/>
-<path d="M 404,178 C 396,168 380,170 376,184 C 373,195 378,205 381,214 C 384,222 390,226 397,223"
+<path d="M 390,178 C 382,168 366,170 362,184 C 359,195 364,205 367,214 C 370,222 376,226 383,223
+         C 387,220 388,214 389,208 C 390,198 392,188 390,178 Z" fill="{skin}"/>
+<path d="M 390,178 C 382,168 366,170 362,184 C 359,195 364,205 367,214 C 370,222 376,226 383,223"
       fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round"/>
-<path d="M 398,183 C 389,180 384,189 388,198 C 390,203 395,204 397,200" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
+<path d="M 384,183 C 375,180 370,189 374,198 C 376,203 381,204 383,200" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
+<path d="M 500,184 C 504,192 507,200 506,206 C 502,210 496,210 492,207" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round" stroke-linejoin="round"/>
 '''
 
 # name: (kind, svg, centre in drawing units, tilt) - see flambe.py's FACE.
 FACE = {
-    'BrowFront': ('brow', '<path d="M 422,150 L 478,166 L 476,180 L 424,166 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (450.0, 165.0), 1),
-    'BrowBack': ('brow', '<path d="M 482,170 L 500,160 L 502,170 L 484,180 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (492.0, 170.0), -1),
-    'EyeFront': ('eye', '''<path d="M 442,186 C 448,178 464,177 474,182 C 466,192 450,193 442,186 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="468" cy="185" r="4.4" fill="{ink}"/>
-<path d="M 439,183 L 475,180" fill="none" stroke="{ink}" stroke-width="5" stroke-linecap="round"/>''', (457.0, 184.0), 1),
-    'EyeBack': ('eye', '''<path d="M 485,189 C 488,184 496,183 501,185 C 498,192 490,193 485,189 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="497" cy="187" r="3.2" fill="{ink}"/>
-<path d="M 484,186 L 502,183" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (493.0, 187.0), -1),
-    'Mouth': ('mouth', '''<path d="M 472,238 C 482,235 494,234 506,236 L 505,245 C 494,244 484,247 474,252 Z" fill="{white}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
-<path d="M 468,244 C 465,250 466,256 470,261" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>''', (488.0, 236.0), 1),
+    'BrowFront': ('brow', '<path d="M 404,156 L 462,168 L 460,182 L 406,172 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (433.0, 169.0), 1),
+    'BrowBack': ('brow', '<path d="M 472,170 L 503,158 L 506,168 L 475,184 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (489.0, 171.0), -1),
+    'EyeFront': ('eye', '''<path d="M 414,192 C 422,183 444,182 455,188 C 446,199 424,200 414,192 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="446" cy="190" r="5.2" fill="{ink}"/>
+<path d="M 411,188 L 457,185" fill="none" stroke="{ink}" stroke-width="5" stroke-linecap="round"/>''', (434.0, 190.0), 1),
+    'EyeBack': ('eye', '''<path d="M 472,193 C 477,186 491,185 498,188 C 494,197 480,198 472,193 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="491" cy="191" r="4.4" fill="{ink}"/>
+<path d="M 470,189 L 500,186" fill="none" stroke="{ink}" stroke-width="5" stroke-linecap="round"/>''', (485.0, 191.0), -1),
+    'Mouth': ('mouth', '''<path d="M 436,236 C 452,232 476,231 494,234 L 493,246 C 476,245 456,247 438,252 Z" fill="{white}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
+<path d="M 432,244 C 429,250 430,256 434,261" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>''', (465.0, 234.0), 1),
     # Shown instead of his gritted teeth when he opens up to shout or talk: a wide-open bellow.
-    'MouthOpen': ('mouthOpen', '''<path d="M 470,236 C 482,232 498,232 508,236 L 506,262 C 494,270 480,268 472,258 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-<path d="M 473,238 C 484,236 496,236 506,238 L 506,244 C 494,243 484,244 474,246 Z" fill="{white}"/>''', (488.0, 236.0), 1),
+    'MouthOpen': ('mouthOpen', '''<path d="M 434,234 C 452,229 478,229 496,233 L 494,262 C 478,272 452,270 440,258 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
+<path d="M 437,236 C 452,233 478,233 494,235 L 494,242 C 478,241 454,242 438,244 Z" fill="{white}"/>''', (465.0, 234.0), 1),
 }
 HEAD = HEAD_BASE + '\n'.join(svg for name, (kind, svg, centre, tilt) in sorted(FACE.items()) if kind != 'mouthOpen')
 

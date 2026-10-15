@@ -35,6 +35,7 @@ public partial class Fighter
 
 		FaceState want = FightFace();
 		if (!string.IsNullOrEmpty(Expression)) want = FaceState.Named(Expression);
+		else if (Celebrating && IsStandingStill) want = FaceState.Named(Data.VictoryFace);
 
 		// The eyes drift about while nothing is happening, and every few seconds a blink - hashed,
 		// so it is never two fighters blinking together, and never random.

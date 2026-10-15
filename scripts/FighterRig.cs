@@ -340,6 +340,7 @@ public partial class FighterRig : Node2D
 				float shade = entry.ContainsKey("darken") ? (float)entry["darken"] : darken;
 				sprite.Modulate = new Color(shade, shade, shade);
 			}
+			sideShade[(int)bone] = sprite.Modulate;
 
 			node.AddChild(sprite);
 			sprites[(int)bone] = sprite;
@@ -1872,7 +1873,10 @@ public partial class FighterRig : Node2D
 
 		// Blending toward the target rather than snapping to it smooths the joins between
 		// states, so a fighter landing out of a launch does not pop from tumbling to standing.
-		Pose.Exaggerate(pose, Drama, HipDrama * DramaScale, exaggerated, DramaScale);
+		// Face on, a pose is placed as the drawing is - pushed further, raised arms went on past
+		// straight up and crossed over his head.
+		if (FrontOn) Pose.Exaggerate(pose, 1.0f, 1.0f, exaggerated);
+		else Pose.Exaggerate(pose, Drama, HipDrama * DramaScale, exaggerated, DramaScale);
 		Follow(exaggerated, blend);
 		TurnLimbs();
 		BendOneWay();
@@ -1916,6 +1920,54 @@ public partial class FighterRig : Node2D
 			bones[(int)RigBone.Hip].Position += new Vector2(0.0f, FloorGap() * plantBlend);
 		}
 	}
+
+	// --- Face on ----------------------------------------------------------------------------------
+
+	/// <summary>
+	/// Stood face on, the way a drawing done straight on was drawn - DoomBot, his arms out to his
+	/// sides (FighterData.FrontOn), for talking and for celebrating; a fight is always side on. Both
+	/// arms come out in front of his body and neither is shaded, since neither is the far one; no
+	/// limb turns round to face back; and an elbow bends either way across the picture, because
+	/// facing you there is no "forward" for it to fold toward. Nothing is redrawn: it is his own
+	/// parts, put the way he drew them.
+	/// </summary>
+	public bool FrontOn { get; private set; }
+
+	/// <summary>Each part's shade as the side view has it, for putting back after standing face on.</summary>
+	readonly Color[] sideShade = new Color[(int)RigBone.Count];
+
+	public void SetFrontOn(bool on)
+	{
+		if (on == FrontOn || !Loaded) return;
+		FrontOn = on;
+		foreach (RigBone bone in new[] { RigBone.ArmBackUpper, RigBone.ArmBackLower, RigBone.LegBackUpper, RigBone.LegBackLower })
+		{
+			Sprite2D sprite = sprites[(int)bone];
+			if (sprite != null) sprite.Modulate = on ? Colors.White : sideShade[(int)bone];
+		}
+		Sprite2D farFoot = feet[(int)RigBone.LegBackLower];
+		if (farFoot != null) farFoot.Modulate = on ? Colors.White : new Color(limbDarken, limbDarken, limbDarken);
+
+		// The far arm from behind the body to in front of it, and back.
+		Node2D arm = bones[(int)RigBone.ArmBackUpper];
+		Sprite2D body = sprites[(int)RigBone.Torso];
+		if (arm != null && body != null && arm.GetParent() == body.GetParent())
+		{
+			Node parent = arm.GetParent();
+			if (on)
+			{
+				sideArmIndex = arm.GetIndex();
+				parent.MoveChild(arm, body.GetIndex() + (arm.GetIndex() < body.GetIndex() ? 0 : 1));
+			}
+			else
+			{
+				parent.MoveChild(arm, sideArmIndex);
+			}
+		}
+		for (int l = 0; l < turned.Length; l++) turned[l] = false;
+	}
+
+	int sideArmIndex;
 
 	// --- Elbows and knees bend one way; limbs turn to face the way they point -------------------
 
@@ -1990,6 +2042,11 @@ public partial class FighterRig : Node2D
 		for (int l = 0; l < Limbs.Length; l++)
 		{
 			bool leg = l >= 2;
+			if (FrontOn)
+			{
+				turned[l] = false;
+				continue;
+			}
 			float behind = current[Limbs[l].upper];
 			float on = !leg ? ArmTurnOn : planted ? PlantedLegTurnOn : LegTurnOn;
 			float off = !leg ? ArmTurnOff : planted ? PlantedLegTurnOff : LegTurnOff;
@@ -2007,6 +2064,7 @@ public partial class FighterRig : Node2D
 	{
 		bool leg = limb >= 2;
 		float fold = leg ? KneeFold : ElbowFold;
+		if (FrontOn && !leg) return (-fold, fold);
 		return leg == turned[limb] ? (-fold, 0.0f) : (0.0f, fold);
 	}
 
@@ -2020,7 +2078,7 @@ public partial class FighterRig : Node2D
 		{
 			(float min, float max) = JointRange(l);
 			Hold(Limbs[l].lower, min, max);
-			if (l < 2) Hold(Limbs[l].upper, float.MinValue, lookingBack ? ArmBackMost : Mathf.Min(ArmBackMost, ArmBackLimit));
+			if (l < 2 && !FrontOn) Hold(Limbs[l].upper, float.MinValue, lookingBack ? ArmBackMost : Mathf.Min(ArmBackMost, ArmBackLimit));
 		}
 	}
 

@@ -22,10 +22,14 @@ player taunt
 wait 20
 player look smug
 player (hot): Every show needs a headliner.
+player pose present
 player: And this kitchen is my stage.
+player pose none
 player special
 wait 20
+player pose fist
 player (hot): Let's turn up the heat.
+player pose none
 camera wide slow
 wait 40
 end
@@ -42,10 +46,14 @@ flambe mark steam
 wait 30
 flambe face player
 flambe look smug
+flambe pose beckon
 flambe: You're just in time.
+flambe pose none
 flambe mark none
 wait 20
+flambe pose point
 flambe (hot): ...To get roasted.
+flambe pose none
 camera wide
 fight
 
@@ -73,13 +81,21 @@ flambe look shocked
 lugnut look shocked
 wait 20
 lugnut look happy
+lugnut pose present
 lugnut: You hungry?
+lugnut pose none
 flambe look smug
+flambe pose fist
 flambe (hot): For a fight.
+flambe pose none
 lugnut look sad
+lugnut pose shrug
 lugnut: ...I was gonna offer half a sandwich.
+lugnut pose none
 lugnut look angry
+lugnut pose flex
 lugnut: Break's over.
+lugnut pose none
 camera wide
 fight
 
@@ -89,7 +105,9 @@ cast flambe at 200 facing left
 cast lugnut at 420 facing left
 music story
 flambe pose slump
+lugnut pose facepalm
 lugnut: Well. Lunch is ruined.
+lugnut pose none
 flambe: Mon ami, lunch was ruined when you brought egg salad.
 end
 
@@ -109,17 +127,27 @@ narrator: Clang. Clang.
 player walk to -200
 player look shocked
 camera two player lugnut
+player pose present
 player: Lug. Buddy. What are you doing to my stage.
+player pose none
 lugnut face player
+lugnut pose point
 lugnut: Lighting rig. Your stage wasn't up to code.
+lugnut pose none
+player pose fist
 player (shout): It's ROCK AND ROLL. Nothing is up to code!
+player pose none
 lugnut pose crossarms
 lugnut: Then nobody plays till it passes inspection.
 player mark anger
 player look angry
+player pose stomp
 player (hot): You're cancelling my SHOW?!
+player pose none
 lugnut pose none
+lugnut pose shrug
 lugnut: ...Break's over, I guess.
+lugnut pose none
 player mark none
 camera wide
 fight
@@ -129,13 +157,21 @@ cast player at -200 facing right
 cast lugnut at 200 facing left
 music story
 camera two player lugnut
+lugnut pose nod
 lugnut: ...Okay. It passed.
+lugnut pose none
+player pose think
 player: Inspection?
+player pose none
 lugnut: Stress test.
 player look happy
+player pose present
 player: So I can play?
+player pose none
 lugnut look happy
+lugnut pose nod
 lugnut: With pyro, even.
+lugnut pose none
 player walk to lugnut
 sound clang
 player pose cheer
@@ -151,23 +187,31 @@ cast edgelord at 420 facing left
 cast triguy at 640 facing left
 music story
 camera two edgelord triguy
+edgelord pose fist
 edgelord: Speed and edge, kid. We're unstoppable.
+edgelord pose none
 triguy show taunt_pose
 triguy: that's, really kewl.
 edgelord look smug
+edgelord pose hips
 edgelord: Exactly. Stick with me.
+edgelord pose none
 triguy show none
 triguy face edgelord
 triguy mark sparkle
 triguy: that's, really kewl.
 edgelord look angry
+edgelord pose point
 edgelord: Hands off the sword.
+edgelord pose none
 triguy mark none
 triguy look sad
 triguy (whisper): not kewl.
 camera on player zoom 1.2
 player look smug
+player pose beckon
 player (hot): Order up.
+player pose none
 camera wide
 fight
 
@@ -181,7 +225,9 @@ edgelord: That was me letting you win.
 triguy show crying
 triguy: not kewl.
 player look smug
+player pose laugh
 player: Even your sidekick isn't buying that, mon ami.
+player pose none
 edgelord look angry
 edgelord: Whose side are you on?
 triguy show none
@@ -190,19 +236,31 @@ end
 # --- The finale -------------------------------------------------------------------------------
 
 == roast
+player pose point
 player (hot): The fridge is not yours, mon ami.
+player pose none
+player pose shrug
 player: Even if you do look so alike that I almost grabbed your handle to put the butter away.
+player pose none
 camera on doombot zoom 1.35 fast
 doombot look angry
 wait 30
+doombot pose stomp
 doombot (slam): THAT. IS. AN. ARM.
+doombot pose none
 camera two player doombot
 
 == answer
 player look happy
+player pose present
 player (happy): You know what fixes a meltdown, mon ami? Dessert.
+player pose none
+doombot pose crossarms
 doombot: ...DOOMBOT DOES NOT EAT.
+doombot pose none
+player pose beckon
 player: Then you can hold the lighter.
+player pose none
 doombot look happy
 
 == ending
@@ -217,10 +275,14 @@ narrator: Lugnut's lights up on the girder. Fire Rain for fireworks.
 camera two player lugnut
 lugnut pose cheer
 lugnut (shout): ENCORE!
+player pose crossarms
 player: I don't do encores.
+player pose none
 wait 40
 player look happy
+player pose fist
 player: ...Okay. One encore.
+player pose none
 player taunt
 lugnut pose none
 wait 40

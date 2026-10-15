@@ -29,7 +29,9 @@ player mark !
 wait 20
 player mark none
 player look angry
+player pose stomp
 player: [fridge] [heart] [!]
+player pose none
 player special
 wait 40
 narrator: He wasn't going anywhere.
@@ -42,12 +44,18 @@ cast player at -400
 cast circy at 400 facing left
 music story
 camera two player circy
+circy pose point
 circy: [fridge] [heart] [!]
+circy pose none
+player pose shrug
 player: I know, I know. You were here first. Everybody knows.
+player pose none
 circy look angry
 circy: [bomb]
 player look shocked
+player pose tremble
 player: Whoa. Okay. Nobody's touching your page. ...Except me.
+player pose none
 camera wide
 fight
 
@@ -57,7 +65,9 @@ cast circy at 300 facing left
 music story
 circy look sad
 circy: [heart] [?]
+player pose nod
 player: Course you're staying. You were here first.
+player pose none
 circy look happy
 end
 
@@ -72,11 +82,15 @@ triguy show taunt_surprised
 camera two player triguy
 narrator: Triguy had his eye on the oldest page on the fridge.
 triguy: that's, really kewl.
+player pose shrug
 player: [?]
+player pose none
 triguy show taunt_pose
 triguy (shout): THAT'S, REALLY KEWL.
 player look angry
+player pose stomp
 player: [bomb] [!]
+player pose none
 triguy show none
 triguy look shocked
 camera wide
@@ -88,7 +102,9 @@ cast triguy at 200 facing left
 music story
 triguy show crying
 triguy (whisper): not kewl.
+player pose present
 player: [fridge] [heart] [star]
+player pose none
 triguy show none
 triguy look happy
 triguy: that's, really kewl.
@@ -100,13 +116,19 @@ cast edgelord at 520 facing left
 music story
 camera two player edgelord
 edgelord: A circle. You don't even have edges.
+player pose think
 player: [square] [?]
+player pose none
 edgelord look squint
+edgelord pose hips
 edgelord: Better as a square? ...Yes. Obviously.
+edgelord pose none
 player look angry
 player: [bomb]
 edgelord look shocked
+edgelord pose shrug
 edgelord: Okay, put that away. ...Fair.
+edgelord pose none
 camera wide
 fight
 
@@ -115,13 +137,23 @@ cast player at -400 facing right
 cast flambe at 400 facing left
 music story
 camera two player flambe
+flambe pose present
 flambe (hot): Little circle! Want to see a trick?
+flambe pose none
+player pose crossarms
 player: [nofire] [fridge]
+player pose none
 flambe look shocked
+flambe pose think
 flambe: No fire? Near the fridge? ...After last time.
+flambe pose none
+flambe pose nod
 flambe: That's fair. That's actually very fair.
+flambe pose none
 flambe look smug
+flambe pose beckon
 flambe (hot): I'll just kick you instead.
+flambe pose none
 camera wide
 fight
 
@@ -130,13 +162,21 @@ cast player at -400 facing right
 cast lugnut at 400 facing left
 music story
 camera two player lugnut
+player pose present
 player: [magnet] [heart] [fridge]
+player pose none
 lugnut look happy
+lugnut pose think
 lugnut: Strong enough you never come down again, huh?
+lugnut pose none
+lugnut pose hips
 lugnut: Pal, I've got just the one. Strongest on the site.
+lugnut pose none
 wait 30
 lugnut look angry
+lugnut pose flex
 lugnut: Right after I stop you fighting. Break's over.
+lugnut pose none
 camera wide
 fight
 
@@ -144,10 +184,16 @@ fight
 cast player at -200 facing right
 cast lugnut at 200 facing left
 music story
+lugnut pose present
 lugnut: Still want that magnet?
+lugnut pose none
+player pose cheer
 player: [magnet] [heart]
+player pose none
 lugnut look happy
+lugnut pose nod
 lugnut: The big red one it is.
+lugnut pose none
 sound magnet_clink
 end
 
@@ -155,19 +201,29 @@ end
 
 == roast
 camera on player zoom 1.2
+player pose point
 player: [fridge] [=] [doombot]
+player pose none
 camera on doombot zoom 1.3 fast
 wait 40
+doombot pose think
 doombot: ...IS THAT. AN EQUALS SIGN.
+doombot pose none
 wait 30
 doombot look angry
+doombot pose stomp
 doombot (shout): I AM NOT A FRIDGE.
+doombot pose none
 
 == answer
+player pose present
 player: [doombot] [heart]
+player pose none
 wait 30
 doombot look shocked
+doombot pose facepalm
 doombot: ...YOU. LIKE. ME?
+doombot pose none
 doombot look happy
 doombot mark heart
 wait 40

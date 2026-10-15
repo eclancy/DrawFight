@@ -214,6 +214,21 @@ public partial class FighterData : Resource
 	/// <summary>What the fighter says in a speech bubble while taunting. Empty says nothing.</summary>
 	public string TauntLine = "";
 
+	/// <summary>
+	/// Drawn face on (DoomBot): standing in a story scene, and celebrating a win, he turns to face
+	/// you with his arms out the way he was drawn (FighterRig.SetFrontOn). A fight is side on.
+	/// </summary>
+	public bool FrontOn;
+
+	/// <summary>How he celebrates a win, standing still once it is won: a story pose (FighterAnimations.StoryPose).</summary>
+	public string VictoryPose = "cheer";
+
+	/// <summary>One of his own drawings held up to celebrate instead (Triguy's), or empty.</summary>
+	public string VictoryShow = "";
+
+	/// <summary>The face he wins with (FaceState.Named).</summary>
+	public string VictoryFace = "happy";
+
 	public MoveData Move(MoveSlot slot)
 	{
 		int i = (int)slot;
@@ -254,6 +269,9 @@ public partial class FighterData : Resource
 		data.Taunt = Taunts.Make(AttackAnim.HangUp, propArt: "");
 		data.TauntLine = "Too hot for you!";
 		data.Throws = Grabs.Flambe();
+		// A fist punched up at the lights, the way he is drawn.
+		data.VictoryPose = "fist";
+		data.VictoryFace = "smug";
 		return data;
 	}
 
@@ -286,6 +304,9 @@ public partial class FighterData : Resource
 		data.Taunt = Taunts.Make(AttackAnim.OverheadArc, propArt: "tool_sledgehammer", extra: "hardhat");
 		data.TauntLine = "Break's over!";
 		data.Throws = Grabs.Construction();
+		// Flexing, the way he is drawn.
+		data.VictoryPose = "flex";
+		data.VictoryFace = "smug";
 		return data;
 	}
 
@@ -293,8 +314,9 @@ public partial class FighterData : Resource
 	/// EdgeLord, drawn by Eric: "stretchy arms, super speed, infinite swords." The stretchy arms
 	/// went to Circy, whose thing stretching is; the super speed is the fastest run in the game
 	/// and an air dash in place of a second jump. Light, which is also his weakness - easy to
-	/// launch - and his normals are ordinary sword swings, so his range comes from his specials. The art is a placeholder until his
-	/// own coloured drawing arrives (see tools/art/cut_edgelord.py).
+	/// launch - and his normals are ordinary sword swings, so his range comes from his specials. His
+	/// colouring is ours, from his pencil drawing, and final (Eric's call, 2026-10-15; see
+	/// tools/art/cut_edgelord.py).
 	/// </summary>
 	public static FighterData EdgeLord()
 	{
@@ -324,6 +346,9 @@ public partial class FighterData : Resource
 		data.Taunt = Taunts.Make(AttackAnim.PointUp, propArt: "sword_claymore");
 		data.TauntLine = "Try to keep up.";
 		data.Throws = Grabs.EdgeLord();
+		// Too cool to cheer.
+		data.VictoryPose = "crossarms";
+		data.VictoryFace = "smug";
 		return data;
 	}
 
@@ -389,6 +414,8 @@ public partial class FighterData : Resource
 			Robotic = true,
 			// No rolling: he stays in his block instead.
 			CanRoll = false,
+			// Eric drew him face on, arms out: that is how he stands to talk and to celebrate.
+			FrontOn = true,
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBot(),
 			CharacterNormals.DoomBot, CharacterNormals.DoomBotJab());
@@ -484,6 +511,8 @@ public partial class FighterData : Resource
 		data.Taunt = Taunts.Posed(Specials.TriguyPoses);
 		data.TauntLine = "That's, really kewl";
 		data.Throws = Grabs.Triguy();
+		// He wins by holding up Elim's own drawing of him going "pog".
+		data.VictoryShow = "taunt_pog";
 		return data;
 	}
 }

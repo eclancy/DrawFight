@@ -48,10 +48,14 @@ triguy run to 300
 triguy show taunt_pose
 camera two player triguy
 triguy: that's, really kewl.
+player pose crossarms
 player: Yeah, it's a great spot. And no, you can't have it.
+player pose none
 triguy show taunt_pog
 triguy (shout): THAT'S, REALLY KEWL.
+player pose beckon
 player: ...Fine. Fight me for it.
+player pose none
 triguy show none
 camera wide
 fight
@@ -62,7 +66,9 @@ cast triguy at 300 facing left
 music story
 triguy show crying
 triguy (whisper): not kewl.
+player pose shrug
 player: Yeah. I know. You'll find a spot. Somewhere that isn't mine.
+player pose none
 triguy show none
 end
 
@@ -73,17 +79,25 @@ cast player at -780 facing right
 cast edgelord at 520 facing left
 music story
 camera two player edgelord
+edgelord pose crossarms
 edgelord: Another speedster. How original.
+edgelord pose none
 player: that's, really kewl.
 edgelord look smug
+edgelord pose laugh
 edgelord: Faster than me? Please.
+edgelord pose none
 player: that's, really kewl.
 edgelord look angry
+edgelord pose point
 edgelord: Say it one more time.
+edgelord pose none
 player show taunt_pog
 player: that's, really kewl.
 edgelord look sad
+edgelord pose facepalm
 edgelord: ...I walked into that.
+edgelord pose none
 player show none
 camera wide
 fight
@@ -96,7 +110,9 @@ edgelord pose crossarms
 edgelord: Fine. You're fast.
 player show taunt_pose
 player (happy): that's, really kewl.
+edgelord pose facepalm
 edgelord: Yes, I know you know. You don't have to say it.
+edgelord pose none
 player show none
 end
 
@@ -105,12 +121,18 @@ cast player at -400 facing right
 cast lugnut at 400 facing left
 music story
 camera two player lugnut
+lugnut pose present
 lugnut: Easy there, speedy. You're gonna slide right off.
+lugnut pose none
 player show taunt_surprised
 player: not kewl.
+lugnut pose think
 lugnut: Been sliding off all day, huh? Then you need a spot that's built right.
+lugnut pose none
 lugnut look angry
+lugnut pose flex
 lugnut: Soon as I've stopped you running around. Break's over.
+lugnut pose none
 player show none
 camera wide
 fight
@@ -124,11 +146,15 @@ flambe taunt
 player show taunt_pog
 player (shout): THAT'S, REALLY KEWL.
 flambe look smug
+flambe pose present
 flambe: A fan! Of course. Where do I sign?
+flambe pose none
 player show none
 player: not kewl.
 flambe look shocked
+flambe pose point
 flambe: ...Oh. Not my autograph. My STAGE. Then we have a problem, mon ami.
+flambe pose none
 camera wide
 fight
 
@@ -146,7 +172,9 @@ camera on player zoom 1.3 whip
 wait 40
 camera two player doombot
 doombot look angry
+doombot pose point
 doombot: DO NOT. MAKE. THAT FACE.
+doombot pose none
 player show none
 player (whisper): not kewl.
 
@@ -154,7 +182,9 @@ player (whisper): not kewl.
 player look sad
 player (whisper): that's, really kewl.
 doombot look shocked
+doombot pose bow
 doombot: ...THANK YOU. SMALL TRIANGLE.
+doombot pose none
 doombot look happy
 
 == ending

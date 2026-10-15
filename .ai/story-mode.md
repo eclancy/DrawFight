@@ -58,7 +58,20 @@ in the same place. Nothing is drawn new for a story; it is staged with what the 
   flourish - by narrowing to its edge and coming back the other way, as a cut-out would; a
   drawing can also roll round in the plane of the page.
 - **Emotion is posed and marked.** New shared poses, authored once in `FighterAnimations` for
-  everyone like every other clip: cheer, slump, point, shrug, laugh, stomp, tremble, cross arms.
+  everyone like every other clip: cheer, slump, point, shrug, laugh, stomp, tremble, cross arms,
+  wave, fist (in the air), flex, hands on hips, think, facepalm, present ("ta-da"), beckon, nod
+  and bow - the moving ones move (a wave waves, a fist pumps). Every story puts them on the lines
+  that want them (Eric, 2026-10-15).
+- **Bodies talk too.** Whoever is talking talks with their hands, in the way the line is said
+  (`Fighter.TalkMood`, `FighterAnimations.TalkPose`): gesturing and nodding along; leaning in
+  and jabbing on a shout; hunched with a hand by the mouth on a whisper; arms open and bouncing
+  when happy; cowering when scared; a showman's flourish on Flambe's hot lines; fists balled and
+  jolting on DoomBot's slams. A pose a script names wins over it.
+- **Faces show.** Every fighter is drawn so the whole face reads as they talk: Circy, Triguy
+  and EdgeLord three-quarter on as drawn, Flambe and Lugnut redrawn three-quarter, turned to
+  the camera, and DoomBot - drawn face on, arms out - turns to face you whenever he stands in a
+  scene or celebrates, with a paper turn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`). A
+  fight is always side on.
   Marks over the head: anger vein, sweat drop, sparkle, heart, "!", "?", steam, tears (Triguy
   cries his own). DoomBot shows anger the way he already shows heat: glowing, smoking,
   flashing.
@@ -348,8 +361,9 @@ In order, each step usable before the next:
    `== won`, else that fighter's `== defeated`. `StoryScript.Check` reads every chapter list too:
    a chapter with no scene to start it fails at startup.
 3. **Feeling** - **built, 2026-10-15.** Faces and the paper turn (2026-10-11); the shared story
-   poses (`pose cheer`, slump, point, shrug, laugh, stomp, tremble, crossarms -
-   `FighterAnimations.StoryPose`), a fighter's own whole drawings (`show taunt_surprised`), and
+   poses (`pose cheer`, slump, point, shrug, laugh, stomp, tremble, crossarms, wave, fist,
+   flex, hips, think, facepalm, present, beckon, nod, bow - `FighterAnimations.StoryPose`),
+   talking with their hands (2026-10-15), a fighter's own whole drawings (`show taunt_surprised`), and
    marks over the head (`mark anger`, sweat, sparkle, heart, !, ?, steam, tears - `StoryOverlay`);
    text moods and per-fighter voices; story sounds (magnet clink, fridge hum, smoke alarm, steam
    whistle) and three new music pieces (story, DoomBot's theme, the victory sting) -

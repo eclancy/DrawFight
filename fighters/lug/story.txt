@@ -22,15 +22,21 @@ narrator: Lugnut was measuring the fridge door.
 player walk to 220
 player look squint
 wait 30
+player pose shrug
 player: Fridge is full. Folks are getting knocked off left and right.
+player pose none
 player look normal
 player face left
+player pose present
 player: But if everybody scooches over, there's room for all of us.
+player pose none
 sound hit_heavy
 shake 25
 narrator: Somewhere nearby, somebody was fighting.
 player look angry
+player pose flex
 player: ...Right after I stop all that.
+player pose none
 player taunt
 wait 20
 player (shout): Break's over!
@@ -52,7 +58,9 @@ wait 20
 narrator: He put the sandwich down. Carefully.
 lugnut crouch 20
 lugnut look angry
+lugnut pose flex
 lugnut (shout): Break's over.
+lugnut pose none
 camera wide
 fight
 
@@ -81,14 +89,22 @@ player look shocked
 player mark sweat
 camera two player flambe
 player walk to flambe
+player pose present
 player: Buddy. Pal. Put the lighter down.
+player pose none
+flambe pose fist
 flambe (hot): It's creme brulee! It NEEDS fire!
+flambe pose none
+player pose point
 player: It needs to not get us all recycled.
+player pose none
 flambe pose crossarms
 flambe: Mon ami. You do not rush a dessert.
 player mark none
 player look angry
+player pose flex
 player: Then I'm on overtime.
+player pose none
 flambe pose none
 flambe mark none
 camera wide
@@ -103,9 +119,13 @@ narrator: After, they sat together. Flambe handed it over.
 player look normal
 wait 30
 player look happy
+player pose nod
 player: ...Okay. That's actually really good.
+player pose none
 flambe look smug
+flambe pose bow
 flambe (hot): I KNOW.
+flambe pose none
 end
 
 == vs circy triguy
@@ -114,21 +134,31 @@ cast circy at 260 facing left
 cast triguy at 460 facing left
 music story
 camera two circy triguy
+player pose point
 player: A circle and a triangle.
+player pose none
 circy: [square]
 player look squint
+player pose laugh
 player: Ha. That's me, all right.
+player pose none
+player pose shrug
 player: ...Pal, I'm a rectangle at most.
+player pose none
 triguy show taunt_pog
 triguy mark sparkle
 triguy: that's, really kewl.
 player look happy
 player block 20
+player pose nod
 player: Thanks, kid. Safety's always in style.
+player pose none
 triguy mark none
 triguy show none
 player look angry
+player pose flex
 player: Still got to stop you two. Hard hats on.
+player pose none
 camera wide
 fight
 
@@ -138,17 +168,23 @@ cast circy at 200 facing left
 cast triguy at 420 facing left
 music story
 circy: [fridge] [?]
+player pose present
 player: Yes. There's room on the fridge for you. For both of you.
+player pose none
 triguy show taunt_pose
 triguy (shout): THAT'S, REALLY KEWL.
+player pose nod
 player: You're welcome.
+player pose none
 triguy show none
 end
 
 # --- The finale -------------------------------------------------------------------------------
 
 == roast
+player pose hips
 player: Pal, I've installed plenty of fridges.
+player pose none
 player: You look like one, sure. Doesn't make it yours.
 player hold metre_stick
 player look squint
@@ -158,8 +194,12 @@ player: ...And you're not even level.
 
 == answer
 player walk to doombot
+player pose present
 player: Pal. There's room for everybody on that fridge.
+player pose none
+player pose nod
 player: Even you. I'll build you a spot.
+player pose none
 wait 30
 doombot look happy
 doombot: ...A SPOT.
@@ -176,9 +216,15 @@ sound magnet_clink
 narrator: Room for everybody. Even a little spot for a MiniBot.
 camera two player flambe
 player look happy
+player pose hips
 player: Built to code.
+player pose none
 flambe look angry
+flambe pose point
 flambe: Why am I behind DoomBot?
+flambe pose none
+player pose crossarms
 player: Structural reasons.
+player pose none
 wait 50
 end

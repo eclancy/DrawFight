@@ -200,6 +200,19 @@ striding pose separates all four limbs without the drawing looking like a starfi
 a left-facing drawing has to be flipped on import, which flips any text, asymmetric details, or
 handedness he drew deliberately.
 
+**But the face has to show.** A story has everyone talk, and a win has them celebrate, so the
+whole face reads best turned three-quarter toward the camera while the body still points right
+- the way Circy, Triguy and EdgeLord were drawn (Eric, 2026-10-15). The two we draw ourselves,
+Flambé and Lugnut, are drawn that way: the face across the front of the head, both eyes on it,
+the ear at the back, and only the tip of the nose past the outline, which is what keeps which
+way he faces unambiguous. A drawing done **face on** - DoomBot, arms out - stays as drawn and
+fights side on as every rig does; for standing in a story scene and for celebrating it turns
+face on with a paper turn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`): the far arm comes
+out in front of the body unshaded, no limb turns to face back, an elbow bends either way across
+the picture, and no pose is exaggerated, so his arms go where he drew them. Side-view story
+poses are turned face on for him (`FighterAnimations.FaceOn`); the ones that fold an arm across
+the body have their own.
+
 ## The import tool
 
 An `EditorPlugin` dock written in C#, living in `addons/fighter_importer/`. Not a Python script:

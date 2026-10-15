@@ -32,6 +32,9 @@ public partial class MatchManager : Node2D
 	public StoryRun Story;
 	StoryDirector director;
 
+	/// <summary>A story scene is playing, not the fight: everyone is the script's.</summary>
+	public bool InStoryScene => director != null && director.InScene;
+
 	/// <summary>
 	/// Which side each player is on, or null for everyone on their own - a two-on-one in a story,
 	/// two CPUs on one side (Eric's call, 2026-10-15). Teammates cannot hurt or grab each other,
@@ -62,6 +65,9 @@ public partial class MatchManager : Node2D
 	string status = "";
 	string winner = "";
 	bool matchOver;
+
+	/// <summary>Who won, for the camera to go in on once it is won; null for a draw or a match on.</summary>
+	Fighter victor;
 
 	// --- Countdown -----------------------------------------------------------
 	// 3, 2, 1, FIGHT! Nobody can act until FIGHT! appears, so a match never starts with one
@@ -510,6 +516,17 @@ public partial class MatchManager : Node2D
 			MusicPlayer.Stop();
 			SfxPlayer.Ui("game_set");
 			winner = last != null ? $"{last.Data.DisplayName} wins!" : "Draw!";
+			victor = last;
+			// The winners celebrate, once they stand still.
+			if (last != null)
+			{
+				foreach (Fighter fighter in Fighters)
+				{
+					if (fighter.Stocks > 0 && TeamOf(fighter) == TeamOf(last)) fighter.Celebrating = true;
+					// The computer stops when it is won, as a player puts the pad down.
+					if (director == null && fighter.Controller is CpuInputSource) fighter.Controller = null;
+				}
+			}
 			director?.OnFightOver(last);
 		}
 	}
@@ -529,6 +546,11 @@ public partial class MatchManager : Node2D
 		}
 
 		if (director != null && director.DrivesCamera) director.DriveCamera((float)delta);
+		else if (director == null && victor != null && endFrames > EndSlowFrames && victor.State != FighterState.Eliminated)
+		{
+			// Won: in on the winner, celebrating, with the banner over his head.
+			camera.FrameOn(victor.GlobalPosition + new Vector2(0.0f, -victor.Data.BodySize.Y * 0.2f), 1.3f, 2.5f, (float)delta);
+		}
 		else camera.FrameFighters(Fighters, (float)delta);
 
 		if (shotAfterFrames > 0 && framesElapsed >= shotAfterFrames)
@@ -547,9 +569,14 @@ public partial class MatchManager : Node2D
 		if (matchOver)
 		{
 			hud.SetCountdown("", Colors.White, 0.0f, 0.0f);
-			// In a story the next scene says who won.
+			// In a story the next scene says who won. In versus the banner goes up top, out of the
+			// way of the winner celebrating under it.
 			if (director != null) hud.SetBanner("");
-			else hud.SetBanner(winner, "Press Start to pick fighters");
+			else
+			{
+				hud.SetBannerHigh(true);
+				hud.SetBanner(winner, "Press Start to pick fighters");
+			}
 			return;
 		}
 
@@ -768,6 +795,7 @@ public partial class MatchManager : Node2D
 		pauseMenu = null;
 		GetTree().Paused = false;
 		matchOver = false;
+		victor = null;
 		status = "";
 		winner = "";
 		lastKnockback = 0.0f;

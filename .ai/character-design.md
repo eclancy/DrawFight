@@ -433,6 +433,9 @@ fighter is not finished until their story is in it.** When a fighter is added, w
   into everyone else's story without rewriting it; a scene for one particular pair (a rival, a
   friend) is optional on top.
 - **Their roast of DoomBot** at the finale, and how they take him down.
+- **How they celebrate a win** - a victory pose (`FighterData.VictoryPose`, any story pose) and
+  face, or one of their own drawings held up (`VictoryShow`, as Triguy does). Take it from the
+  drawing where there is one: Flambé's fist in the air and Lugnut's flex are how they are drawn.
 
 In their `story.txt` that is: `== chapters` (their story, a chapter a line), `== opening`,
 `== ending`, `== challenger` and `== defeated` (how they meet a challenger and how they take

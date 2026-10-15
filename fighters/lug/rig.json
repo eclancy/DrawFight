@@ -162,8 +162,8 @@
       "face": "brow", 
       "name": "faceBrowBack", 
       "offset": [
-        46.2, 
-        -91.0
+        44.1, 
+        -90.3
       ], 
       "onPart": true, 
       "part": "FaceBrowBack", 
@@ -175,8 +175,8 @@
       "face": "brow", 
       "name": "faceBrowFront", 
       "offset": [
-        16.8, 
-        -94.5
+        4.9, 
+        -91.7
       ], 
       "onPart": true, 
       "part": "FaceBrowFront", 
@@ -188,8 +188,8 @@
       "face": "eye", 
       "name": "faceEyeBack", 
       "offset": [
-        46.9, 
-        -79.1
+        41.3, 
+        -76.3
       ], 
       "onPart": true, 
       "part": "FaceEyeBack", 
@@ -201,8 +201,8 @@
       "face": "eye", 
       "name": "faceEyeFront", 
       "offset": [
-        21.7, 
-        -81.2
+        5.6, 
+        -77.0
       ], 
       "onPart": true, 
       "part": "FaceEyeFront", 
@@ -214,8 +214,8 @@
       "face": "mouth", 
       "name": "faceMouth", 
       "offset": [
-        43.4, 
-        -44.8
+        27.3, 
+        -46.2
       ], 
       "onPart": true, 
       "part": "FaceMouth", 
@@ -227,8 +227,8 @@
       "face": "mouthOpen", 
       "name": "faceMouthOpen", 
       "offset": [
-        43.4, 
-        -44.8
+        27.3, 
+        -46.2
       ], 
       "onPart": true, 
       "part": "FaceMouthOpen", 
@@ -270,43 +270,43 @@
     }, 
     "FaceBrowBack": {
       "pivot": [
-        14.4, 
-        14.0
+        19.3, 
+        16.7
       ], 
       "texture": "parts/FaceBrowBack.png"
     }, 
     "FaceBrowFront": {
       "pivot": [
-        27.0, 
-        18.5
+        28.1, 
+        16.3
       ], 
       "texture": "parts/FaceBrowFront.png"
     }, 
     "FaceEyeBack": {
       "pivot": [
-        14.1, 
-        10.9
+        18.5, 
+        11.7
       ], 
       "texture": "parts/FaceEyeBack.png"
     }, 
     "FaceEyeFront": {
       "pivot": [
-        20.9, 
-        10.8
+        24.8, 
+        12.0
       ], 
       "texture": "parts/FaceEyeFront.png"
     }, 
     "FaceMouth": {
       "pivot": [
-        22.6, 
-        9.2
+        32.5, 
+        9.8
       ], 
       "texture": "parts/FaceMouth.png"
     }, 
     "FaceMouthOpen": {
       "pivot": [
-        20.6, 
-        9.2
+        29.5, 
+        9.8
       ], 
       "texture": "parts/FaceMouthOpen.png"
     }, 
@@ -340,7 +340,7 @@
     }, 
     "Head": {
       "pivot": [
-        54.2, 
+        53.2, 
         155.0
       ], 
       "texture": "parts/Head.png"

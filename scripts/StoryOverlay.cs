@@ -272,7 +272,11 @@ public partial class StoryOverlay : CanvasLayer
 					if (g % 3 == 0 && line.Glyphs[g].Ch != " ") SfxPlayer.Voice("voice", line.Speaker.Data.VoicePitch);
 				}
 			}
-			if (line.Speaker != null) line.Speaker.Talking = !line.Typed;
+			if (line.Speaker != null)
+			{
+				line.Speaker.Talking = !line.Typed;
+				line.Speaker.TalkMood = line.Mood;
+			}
 			if (line.Typed) line.Hold = HoldFor(line);
 			return;
 		}

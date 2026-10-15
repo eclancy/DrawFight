@@ -953,8 +953,9 @@ public static class FighterAnimations
 		(LFU, -44), (LFL, 30), (LBU, 36), (LBL, 30));
 
 	// --- Story poses -----------------------------------------------------------------------
-	// Struck and held in a story scene (Fighter.StoryPose), shared by everyone like every other
-	// clip. Laugh, cheer and stomp move (Fighter.ApplyStoryPose); tremble shakes.
+	// Struck and held in a story scene (Fighter.StoryPose), and to celebrate a win
+	// (FighterData.VictoryPose) - shared by everyone like every other clip. Laugh, cheer, stomp,
+	// wave, fist, flex, beckon and nod move (Fighter.ApplyStoryPose); tremble shakes.
 
 	/// <summary>A pose a story can name, or null.</summary>
 	public static Pose StoryPose(string name) => name switch
@@ -967,10 +968,24 @@ public static class FighterAnimations
 		"stomp" => Stomp,
 		"tremble" => Tremble,
 		"crossarms" => CrossArms,
+		"wave" => Wave,
+		"fist" => Fist,
+		"flex" => Flex,
+		"hips" => Hips,
+		"think" => Think,
+		"facepalm" => Facepalm,
+		"present" => Present,
+		"beckon" => Beckon,
+		"nod" => Nod,
+		"bow" => Bow,
 		_ => null,
 	};
 
-	public static readonly string[] StoryPoses = { "cheer", "slump", "point", "shrug", "laugh", "stomp", "tremble", "crossarms" };
+	public static readonly string[] StoryPoses =
+	{
+		"cheer", "slump", "point", "shrug", "laugh", "stomp", "tremble", "crossarms",
+		"wave", "fist", "flex", "hips", "think", "facepalm", "present", "beckon", "nod", "bow",
+	};
 
 	/// <summary>Both arms flung up over his head, up on his toes.</summary>
 	static readonly Pose Cheer = new Pose(new Vector2(0, -8),
@@ -1019,6 +1034,206 @@ public static class FighterAnimations
 		(Torso, 6), (Head, -8),
 		(AFU, 24), (AFL, -128), (ABU, 30), (ABL, -124),
 		(LFU, -8), (LFL, 6), (LBU, 8), (LBL, 6));
+
+	/// <summary>A hand up high, waving (the forearm swings - Fighter.ApplyStoryPose).</summary>
+	static readonly Pose Wave = new Pose(new Vector2(0, -2),
+		(Torso, 2), (Head, -6),
+		(AFU, -150), (AFL, -24), (ABU, 14), (ABL, -18),
+		(LFU, -6), (LFL, 4), (LBU, 6), (LBL, 4));
+
+	/// <summary>
+	/// A fist punched up at the sky, the other balled at his chest - Flambe as he is drawn. Written
+	/// short of straight up: shown further (FighterRig.Drama), it gets there, and no further.
+	/// </summary>
+	static readonly Pose Fist = new Pose(new Vector2(0, -3),
+		(Torso, 4), (Head, -12),
+		(AFU, -142), (AFL, -4), (ABU, -26), (ABL, -124),
+		(LFU, -14), (LFL, 8), (LBU, 12), (LBL, 8));
+
+	/// <summary>Both arms up and bent, showing off his biceps, chest out.</summary>
+	static readonly Pose Flex = new Pose(new Vector2(0, 2),
+		(Torso, 8), (Head, -10),
+		(AFU, -82), (AFL, -104), (ABU, -96), (ABL, -100),
+		(LFU, -12), (LFL, 10), (LBU, 12), (LBL, 10));
+
+	/// <summary>Hands on his hips, elbows out, feet apart.</summary>
+	static readonly Pose Hips = new Pose(new Vector2(0, 0),
+		(Torso, 4), (Head, -6),
+		(AFU, 34), (AFL, -112), (ABU, 30), (ABL, -108),
+		(LFU, -12), (LFL, 6), (LBU, 12), (LBL, 6));
+
+	/// <summary>A hand at his chin, the other across his middle, head on one side.</summary>
+	static readonly Pose Think = new Pose(new Vector2(0, 0),
+		(Torso, -2), (Head, 10),
+		(AFU, -14), (AFL, -150), (ABU, 8), (ABL, -96),
+		(LFU, -6), (LFL, 4), (LBU, 6), (LBL, 4));
+
+	/// <summary>A hand over his face, head down.</summary>
+	static readonly Pose Facepalm = new Pose(new Vector2(0, 4),
+		(Torso, -10), (Head, 18),
+		(AFU, -30), (AFL, -150), (ABU, 10), (ABL, -10),
+		(LFU, -8), (LFL, 8), (LBU, 8), (LBL, 8));
+
+	/// <summary>Arms open, hands out - "ta-da", or "here is how it is".</summary>
+	static readonly Pose Present = new Pose(new Vector2(0, -2),
+		(Torso, 6), (Head, -8),
+		(AFU, -56), (AFL, -34), (ABU, 46), (ABL, -30),
+		(LFU, -8), (LFL, 6), (LBU, 8), (LBL, 6));
+
+	/// <summary>An arm out at someone, beckoning them on (the forearm curls - Fighter.ApplyStoryPose).</summary>
+	static readonly Pose Beckon = new Pose(new Vector2(0, 0),
+		(Torso, 4), (Head, -6),
+		(AFU, -70), (AFL, -20), (ABU, 20), (ABL, -40),
+		(LFU, -8), (LFL, 6), (LBU, 8), (LBL, 6));
+
+	/// <summary>Standing easy, nodding (the head moves - Fighter.ApplyStoryPose).</summary>
+	static readonly Pose Nod = new Pose(new Vector2(0, 0),
+		(Torso, -2), (Head, 0),
+		(AFU, 6), (AFL, -10), (ABU, 8), (ABL, -10),
+		(LFU, -4), (LFL, 2), (LBU, 4), (LBL, 2));
+
+	/// <summary>A deep bow, arms hanging.</summary>
+	static readonly Pose Bow = new Pose(new Vector2(0, 8),
+		(Torso, -56), (Head, -10),
+		(AFU, -30), (AFL, -10), (ABU, -20), (ABL, -10),
+		(LFU, 10), (LFL, 6), (LBU, 10), (LBL, 6));
+
+	// --- Face on -----------------------------------------------------------------------------
+	// For a fighter drawn face on (FighterData.FrontOn: DoomBot), standing to talk or to celebrate
+	// (FighterRig.SetFrontOn). His near arm is on the left of the picture and his far arm on the
+	// right, both in front of him; out to the side is positive for the left arm and negative for
+	// the right.
+
+	/// <summary>DoomBot as Eric drew him: arms straight out, one claw hanging down, one up.</summary>
+	public static readonly Pose FrontIdle = new Pose(Vector2.Zero,
+		(AFU, 90), (AFL, -90), (ABU, -90), (ABL, -90));
+
+	/// <summary>Face-on versions of the poses that fold an arm across him - which, side on, is forward.</summary>
+	static Pose FrontStoryPose(string name) => name switch
+	{
+		"crossarms" => FrontCrossArms,
+		"hips" => FrontHips,
+		"laugh" => FrontLaugh,
+		"think" => FrontThink,
+		"facepalm" => FrontFacepalm,
+		"flex" => FrontFlex,
+		"fist" => FrontFist,
+		_ => null,
+	};
+
+	static readonly Pose FrontCrossArms = new Pose(Vector2.Zero,
+		(Head, -4), (AFU, 10), (AFL, -96), (ABU, -10), (ABL, 104));
+
+	static readonly Pose FrontHips = new Pose(Vector2.Zero,
+		(AFU, 46), (AFL, -88), (ABU, -46), (ABL, 88));
+
+	static readonly Pose FrontLaugh = new Pose(new Vector2(0, 2),
+		(Head, -6), (AFU, 16), (AFL, -110), (ABU, -16), (ABL, 110));
+
+	static readonly Pose FrontThink = new Pose(Vector2.Zero,
+		(Head, 8), (AFU, 10), (AFL, -100), (ABU, 10), (ABL, 152));
+
+	static readonly Pose FrontFacepalm = new Pose(new Vector2(0, 3),
+		(Head, 10), (AFU, 12), (AFL, -10), (ABU, 2), (ABL, 158));
+
+	static readonly Pose FrontFlex = new Pose(new Vector2(0, 2),
+		(AFU, 90), (AFL, 96), (ABU, -90), (ABL, -96));
+
+	static readonly Pose FrontFist = new Pose(new Vector2(0, -3),
+		(AFU, 20), (AFL, -110), (ABU, -168), (ABL, -4));
+
+	/// <summary>
+	/// A story pose, face on: the far arm (on the facing side) does what the near arm does side
+	/// on, the near arm mirrors the far one, and leans and steps - which side on go toward and away
+	/// from you - become a little tilt. The poses that fold an arm across him have their own.
+	/// </summary>
+	public static void FaceOn(string name, Pose into)
+	{
+		Pose own = FrontStoryPose(name);
+		if (own != null)
+		{
+			into.CopyFrom(own);
+			return;
+		}
+		Pose side = StoryPose(name) ?? FrontIdle;
+		into.CopyFrom(side);
+		into.Set(ABU, side[AFU]);
+		into.Set(ABL, side[AFL]);
+		into.Set(AFU, -side[ABU]);
+		into.Set(AFL, -side[ABL]);
+		into.Set(Torso, side[Torso] * 0.4f);
+		into.Set(Head, side[Head] * 0.4f);
+		foreach (RigBone leg in new[] { LFU, LFL, LBU, LBL }) into.Set(leg, side[leg] * 0.35f);
+	}
+
+	// --- Talking -----------------------------------------------------------------------------
+	// While a story has him talking (Fighter.Talking), his body talks too, in the way the line is
+	// said (Fighter.TalkMood): the beat is how far into a gesture he is, 0 to 1.
+
+	/// <summary>How he stands to say a line said this way, at this beat of it.</summary>
+	public static void TalkPose(string mood, float beat, Pose into)
+	{
+		float b = beat;
+		switch (mood)
+		{
+			case "shout":
+				// Leaning in at them, jabbing the point home, the other fist back.
+				Set(into, new Vector2(2, 0), -14, -10, -50 - 22 * b, -20 - 24 * b, 30, -50, -14, 10, 14, 10);
+				break;
+			case "slam":
+				// Fists balled and chest out, every word a jolt.
+				Set(into, new Vector2(0, 2 * b), 8, -6 * b, 22, -60, 28, -60, -8, 6, 8, 6);
+				break;
+			case "whisper":
+				// Hunched, a hand up by his mouth.
+				Set(into, new Vector2(0, 6), -16, 16, -26, -132, 10, -20, -10, 14, 8, 14);
+				break;
+			case "happy":
+				// Arms open, bouncing on it.
+				Set(into, new Vector2(0, -4 * b), 6, -8, -56 - 10 * b, -34, 40, -30, -6, 4, 6, 4);
+				break;
+			case "scared":
+				into.CopyFrom(Tremble);
+				break;
+			case "hot":
+				// A flourish, the other fist at his chest - a showman's line.
+				Set(into, new Vector2(0, -2 * b), -4, -6, -60 - 50 * b, -10 - 30 * b, 10, -100, -8, 6, 8, 6);
+				break;
+			default:
+				// Talking with his hands, nodding along.
+				Set(into, new Vector2(0, -1.5f * b), -2, -4 * b, -26 - 14 * b, -44 - 36 * b, 12, -20, -6, 4, 6, 4);
+				break;
+		}
+	}
+
+	/// <summary>The same, face on: arms out as he was drawn, the raised claw going with every word.</summary>
+	public static void FrontTalkPose(string mood, float beat, Pose into)
+	{
+		into.CopyFrom(FrontIdle);
+		bool loud = mood == "shout" || mood == "slam";
+		into.HipOffset = new Vector2(0, (loud ? 3 : 1.5f) * beat);
+		into.Set(ABU, -90 + 12 * beat);
+		into.Set(ABL, -90 - (loud ? 34 : 24) * beat);
+		into.Set(Head, (loud ? 6 : 3) * beat);
+		// Shouting, both claws go up.
+		if (loud) into.Set(AFL, 90 - 20 * beat);
+	}
+
+	static void Set(Pose into, Vector2 hip, float torso, float head, float afu, float afl, float abu, float abl,
+		float lfu, float lfl, float lbu, float lbl)
+	{
+		into.HipOffset = hip;
+		into.Set(Torso, torso);
+		into.Set(Head, head);
+		into.Set(AFU, afu);
+		into.Set(AFL, afl);
+		into.Set(ABU, abu);
+		into.Set(ABL, abl);
+		into.Set(LFU, lfu);
+		into.Set(LFL, lfl);
+		into.Set(LBU, lbu);
+		into.Set(LBL, lbl);
+	}
 
 	/// <summary>
 	/// Crouched behind a held-up shield: knees bent, head down behind it, the shield arm out in

@@ -127,6 +127,8 @@ public partial class StoryDirector : Node
 		inputs.Clear();
 		foreach (Fighter fighter in Match.Fighters)
 		{
+			// The scene says what they do now, not the win before it.
+			fighter.Celebrating = false;
 			var input = new ScriptedInput();
 			inputs[fighter] = input;
 			fighter.Controller = input;

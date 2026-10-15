@@ -777,7 +777,8 @@ public partial class Fighter : CharacterBody2D
 
 		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll() + TrembleRoll(),
 			State == FighterState.Dodging && groundRoll);
-		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth());
+		TickFrontOn();
+		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth() * FrontTurnWidth());
 		UpdateFace();
 		UpdateWrist();
 		rig.SetFrontLegReach(LegReachNow());
@@ -874,6 +875,8 @@ public partial class Fighter : CharacterBody2D
 			case FighterState.Grounded:
 				rig.SetStanding(true);
 				rig.HandOnHip = Data.HandOnHip;
+				// A story posing him, or him talking, poses him outright (ApplyStoryLayer, below).
+				if (StoryLayerOwnsPose()) break;
 				rig.Play(FighterAnimations.Idle);
 				// A heavier body breathes slower, and no two fighters breathe in step.
 				rig.Advance(1.0f / Data.Inertia);
@@ -906,10 +909,7 @@ public partial class Fighter : CharacterBody2D
 		// A stretched kick: the leg pointed at the hit, as well as long enough to reach it.
 		float kick = LegStretchAmount();
 		if (kick > 0.0f) rig.AimFrontLeg(CurrentHitboxCentre(), kick);
-		if (!string.IsNullOrEmpty(StoryPose) && (State == FighterState.Grounded || State == FighterState.Airborne))
-		{
-			ApplyStoryPose();
-		}
+		ApplyStoryLayer();
 		if (shieldRaised && State != FighterState.Attacking)
 		{
 			rig.SetStanding(false);
@@ -4598,9 +4598,12 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	string HeldPoseName()
 	{
-		// A story holding up one of his own drawings - not in a move, not flying from a hit.
-		if (!string.IsNullOrEmpty(StoryShow) && rig != null && rig.Loaded && State != FighterState.Attacking
-			&& rig.PoseArtFor(StoryShow) != null) return StoryShow;
+		// A story holding up one of his own drawings - not in a move, not flying from a hit - or
+		// holding one up to celebrate a win.
+		string show = !string.IsNullOrEmpty(StoryShow) ? StoryShow
+			: Celebrating && IsStandingStill ? Data.VictoryShow : "";
+		if (!string.IsNullOrEmpty(show) && rig != null && rig.Loaded && State != FighterState.Attacking
+			&& rig.PoseArtFor(show) != null) return show;
 		if (rig == null || !rig.Loaded || State != FighterState.Attacking || currentMove == null) return null;
 
 		// A move that strikes one of several drawn poses holds the one picked for it, start to end.

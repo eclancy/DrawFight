@@ -4,7 +4,7 @@ Draws Flambe - a stand-in, in place of the stick figure Swift - and rigs him:
 
     python tools/art/flambe.py
 
-A hotshot punk rocker, three-quarter view facing right: a flame mohawk, a black leather jacket
+A hotshot punk rocker, three-quarter view facing right, his face turned toward the camera: a flame mohawk, a black leather jacket
 with spikes on the shoulders and studs on the collar, flames up its hem, a wallet chain, dark red
 skinny jeans and chunky boots - and, because he is also somehow a French chef, a red
 neckerchief. Confident and defiant: brows down, eyes ahead, a smirk. Lean and long in the leg, because he fights with his feet. Coloured in
@@ -168,9 +168,13 @@ TORSO = '''
 <path d="M 372,594 C 366,640 410,656 436,600" fill="none" stroke="{metal}" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 5"/>
 '''
 
-HEAD_PATH = ('M 380,204 C 380,172 410,152 440,154 C 478,156 498,178 498,206 L 500,220 '
-             'L 522,238 L 500,246 C 504,256 508,268 506,282 C 500,298 478,308 452,306 '
-             'C 426,306 404,296 394,282 C 382,266 378,236 380,204 Z')
+# Turned three-quarters toward the camera, so the whole face shows when he talks (Eric,
+# 2026-10-15): the face fills the front of the head, both eyes open on it, and only the tip of
+# his nose breaks the outline, which is what still says he faces right.
+HEAD_PATH = ('M 384,214 C 382,178 406,154 442,154 C 476,154 500,176 502,206 '
+             'C 503,218 502,228 504,236 L 512,252 L 503,258 '
+             'C 504,274 498,292 484,302 C 470,312 446,312 428,302 '
+             'C 404,290 388,264 384,236 Z')
 # The flame mohawk, red to yellow, swept back off his head. Drawn first: the skull covers its root.
 MOHAWK = '''
 <path d="M 384,190 C 378,160 362,134 344,118 C 374,124 390,136 398,150 C 394,118 384,92 366,70
@@ -191,35 +195,36 @@ HEAD_BASE = MOHAWK + '''
 <path d="M 414,330 L 420,290 M 458,290 L 464,330" fill="none" stroke="{ink}" stroke-width="{wo}" stroke-linecap="round"/>
 <path d="{hp}" fill="{skin}"/>
 <g clip-path="url(#head)">
-  <path d="M 370,150 L 476,150 C 452,176 424,186 404,206 L 386,236 L 370,240 Z" fill="{shaved}"/>
+  <path d="M 370,150 L 452,150 C 432,170 412,180 400,198 L 388,226 L 370,230 Z" fill="{shaved}"/>
 </g>
 <path d="{hp}" fill="none" stroke="{ink}" stroke-width="{wo}" stroke-linejoin="round"/>
-<path d="M 413,224 C 406,214 392,216 388,228 C 385,238 390,248 393,256 C 395,264 400,268 406,266
-         C 410,264 411,258 412,252 C 413,244 414,234 413,224 Z" fill="{skin}"/>
-<path d="M 413,224 C 406,214 392,216 388,228 C 385,238 390,248 393,256 C 395,264 400,268 406,266"
+<path d="M 397,226 C 390,214 376,216 372,228 C 369,238 374,248 377,256 C 379,264 384,268 390,266
+         C 394,264 395,258 396,252 C 397,244 398,234 397,226 Z" fill="{skin}"/>
+<path d="M 397,226 C 390,214 376,216 372,228 C 369,238 374,248 377,256 C 379,264 384,268 390,266"
       fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round"/>
-<path d="M 407,228 C 399,226 395,234 398,242 C 400,247 404,248 406,244" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
-<circle cx="401" cy="272" r="8" fill="none" stroke="{ink}" stroke-width="9"/>
-<circle cx="401" cy="272" r="8" fill="none" stroke="{metal}" stroke-width="4"/>
+<path d="M 391,230 C 383,228 379,236 382,244 C 384,249 388,250 390,246" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="385" cy="272" r="8" fill="none" stroke="{ink}" stroke-width="9"/>
+<circle cx="385" cy="272" r="8" fill="none" stroke="{metal}" stroke-width="4"/>
+<path d="M 494,240 C 497,246 499,252 498,256 C 495,259 490,259 487,257" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M 410,334 L 466,334 L 452,352 L 440,368 L 426,350 Z" fill="{scarf}" stroke="{ink}" stroke-width="{wi}" stroke-linejoin="round"/>
 '''
 
 # name: (kind, svg, centre in drawing units, tilt). The centre is what each turns and squashes
 # about; a mouth's is its top, since it opens downward. Tilt: which way it turns angry.
 FACE = {
-    'BrowFront': ('brow', '<path d="M 436,200 L 482,214 L 479,224 L 438,211 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (459.0, 212.0), 1),
-    'BrowBack': ('brow', '<path d="M 486,216 L 503,204 L 506,212 L 489,225 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (496.0, 214.0), -1),
-    'EyeFront': ('eye', '''<path d="M 446,237 C 451,227 469,226 479,232 C 472,244 455,245 446,237 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="473" cy="235" r="4.6" fill="{ink}"/>
-<path d="M 446,232 L 480,229" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (463.0, 235.0), 1),
-    'EyeBack': ('eye', '''<path d="M 488,238 C 491,233 499,232 504,234 C 501,241 493,242 488,238 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
-<circle cx="500" cy="236" r="3.2" fill="{ink}"/>
-<path d="M 487,235 L 505,232" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (496.0, 236.0), -1),
-    'Mouth': ('mouth', '''<path d="M 470,266 C 474,274 484,278 494,278 C 498,278 502,277 505,275" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 466,261 C 463,267 464,273 468,278" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>''', (486.0, 262.0), 1),
+    'BrowFront': ('brow', '<path d="M 418,212 L 462,220 L 460,230 L 419,222 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (440.0, 221.0), 1),
+    'BrowBack': ('brow', '<path d="M 472,222 L 498,210 L 501,218 L 474,231 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>', (486.0, 220.0), -1),
+    'EyeFront': ('eye', '''<path d="M 424,240 C 430,229 450,227 461,234 C 453,247 433,248 424,240 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="453" cy="238" r="5.2" fill="{ink}"/>
+<path d="M 423,235 L 462,231" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (443.0, 238.0), 1),
+    'EyeBack': ('eye', '''<path d="M 472,239 C 476,231 489,229 496,233 C 492,242 479,244 472,239 Z" fill="{white}" stroke="{ink}" stroke-width="3"/>
+<circle cx="490" cy="236" r="4.2" fill="{ink}"/>
+<path d="M 471,235 L 497,231" fill="none" stroke="{ink}" stroke-width="4" stroke-linecap="round"/>''', (484.0, 237.0), -1),
+    'Mouth': ('mouth', '''<path d="M 446,276 C 454,284 472,288 488,282 C 492,280 495,277 497,274" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 443,270 C 440,276 441,282 445,286" fill="none" stroke="{ink}" stroke-width="3.5" stroke-linecap="round"/>''', (470.0, 274.0), 1),
     # Shown instead of the smirk when he opens his mouth to shout or talk.
-    'MouthOpen': ('mouthOpen', '''<path d="M 466,262 C 468,290 500,296 508,272 C 496,278 480,274 466,262 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
-<ellipse cx="489" cy="283" rx="9" ry="4.5" fill="{scarf}"/>''', (486.0, 262.0), 1),
+    'MouthOpen': ('mouthOpen', '''<path d="M 444,272 C 446,300 484,304 496,276 C 482,284 460,282 444,272 Z" fill="{ink}" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="470" cy="290" rx="11" ry="5" fill="{scarf}"/>''', (470.0, 274.0), 1),
 }
 HEAD = HEAD_BASE + '\n'.join(svg for name, (kind, svg, centre, tilt) in sorted(FACE.items()) if kind != 'mouthOpen')
 
