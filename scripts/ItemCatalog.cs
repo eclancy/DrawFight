@@ -82,6 +82,15 @@ public static class ItemCatalog
 		PropArt = "-",
 	};
 
+	/// <summary>The eraser's one swing: wound up for most of a second, then it rubs out whoever it meets.</summary>
+	static MoveData EraserSwing()
+	{
+		MoveData m = Swing("Rub Out", AttackAnim.OverheadSlam, 52, 5, 30, 0.0f, 0.0f, 0.0f, 40.0f, 62.0f);
+		m.Erases = true;
+		m.Unblockable = true;
+		return m;
+	}
+
 	static readonly Color PaintBlue = new Color(0.30f, 0.52f, 0.96f);
 	static readonly Color PaintOrange = new Color(0.98f, 0.55f, 0.22f);
 	static readonly Color PaintPurple = new Color(0.66f, 0.40f, 0.92f);
@@ -100,9 +109,11 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "eraser", DisplayName = "Big Pink Eraser", Use = ItemUse.Swing, Size = 90.0f, Swings = 8, Cooldown = 20,
-			Blurb = "A soft bonk - but whatever it rubs out is gone: fireballs, puddles, traps.",
-			Swing = Swing("Eraser Rub", AttackAnim.Slash, 7, 4, 16, 6.0f, 32.0f, 0.5f, 40.0f, 46.0f),
+			// Rare, and one use: a huge, slow, obvious wind-up, and whoever it touches is rubbed
+			// out - the stock is gone (Eric, 2026-10-15).
+			Id = "eraser", DisplayName = "Big Pink Eraser", Use = ItemUse.Swing, Size = 110.0f, Swings = 1, SpawnWeight = 0.2f,
+			Blurb = "Rare. One enormous wind-up and one swing - and whoever it touches is rubbed right off the page.",
+			Swing = EraserSwing(),
 			Hit = Hit("Thrown Eraser", 6.0f, 30.0f, 0.4f, 40.0f),
 		},
 		new ItemData
@@ -115,8 +126,10 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "metre_stick", DisplayName = "Metre Stick", Use = ItemUse.Swing, Size = 175.0f, Swings = 4, Cooldown = 40,
-			Blurb = "A huge, slow, wound-up swing that knocks people right off the stage.",
+			// Picked up, it stands beside him and shoots up taller than he is - and he grows to
+			// measure up, for ten seconds (Eric, 2026-10-15).
+			Id = "metre_stick", DisplayName = "Metre Stick", Use = ItemUse.Swing, Size = 175.0f, Swings = 4, Cooldown = 40, Duration = 600,
+			Blurb = "Measures you up: it shoots up beside you and you grow to match. A huge, slow, wound-up swing that knocks people right off the stage.",
 			Swing = Swing("Home Run", AttackAnim.SmashSwing, 22, 4, 26, 22.0f, 42.0f, 1.25f, 38.0f, 52.0f),
 			Hit = Hit("Thrown Metre Stick", 9.0f, 34.0f, 0.5f, 35.0f),
 		},
@@ -231,9 +244,9 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			Id = "airbrush", DisplayName = "Airbrush", Use = ItemUse.Gust, Size = 85.0f, Uses = 6, Cooldown = 60,
-			Blurb = "Blows a gust that pushes everyone ahead back - right off the edge.",
-			Hit = Hit("Thrown Airbrush", 6.0f, 28.0f, 0.4f, 40.0f), Radius = 320.0f, Duration = 26,
+			Id = "airbrush", DisplayName = "Airbrush", Use = ItemUse.Gust, Size = 85.0f, Uses = 300, Cooldown = 20,
+			Blurb = "Hold attack and it blows: everyone ahead pushed back - right off the edge - and anything thrown or shot blown away.",
+			Hit = Hit("Thrown Airbrush", 6.0f, 28.0f, 0.4f, 40.0f), Radius = 340.0f, Duration = 26,
 			Tint = new Color(0.62f, 0.86f, 0.98f),
 		},
 		new ItemData
@@ -284,8 +297,8 @@ public static class ItemCatalog
 		new ItemData
 		{
 			Id = "popup_book", DisplayName = "Pop-Up Book", Use = ItemUse.Throw, Impact = ItemImpact.Spring, Size = 90.0f,
-			Blurb = "Opens on the floor into a pop-up that springs whoever stands on it sky high.",
-			Hit = Hit("Pop-Up Book", 5.0f, 24.0f, 0.3f, 40.0f), Radius = 70.0f, Duration = 420, Amount = 1750.0f,
+			Blurb = "Opens on the floor into one of three huge pop-ups: a bouncy castle, a snapping crocodile, or a storm cloud.",
+			Hit = Hit("Pop-Up Book", 5.0f, 24.0f, 0.3f, 40.0f), Duration = 420, Amount = 1750.0f,
 		},
 
 		// --- Container and summon ------------------------------------------------------
@@ -359,18 +372,20 @@ public sealed class ItemSettings
 	}
 
 	/// <summary>Frames between items appearing, and how many can be out at once.</summary>
+	// Lowered across the board (Eric, 2026-10-15): items are a seasoning on the fight, not the
+	// fight - medium now drops one about every thirteen seconds.
 	public int SpawnInterval => Frequency switch
 	{
-		ItemFrequency.Low => 840,
-		ItemFrequency.High => 240,
-		_ => 480,
+		ItemFrequency.Low => 1320,
+		ItemFrequency.High => 420,
+		_ => 780,
 	};
 
 	public int MaxOnStage => Frequency switch
 	{
 		ItemFrequency.Low => 1,
-		ItemFrequency.High => 5,
-		_ => 3,
+		ItemFrequency.High => 3,
+		_ => 2,
 	};
 
 	public static string Describe(ItemFrequency frequency) => frequency switch

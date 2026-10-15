@@ -444,6 +444,26 @@ small path rather than bending the rig.
   black marker at his own line width (`redraw_front_foot` in `tools/art/cut_circy.py`). It works
   on the copy the parts are cut from; `source/` is untouched. It is the only redrawn line in any
   kid's fighter: do not take it as leave to redraw another without being asked for that one.
+- **Legs of two lengths, evened** (`"evenLegs": true`, Circy's): his front leg is drawn longer
+  than his back one, so standing on both it had to bend far forward at the knee, both feet ended
+  up out ahead of his ball and he looked to be falling over backwards (Eric, 2026-10-15). The
+  rig stretches the shorter leg along its own length (`FighterRig.EvenUpLegs`) - the way his
+  Stretch does, no line redrawn - until both stand straight with their feet flat, under him.
+- **Coloured in where the drawing is white** (Triguy's, Eric's call 2026-10-15): at match size
+  his eyes, teeth and hat ran into the white of his body. `colour_in` in
+  `tools/art/cut_triguy.py` colours the one big white shape in each drawing light green, a shade
+  deeper round its rim; fills the gaps his mouth's own lines close in white, in the mouth piece,
+  so the teeth stay white as it moves; and puts a sheen along the top edges of his hat - the
+  biggest thick black shape, never a line - so it reads as a shiny top hat. Not one of his lines
+  moves or changes: only what he left white or filled black is coloured, after the cut.
+- **EdgeLord's thickness** (Eric's own drawing, his call 2026-10-15): he drew the right-hand
+  edge of the V doubled down to his arm, giving the body depth; `color_edgelord.py` carries a
+  second line on down from there to the point of the V, at the same gap (`edge_depth_line`).
+- **A leg cut flush with the body gets a cap**: EdgeLord's legs tuck up behind his V, so cut
+  along its edge they pivoted on a corner of the cut and swung clean off him (Eric, 2026-10-15).
+  Each now turns about the middle of where it meets the body, and is carried on up past the cut
+  with leg cloned from just below into a rounded cap, hidden behind the body at rest
+  (`capped` in `tools/art/cut_edgelord.py`) - DoomBot's round joint caps, for a diagonal leg.
 - **Feet cut separately** (DoomBot's boots): a foot is an extra on its lower leg pinned at the
   ankle, marked `"foot": true` in rig.json. The rig keeps it level as far as the fighter is
   planted (`FighterRig.LevelFeet`) - an ankle, without a new bone - and, standing, solves thigh

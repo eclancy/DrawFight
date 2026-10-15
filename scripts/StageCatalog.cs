@@ -157,8 +157,9 @@ public static class StageCatalog
 
 		data.Platforms = new[]
 		{
-			// Runs past both blast zones, so there is no edge and no ledge.
-			new StagePlatform(new Rect2(-2000.0f, 0.0f, 4000.0f, 460.0f), false, PlatformLook.Ledge),
+			// Runs past both blast zones and out past the edge of the painted sky, so there is no
+			// edge, no ledge, and no end to the ground however far the camera pulls back.
+			new StagePlatform(new Rect2(-2600.0f, 0.0f, 5200.0f, 460.0f), false, PlatformLook.Ledge),
 
 			// Treetops - the leaves are the soft platforms. No buildings on the plains.
 			new StagePlatform(new Rect2(-680.0f, -200.0f, 310.0f, 26.0f), true, PlatformLook.TreeTop),

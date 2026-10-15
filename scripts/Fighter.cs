@@ -512,6 +512,15 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
+		// Being rubbed out by the eraser: frozen where he stands until he is gone.
+		if (erasedFrames > 0)
+		{
+			TickErased();
+			UpdateRig();
+			Redraw();
+			return;
+		}
+
 		if (State == FighterState.Eliminated)
 		{
 			// Out of the match, but still a player: Start still pauses, or moves on at the end.
@@ -2430,6 +2439,13 @@ public partial class Fighter : CharacterBody2D
 			other.ReceiveHit(this, hit, nearest, ChargeScale * ItemPower);
 			OnItemSwingHit(other, firstHit);
 
+			// A charge that stops on whoever it hits: dead still, and popped up off them.
+			if (currentMove.HopOnHit > 0.0f)
+			{
+				Velocity = new Vector2(-Facing * 140.0f, -currentMove.HopOnHit);
+				moveFrame = Mathf.Max(moveFrame, activeEnd);
+			}
+
 			// "He will also take some damage." Percent only - never knockback.
 			Percent += currentMove.SelfDamage;
 
@@ -2507,6 +2523,7 @@ public partial class Fighter : CharacterBody2D
 
 	bool CanBeHit =>
 		invulnFrames <= 0
+		&& erasedFrames <= 0
 		&& starFrames <= 0
 		&& !IsInvincibleMove
 		&& State != FighterState.Eliminated
@@ -2548,6 +2565,13 @@ public partial class Fighter : CharacterBody2D
 		// throw itself arrives as a hit.
 		ReleaseGrabbed();
 		heldBy = null;
+
+		// The eraser: no knockback, no damage. Rubbed out where he stands.
+		if (move.Erases)
+		{
+			BeginErased();
+			return;
+		}
 
 		// A shield held up takes a hit from in front like a block - without wearing the block down.
 		bool shieldBlocked = shieldRaised && !move.Unblockable && attackerFacing == -Facing;
@@ -3905,11 +3929,17 @@ public partial class Fighter : CharacterBody2D
 				SfxPlayer.At("special_blink", GlobalPosition, 0.0f);
 			}
 			Velocity = blinkVelocity;
+			// Straight through anything that can be dropped through, up or down.
+			CollisionMask = SolidOnlyMask;
 			return;
 		}
 
 		// Arriving at a blade he stops on it; otherwise he slides out of the cut.
-		if (moveFrame == activeEnd + 1) Velocity = blinkToTrap ? Vector2.Zero : new Vector2(Facing * 240.0f, 0.0f);
+		if (moveFrame == activeEnd + 1)
+		{
+			Velocity = blinkToTrap ? Vector2.Zero : new Vector2(Facing * 240.0f, 0.0f);
+			if (dropThroughFrames == 0) CollisionMask = GroundMask;
+		}
 	}
 
 	bool IsBlinkWindup =>
@@ -5274,8 +5304,8 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	Hazard TrapAhead()
 	{
-		float Reach = currentMove.SpecialSpeed * currentMove.ActiveFrames / 60.0f;
-		const float Rise = 320.0f;
+		float Reach = currentMove.SpecialSpeed * currentMove.ActiveFrames / 60.0f * 1.5f;
+		const float Rise = 620.0f;
 		Hazard best = null;
 		float bestDistance = float.MaxValue;
 		foreach (KeyValuePair<MoveData, List<Hazard>> pair in outHazards)

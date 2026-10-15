@@ -414,7 +414,9 @@ def ink_bottle():
 
 
 def paper_airplane():
-    """A folded dart from ruled paper, side on, nose to the right."""
+    """A folded dart from ruled paper, side on, nose to the right: the wing up top and the keel
+    hanging under it. Drawn as before and turned over top to bottom - the first way up read as
+    a plane flying upside down (Eric, 2026-10-15)."""
     near = poly([(6, 34), (170, 52), (40, 72)])
     keel = poly([(46, 68), (170, 52), (86, 102)])
     s = P(poly([(28, 8), (170, 52), (58, 40)]), 'paper_shade')
@@ -425,7 +427,8 @@ def paper_airplane():
     lines = ''.join(L('M 0,%d L 180,%d' % (y, y + 18), 4.5, 'rule') for y in (43, 53, 63))
     s += clip('wing', near, lines + L('M 34,20 L 30,90', 4.5, 'margin'))
     s += L(near, 'wo')
-    return s, (176, 106), (88, 54), (170, 52)
+    s = '<g transform="matrix(1 0 0 -1 0 110)">' + s + '</g>'
+    return s, (176, 110), (88, 56), (170, 58)
 
 
 def paper_ball():
@@ -680,8 +683,9 @@ def popup_book():
     return s, (160, 166), (82, 84), (82, 84)
 
 
-def popup_book_open():
-    """The pop-up book lying open, a cardboard castle standing up out of the middle."""
+def open_book():
+    """The pop-up book lying open: red covers, cream page edges and two ruled pages. Every pop-up
+    stands up out of the middle of it."""
     s = P('M 4,160 L 125,172 L 246,160 L 246,170 L 125,184 L 4,170 Z', 'red')
     s += P('M 6,154 C 50,148 100,152 125,166 L 125,174 C 100,160 50,156 6,162 Z', 'cream_shade', 'wi')
     s += P('M 244,154 C 200,148 150,152 125,166 L 125,174 C 150,160 200,156 244,162 Z', 'cream_shade', 'wi')
@@ -689,6 +693,12 @@ def popup_book_open():
     s += P('M 232,128 C 198,120 150,124 125,140 L 125,166 C 150,152 200,148 244,154 Z', 'paper')
     s += L('M 24,138 C 54,132 90,134 112,146 M 18,148 C 50,142 90,144 112,156', 4, 'rule')
     s += L('M 226,138 C 196,132 160,134 138,146 M 232,148 C 200,142 160,144 138,156', 4, 'rule')
+    return s
+
+
+def popup_book_open():
+    """The pop-up book lying open, a cardboard bouncy castle standing up out of the middle."""
+    s = open_book()
     for cx in (74, 176):
         s += P(rect(cx - 14, 72, cx + 14, 150), 'cardboard')
         s += P(rect(cx - 7, 96, cx + 7, 118, 7), 'window', 'wi')
@@ -701,6 +711,56 @@ def popup_book_open():
         s += L('M %d,26 L %d,8' % (cx, cx))
         s += P('M %d,8 L %d,14 L %d,20 Z' % (cx, cx + 18, cx), 'red', 'wi')
     return s, (250, 188), (125, 182), (125, 100)
+
+
+def popup_book_croc():
+    """The pop-up book open on a cardboard crocodile, facing right, its lower jaw out over the
+    page - the upper jaw is its own piece (popup_book_croc_jaw), hinged at the back of the mouth,
+    so it can snap shut."""
+    s = ''
+    # The tail, curling back over the left page.
+    s += P('M 70,128 C 40,128 22,112 26,92 C 30,78 44,80 44,92 C 44,104 56,110 74,108 Z', 'green')
+    # The body, a fat hump on stubby legs, standing up out of the fold.
+    s += P('M 58,150 L 58,108 C 60,84 92,72 124,74 C 150,76 164,88 168,104 L 168,150 Z', 'green')
+    s += F('M 70,140 C 90,128 140,126 160,138 L 160,148 L 70,148 Z', 'green_light')
+    for x in (76, 104, 132):
+        s += P('M %d,96 L %d,84 L %d,96 Z' % (x - 9, x, x + 9), 'bright_green', 'wi')
+    s += P(rect(70, 138, 88, 156, 4), 'green', 'wi')
+    s += P(rect(140, 138, 158, 156, 4), 'green', 'wi')
+    # The lower jaw, teeth up.
+    s += P('M 160,108 L 240,114 C 246,116 246,126 240,128 L 160,128 Z', 'green')
+    for x in (176, 192, 208, 224):
+        s += P('M %d,114 L %d,104 L %d,114 Z' % (x - 6, x, x + 6), 'white', 'wi')
+    s += F('M 166,118 L 236,121 L 236,124 L 166,124 Z', 'pink_light')
+    return open_book() + s, (250, 188), (125, 182), (162, 108)
+
+
+def popup_book_croc_jaw():
+    """The crocodile's upper jaw: hinged at its back-bottom corner (the grip), teeth down, an eye
+    on top - it swings up open and snaps down."""
+    s = P('M 6,46 C 6,22 20,10 38,10 C 54,10 62,18 68,24 L 86,28 C 96,30 98,44 90,48 L 8,52 Z', 'green')
+    s += P(ellipse(82, 33, 5, 4), 'green_light', 'wi')
+    for x in (24, 42, 60, 78):
+        s += P('M %d,50 L %d,62 L %d,50 Z' % (x - 6, x, x + 6), 'white', 'wi')
+    s += P(ellipse(34, 18, 13, 11), 'white', 'wi')
+    s += F(ellipse(38, 19, 6, 7), 'ink')
+    s += F(ellipse(40, 16, 2, 2), 'white')
+    return s, (102, 66), (8, 50), (90, 44)
+
+
+def popup_book_cloud():
+    """The pop-up book open on a cardboard storm cloud on a stick, standing up out of the fold.
+    The lightning is the game's to draw: it strikes from under the cloud."""
+    s = tube('M 125,152 L 125,64', 'cardboard', 8, 5)
+    s += P(blob(125, 46, 34, 7, 8, 0.1), 'murky4')
+    cloud = ('M 34,64 C 18,64 14,40 34,36 C 34,16 62,8 76,22 C 86,2 122,0 132,18 C 146,4 182,8 '
+             '182,30 C 204,28 214,56 192,66 C 190,78 170,80 160,72 C 146,84 118,84 108,72 '
+             'C 92,84 64,82 58,70 C 50,76 36,74 34,64 Z')
+    s += P(cloud, 'trace_back')
+    s += F('M 50,58 C 70,66 90,62 108,56 C 126,64 150,64 170,56 C 180,62 190,60 194,54 L 194,62 '
+           'C 170,76 120,78 96,70 C 76,76 56,72 50,64 Z', 'murky4')
+    s += L('M 52,40 C 60,30 74,30 80,36 M 120,26 C 130,18 146,20 150,30', 4, 'white')
+    return open_book() + s, (250, 188), (125, 182), (125, 74)
 
 
 def small_pencil():
@@ -812,6 +872,8 @@ ITEMS = [
     ('thumbtacks', thumbtacks()), ('tack', tack()),
     ('rinse_cup', rinse_cup()),
     ('popup_book', popup_book()), ('popup_book_open', popup_book_open()),
+    ('popup_book_croc', popup_book_croc()), ('popup_book_croc_jaw', popup_book_croc_jaw()),
+    ('popup_book_cloud', popup_book_cloud()),
     ('pencil_case', pencil_case()),
     ('canvas', canvas()),
     ('gold_star', gold_star()),

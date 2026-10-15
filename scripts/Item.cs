@@ -68,7 +68,55 @@ public partial class Item : CharacterBody2D
 	static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
 
 	float Radius => Data.Size * 0.3f;
-	float ArtScale => Art != null ? Data.Size / Mathf.Max(Art.Size.X, Art.Size.Y) : 1.0f;
+	float ArtScale => Art != null ? Data.Size * (State == Phase.Held ? Extension : 1.0f) / Mathf.Max(Art.Size.X, Art.Size.Y) : 1.0f;
+
+	// --- The metre stick measuring him up ------------------------------------------------
+	// Picked up, it does not go straight into his hand: it stands on the floor beside him and
+	// shoots up out of it, taller than he is, while he grows to match - then it is in his fist,
+	// longer than it lay (Eric, 2026-10-15).
+
+	/// <summary>How much longer than its lying-down size it is in his hand.</summary>
+	public float Extension = 1.0f;
+
+	/// <summary>Frames left of standing beside him, rising; 0 once it is in his hand.</summary>
+	public int MeasureFrames;
+
+	public const int MeasureTotal = 36;
+	const int MeasureRise = 24;
+
+	public void StartMeasuring()
+	{
+		MeasureFrames = MeasureTotal;
+		Extension = 1.4f;
+	}
+
+	/// <summary>Where it stands while it measures him: on the floor at his side.</summary>
+	public void StandAt(Vector2 floorPoint, int facing)
+	{
+		GlobalPosition = floorPoint;
+		heldFacing = facing;
+		QueueRedraw();
+	}
+
+	void DrawMeasuring()
+	{
+		if (Art == null) return;
+		float s = ArtScale;
+		int into = MeasureTotal - MeasureFrames;
+		// Out of the floor fast, easing to a stop at full height.
+		float t = Mathf.Min(1.0f, into / (float)MeasureRise);
+		float shown = 1.0f - Mathf.Pow(1.0f - t, 3.0f);
+		// The top of the stick comes up first, as if pushed up from under the floor.
+		var source = new Rect2(0.0f, 0.0f, Art.Size.X, Art.Size.Y * shown);
+		var place = new Rect2(-Art.Size.X * s * 0.5f, -Art.Size.Y * s * shown, Art.Size.X * s, Art.Size.Y * s * shown);
+		DrawTextureRectRegion(Art.Texture, place, source);
+		// A sparkle at its top as it reaches full height.
+		if (into >= MeasureRise - 2 && into < MeasureRise + 10)
+		{
+			float k = (into - (MeasureRise - 2)) / 12.0f;
+			DrawStar(new Vector2(0.0f, -Art.Size.Y * s - 10.0f), 22.0f * Mathf.Sin(k * Mathf.Pi), new Color(1.0f, 0.9f, 0.4f, 1.0f - k * 0.5f));
+		}
+	}
 
 	public bool CanBePickedUp => State == Phase.Resting || State == Phase.Falling && age > 20;
 
@@ -173,6 +221,8 @@ public partial class Item : CharacterBody2D
 	/// <summary>Out of his hand and away, as thrown - or let go of, with no speed, when he is hit.</summary>
 	public void Thrown(Fighter by, Vector2 velocity)
 	{
+		Extension = 1.0f;
+		MeasureFrames = 0;
 		Holder = null;
 		DrawnBy = null;
 		OwnerFighter = by;
@@ -188,6 +238,8 @@ public partial class Item : CharacterBody2D
 
 	public void Dropped()
 	{
+		Extension = 1.0f;
+		MeasureFrames = 0;
 		Holder = null;
 		DrawnBy = null;
 		Velocity = new Vector2(0.0f, -300.0f);
@@ -214,6 +266,34 @@ public partial class Item : CharacterBody2D
 		phaseFrames = 0;
 		effectAt = GlobalPosition;
 		Velocity = Vector2.Zero;
+	}
+
+	/// <summary>
+	/// Caught in an airbrush's gust: lying on the floor it is picked up and carried off, and in
+	/// the air it is pushed along with the wind - turned right round, it is the blower's now.
+	/// </summary>
+	public void Blow(Fighter by, float wind)
+	{
+		switch (State)
+		{
+			case Phase.Resting:
+				State = Phase.Falling;
+				phaseFrames = 0;
+				Velocity = new Vector2(wind * 0.6f, -260.0f);
+				break;
+			case Phase.Falling:
+				Velocity = new Vector2(Mathf.MoveToward(Velocity.X, wind * 0.8f, Mathf.Abs(wind) * 0.12f), Velocity.Y);
+				break;
+			case Phase.Thrown:
+				bool against = Velocity.X * wind < 0.0f;
+				Velocity = new Vector2(Mathf.MoveToward(Velocity.X, wind, Mathf.Abs(wind) * 0.12f), Velocity.Y);
+				if (against && Velocity.X * wind > 0.0f)
+				{
+					OwnerFighter = by;
+					lastHitAt.Clear();
+				}
+				break;
+		}
 	}
 
 	/// <summary>Rubbed out by the eraser.</summary>
@@ -246,7 +326,7 @@ public partial class Item : CharacterBody2D
 		{
 			case Phase.Falling: TickFalling(dt); break;
 			case Phase.Resting: TickResting(dt); break;
-			case Phase.Held: break;
+			case Phase.Held: if (MeasureFrames > 0) MeasureFrames--; break;
 			case Phase.Thrown: TickThrown(dt); break;
 			case Phase.Effect: TickEffect(dt); break;
 			case Phase.Summon: TickSummon(dt); break;
@@ -527,6 +607,8 @@ public partial class Item : CharacterBody2D
 
 	void StartEffect(Vector2 at)
 	{
+		// Which way it was going when it landed - the pop-up crocodile faces that way.
+		popFacing = Velocity.X < -1.0f ? -1 : Velocity.X > 1.0f ? 1 : OwnerFighter?.Facing ?? 1;
 		State = Phase.Effect;
 		phaseFrames = 0;
 		effectAt = at;
@@ -560,7 +642,11 @@ public partial class Item : CharacterBody2D
 			case ItemImpact.Spring:
 				if (float.IsNaN(floorY)) { if (Data.Impact == ItemImpact.Spring) { Poof(); return; } break; }
 				GlobalPosition = new Vector2(at.X, floorY - Radius);
-				if (Data.Impact == ItemImpact.Spring) SfxPlayer.At("boing", at, 0.1f);
+				if (Data.Impact == ItemImpact.Spring)
+				{
+					popUp = (PopUp)(Mathf.Abs((int)(CrayonBrush.Noise(age, (int)(GetInstanceId() % 9973)) * 3000.0f)) % 3);
+					SfxPlayer.At("boing", at, 0.1f);
+				}
 				break;
 		}
 	}
@@ -737,24 +823,120 @@ public partial class Item : CharacterBody2D
 
 	bool poppedMine;
 
-	/// <summary>The pop-up book: anyone landing on it, or standing on it, is sprung up into the air.</summary>
-	void TickSpring()
+	// --- The pop-up book ----------------------------------------------------------------
+	// Opened on the floor, it is one of three pop-ups, much bigger than the book (Eric,
+	// 2026-10-15): a bouncy castle that springs whoever stands on it sky high, a crocodile that
+	// snaps at whoever is in front of it, or a storm cloud that zaps whoever is under it. The
+	// one who threw it is spared by the crocodile and the cloud.
+
+	enum PopUp { Castle, Crocodile, Cloud }
+
+	PopUp popUp;
+	int popFacing = 1;
+	int sprungAt = -100;
+	int snapAt = -100;
+	int zapAt = -100;
+	Vector2 zapTo;
+
+	const int OpenFrames = 14;
+
+	/// <summary>How big a pop-up stands, against the book's own size.</summary>
+	const float PopUpGrowth = 3.6f;
+
+	/// <summary>The crocodile snaps every so often, its jaw opening wide first.</summary>
+	const int SnapEvery = 60;
+	const int SnapOpening = 22;
+
+	/// <summary>The cloud strikes this often.</summary>
+	const int ZapEvery = 45;
+
+	static readonly MoveData CrocodileSnap = new MoveData
 	{
-		const int OpenFrames = 14;
-		if (phaseFrames < OpenFrames) return;
-		Rect2 top = new Rect2(GlobalPosition.X - Data.Radius, floorY - 60.0f, Data.Radius * 2.0f, 70.0f);
-		foreach (Fighter f in match.Fighters)
-		{
-			if (!f.IsInPlay || f.Velocity.Y < -50.0f || Cooling(f, 24)) continue;
-			if (!top.HasPoint(f.Feet)) continue;
-			lastHitAt[f] = age;
-			f.SpringUp(Data.Amount);
-			sprungAt = phaseFrames;
-			SfxPlayer.At("boing", GlobalPosition, 0.05f);
-		}
+		MoveName = "Pop-Up Crocodile", Damage = 12.0f, BaseKnockback = 32.0f, KnockbackGrowth = 0.85f, LaunchAngleDegrees = 45.0f,
+	};
+
+	static readonly MoveData CloudZap = new MoveData
+	{
+		MoveName = "Pop-Up Storm", Damage = 5.0f, BaseKnockback = 30.0f, KnockbackGrowth = 0.3f, LaunchAngleDegrees = 80.0f,
+	};
+
+	ItemArt PopUpArt => ItemCatalog.Art(popUp switch
+	{
+		PopUp.Crocodile => "popup_book_croc",
+		PopUp.Cloud => "popup_book_cloud",
+		_ => "popup_book_open",
+	});
+
+	float PopUpScale(ItemArt art) => Data.Size * PopUpGrowth / Mathf.Max(art.Size.X, art.Size.Y);
+
+	/// <summary>A point on the pop-up's drawing (in its PNG's pixels), in the world, standing open.</summary>
+	Vector2 PopUpPoint(ItemArt art, Vector2 pixel)
+	{
+		float s = PopUpScale(art);
+		Vector2 d = (pixel - art.Grip) * s;
+		return GlobalPosition + new Vector2(0.0f, Radius) + new Vector2(d.X * popFacing, d.Y);
 	}
 
-	int sprungAt = -100;
+	void TickSpring()
+	{
+		if (phaseFrames < OpenFrames) return;
+		ItemArt art = PopUpArt;
+		if (art == null) return;
+		float half = art.Size.X * PopUpScale(art) * 0.5f;
+		switch (popUp)
+		{
+			case PopUp.Castle:
+			{
+				// The whole castle bounces: anyone on its floor goes up.
+				Rect2 floor = new Rect2(GlobalPosition.X - half * 0.85f, floorY - 90.0f, half * 1.7f, 100.0f);
+				foreach (Fighter f in match.Fighters)
+				{
+					if (!f.IsInPlay || f.Velocity.Y < -50.0f || Cooling(f, 24)) continue;
+					if (!floor.HasPoint(f.Feet)) continue;
+					lastHitAt[f] = age;
+					f.SpringUp(Data.Amount);
+					sprungAt = phaseFrames;
+					SfxPlayer.At("boing", GlobalPosition, 0.05f);
+				}
+				break;
+			}
+			case PopUp.Crocodile:
+			{
+				int into = (phaseFrames - OpenFrames) % SnapEvery;
+				if (into != SnapEvery - 1 || phaseFrames > Data.Duration - 30) break;
+				snapAt = phaseFrames;
+				SfxPlayer.At("item_snip", GlobalPosition, 0.05f);
+				match?.Shake(14.0f);
+				Vector2 hinge = PopUpPoint(art, art.Head);
+				float reach = 120.0f * PopUpScale(art);
+				Rect2 jaws = new Rect2(popFacing > 0 ? hinge.X - 20.0f : hinge.X - reach, hinge.Y - 120.0f, reach + 20.0f, floorY - hinge.Y + 125.0f);
+				foreach (Fighter f in match.Fighters)
+				{
+					if (f == OwnerFighter || !f.IsInPlay || !f.CanBeHitByHazard || !f.BodyRect().Intersects(jaws)) continue;
+					f.ReceiveItemHit(OwnerFighter, CrocodileSnap, popFacing, f.GlobalPosition);
+				}
+				break;
+			}
+			case PopUp.Cloud:
+			{
+				if ((phaseFrames - OpenFrames) % ZapEvery != ZapEvery - 1 || phaseFrames > Data.Duration - 30) break;
+				Vector2 under = PopUpPoint(art, art.Head);
+				float width = art.Size.X * PopUpScale(art) * 0.42f;
+				zapAt = phaseFrames;
+				zapTo = new Vector2(under.X + CrayonBrush.Noise(age, 5) * width * 0.6f, floorY);
+				Rect2 below = new Rect2(under.X - width, under.Y, width * 2.0f, floorY - under.Y + 10.0f);
+				foreach (Fighter f in match.Fighters)
+				{
+					if (f == OwnerFighter || !f.IsInPlay || !f.CanBeHitByHazard || !f.BodyRect().Intersects(below)) continue;
+					zapTo = f.GlobalPosition;
+					f.ReceiveItemHit(OwnerFighter, CloudZap, f.GlobalPosition.X >= under.X ? 1 : -1, f.GlobalPosition);
+					break;
+				}
+				SfxPlayer.At("zap", under, 0.08f);
+				break;
+			}
+		}
+	}
 
 	// --- The canvas: a drawing comes to life -----------------------------------------------
 
@@ -949,6 +1131,11 @@ public partial class Item : CharacterBody2D
 
 	void DrawHeld()
 	{
+		if (MeasureFrames > 0)
+		{
+			DrawMeasuring();
+			return;
+		}
 		if (DrawnBy != null && IsInstanceValid(DrawnBy)) return;
 		DrawHeldOn(this, Transform2D.Identity);
 	}
@@ -1007,7 +1194,10 @@ public partial class Item : CharacterBody2D
 		switch (Data.Impact)
 		{
 			case ItemImpact.Glide:
-				DrawArtCentred(Velocity.Angle(), 1.0f, null, 1.0f, false);
+				// Nose first, and the right way up whichever way it flies: going left it is turned
+				// over side to side, not rolled upside down.
+				bool left = Velocity.X < 0.0f;
+				DrawArtCentred(left ? Velocity.Angle() - Mathf.Pi : Velocity.Angle(), 1.0f, null, 1.0f, left);
 				break;
 			default:
 				DrawArtCentred(spin);
@@ -1292,22 +1482,55 @@ public partial class Item : CharacterBody2D
 
 	void DrawPopUpBook(int f, float fade)
 	{
-		ItemArt open = ItemCatalog.Art("popup_book_open");
-		const int OpenFrames = 14;
-		float rise = Mathf.Min(1.0f, f / (float)OpenFrames);
-		// Springing: squashed for a moment, then stretched up past its height, then settling.
-		int since = f - sprungAt;
-		float boing = since < 18 ? Mathf.Sin(since / 18.0f * Mathf.Pi * 2.0f) * (1.0f - since / 18.0f) : 0.0f;
-		float height = rise * (1.0f + 0.35f * boing);
+		ItemArt open = PopUpArt;
 		if (open == null)
 		{
 			DrawArtSitting(0.0f, fade);
 			return;
 		}
-		float s = Data.Size * 1.5f / Mathf.Max(open.Size.X, open.Size.Y);
-		DrawSetTransformMatrix(new Transform2D(0.0f, new Vector2(s, s * Mathf.Max(0.2f, height)), 0.0f, new Vector2(0.0f, Radius)));
-		DrawTexture(open.Texture, -open.Grip, new Color(1, 1, 1, fade));
+		// Standing up out of the book with an overshoot, the way a pop-up page springs open.
+		float t = Mathf.Min(1.0f, f / (float)OpenFrames);
+		float rise = t < 1.0f ? t * (1.0f + 0.25f * Mathf.Sin(t * Mathf.Pi)) : 1.0f;
+		// Springing someone: squashed for a moment, then stretched up past its height, settling.
+		int since = f - sprungAt;
+		float boing = since < 18 ? Mathf.Sin(since / 18.0f * Mathf.Pi * 2.0f) * (1.0f - since / 18.0f) : 0.0f;
+		float height = rise * (1.0f + 0.3f * boing);
+		float s = PopUpScale(open);
+		var colour = new Color(1, 1, 1, fade);
+		Vector2 foot = new Vector2(0.0f, Radius);
+		DrawSetTransformMatrix(new Transform2D(0.0f, new Vector2(s * popFacing, s * Mathf.Max(0.15f, height)), 0.0f, foot));
+		DrawTexture(open.Texture, -open.Grip, colour);
+
+		if (popUp == PopUp.Crocodile && ItemCatalog.Art("popup_book_croc_jaw") is ItemArt jaw)
+		{
+			// The upper jaw on its hinge: opening wide before each snap, slammed shut on it.
+			int into = (f - OpenFrames) % SnapEvery;
+			float gape = f < OpenFrames ? 0.0f
+				: into >= SnapEvery - SnapOpening ? (into - (SnapEvery - SnapOpening)) / (float)SnapOpening
+				: f - snapAt < 6 ? 0.0f : 0.15f;
+			float angle = -0.75f * gape * gape;
+			Vector2 hinge = foot + new Vector2((open.Head.X - open.Grip.X) * s * popFacing, (open.Head.Y - open.Grip.Y) * s * Mathf.Max(0.15f, height));
+			DrawSetTransformMatrix(new Transform2D(angle * popFacing, new Vector2(s * popFacing, s * Mathf.Max(0.15f, height)), 0.0f, hinge));
+			DrawTexture(jaw.Texture, -jaw.Grip, colour);
+		}
 		DrawSetTransformMatrix(Transform2D.Identity);
+
+		// The storm cloud's lightning: a jagged yellow bolt from under the cloud to what it struck.
+		if (popUp == PopUp.Cloud && f - zapAt < 10 && f >= OpenFrames)
+		{
+			Vector2 from = ToLocal(PopUpPoint(open, open.Head));
+			Vector2 to = ToLocal(zapTo);
+			float a = 1.0f - (f - zapAt) / 10.0f;
+			var bolt = new Vector2[7];
+			for (int i = 0; i < bolt.Length; i++)
+			{
+				float k = i / (float)(bolt.Length - 1);
+				float jag = i == 0 || i == bolt.Length - 1 ? 0.0f : (i % 2 == 0 ? 1.0f : -1.0f) * 26.0f;
+				bolt[i] = from.Lerp(to, k) + new Vector2(jag, 0.0f);
+			}
+			DrawPolyline(bolt, new Color(Ink, 0.9f * a * fade), 14.0f, true);
+			DrawPolyline(bolt, new Color(1.0f, 0.88f, 0.3f, a * fade), 8.0f, true);
+		}
 	}
 
 	void DrawSummon()

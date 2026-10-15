@@ -28,7 +28,7 @@ import json
 import math
 import os
 
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 import color_edgelord as ce
 import edgelord_extras as ex
@@ -86,7 +86,39 @@ def ink_crossing(canvas, row, centre):
     return (best[0] + best[1]) / 2.0
 
 
-def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, parts):
+def capped(canvas, joint):
+    """
+    A leg, hanging straight down from `joint`, carried on up past its cut-off top with leg
+    cloned from just below (mirrored band by band, so there is no seam), into a rounded cap over
+    the joint. His legs are cut flush with the body they tuck up behind, so any swing opened a gap
+    between leg and body (Eric, 2026-10-15: a leg not attached). At rest the cap is behind the
+    body; swung, it is the top of the thigh - as DoomBot's hips are (cut_doombot.capped_leg).
+    """
+    jx, jy = int(joint[0]), int(joint[1])
+    px = canvas.load()
+    row = jy + 24
+    xs = [x for x in range(canvas.size[0]) if px[x, row][3] > 60]
+    if not xs:
+        return canvas
+    left, right = min(xs), max(xs)
+    width = right - left
+    rows = 10
+    band = canvas.crop((0, jy + 14, canvas.size[0], jy + 14 + rows))
+    fill = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    y, flip = jy + 14 - rows, True
+    top = jy - width
+    while y > top - rows:
+        fill.paste(band.transpose(Image.FLIP_TOP_BOTTOM) if flip else band, (0, y))
+        y, flip = y - rows, not flip
+    shape = Image.new('L', canvas.size, 0)
+    draw = ImageDraw.Draw(shape)
+    draw.rectangle([left, top + width / 2, right, jy + 14], fill=255)
+    draw.ellipse([left, top, right, top + width], fill=255)
+    fill.putalpha(ImageChops.multiply(shape, fill.split()[3]))
+    return Image.alpha_composite(fill, canvas)
+
+
+def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, parts, joint=None, cap=False):
     """Rotates a limb about its joint until its far end hangs straight down, then halves it.
 
     The elbow or knee goes where the drawn limb crosses the halfway line, not on the straight
@@ -95,7 +127,8 @@ def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, pa
     from the upper arm - his far hand floated loose (Eric, 2026-10-04). Returns the joint, the
     length, and how far across the elbow is from the joint (zero for a straight limb)."""
     pts = pixels(mask)
-    joint = min(pts, key=lambda p: (p[0] - reference[0]) ** 2 + (p[1] - reference[1]) ** 2)
+    if joint is None:
+        joint = min(pts, key=lambda p: (p[0] - reference[0]) ** 2 + (p[1] - reference[1]) ** 2)
     tip = max(pts, key=lambda p: (p[0] - joint[0]) ** 2 + (p[1] - joint[1]) ** 2)
     length = math.hypot(tip[0] - joint[0], tip[1] - joint[1])
 
@@ -107,6 +140,8 @@ def canonical_limb(piece, mask, reference, name_upper, name_lower, parts_dir, pa
     canvas.paste(crop, (int(side / 2 - jx), int(side / 2 - jy)))
     angle = math.degrees(math.atan2(tip[1] - joint[1], tip[0] - joint[0]))
     canvas = canvas.rotate(angle - 90.0, resample=Image.BICUBIC, center=(side / 2, side / 2))
+    if cap:
+        canvas = capped(canvas, (side / 2, side / 2))
 
     mid = side / 2 + length / 2.0
     knee_x = ink_crossing(canvas, int(mid), side / 2.0)
@@ -179,8 +214,16 @@ def main():
         ('arm_left', 'ArmFront_Upper', 'ArmFront_Lower', centre),
     ):
         piece = masked(full, limb_masks[key])
+        joint = None
+        leg = key.startswith('leg')
+        if leg:
+            # A leg turns about the middle of where it is cut off against the body - not the corner
+            # of the cut nearest the hip, which swung the rest of its top away from him.
+            seam = pixels(ImageChops.multiply(limb_masks[key], body_keep.filter(ImageFilter.MaxFilter(13))))
+            if seam:
+                joint = (sum(p[0] for p in seam) / float(len(seam)), sum(p[1] for p in seam) / float(len(seam)))
         joints[upper], lengths[upper], knees[upper] = canonical_limb(
-            piece, limb_masks[key], ref, upper, lower, parts_dir, parts)
+            piece, limb_masks[key], ref, upper, lower, parts_dir, parts, joint=joint, cap=leg)
 
     # The body: everything that is not a limb - but only on or above the V, so a stray bit of
     # leg outline left over from the cut does not ride along with the body.

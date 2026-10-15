@@ -453,6 +453,11 @@ def main():
         'ballWidth': dims['ballWidth'],
         # Elim drew thin black limbs; darkening the far ones would only lose them.
         'backLimbDarken': 1.0,
+        # His front leg is drawn longer than his back one: the back one is stretched along its
+        # length to match, so he stands straight on both, under his ball, instead of bending the
+        # long one far forward and looking to fall over backwards (FighterRig.EvenUpLegs; Eric,
+        # 2026-10-15).
+        'evenLegs': True,
         'bones': bones,
         'parts': parts,
         'poses': poses,

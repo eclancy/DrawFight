@@ -74,8 +74,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
    replace what is there. This is the entire point of the project. (The allowed exceptions, for
    readability at match size: widening every line uniformly, in place, when it is too thin to
    see - Circy's and Triguy's `LINE_BOOST` - on Eric's own DoomBot at his request, a dark
-   ring round the outside edge - and, on Eric's call, Circy's front foot redrawn flat. Each was
-   asked for by name; none is a precedent for the next drawing. Eyes and mouths are lifted out
+   ring round the outside edge - and, on Eric's call, Circy's front foot redrawn flat, and
+   Triguy's white coloured in light green with a sheen on his hat, not a line of his moved. Each
+   was asked for by name; none is a precedent for the next drawing. Eyes and mouths are lifted out
    whole and moved - squashed to blink, stretched to talk - never redrawn, and at rest the face
    is exactly as drawn (Eric's call, 2026-10-11). See `.ai/art-pipeline.md`.)
 2. **Every fighter rigs to the same skeleton**, so the animation library is authored once and
@@ -120,7 +121,7 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`python tools/art/cut_circy.py`** — re-cut Circy's parts and poses from Elim's drawings in
   `fighters/circy/source/`. Takes about 20 seconds; Python 2.7 without numpy is slow per pixel.
 - **`python tools/art/cut_triguy.py`** — re-cut Triguy's parts, poses and effects from Elim's
-  drawings in `fighters/triguy/source/`. About 45 seconds.
+  drawings in `fighters/triguy/source/`, and colours him in. About two minutes.
 - **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's placeholder rig: colours his
   drawing, cuts it, and draws the swords and turning frames. About a minute. Replaced
   wholesale when his own coloured art arrives - see `fighters/README.md`.

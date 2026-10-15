@@ -30,7 +30,7 @@ OUT_PNG = os.path.join(ROOT, "icon.png")
 # Circy standing idle in the first cell of his parade, on the 1920x1080 screenshot: centre x,
 # centre y, square side. His whole ball and the tops of his legs, with a margin of paper, tight
 # enough that the face still reads when the project manager shows it at 64px.
-FACE = (304, 395, 200)
+FACE = (296, 395, 200)
 
 SIZE = 256
 

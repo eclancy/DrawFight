@@ -58,8 +58,11 @@ public partial class Fighter
 	/// <summary>The paint tube: held up and squeezed, as long as attack is held, then fired.</summary>
 	static readonly MoveData SqueezeMove = ItemMove("Squeeze", AttackAnim.Aim, 8, 2, 14, ItemAction.Squeeze);
 
-	/// <summary>The airbrush's gust.</summary>
-	static readonly MoveData GustMove = ItemMove("Gust", AttackAnim.Aim, 6, 26, 10, ItemAction.Gust);
+	/// <summary>
+	/// The airbrush's gust: it blows for as long as attack is held and there is air in it (Eric,
+	/// 2026-10-15) - the active window is only the most it can go on for.
+	/// </summary>
+	static readonly MoveData GustMove = ItemMove("Gust", AttackAnim.Aim, 6, 600, 10, ItemAction.Gust);
 
 	/// <summary>A line drawn in the air with the marker.</summary>
 	static readonly MoveData DrawMove = ItemMove("Draw", AttackAnim.Slash, 7, 10, 8, ItemAction.Draw);
@@ -362,8 +365,12 @@ public partial class Fighter
 				return false;
 
 			case ItemAction.Gust:
-				if (firstActive && heldItem != null) heldItem.UsesLeft--;
-				if (moveFrame > activeStart && moveFrame <= activeEnd) Gust();
+				if (moveFrame > activeStart && moveFrame <= activeEnd && heldItem != null)
+				{
+					heldItem.UsesLeft--;
+					Gust();
+					if (!input.AttackHeld || heldItem.UsesLeft <= 0) moveFrame = activeEnd;
+				}
 				return false;
 
 			case ItemAction.Draw:
@@ -396,6 +403,7 @@ public partial class Fighter
 
 		if (firstActive && data.Id == "paintbrush") FlickPaint();
 		if (data.Id == "eraser" && moveFrame > activeStart && moveFrame <= activeEnd) EraseAround(heldItem.HeadGlobal(), 70.0f);
+		if (data.Id == "eraser" && moveFrame == 1) SfxPlayer.At("special_glint", GlobalPosition, 0.0f);
 		if (data.Id == "scissors" && firstActive) SfxPlayer.At("item_snip", GlobalPosition, 0.05f);
 		return false;
 	}
@@ -466,6 +474,7 @@ public partial class Fighter
 		// Drawn behind him, so his fist closes over its handle.
 		Match?.MoveChild(item, GetIndex());
 		SfxPlayer.At("item_pickup", GlobalPosition, 0.05f);
+		if (item.Data.Id == "metre_stick") MeasureUp(item);
 
 		switch (item.Data.Use)
 		{
@@ -523,19 +532,40 @@ public partial class Fighter
 		SfxPlayer.At("special_shot", GlobalPosition, 0.05f);
 	}
 
-	/// <summary>The airbrush's gust: everyone ahead pushed away, harder the closer they are.</summary>
+	/// <summary>
+	/// The airbrush's gust: everyone ahead pushed away, harder the closer they are - and anything
+	/// thrown, lying about or shot in its way blown along with it. A shot blown right round is
+	/// his now, as off a shield (Eric, 2026-10-15).
+	/// </summary>
 	void Gust()
 	{
 		if (Match == null || heldItem == null) return;
 		float reach = heldItem.Data.Radius;
 		Vector2 nozzle = heldItem.HeadGlobal();
+		float Strength(Vector2 at, float height)
+		{
+			float dx = (at.X - nozzle.X) * Facing;
+			if (dx < -20.0f || dx > reach || Mathf.Abs(at.Y - nozzle.Y) > height) return 0.0f;
+			return 1.0f - Mathf.Clamp(dx / reach, 0.0f, 1.0f) * 0.6f;
+		}
 		foreach (Fighter f in Match.Fighters)
 		{
 			if (f == this || !f.IsInPlay) continue;
-			float dx = (f.GlobalPosition.X - nozzle.X) * Facing;
-			if (dx < -20.0f || dx > reach || Mathf.Abs(f.GlobalPosition.Y - nozzle.Y) > 140.0f) continue;
-			float strength = 1.0f - Mathf.Clamp(dx / reach, 0.0f, 1.0f) * 0.6f;
-			f.ApplyWind(new Vector2(Facing * 950.0f * strength, 0.0f));
+			float strength = Strength(f.GlobalPosition, 140.0f);
+			if (strength > 0.0f) f.ApplyWind(new Vector2(Facing * 950.0f * strength, 0.0f));
+		}
+		foreach (Node child in Match.GetChildren())
+		{
+			if (child is Item item && item != heldItem)
+			{
+				float strength = Strength(item.GlobalPosition, 160.0f);
+				if (strength > 0.0f) item.Blow(this, Facing * 1100.0f * strength);
+			}
+			else if (child is Hazard hazard && hazard.CanBeBlown)
+			{
+				float strength = Strength(hazard.GlobalPosition, 160.0f);
+				if (strength > 0.0f) hazard.Blow(this, Facing * 1300.0f * strength);
+			}
 		}
 		if (moveFrame % 8 == 0) SfxPlayer.At("item_gust", GlobalPosition, 0.1f);
 	}
@@ -674,6 +704,118 @@ public partial class Fighter
 	int stampMarkFrames;
 	public void StampMark() => stampMarkFrames = 90;
 
+	// --- Rubbed out --------------------------------------------------------------------------
+	// Touched by the eraser's swing he is erased off the page where he stands: frozen, the
+	// eraser scrubs back and forth across him from his head down, and everything it passes over
+	// is gone - his drawing really is rubbed out (EraseShader) - and then so is the stock
+	// (Eric, 2026-10-15).
+
+	int erasedFrames;
+	const int EraseFrames = 84;
+	const int EraseStartle = 14;
+	const int EraseRub = 62;
+
+	public bool IsBeingErased => erasedFrames > 0;
+
+	static Shader eraseShader;
+
+	/// <summary>
+	/// Every part of the rig cut away above a ragged line that sweeps from his head to his feet,
+	/// with streaks of half-rubbed drawing just below it, the way a real eraser leaves a page.
+	/// </summary>
+	const string EraseShaderCode = @"
+shader_type canvas_item;
+uniform float edge = -1.0;
+uniform float top = 0.0;
+uniform float height = 1.0;
+varying vec2 world;
+void vertex() {
+	world = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+}
+void fragment() {
+	vec4 c = texture(TEXTURE, UV) * COLOR;
+	float y = (world.y - top) / height + 0.025 * sin(world.x * 0.09) + 0.015 * sin(world.x * 0.31 + 1.3);
+	float streak = 0.5 + 0.5 * sin(world.y * 0.55);
+	float faint = smoothstep(edge, edge + 0.07 + 0.05 * streak, y);
+	c.a *= faint;
+	COLOR = c;
+}";
+
+	void BeginErased()
+	{
+		if (erasedFrames > 0 || rig == null) return;
+		erasedFrames = EraseFrames;
+		Velocity = Vector2.Zero;
+		ReleaseGrabbed();
+		DropHeldItem();
+		Expression = "shocked";
+		eraseShader ??= new Shader { Code = EraseShaderCode };
+		rig.Material = new ShaderMaterial { Shader = eraseShader };
+		UseParentMaterialBelow(rig, true);
+		SfxPlayer.At("special_blink", GlobalPosition, 0.0f);
+		Match?.Shake(30.0f);
+	}
+
+	static void UseParentMaterialBelow(Node node, bool on)
+	{
+		foreach (Node child in node.GetChildren())
+		{
+			if (child is CanvasItem item) item.UseParentMaterial = on;
+			UseParentMaterialBelow(child, on);
+		}
+	}
+
+	/// <summary>How far down him the rubbing has got, 0 at his head to 1 past his feet.</summary>
+	float EraseProgress => erasedFrames <= 0 ? 0.0f
+		: Mathf.Clamp((EraseFrames - EraseStartle - erasedFrames) / (float)EraseRub, 0.0f, 1.0f);
+
+	/// <summary>The top and height of what there is of him to rub out, in the world.</summary>
+	(float top, float height) EraseSpan()
+	{
+		Rect2 body = BodyRect();
+		return (body.Position.Y - bodySize.Y * 0.15f, body.Size.Y + bodySize.Y * 0.3f);
+	}
+
+	void TickErased()
+	{
+		erasedFrames--;
+		Velocity = Vector2.Zero;
+		(float top, float height) = EraseSpan();
+		if (rig?.Material is ShaderMaterial erase)
+		{
+			erase.SetShaderParameter("edge", EraseProgress * 1.12f - 0.06f);
+			erase.SetShaderParameter("top", top);
+			erase.SetShaderParameter("height", height);
+		}
+		int into = EraseFrames - erasedFrames;
+		if (into > EraseStartle && into % 7 == 0)
+		{
+			SfxPlayer.At("item_crumple", GlobalPosition, 0.15f);
+			crumbs.Add((new Vector2(GlobalPosition.X + CrayonBrush.Noise(into, 3) * bodySize.X * 0.6f, top + height * EraseProgress), fxFrames));
+		}
+		if (erasedFrames > 0) return;
+
+		// All gone: so is the stock.
+		rig.Material = null;
+		UseParentMaterialBelow(rig, false);
+		Expression = "";
+		Match?.ErasedOut(this);
+	}
+
+	/// <summary>The eraser scrubbing back and forth across him at the line it has rubbed down to.</summary>
+	void DrawEraserScrub(CanvasItem canvas)
+	{
+		int into = EraseFrames - erasedFrames;
+		if (into <= EraseStartle - 4 || ItemCatalog.Art("eraser") is not ItemArt art) return;
+		(float top, float height) = EraseSpan();
+		Vector2 local = canvas is Node2D n ? n.ToLocal(new Vector2(GlobalPosition.X, top + height * EraseProgress)) : Vector2.Zero;
+		float sweep = Mathf.Sin(into * 0.55f) * bodySize.X * 0.55f;
+		float s = 120.0f / Mathf.Max(art.Size.X, art.Size.Y);
+		canvas.DrawSetTransformMatrix(new Transform2D(0.35f + 0.15f * Mathf.Sin(into * 0.55f), new Vector2(s, s), 0.0f, local + new Vector2(sweep, -30.0f)));
+		canvas.DrawTexture(art.Texture, -art.Size * 0.5f);
+		canvas.DrawSetTransformMatrix(Transform2D.Identity);
+	}
+
 	/// <summary>
 	/// A gust pushing him. A shove straight along the ground, past his own footing - a push on his
 	/// speed alone is eaten by his friction and he barely slides - and harder in the air, with
@@ -712,6 +854,21 @@ public partial class Fighter
 		Match?.MoveChild(item, GetIndex());
 		if (item.Data.Use == ItemUse.Stamp) stampModeFrames = item.Data.Duration;
 		return true;
+	}
+
+	/// <summary>
+	/// The metre stick, picked up off the floor (not handed to him by a story): it shoots up
+	/// beside him, taller than he is, and he grows to measure up - giant for its Duration, as the magnifying glass makes him. It is in his hand
+	/// once it has finished rising, and cannot be swung before.
+	/// </summary>
+	void MeasureUp(Item stick)
+	{
+		stick.StartMeasuring();
+		giantFrames = Mathf.Max(giantFrames, stick.Data.Duration);
+		itemCooldownFrames = Mathf.Max(itemCooldownFrames, Item.MeasureTotal);
+		boostFlashFrames = 18;
+		boostFlash = new Color(0.98f, 0.86f, 0.55f);
+		SfxPlayer.At("special_resize", GlobalPosition, 0.05f);
 	}
 
 	/// <summary>Knocked out of his hand - or, KO'd, gone.</summary>
@@ -842,6 +999,15 @@ public partial class Fighter
 		(Vector2 fist, Vector2 along)? hand = rig.FrontHandGlobal();
 		if (hand == null) return;
 		(Vector2 fist, Vector2 along) = hand.Value;
+
+		// Still measuring him up: standing on the floor at his side, not in his hand yet.
+		if (heldItem.MeasureFrames > 0)
+		{
+			heldItem.DrawnBy = null;
+			heldItem.StandAt(new Vector2(GlobalPosition.X + Facing * (bodySize.X * 0.5f + 60.0f), Feet.Y), Facing);
+			return;
+		}
+
 		heldItem.HoldAt(fist, along, Facing);
 
 		// Drawn inside his arm, in front of his body and behind his hand. The layer is part of his
@@ -943,6 +1109,18 @@ public partial class Fighter
 	void DrawItemOverlay(CanvasItem canvas)
 	{
 		DrawItemUses(canvas);
+		if (erasedFrames > 0) DrawEraserScrub(canvas);
+
+		// The eraser wound up: a pink glow swelling round it, trembling, so everyone sees what
+		// is coming and has the whole wind-up to get out of the way.
+		if (heldItem != null && State == FighterState.Attacking && currentMove == heldItem.Data.Swing
+			&& currentMove.Erases && moveFrame <= currentMove.StartupFrames && canvas is Node2D windup)
+		{
+			float t = moveFrame / (float)currentMove.StartupFrames;
+			Vector2 at = windup.ToLocal(heldItem.HeadGlobal()) + new Vector2(CrayonBrush.Noise(fxFrames, 7), CrayonBrush.Noise(fxFrames, 8)) * 5.0f * t;
+			canvas.DrawCircle(at, 20.0f + 70.0f * t, new Color(0.96f, 0.55f, 0.7f, 0.18f + 0.25f * t));
+			canvas.DrawArc(at, 20.0f + 70.0f * t, 0.0f, Mathf.Tau, 32, new Color(0.9f, 0.4f, 0.6f, 0.6f * t), 5.0f, true);
+		}
 		Vector2 top = new Vector2(0.0f, -bodySize.Y * 0.5f);
 		Vector2 feet = new Vector2(0.0f, bodySize.Y * 0.5f);
 

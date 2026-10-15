@@ -46,8 +46,9 @@ public static class Specials
 	/// <summary>
 	/// Side: he curls up into a ball of fire, spinning on the spot while special is held - the
 	/// fireball swells with the charge - then lets go and rolls across the stage, burning whoever
-	/// he runs over. A tap rolls a short way; a full charge rolls nearly twice as fast and hits
+	/// he runs into. A tap rolls a short way; a full charge rolls nearly twice as fast and hits
 	/// nearly twice as hard. Started on the ground it stops at the edge rather than rolling off.
+	/// Hitting someone stops the roll dead and pops him up off them (Eric, 2026-10-15).
 	/// </summary>
 	static MoveData FireballRoll() => new MoveData
 	{
@@ -61,6 +62,7 @@ public static class Specials
 		CarriesMomentum = true, BallForm = true, FxFlame = true,
 		Special = SpecialKind.Dash,
 		SpecialSpeed = 1100.0f,
+		HopOnHit = 820.0f,
 		BurnFrames = 60, BurnDamage = 3.0f,
 		FxColor = new Color(0.99f, 0.56f, 0.20f), FxRadius = 40.0f,
 	};
@@ -444,10 +446,11 @@ public static class Specials
 	/// This is the move that most needs its sound: a ring rising through the glint that peaks on
 	/// the frame he goes (special_glint), then a sharp cut (special_blink).
 	///
-	/// With one of his planted blades up ahead and no further than the blink itself goes, he goes
-	/// to it instead - up or down - and pulls it out of the ground: his blades are anchors. The
-	/// blink was doubled to about 660 pixels, and the search for a blade with it (Eric's call,
-	/// 2026-10-04).
+	/// With one of his planted blades up ahead - half as far again as the blink itself goes, and
+	/// a long way up or down - he goes to it instead and pulls it out of the ground: his blades
+	/// are anchors. Going there he passes through the platforms that can be dropped through. The
+	/// blink was doubled to about 660 pixels (Eric's call, 2026-10-04); the search widened past it
+	/// (2026-10-15).
 	/// </summary>
 	static MoveData BlurSlash() => new MoveData
 	{
@@ -497,8 +500,8 @@ public static class Specials
 
 	/// <summary>
 	/// Down: he stabs a sword into the ground in front of him and leaves it. The first person to
-	/// run into it is cut and popped up, and the sword is gone; left alone, it is gone after four
-	/// seconds. Two can be out; a third pulls up the oldest. Put down in the air, it falls
+	/// run into it is cut and popped up, and the sword is gone; left alone, it is gone after eight
+	/// seconds (four, until Eric's call of 2026-10-15). Two can be out; a third pulls up the oldest. Put down in the air, it falls
 	/// point-first until it sticks in whatever is below.
 	/// </summary>
 	static MoveData PlantedBlade() => new MoveData
@@ -511,7 +514,7 @@ public static class Specials
 		// Low enough that, on the ground, the point is in the floor.
 		HitboxOffset = new Vector2(66.0f, -7.0f), HitboxRadius = 34.0f,
 		Special = SpecialKind.Trap,
-		SpecialLifetime = 240, SpecialGravity = 3000.0f, MaxOut = 2, SpentOnHit = true,
+		SpecialLifetime = 480, SpecialGravity = 3000.0f, MaxOut = 2, SpentOnHit = true,
 		FxColor = new Color(0.80f, 0.82f, 0.86f), FxRadius = 30.0f,
 		FxTexture = EdgeFx("planted"), FxArtSize = 150.0f,
 	};

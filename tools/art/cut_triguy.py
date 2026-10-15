@@ -32,6 +32,14 @@ a transparent canvas, drawn side-on facing right:
 The other drawings are front or three-quarter views shown whole: his three taunt poses, the
 crying pose for his puddle, and three effects - the spike that comes up out of the puddle, the
 trampoline, and the jagged outline that goes round him while he is invincible.
+
+COLOUR, on Eric's call (2026-10-15): Elim drew him white, and at match size his eyes, his teeth
+and his hat ran into the white. So the white of his body - the one big white shape in each
+drawing - is coloured in a light green (BODY_LIGHT), a shade deeper round its rim so it reads as
+a solid thing; the gaps between his teeth are filled white in the mouth piece, so they stay white
+as it moves; and his hat gets a sheen along its top edges (HAT_SHEEN), so it reads as a shiny top
+hat rather than a black blot. Every line stays exactly where and as Elim drew it: this colours in
+what he left white or filled black, after the cut, and never touches source/.
 """
 
 from __future__ import division, print_function
@@ -40,7 +48,7 @@ import json
 import math
 import os
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 import cut_circy as circy
 import faces
@@ -70,6 +78,12 @@ EFFECTS = [
     ('trampoline', 'trampoline.png', 'mat'),
     ('outline', 'outline.png', 'centre'),
 ]
+
+# His colouring (see the note at the top): the body's light green, deeper at its rim, and the
+# sheen on his hat.
+BODY_LIGHT = (214, 240, 200)
+BODY_DEEP = (168, 212, 156)
+HAT_SHEEN = (110, 116, 140)
 
 OUTLINE_GROW = 16      # px added around the white fill to take in the triangle's outline
 STRAY_PIXELS = 400     # a stroke smaller than this is a stray mark, given to the nearest limb
@@ -312,6 +326,119 @@ def cut_poses(poses_dir):
     return poses
 
 
+# --- Colouring in -------------------------------------------------------------------------------
+
+# The shapes are found on a copy a quarter the size - the drawings are 2000 pixels across, and
+# Python 2.7 without numpy is slow per pixel - then cut back to the exact pixels of the drawing.
+SMALL = 4
+
+
+def _small(mask):
+    return mask.resize((max(1, mask.size[0] // SMALL), max(1, mask.size[1] // SMALL)), Image.NEAREST)
+
+
+def _full(small, mask):
+    """A shape found small, laid back over the full-size mask: only the mask's own pixels in it."""
+    big = small.resize(mask.size, Image.BILINEAR).point(lambda v: 255 if v >= 128 else 0)
+    return ImageChops.multiply(big, mask)
+
+
+def _largest(small):
+    """The largest 4-connected region of a (small) mask."""
+    w, h = small.size
+    sp = small.load()
+    seen = bytearray(w * h)
+    best = []
+    for start in range(w * h):
+        if seen[start] or sp[start % w, start // w] < 128:
+            continue
+        seen[start] = 1
+        stack = [start]
+        comp = []
+        while stack:
+            i = stack.pop()
+            comp.append(i)
+            x = i % w
+            for j in (i - 1 if x > 0 else -1, i + 1 if x < w - 1 else -1, i - w, i + w):
+                if 0 <= j < w * h and not seen[j] and sp[j % w, j // w] >= 128:
+                    seen[j] = 1
+                    stack.append(j)
+        if len(comp) > len(best):
+            best = comp
+    region = Image.new('L', small.size, 0)
+    rp = region.load()
+    for i in best:
+        rp[i % w, i // w] = 255
+    return region
+
+
+def colour_body(img):
+    """The one big white shape - his body - coloured in light green, deeper toward its edge.
+    Smaller whites (an eye, the gaps in a mouth) stay white; nothing that is not white changes."""
+    r, g, b, a = img.split()
+    white = ImageChops.darker(ImageChops.darker(r, g), b).point(lambda v: 255 if v > 200 else 0)
+    white = ImageChops.multiply(white, a.point(lambda v: 255 if v > 128 else 0))
+    small = _largest(_small(white))
+    body = _full(small, white)
+    depth = small.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MinFilter(7))
+    depth = depth.filter(ImageFilter.GaussianBlur(26 // SMALL)).resize(img.size, Image.BILINEAR)
+    shade = Image.composite(Image.new('RGBA', img.size, BODY_LIGHT + (255,)),
+                            Image.new('RGBA', img.size, BODY_DEEP + (255,)), depth)
+    out = img.copy()
+    out.paste(shade, (0, 0), body)
+    return out
+
+
+def fill_teeth(img):
+    """The see-through gaps a mouth's own lines close in - his teeth - filled white, so they stay
+    white over his coloured body as the mouth moves."""
+    w, h = img.size
+    clear = img.split()[3].point(lambda v: 255 if v < 128 else 0)
+    cp = clear.load()
+    edge = [(x, 0) for x in range(w)] + [(x, h - 1) for x in range(w)] + \
+           [(0, y) for y in range(h)] + [(w - 1, y) for y in range(h)]
+    for xy in edge:
+        if cp[xy] == 255:
+            ImageDraw.floodfill(clear, xy, 128)
+    enclosed = clear.point(lambda v: 255 if v == 255 else 0)
+    out = img.copy()
+    out.paste((255, 255, 255, 255), (0, 0) + img.size, enclosed)
+    return out
+
+
+def hat_sheen(img):
+    """A sheen along the top edges of his hat - the biggest thickly filled black shape in the
+    drawing, never a line - kept inside it, so the black edge he drew stays black."""
+    r, g, b, a = img.split()
+    solid = ImageChops.lighter(ImageChops.lighter(r, g), b).point(lambda v: 255 if v < 60 else 0)
+    solid = ImageChops.multiply(solid, a.point(lambda v: 255 if v > 128 else 0))
+    # Only what is far thicker than any line survives shrinking; the biggest of that is the hat.
+    core = _largest(_small(solid).filter(ImageFilter.MinFilter(11)))
+    hat = _full(core.filter(ImageFilter.MaxFilter(13)), solid)
+    inner = _full(_small(hat).filter(ImageFilter.MinFilter(5)), hat)
+    below = Image.new('L', img.size, 0)
+    below.paste(hat, (0, 34))
+    band = ImageChops.subtract(inner, below).filter(ImageFilter.GaussianBlur(6))
+    band = ImageChops.multiply(band, inner.filter(ImageFilter.GaussianBlur(3))).point(lambda v: int(v * 0.85))
+    return Image.composite(Image.new('RGBA', img.size, HAT_SHEEN + (255,)), img, band)
+
+
+def colour_in(parts_dir, poses_dir):
+    """Every drawing of him coloured in the same way (the note at the top)."""
+    def redo(path, *steps):
+        img = Image.open(path).convert('RGBA')
+        for step in steps:
+            img = step(img)
+        img.save(path)
+    redo(os.path.join(parts_dir, 'Torso.png'), colour_body)
+    redo(os.path.join(parts_dir, 'FaceMouth.png'), fill_teeth)
+    redo(os.path.join(parts_dir, 'Hat.png'), hat_sheen)
+    redo(os.path.join(poses_dir, 'hat.png'), hat_sheen)
+    for name, _ in BODY_POSES:
+        redo(os.path.join(poses_dir, name + '.png'), colour_body, hat_sheen)
+    print('coloured in')
+
+
 def main():
     parts_dir = os.path.join(ROOT, 'parts')
     poses_dir = os.path.join(ROOT, 'poses')
@@ -345,8 +472,10 @@ def main():
     }
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
-    # Last: the eyes and mouth lifted out so the game can move them (faces.py, face_specs.py).
+    # The eyes and mouth lifted out so the game can move them (faces.py, face_specs.py) - then
+    # the colouring in, over the face's filled-in hole as much as the rest of him.
     faces.apply(ROOT, *FACES['triguy'])
+    colour_in(parts_dir, poses_dir)
     print('done')
 
 

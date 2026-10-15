@@ -67,20 +67,32 @@ public partial class MatchManager : Node2D
 	int itemTimer = -1;
 	readonly System.Random itemRng = new System.Random();
 
-	/// <summary>A random item that may appear; never a pencil case out of a pencil case.</summary>
+	/// <summary>
+	/// A random item that may appear; never a pencil case out of a pencil case. A rare one
+	/// (ItemData.SpawnWeight) comes up less often than the rest.
+	/// </summary>
 	public ItemData RandomItem(int salt, bool fromCase)
 	{
+		bool only = !string.IsNullOrEmpty(OnlyItem) && !fromCase;
 		var choices = new List<ItemData>();
+		float total = 0.0f;
 		for (int i = 0; i < ItemCatalog.Count; i++)
 		{
 			ItemData data = ItemCatalog.Get(i);
 			if (fromCase && data.Use == ItemUse.Open) continue;
-			if (!string.IsNullOrEmpty(OnlyItem) && !fromCase) { if (data.Id == OnlyItem) choices.Add(data); continue; }
-			if (Items != null && !Items.Enabled[i]) continue;
+			if (only && data.Id != OnlyItem) continue;
+			if (!only && Items != null && !Items.Enabled[i]) continue;
 			choices.Add(data);
+			total += data.SpawnWeight;
 		}
 		if (choices.Count == 0) return null;
-		return choices[itemRng.Next(choices.Count)];
+		float pick = (float)itemRng.NextDouble() * total;
+		foreach (ItemData data in choices)
+		{
+			pick -= data.SpawnWeight;
+			if (pick <= 0.0f) return data;
+		}
+		return choices[^1];
 	}
 
 	public Item SpawnItem(ItemData data, Vector2 at, Vector2 velocity)
@@ -177,7 +189,7 @@ public partial class MatchManager : Node2D
 		debugDraw = new DebugDraw { Match = this };
 		AddChild(debugDraw);
 
-		camera = new GameCamera();
+		camera = new GameCamera { Bounds = stage.BlastZone, Limits = stage.Backdrop };
 		AddChild(camera);
 		fx.Camera = camera;
 
@@ -337,6 +349,33 @@ public partial class MatchManager : Node2D
 		SfxPlayer.At("explosion", position, 0.03f);
 	}
 
+	// --- The end of a match ---------------------------------------------------------
+	// The last KO plays in slow motion, as in Smash, and the winner is still in play through it:
+	// jump off the edge and he is KO'd like anyone, the blast and all - but the camera stops at
+	// the edge of the stage rather than following him out (Eric, 2026-10-15).
+
+	const float EndSlowScale = 0.25f;
+	const int EndSlowFrames = 50;
+	const int EndEaseFrames = 24;
+	int endFrames;
+
+	void TickEndSlowMotion()
+	{
+		endFrames++;
+		if (endFrames <= EndSlowFrames) Engine.TimeScale = EndSlowScale;
+		else if (endFrames <= EndSlowFrames + EndEaseFrames)
+		{
+			Engine.TimeScale = Mathf.Lerp(EndSlowScale, 1.0f, (endFrames - EndSlowFrames) / (float)EndEaseFrames);
+		}
+		else if (endFrames == EndSlowFrames + EndEaseFrames + 1) Engine.TimeScale = 1.0f;
+	}
+
+	public override void _ExitTree()
+	{
+		// Leaving mid slow-motion must not leave the menus running slow.
+		Engine.TimeScale = 1.0f;
+	}
+
 	public override void _PhysicsProcess(double delta)
 	{
 		if (countdownFrames > 0)
@@ -344,9 +383,9 @@ public partial class MatchManager : Node2D
 			CountdownSound();
 			countdownFrames--;
 		}
-		if (matchOver) return;
 		if (director != null && director.InScene) return;
-		if (countdownFrames <= FightBannerFrames) TickItems();
+		if (matchOver) TickEndSlowMotion();
+		else if (countdownFrames <= FightBannerFrames) TickItems();
 
 		foreach (Fighter fighter in Fighters)
 		{
@@ -364,7 +403,7 @@ public partial class MatchManager : Node2D
 			}
 		}
 
-		CheckForWinner();
+		if (!matchOver) CheckForWinner();
 	}
 
 	void KillOffStage(Fighter fighter)
@@ -384,6 +423,19 @@ public partial class MatchManager : Node2D
 		// A KO is the biggest moment in a match; it gets the biggest rumble.
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 
+		fighter.LoseStock(stage.RespawnPoint);
+		FaceInward(fighter);
+	}
+
+	/// <summary>
+	/// Rubbed out by the eraser: a KO where he stood, with no blast to fly into - just a shake,
+	/// the KO's sound and a rumble, and the stock is gone.
+	/// </summary>
+	public void ErasedOut(Fighter fighter)
+	{
+		camera.AddShake(90.0f);
+		SfxPlayer.At("ko_blast", fighter.GlobalPosition, 0.0f);
+		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
 	}
@@ -669,6 +721,7 @@ public partial class MatchManager : Node2D
 		winner = "";
 		lastKnockback = 0.0f;
 		Engine.TimeScale = 1.0f;
+		endFrames = 0;
 		// The battle music comes back in on FIGHT!, like the first time.
 		MusicPlayer.Stop();
 		MusicPlayer.SetPaused(false);

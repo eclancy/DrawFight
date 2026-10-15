@@ -317,11 +317,11 @@
   "paper_airplane": {
     "grip": [
       91.0, 
-      55.0
+      57.0
     ], 
     "head": [
       173.0, 
-      53.0
+      59.0
     ], 
     "size": [
       182, 
@@ -403,6 +403,51 @@
       166
     ], 
     "texture": "popup_book.png"
+  }, 
+  "popup_book_cloud": {
+    "grip": [
+      130.0, 
+      186.0
+    ], 
+    "head": [
+      130.0, 
+      78.0
+    ], 
+    "size": [
+      260, 
+      197
+    ], 
+    "texture": "popup_book_cloud.png"
+  }, 
+  "popup_book_croc": {
+    "grip": [
+      130.0, 
+      118.0
+    ], 
+    "head": [
+      167.0, 
+      44.0
+    ], 
+    "size": [
+      260, 
+      129
+    ], 
+    "texture": "popup_book_croc.png"
+  }, 
+  "popup_book_croc_jaw": {
+    "grip": [
+      11.0, 
+      51.0
+    ], 
+    "head": [
+      93.0, 
+      45.0
+    ], 
+    "size": [
+      107, 
+      71
+    ], 
+    "texture": "popup_book_croc_jaw.png"
   }, 
   "popup_book_open": {
     "grip": [

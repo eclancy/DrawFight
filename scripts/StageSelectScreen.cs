@@ -26,11 +26,13 @@ public partial class StageSelectScreen : Node2D
 	Node2D cursorLayer;
 	int shown = -1;
 
-	const float CardWidth = 470.0f;
 	const float CardGap = 40.0f;
 
-	/// <summary>The button to the item settings, with how often items are set to turn up on it.</summary>
-	static readonly Rect2 ItemsButton = new Rect2(1440.0f, 820.0f, 400.0f, 96.0f);
+	/// <summary>
+	/// The button to the item settings, with how often items are set to turn up on it - up in the
+	/// corner by the title, out of the way of the stages, which get the page (Eric, 2026-10-15).
+	/// </summary>
+	static readonly Rect2 ItemsButton = new Rect2(1470.0f, 70.0f, 370.0f, 90.0f);
 
 	public override void _Ready()
 	{
@@ -45,12 +47,16 @@ public partial class StageSelectScreen : Node2D
 		for (int i = 0; i < stages.Length; i++) stages[i] = StageCatalog.Get(i);
 
 		// As wide as a card can be and still fit every stage across the page.
-		float width = Mathf.Min(CardWidth, (viewport.X - 360.0f - (stages.Length - 1) * CardGap) / stages.Length);
-		float total = stages.Length * width + (stages.Length - 1) * CardGap;
-		float left = (viewport.X - total) * 0.5f;
+		// Big and wide, in a grid - two across for up to four stages, three after that - so each
+		// stage shows the whole of its play area at a size you can read it (Eric, 2026-10-15).
+		int columns = stages.Length <= 4 ? 2 : 3;
+		int rows = (stages.Length + columns - 1) / columns;
+		float width = (viewport.X - 240.0f - (columns - 1) * CardGap) / columns;
+		float height = Mathf.Min(width * 0.4f, (720.0f - rows * 56.0f) / rows);
 		for (int i = 0; i < cards.Length; i++)
 		{
-			cards[i] = new Rect2(left + i * (width + CardGap), 262.0f, width, 440.0f * width / CardWidth);
+			int column = i % columns, row = i / columns;
+			cards[i] = new Rect2(200.0f + column * (width + CardGap), 196.0f + row * (height + 56.0f), width, height);
 		}
 
 		for (int i = 0; i < stages.Length; i++) previews[i] = BuildPreview(stages[i], cards[i].Size);
@@ -75,11 +81,11 @@ public partial class StageSelectScreen : Node2D
 		for (int i = 0; i < stages.Length; i++)
 		{
 			root.AddChild(MenuTheme.MakeLabel(stages[i].DisplayName,
-				new Vector2(cards[i].Position.X + 6.0f, cards[i].End.Y + 18.0f), 30, MenuTheme.Text));
+				new Vector2(cards[i].Position.X + 6.0f, cards[i].End.Y + 8.0f), 30, MenuTheme.Text));
 		}
 
-		nameLabel = MenuTheme.MakeLabel("", new Vector2(196.0f, 812.0f), 56, MenuTheme.Text);
-		blurbLabel = MenuTheme.MakeLabel("", new Vector2(200.0f, 886.0f), 27, MenuTheme.Soft);
+		nameLabel = MenuTheme.MakeLabel("", new Vector2(196.0f, 936.0f), 48, MenuTheme.Text);
+		blurbLabel = MenuTheme.MakeLabel("", new Vector2(200.0f, 1000.0f), 27, MenuTheme.Soft);
 		root.AddChild(nameLabel);
 		root.AddChild(blurbLabel);
 

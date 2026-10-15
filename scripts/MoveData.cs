@@ -582,6 +582,18 @@ public partial class MoveData : Resource
 	[Export] public bool SpentOnHit { get; set; } = false;
 
 	/// <summary>
+	/// A charge that stops dead on whoever it hits and pops him up off them, this fast (px/s) -
+	/// Flambe's fireball roll, which rolled on through (Eric, 2026-10-15). Zero rolls on.
+	/// </summary>
+	[Export] public float HopOnHit { get; set; } = 0.0f;
+
+	/// <summary>
+	/// Rubs out whoever it touches: no knockback, no percent - they are erased off the page where
+	/// they stand and lose the stock. The Big Pink Eraser's one swing (Eric, 2026-10-15).
+	/// </summary>
+	[Export] public bool Erases { get; set; } = false;
+
+	/// <summary>
 	/// A chargeable move that charges while SPECIAL is held rather than attack - Swift's fireball.
 	/// Needs <see cref="Chargeable"/>. Works in the air. A projectile grows with the charge (see
 	/// <see cref="ChargeSize"/>).

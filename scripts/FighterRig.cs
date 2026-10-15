@@ -102,6 +102,16 @@ public partial class FighterRig : Node2D
 	float legStretch = 1.0f;
 	float frontLegReach = 1.0f;
 
+	/// <summary>
+	/// Each leg's length against as drawn, so both reach the floor straight (rig.json "evenLegs").
+	/// Elim drew Circy's front leg longer than his back one; standing on both, the long one bent
+	/// far forward at the knee, put both feet out ahead of his ball, and he looked to be falling
+	/// over backwards (Eric, 2026-10-15). The shorter leg is stretched to match - along its own
+	/// length only, the way his Stretch does, never redrawn.
+	/// </summary>
+	float backLegEven = 1.0f, frontLegEven = 1.0f;
+	bool evenLegs;
+
 	readonly Pose current = new Pose();
 	readonly Pose target = new Pose();
 
@@ -235,6 +245,7 @@ public partial class FighterRig : Node2D
 		ballWidth = root.ContainsKey("ballWidth") ? (float)root["ballWidth"] : 0.0f;
 		figureHeight = root.ContainsKey("figureHeight") ? (float)root["figureHeight"] : 0.0f;
 		stanceSpread = root.ContainsKey("stance") ? (float)root["stance"] : 0.0f;
+		evenLegs = root.ContainsKey("evenLegs") && (bool)root["evenLegs"];
 		legsOnBody = root.ContainsKey("legsOnBody") && (bool)root["legsOnBody"];
 		LoadPoses(root, baseDir);
 
@@ -331,6 +342,7 @@ public partial class FighterRig : Node2D
 
 		LoadExtras(root, parts, baseDir);
 		LoadPoints(root);
+		if (evenLegs) EvenUpLegs();
 
 		Loaded = true;
 		Play(FighterAnimations.Idle);
@@ -1500,13 +1512,26 @@ public partial class FighterRig : Node2D
 
 	static readonly RigBone[] LegParts = { RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower };
 
+	/// <summary>The shorter leg lengthened until, standing straight, its sole comes as low as the other's.</summary>
+	void EvenUpLegs()
+	{
+		float? back = Reach(RigBone.LegBackUpper, RigBone.LegBackLower);
+		float? front = Reach(RigBone.LegFrontUpper, RigBone.LegFrontLower);
+		if (back == null || front == null) return;
+		float backRoot = bones[(int)RigBone.LegBackUpper].Position.Y;
+		float frontRoot = bones[(int)RigBone.LegFrontUpper].Position.Y;
+		if (back.Value < front.Value) backLegEven = (front.Value - backRoot) / Mathf.Max(1.0f, back.Value - backRoot);
+		else frontLegEven = (back.Value - frontRoot) / Mathf.Max(1.0f, front.Value - frontRoot);
+		ApplyLegLengths();
+	}
+
 	void ApplyLegLengths()
 	{
 		foreach (RigBone bone in LegParts)
 		{
 			int i = (int)bone;
 			bool front = bone == RigBone.LegFrontUpper || bone == RigBone.LegFrontLower;
-			float k = legStretch * (front ? frontLegReach : 1.0f);
+			float k = legStretch * (front ? frontLegReach * frontLegEven : backLegEven);
 			float side = TurnSign(bone);
 			if (sprites[i] != null) sprites[i].Scale = new Vector2(side, k);
 			// The knees move with it - down the leg only: a knee drawn off to one side (a bowed

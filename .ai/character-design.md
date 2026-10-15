@@ -199,7 +199,8 @@ any of them:
 - `Chargeable` on a **Dash** - it charges in place (with `ChargeWithSpecial`, while special is
   held) and only goes on release, up to `ChargeSize` times as fast. With `BallForm` and `FxFlame`
   he is curled up inside a fireball that swells with the charge and trails fire as it rolls -
-  Flambe's Fireball Roll.
+  Flambe's Fireball Roll. `HopOnHit` stops a charge dead on whoever it hits and pops him up off
+  them at that speed, instead of rolling on through (Flambe's roll, Eric 2026-10-15).
 - `ComboNext` on **any** normal, not just the jab: press attack again during the move and the
   follow-up comes out as soon as the first hit is done. Flambe's tilts, dash attack and forward
   air are two-part this way. The speed check counts a combo string as one move.
@@ -286,8 +287,9 @@ any of them:
   floor's end, makes everyone else slip (`Fighter.Slip`), and sends `RainDrop` up out of it every
   `RainInterval` frames. Triguy's crying.
 - `BlinkToTrap` - a blink that goes exactly to one of the fighter's own traps when one is ahead
-  and within about 700 pixels, up or down, and pulls it out. EdgeLord's planted blades are
-  anchors for his Blur Slash.
+  and within about 1000 pixels, and 620 up or down, and pulls it out - passing straight through
+  any platform that can be dropped through on the way. EdgeLord's planted blades are anchors for
+  his Blur Slash, and stay planted for eight seconds (Eric, 2026-10-15).
 
 Some are **traits on `FighterData`**, because they are about the fighter rather than one move:
 

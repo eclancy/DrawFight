@@ -16,7 +16,7 @@ public enum ItemUse
 	/// <summary>Held down, it charges; let go, and it fires a blob that size. The paint tube.</summary>
 	ChargeShot,
 
-	/// <summary>Each press blows a gust that pushes everyone ahead away. The airbrush.</summary>
+	/// <summary>Held down, it blows: everyone ahead pushed away, and anything flying blown along. The airbrush.</summary>
 	Gust,
 
 	/// <summary>Each press draws a platform, for a few seconds. The magic marker.</summary>
@@ -114,6 +114,12 @@ public partial class ItemData : Resource
 
 	/// <summary>Frames after one use before the next can start, so it cannot be mashed.</summary>
 	[Export] public int Cooldown { get; set; } = 0;
+
+	/// <summary>
+	/// How likely it is to be the one that drops, against 1 for most: the eraser, which KOs
+	/// outright, turns up rarely (Eric, 2026-10-15).
+	/// </summary>
+	[Export] public float SpawnWeight { get; set; } = 1.0f;
 
 	/// <summary>
 	/// How much use is in it before it is used up: swings that land (the pencil sharpens down),

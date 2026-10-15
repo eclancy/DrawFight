@@ -557,6 +557,25 @@ public partial class Hazard : Node2D
 	/// <summary>Takes this hazard away early - the oldest planted blade, when a new one goes in.</summary>
 	public void Remove() => Expire();
 
+	/// <summary>A shot still flying - the kind an airbrush's gust can push about.</summary>
+	public bool CanBeBlown => !expiring && !Stopped && !move.Beam
+		&& (move.Special == SpecialKind.Projectile || move.Special == SpecialKind.Drop || move.Special == SpecialKind.Walker);
+
+	/// <summary>
+	/// Pushed along by an airbrush's gust. Turned right round by it, it is the blower's now, the
+	/// way a shot off a shield is.
+	/// </summary>
+	public void Blow(Fighter by, float wind)
+	{
+		bool against = velocity.X * wind < 0.0f;
+		velocity = new Vector2(Mathf.MoveToward(velocity.X, wind, Mathf.Abs(wind) * 0.1f), velocity.Y);
+		if (!against || velocity.X * wind <= 0.0f) return;
+		owner = by;
+		spinSign = -spinSign;
+		FlipArt = !FlipArt;
+		alreadyHit = new HashSet<Fighter>();
+	}
+
 	/// <summary>
 	/// A cloud forms over its first frames, then drops its rain - scattered across its width,
 	/// each drop's spot hashed from the count so the pattern never repeats exactly but is never

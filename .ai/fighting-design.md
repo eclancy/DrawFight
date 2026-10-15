@@ -21,6 +21,11 @@ Smash rules, not health bars.
 - Losing a stock resets your percent to 0 and respawns you on a platform above the stage,
   briefly invulnerable.
 - Default match: 3 stocks, no time limit. Last fighter standing wins.
+- **The last KO plays in slow motion** - a quarter speed for 50 frames, easing back over 24
+  (`MatchManager.TickEndSlowMotion`). The winner is still in play through it: jump off the edge
+  and he is KO'd like anyone, blast and all, but he has still won. The camera never follows
+  anyone past the blast zone, and never looks past the painted edge of the stage
+  (`GameCamera.Bounds`, `Limits`; Eric, 2026-10-15).
 
 Why this and not health bars: percent-based knockback is enormously forgiving. Nobody dies to
 a single mistake at low percent, comebacks happen constantly, and the dramatic moment of a
@@ -489,6 +494,22 @@ needs a new kind of use or impact.
 - **The rubber stamp** is pressed, not swung: for its eight seconds, each press of attack lifts
   it to his chest and presses it straight down onto the floor in front of him, hanging face down,
   printing its star.
+- **The big pink eraser** is rare (a fifth as likely to drop as anything else,
+  `ItemData.SpawnWeight`) and has one use: an enormous wind-up, most of a second with a pink glow
+  swelling round it, then one swing - and whoever it touches is rubbed out where they stand. No
+  knockback and no percent: they freeze, the eraser scrubs back and forth across them from the
+  head down, their drawing really is erased as it goes (a shader on the rig), and the stock is
+  gone. It cannot be blocked, but the wind-up is the whole warning (Eric, 2026-10-15).
+- **The metre stick** measures you up. Picked up, it stands on the floor beside him and shoots
+  up out of it past his head while he grows to match - giant for ten seconds, as the magnifying
+  glass makes him - then it is in his hand, longer than it lay, for its slow home-run swing.
+- **The airbrush** blows for as long as attack is held, until its air runs out: everyone ahead is
+  pushed back, and anything thrown, lying about or shot is blown along with it - a shot blown
+  right round is the blower's now, as off a shield.
+- **The pop-up book** opens on the floor into one of three pop-ups, each much bigger than the
+  book (Eric, 2026-10-15): a bouncy castle that springs whoever stands on it sky high, a
+  crocodile that snaps at whoever is in front of it four times, or a storm cloud that zaps
+  whoever is under it. The crocodile and the cloud spare whoever threw it.
 - **Losing it.** A hit with 70 knockback or more knocks it out of his hand - and something made
   to be thrown flies off the way he was hit and does what it does when it lands, so a paint
   bucket knocked loose still splashes. A KO takes it away.
@@ -499,9 +520,9 @@ needs a new kind of use or impact.
   12 frames, and a splash spares whoever threw it; a glitter bomb spares no one.
 - **Throws are let go of in front of him.** The arm may not have come round by the release frame,
   and a throw that starts from behind his head reads as thrown backwards.
-- **How often** is off, low, medium or high - one item every 14, 8 or 4 seconds, with at most 1, 3
-  or 5 lying about - and each item can be switched off, from the Items button on the stage
-  select screen. Saved in `user://settings.cfg`. `--item=ID` drops only that item, for looking
+- **How often** is off, low, medium or high - one item every 22, 13 or 7 seconds, with at most
+  1, 2 or 3 lying about (lowered across the board, Eric 2026-10-15) - and each item can be
+  switched off, from the Items button in the corner of the stage select screen. Saved in `user://settings.cfg`. `--item=ID` drops only that item, for looking
   at one; `--items=high` sets how often for one run without saving it.
 
 Boosts last 8 to 10 seconds. The gold star is invincibility; White-Out takes 25% off, counting

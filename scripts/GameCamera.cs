@@ -13,6 +13,18 @@ public partial class GameCamera : Camera2D
 	[Export] public float Margin { get; set; } = 420.0f;
 	[Export] public float FollowSharpness { get; set; } = 7.0f;
 
+	/// <summary>
+	/// Where the camera may look: the blast zone. Someone flying out past it - the winner jumping
+	/// off after the last KO - is followed to the edge, not out into nothing.
+	/// </summary>
+	public Rect2 Bounds = new Rect2(-100000.0f, -100000.0f, 200000.0f, 200000.0f);
+
+	/// <summary>
+	/// What is painted: the screen never shows past it. Following someone up into a corner of
+	/// Open Plains looked out past the sky onto blank page (Eric, 2026-10-15).
+	/// </summary>
+	public Rect2 Limits = new Rect2(-100000.0f, -100000.0f, 200000.0f, 200000.0f);
+
 	float shake;
 	Vector2 shakeOffset;
 	readonly RandomNumberGenerator rng = new RandomNumberGenerator();
@@ -47,7 +59,7 @@ public partial class GameCamera : Camera2D
 			// Gone and waiting to come back: nothing to look at yet.
 			if (fighter.IsWaitingToRespawn) continue;
 
-			Vector2 p = fighter.GlobalPosition;
+			Vector2 p = fighter.GlobalPosition.Clamp(Bounds.Position, Bounds.End);
 			if (!any)
 			{
 				min = max = p;
@@ -88,13 +100,23 @@ public partial class GameCamera : Camera2D
 			: Vector2.Zero;
 
 		Zoom = new Vector2(z, z);
-		GlobalPosition = smoothed + shakeOffset;
+		GlobalPosition = InsideLimits(smoothed, z) + shakeOffset;
+	}
+
+	/// <summary>A centre moved in until the whole screen round it is inside Limits.</summary>
+	Vector2 InsideLimits(Vector2 centre, float zoom)
+	{
+		Vector2 half = GetViewportRect().Size / (2.0f * zoom);
+		float Axis(float c, float low, float high, float h) =>
+			high - low <= h * 2.0f ? (low + high) * 0.5f : Mathf.Clamp(c, low + h, high - h);
+		return new Vector2(Axis(centre.X, Limits.Position.X, Limits.End.X, half.X),
+			Axis(centre.Y, Limits.Position.Y, Limits.End.Y, half.Y));
 	}
 
 	/// <summary>A cut: there at once, no easing.</summary>
 	public void CutTo(Vector2 centre, float zoom)
 	{
 		Zoom = new Vector2(zoom, zoom);
-		GlobalPosition = centre + shakeOffset;
+		GlobalPosition = InsideLimits(centre, zoom) + shakeOffset;
 	}
 }

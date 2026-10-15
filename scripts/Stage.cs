@@ -87,7 +87,8 @@ public partial class Stage : Node2D
 		QueueRedraw();
 	}
 
-	Rect2 Backdrop => Data.BlastZone.Grow(BackdropPad);
+	/// <summary>Everything painted behind the stage. The camera never looks past it (GameCamera.Limits).</summary>
+	public Rect2 Backdrop => Data.BlastZone.Grow(BackdropPad);
 
 	public override void _Draw()
 	{

@@ -17,6 +17,10 @@ script goes further than that on purpose, because it was asked to:
     no pupil and an outlined pink scar; the other glows orange-yellow with a small black pupil
     looking forward
   - the grin is coloured as teeth, with a bite line and gaps drawn in
+  - the second line he drew just inside the right-hand edge of the V, which gives the body its
+    thickness, is CONTINUED down from where it meets the edge at his arm to the point of the V
+    (Eric's call, 2026-10-15: the depth stopped at the arm). It is a new line of ours, at the
+    width his old one keeps above the arm, following his edge (EDGE_DEPTH)
 Everything else - the shapes, the swords, the grin, his own shading - is his, coloured over.
 Because the photo is kept and this is a script, every one of those choices can be undone or
 retuned by editing a number here and running it again.
@@ -128,6 +132,13 @@ LINE_WEAK = 17
 LINE_STRONG = 42
 LINE_MIN_PIXELS = 30
 LINE_GROW = 1.6          # how much each line is thickened, in pixels
+
+# The body's thickness down its right-hand edge, below his arm: where his own doubled line comes
+# together with the edge (colored-image rows), how far inside the edge the new line runs, and
+# the point of the V where it closes up again.
+EDGE_DEPTH_FROM = 262
+EDGE_DEPTH_TO = 606
+EDGE_DEPTH_GAP = 14
 
 
 # --- Helpers ----------------------------------------------------------------------------
@@ -504,6 +515,34 @@ def draw_scar(canvas, eye):
         sketch_line(canvas, tick, SCAR, 3, 330 + k)
 
 
+def edge_depth_line(strokes):
+    """
+    The line that carries on his doubled right-hand edge below the arm: on each row, his edge's
+    inside, found in his strokes near the edge of the traced V, and EDGE_DEPTH_GAP in from it -
+    opening out from where his own line meets the edge and closing again at the point of the V.
+    """
+    px = strokes.load()
+    (ax, ay), (bx, by) = shift([(848, 398), (598, 946)])
+    points = []
+    for y in range(EDGE_DEPTH_FROM, EDGE_DEPTH_TO, 6):
+        edge = ax + (bx - ax) * (y - ay) / float(by - ay)
+        inside = [x for x in range(int(edge - 40), int(edge + 8)) if px[x, y] > 128]
+        if inside:
+            points.append((y, min(inside)))
+    # His edge wobbles; ours follows it, a little steadier.
+    steady = []
+    for i, (y, x) in enumerate(points):
+        near = [p[1] for p in points[max(0, i - 2):i + 3]]
+        steady.append((y, sum(near) / float(len(near))))
+    line = []
+    span = float(EDGE_DEPTH_TO - EDGE_DEPTH_FROM)
+    for y, x in steady:
+        t = (y - EDGE_DEPTH_FROM) / span
+        opening = min(1.0, t / 0.15) * min(1.0, (1.0 - t) / 0.12)
+        line.append((x - EDGE_DEPTH_GAP * opening, y))
+    return line
+
+
 def render(limbs=True, face=True, stretch=1.0, masks=None):
     """
     Colours him in and returns the RGBA image. limbs=False leaves out the arms, legs and swords
@@ -557,6 +596,9 @@ def render(limbs=True, face=True, stretch=1.0, masks=None):
         colour_in(None, flat(BRASS), circles=POMMELS)
     masks['body'] = colour_in([BODY_V], body_shade)
     body_only = canvas.split()[3]
+    if face:
+        # The body's thickness carried on down past the arm, under the belt like his own lines.
+        sketch_line(canvas, edge_depth_line(strokes), INK, 7, 263)
     if face:
         colour_in([MOUTH_TRI], teeth_shade)
         draw_teeth(canvas)

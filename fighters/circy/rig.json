@@ -104,6 +104,7 @@
     }
   ], 
   "canonicalHeight": 792.0, 
+  "evenLegs": true, 
   "extras": [
     {
       "always": true, 
