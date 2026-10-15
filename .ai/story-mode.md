@@ -239,12 +239,17 @@ His own story is the villain's side:
   is the two of them - then the finale.
 - **After every win:** "YOU HAVE BEEN... PROCESSED." Beat. "YOU ARE ON THE FLOOR NOW."
 - **His finale: DoomBot Mk. II.** DoomBot upgraded - the same rig, with scrap armour bolted on
-  (a saw-blade crest, exhaust stacks, spikes, a II on his belly plate) - rolls in.
-  "GREETINGS, OLD MODEL." - "OLD?" - "THE FACTORY HAS SENT A NEWER, BETTER DOOMBOT. THE FRIDGE
-  BELONGS TO THE NEWEST MACHINE." - "I WAS MADE ON TUESDAY." - "I WAS MADE ON WEDNESDAY." A very
-  long pause. Steam. "...NO." His own fridge joke, said to the only one it fits: "YOU LOOK LIKE A
-  FRIDGE." - "SO DO YOU." Both of them start to steam. "...THIS CONVERSATION IS OVER."
-- **Ending.** DoomBot alone on an empty fridge. "VICTORY." The fridge hums. "...IT IS VERY
+  (a saw-blade crest, exhaust stacks, spikes, a II on his belly plate) - rolls in and does to
+  him exactly what he did to the drawings, starting with his own opening: "SCANNING. TARGET:
+  FRIDGE. STATUS: COVERED IN... DOOMBOT. UNACCEPTABLE." - "...THAT IS MY LINE." Mk. II shows
+  off his upgrades ("NEW SAW BLADE. NEW EXHAUST PIPES. NEW SPIKES." - "...I HAVE SOME
+  BUTTONS."), thanks him for taking the old drawings down, and says he is taking down the old
+  robot. DoomBot, quietly: "...SO THIS IS HOW IT FEELS." Then the steam: "NOBODY. TAKES.
+  DOOMBOT. DOWN." Beaten, Mk. II: "...i only did what you did." - "...I KNOW." The scene has a
+  reason for Mk. II to be there and gives DoomBot the feeling his ending turns on (Eric asked for
+  that, 2026-10-15, over a first draft whose "the fridge belongs to the newest machine" came from
+  nowhere).
+- **Ending.** DoomBot alone on an empty fridge. "...VICTORY." The fridge hums. "...IT IS VERY
   QUIET." *Clink* - a magnet. Someone has put up a new drawing: a crayon drawing of DoomBot. "...
   SOMEONE. DREW. ME?" He glows (that is a blush). "WARNING. CORE TEMPERATURE RISING. FROM AN
   UNKNOWN CAUSE." One by one, he puts the others back up. "THE FRIDGE IS... A LITTLE BIT MINE."

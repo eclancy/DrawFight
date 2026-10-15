@@ -208,33 +208,46 @@ mk2 drop at 380
 sound special_quake
 shake 90
 mk2 face player
-camera two player mk2
-mk2: GREETINGS, OLD MODEL.
-player mark !
-player look shocked
-player: OLD?
-player mark none
-mk2: THE FACTORY HAS SENT A NEWER, BETTER DOOMBOT.
-mk2: THE FRIDGE BELONGS TO THE NEWEST MACHINE.
-player: I WAS MADE ON TUESDAY.
-mk2: I WAS MADE ON WEDNESDAY.
-wait 70
-player mark steam
-sound steam
-player (slam): ...NO.
-camera on player zoom 1.3 fast
-player: YOU LOOK LIKE A FRIDGE.
-camera on mk2 zoom 1.3 whip
-mk2: SO DO YOU.
-mk2 mark steam
-sound steam_whistle
-camera two player mk2
-wait 30
-player look angry
+camera on mk2 zoom 1.3 fast
+mk2 (slam): SCANNING.
+wait 20
+mk2: TARGET: FRIDGE.
+mk2: STATUS: COVERED IN... DOOMBOT.
 mk2 look angry
-player (shout): THIS CONVERSATION IS OVER.
+mk2 (shout): UNACCEPTABLE.
+camera two player mk2
+player look shocked
+player mark !
+player: ...THAT IS MY LINE.
 player mark none
-mk2 mark none
+mk2 look smug
+mk2: GREETINGS, OLD MODEL. I AM DOOMBOT MARK TWO.
+mk2: NEW SAW BLADE. NEW EXHAUST PIPES. NEW SPIKES.
+camera on player zoom 1.3
+player look sad
+wait 40
+player: ...I HAVE SOME BUTTONS.
+camera two player mk2
+mk2 look normal
+mk2: YOU TOOK DOWN THE OLD DRAWINGS. GOOD WORK.
+mk2 pose point
+mk2: NOW I AM TAKING DOWN THE OLD ROBOT.
+mk2 pose none
+wait 50
+camera on player zoom 1.3 slow
+player pose slump
+player (whisper): ...SO THIS IS HOW IT FEELS.
+wait 50
+player pose none
+player mark steam
+sound steam_whistle
+player look angry
+player pose stomp
+player (slam): NOBODY. TAKES. DOOMBOT. DOWN.
+player pose none
+player mark none
+camera two player mk2
+mk2 look angry
 mk2 heat 100
 mk2 stocks 4
 camera wide
@@ -248,10 +261,11 @@ mk2 heat 0
 mk2 look sad
 mk2 pose slump
 sound steam
-mk2 (whisper): ...i was only made on wednesday.
-wait 30
+mk2 (whisper): ...i only did what you did.
+wait 40
 player face mk2
-player: I KNOW. BEING NEW IS VERY CONFUSING.
+player look sad
+player (whisper): ...I KNOW.
 end
 
 == ending
@@ -260,8 +274,8 @@ music stop
 stage bare
 camera on player zoom 1.0 cut
 narrator: An empty fridge.
-player look happy
-player: VICTORY.
+player look normal
+player: ...VICTORY.
 sound fridge_hum
 wait 60
 player look sad
