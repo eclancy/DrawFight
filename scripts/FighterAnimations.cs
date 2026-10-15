@@ -987,10 +987,15 @@ public static class FighterAnimations
 		"wave", "fist", "flex", "hips", "think", "facepalm", "present", "beckon", "nod", "bow",
 	};
 
-	/// <summary>Both arms flung up over his head, up on his toes.</summary>
+	/// <summary>
+	/// Both arms flung up and out in a V, up on his toes, each to its own side of his body (Eric,
+	/// 2026-10-15): written for a near shoulder drawn behind, so the near arm goes up behind him and
+	/// the far one up in front - SpreadArms swaps them for a drawing whose near shoulder leads.
+	/// Written short of where they end: shown further (FighterRig.Drama), they get there.
+	/// </summary>
 	static readonly Pose Cheer = new Pose(new Vector2(0, -8),
 		(Torso, 6), (Head, -14),
-		(AFU, -150), (AFL, -14), (ABU, -138), (ABL, -14),
+		(AFU, 116), (AFL, 10), (ABU, -116), (ABL, -10),
 		(LFU, -6), (LFL, 4), (LBU, 6), (LBL, 4));
 
 	/// <summary>Hunched forward, head hanging, arms dangling, knees giving.</summary>
@@ -1050,10 +1055,13 @@ public static class FighterAnimations
 		(AFU, -142), (AFL, -4), (ABU, -26), (ABL, -124),
 		(LFU, -14), (LFL, 8), (LBU, 12), (LBL, 8));
 
-	/// <summary>Both arms up and bent, showing off his biceps, chest out.</summary>
+	/// <summary>
+	/// A double biceps, chest out: one arm out each side of him, elbows level, fists up - Lugnut as
+	/// he is drawn. Spread, like the cheer (SpreadArms).
+	/// </summary>
 	static readonly Pose Flex = new Pose(new Vector2(0, 2),
 		(Torso, 8), (Head, -10),
-		(AFU, -82), (AFL, -104), (ABU, -96), (ABL, -100),
+		(AFU, 80), (AFL, 84), (ABU, -80), (ABL, -84),
 		(LFU, -12), (LFL, 10), (LBU, 12), (LBL, 10));
 
 	/// <summary>Hands on his hips, elbows out, feet apart.</summary>
@@ -1098,6 +1106,21 @@ public static class FighterAnimations
 		(AFU, -30), (AFL, -10), (ABU, -20), (ABL, -10),
 		(LFU, 10), (LFL, 6), (LBU, 10), (LBL, 6));
 
+	/// <summary>
+	/// For a pose that throws both arms out each to its own side - cheer, flex - drawn for a near
+	/// shoulder behind: with <paramref name="nearArmLeads"/> (FighterRig.NearArmLeads) the arms swap,
+	/// so each still goes away from the body on its own side rather than across it.
+	/// </summary>
+	public static void SpreadArms(string name, Pose pose, bool nearArmLeads)
+	{
+		if (!nearArmLeads || name != "cheer" && name != "flex") return;
+		float upper = pose[AFU], lower = pose[AFL];
+		pose.Set(AFU, pose[ABU]);
+		pose.Set(AFL, pose[ABL]);
+		pose.Set(ABU, upper);
+		pose.Set(ABL, lower);
+	}
+
 	// --- Face on -----------------------------------------------------------------------------
 	// For a fighter drawn face on (FighterData.FrontOn: DoomBot), standing to talk or to celebrate
 	// (FighterRig.SetFrontOn). His near arm is on the left of the picture and his far arm on the
@@ -1108,9 +1131,14 @@ public static class FighterAnimations
 	public static readonly Pose FrontIdle = new Pose(Vector2.Zero,
 		(AFU, 90), (AFL, -90), (ABU, -90), (ABL, -90));
 
-	/// <summary>Face-on versions of the poses that fold an arm across him - which, side on, is forward.</summary>
+	/// <summary>
+	/// Face-on versions of the poses that fold an arm across him - which, side on, is forward - and
+	/// of the ones that open both arms out, one each side.
+	/// </summary>
 	static Pose FrontStoryPose(string name) => name switch
 	{
+		"cheer" => FrontCheer,
+		"present" => FrontPresent,
 		"crossarms" => FrontCrossArms,
 		"hips" => FrontHips,
 		"laugh" => FrontLaugh,
@@ -1120,6 +1148,12 @@ public static class FighterAnimations
 		"fist" => FrontFist,
 		_ => null,
 	};
+
+	static readonly Pose FrontCheer = new Pose(new Vector2(0, -6),
+		(AFU, 145), (AFL, 10), (ABU, -145), (ABL, -10));
+
+	static readonly Pose FrontPresent = new Pose(Vector2.Zero,
+		(AFU, 50), (AFL, 30), (ABU, -50), (ABL, -30));
 
 	static readonly Pose FrontCrossArms = new Pose(Vector2.Zero,
 		(Head, -4), (AFU, 10), (AFL, -96), (ABU, -10), (ABL, 104));

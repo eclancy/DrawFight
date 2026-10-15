@@ -333,14 +333,21 @@ public partial class RigParade : Node2D
 				}
 				else if (names[i] == "as drawn") pose.CopyFrom(FighterAnimations.FrontIdle);
 				else if (data.FrontOn) FighterAnimations.FaceOn(names[i], pose);
-				else pose.CopyFrom(FighterAnimations.StoryPose(names[i]));
+				else
+				{
+					pose.CopyFrom(FighterAnimations.StoryPose(names[i]));
+					FighterAnimations.SpreadArms(names[i], pose, rig.NearArmLeads);
+				}
 				// A pose puts a hammer carried on the shoulder down, as in a scene (Fighter.ApplyStoryLayer).
 				if (!talk && data.ShouldersProp)
 				{
 					rig.CarryOnShoulder = false;
 					rig.SetPartVisible(RigBone.PropFront, false);
 				}
-				rig.ApplyDirect(pose, 0.9f);
+				// A pose struck reaches as far as a match lets it (Fighter.StrikingPose).
+				if (!talk) rig.ArmBackLimit = FighterRig.ArmBackMost;
+				// Held, as a scene holds it: settled where the springs come to rest, not one step there.
+				for (int step = 0; step < 60; step++) rig.ApplyDirect(pose, 0.75f);
 				label = names[i];
 			}
 			else

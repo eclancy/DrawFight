@@ -1933,6 +1933,15 @@ public partial class FighterRig : Node2D
 	/// </summary>
 	public bool FrontOn { get; private set; }
 
+	/// <summary>
+	/// His near shoulder is on the side he faces - Circy's, EdgeLord's, Triguy's, drawn with the
+	/// near arm on the right of the picture - rather than behind (Flambe's, Lugnut's, DoomBot's). An
+	/// arm flung up and away from his body goes to its own shoulder's side, so which way that is
+	/// depends on the drawing (FighterAnimations.SpreadArms).
+	/// </summary>
+	public bool NearArmLeads => present[(int)RigBone.ArmFrontUpper] && present[(int)RigBone.ArmBackUpper]
+		&& restOffsets[(int)RigBone.ArmFrontUpper].X > restOffsets[(int)RigBone.ArmBackUpper].X;
+
 	/// <summary>Each part's shade as the side view has it, for putting back after standing face on.</summary>
 	readonly Color[] sideShade = new Color[(int)RigBone.Count];
 

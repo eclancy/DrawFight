@@ -795,6 +795,7 @@ public partial class Fighter : CharacterBody2D
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
 		// A hand on his hip only while he is just standing; turned on below.
 		rig.HandOnHip = false;
+		rig.ArmBackLimit = StrikingPose ? FighterRig.ArmBackMost : Data.ArmReachBack;
 
 		switch (State)
 		{

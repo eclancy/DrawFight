@@ -114,9 +114,8 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   motion gets checked**. See "Moving like a body" in `.ai/art-pipeline.md`. **`--film=face`**
   shows one fighter's face in every expression, **`--film=turn`** the paper turn and the roll
   a story twirls a drawing with, **`--film=story`** every pose a story can strike (face on, for
-  DoomBot) and **`--film=talk`** how he talks with his hands in each mood. The parade takes one
-  step toward a pose; a match goes all the way and further (`FighterRig.Drama`), so check a pose
-  that reaches overhead in a scene too.
+  DoomBot) and **`--film=talk`** how he talks with his hands in each mood, each held until it settles,
+  as a scene holds it.
 - **`python tools/art/flambe.py`** and **`python tools/art/lugnut.py`** — redraw and re-rig
   the two stand-ins we drew ourselves, Flambé and Lugnut, with their tools and props. Their parts
   are SVG coloured in pencil (`tools/art/drawn.py`), so they need `$GODOT_BIN` to rasterise them

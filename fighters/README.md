@@ -61,10 +61,12 @@ The parts are SVG, rasterised by Godot (`tools/art/svg_raster.gd`, since PIL can
 curve), so the script needs `$GODOT_BIN`. His boots are cut as feet.
 
 **He is coloured in coloured pencil** inside a solid black marker outline, the way the drawing
-guide asks a kid to colour one: the colour goes down in slanted strokes, pressed harder and
-softer, with the paper showing between them and through its tooth. His tools and props get the
-same. The strokes are coarse - about a dozen pixels across - so nothing finer than a pixel
-shimmers at match size. Seeded, so a re-cut is identical. Eric's call, 2026-10-08.
+guide asks a kid to colour one (Eric's call, 2026-10-08) - not in rows of strokes but with the
+subtle unevenness of real coloured pencil (Eric, 2026-10-15): pressed harder and softer in broad
+swells, coloured a patch at a time with short strokes whose way wanders from patch to patch, a
+faint mottle on the paper's grain, and a few specks of bare paper (`pencil_coverage` in
+`tools/art/drawn.py`). His tools and props get the same. Every mark is a few pixels across and
+low in contrast, so nothing shimmers at match size. Seeded, so a re-cut is identical.
 
 **His arms hang from his shoulders as drawn.** Facing right in three-quarter view, his near
 side is on the left: the arm on the left shoulder is his front arm, drawn over everything, and

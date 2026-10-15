@@ -46,6 +46,13 @@ public partial class Fighter
 		&& (rig.FrontOn || !string.IsNullOrEmpty(StoryPose) || Talking || talkLinger > 0
 			|| Celebrating && string.IsNullOrEmpty(Data.VictoryShow));
 
+	/// <summary>
+	/// Striking a story pose, or his victory pose. An arm can go up and out behind him for it -
+	/// a cheer, a flex - past where it swings in a fight (FighterData.ArmReachBack).
+	/// </summary>
+	bool StrikingPose => !string.IsNullOrEmpty(StoryPose) && (State == FighterState.Grounded || State == FighterState.Airborne)
+		|| Celebrating && IsStandingStill && string.IsNullOrEmpty(Data.VictoryShow);
+
 	/// <summary>On his feet and going nowhere: the only time he talks with his hands, or turns to face you.</summary>
 	bool IsStandingStill => State == FighterState.Grounded && Mathf.Abs(Velocity.X) <= 45.0f && !IsBlocking
 		&& !IsCrouching && landFrames <= 0 && !shieldRaised;
@@ -112,6 +119,7 @@ public partial class Fighter
 			Pose pose = FighterAnimations.StoryPose(name);
 			if (pose == null) return false;
 			storyPose.CopyFrom(pose);
+			FighterAnimations.SpreadArms(name, storyPose, rig.NearArmLeads);
 		}
 
 		// The arm that does the moving: the near one side on, the one on the facing side face on.
@@ -136,10 +144,9 @@ public partial class Fighter
 				storyPose.Set(RigBone.Head, storyPose[RigBone.Head] - 14.0f * Mathf.Abs(Mathf.Sin(fxFrames * 0.16f)));
 				break;
 			case "flex":
-				// Squeezing.
-				float squeeze = 12.0f * pump * (faceOn ? 1.0f : -1.0f);
-				storyPose.Set(RigBone.ArmFrontLower, storyPose[RigBone.ArmFrontLower] + squeeze);
-				storyPose.Set(RigBone.ArmBackLower, storyPose[RigBone.ArmBackLower] - Mathf.Abs(squeeze));
+				// Squeezing: each fist curls further in toward his head, whichever way that bends.
+				storyPose.Set(RigBone.ArmFrontLower, storyPose[RigBone.ArmFrontLower] * (1.0f + 0.14f * pump));
+				storyPose.Set(RigBone.ArmBackLower, storyPose[RigBone.ArmBackLower] * (1.0f + 0.14f * pump));
 				break;
 			case "laugh":
 				// Rocking back and forward with it.

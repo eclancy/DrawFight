@@ -100,49 +100,66 @@ def place(svg, at, deg=0.0):
 # --- coloured pencil ---------------------------------------------------------------------------
 
 # Coloured in coloured pencil inside a black marker outline, the way the drawing guide asks a kid
-# to do it (Eric's call, 2026-10-08): the colour goes down in slanted strokes, pressed harder and
-# softer, with the paper showing between them and through its tooth. The marker stays solid.
+# to do it (Eric's call, 2026-10-08). Not in rows of strokes: the subtle unevenness of real
+# coloured pencil (Eric, 2026-10-15) - pressed harder and softer in broad swells, coloured in a
+# patch at a time with short strokes whose way wanders from patch to patch, a faint mottle where
+# the pigment catches the paper's grain, and a few specks of bare paper where it skipped the
+# tooth. The marker stays solid.
 
 def seed_of(name):
     return zlib.crc32(name.encode('utf-8')) & 0xffffffff
 
 
+def soft_noise(rnd, size, cell, lo, hi):
+    """Smooth random values from lo to hi, changing over about <cell> pixels: a coarse grid, blown up smoothly."""
+    w, h = size
+    gw, gh = w // cell + 3, h // cell + 3
+    grid = Image.new('L', (gw, gh))
+    grid.putdata([rnd.randint(lo, hi) for _ in range(gw * gh)])
+    big = grid.resize((gw * cell, gh * cell), Image.BICUBIC)
+    ox, oy = rnd.randint(0, cell), rnd.randint(0, cell)
+    return big.crop((ox, oy, ox + w, oy + h))
+
+
 def pencil_coverage(size, seed):
     """
-    How much colour the pencil laid down at each pixel, 0-255: strokes side by side at a slant,
-    each pressed a little harder or softer and changing along its length, gaps between them where
-    the paper shows, and the paper's tooth catching it in specks. Coarse on purpose - a stroke is
-    about a dozen pixels across, a few on screen - so nothing finer than a pixel shimmers as he
-    moves. Seeded, so a re-cut comes out the same.
+    How much colour the pencil laid down at each pixel, 0-255. Pressed harder and softer in broad
+    swells; coloured a patch at a time, the short strokes in each going one way and the way
+    changing from patch to patch, so nothing lines up into rows; a faint mottle of pigment on the
+    paper's grain; and a few specks where the pencil skipped the tooth. Every mark is a few pixels
+    across and low in contrast, so at match size it is texture, not detail, and nothing finer than
+    a pixel shimmers as he moves. Seeded, so a re-cut comes out the same.
     """
     w, h = size
     rnd = random.Random(seed)
-    side = int(math.hypot(w, h)) + 60
-    strokes = Image.new('L', (side, side), 0)
-    draw = ImageDraw.Draw(strokes)
-    y = 0.0
-    while y < side:
-        width = rnd.uniform(9.0, 14.0)
-        pressure = rnd.uniform(0.6, 1.0)
-        x = 0.0
-        while x < side:
-            run = rnd.uniform(30.0, 80.0)
-            p = max(0.35, min(1.0, pressure + rnd.uniform(-0.2, 0.15)))
-            wobble = rnd.uniform(-1.5, 1.5)
-            draw.polygon([(x, y + wobble), (x + run, y), (x + run, y + width), (x, y + width + wobble)],
-                         fill=int(255 * p))
-            x += run
-        y += width + rnd.uniform(3.0, 6.0)
-    strokes = strokes.filter(ImageFilter.GaussianBlur(2.0))
-    strokes = strokes.rotate(rnd.uniform(28.0, 52.0), resample=Image.BILINEAR)
-    left, top = (side - w) // 2, (side - h) // 2
-    strokes = strokes.crop((left, top, left + w, top + h))
-    # The paper's tooth, in blobs a few pixels across.
-    tooth = Image.new('L', (w // 6 + 2, h // 6 + 2))
-    tooth.putdata([rnd.randint(0, 255) for _ in range(tooth.size[0] * tooth.size[1])])
-    tooth = tooth.resize((w + 12, h + 12), Image.BILINEAR).crop((6, 6, w + 6, h + 6))
-    coverage = strokes.point(lambda v: 150 + v * 105 // 255)
-    return ImageChops.multiply(coverage, tooth.point(lambda v: 200 if v > 200 else 255))
+    pressure = soft_noise(rnd, size, 64, 210, 255)
+
+    marks = Image.new('L', (w, h), 255)
+    draw = ImageDraw.Draw(marks)
+    slant = rnd.uniform(25.0, 60.0)
+    spacing = 62.0
+    for r in range(int(h / spacing) + 2):
+        for c in range(int(w / spacing) + 2):
+            cx = (c - 0.5 + rnd.uniform(-0.4, 0.4)) * spacing
+            cy = (r - 0.5 + rnd.uniform(-0.4, 0.4)) * spacing
+            angle = slant + rnd.uniform(-40.0, 40.0)
+            for _ in range(rnd.randint(22, 34)):
+                a = math.radians(angle + rnd.uniform(-7.0, 7.0))
+                along = rnd.uniform(-spacing * 0.6, spacing * 0.6)
+                across = rnd.uniform(-spacing * 0.6, spacing * 0.6)
+                x = cx + math.cos(a) * along - math.sin(a) * across
+                y = cy + math.sin(a) * along + math.cos(a) * across
+                half = rnd.uniform(10.0, 24.0)
+                dx, dy = math.cos(a) * half, math.sin(a) * half
+                draw.line([(x - dx, y - dy), (x + dx, y + dy)], fill=rnd.randint(206, 236), width=rnd.choice((2, 3, 3, 4)))
+    marks = marks.filter(ImageFilter.GaussianBlur(0.9))
+
+    grain = soft_noise(rnd, size, 6, 208, 255)
+    tooth = soft_noise(rnd, size, 5, 0, 255).point(lambda v: 165 if v < 18 else 228 if v < 36 else 255)
+    tooth = tooth.filter(ImageFilter.GaussianBlur(0.7))
+    cover = ImageChops.multiply(ImageChops.multiply(pressure, grain), ImageChops.multiply(marks, tooth))
+    # Never so light the colour washes out: a kid colouring in presses on.
+    return cover.point(lambda v: 50 + v * 205 // 255)
 
 
 def pencilled(colour, ink, seed):
