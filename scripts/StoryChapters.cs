@@ -84,7 +84,7 @@ public class StoryRun
 /// </summary>
 public static class StoryChapters
 {
-	public static readonly string[] Stages = { "fridge", "plains", "rooftops", "bigshow" };
+	public static readonly string[] Stages = { "fridge", "plains", "rooftops", "bigshow", "playground", "site", "kitchen" };
 
 	public static List<StoryChapter> Read(string playerId, List<string> problems, out string title)
 	{

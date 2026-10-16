@@ -42,7 +42,8 @@ public partial class MatchHud : CanvasLayer
 		return label;
 	}
 
-	public void Build(List<Fighter> fighters)
+	/// <param name="seats">Each column tagged with its player - "P1" in their colour, or "CPU" - for versus.</param>
+	public void Build(List<Fighter> fighters, bool seats = false)
 	{
 		var root = new Control
 		{
@@ -64,6 +65,14 @@ public partial class MatchHud : CanvasLayer
 			name.Text = fighters[i].Data.DisplayName;
 			name.Position = new Vector2(left, 842.0f);
 			name.Size = new Vector2(Column, 44.0f);
+
+			if (seats)
+			{
+				Label tag = MakeLabel(root, 28, MenuTheme.PlayerTint(fighters[i].Seat), 9);
+				tag.Text = fighters[i].Controller is CpuInputSource ? "CPU" : $"P{fighters[i].Seat + 1}";
+				tag.Position = new Vector2(left, 808.0f);
+				tag.Size = new Vector2(Column, 36.0f);
+			}
 
 			Label percent = MakeLabel(root, 112, Ink, 18);
 			percent.Text = "0%";

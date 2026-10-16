@@ -33,7 +33,7 @@ public partial class MainMenuScreen : Node2D
 		IInputSource[] sources = ControllerAssignment.ForPlayers(Mathf.Max(1, pads));
 		for (int i = 0; i < sources.Length; i++)
 		{
-			Color tint = i == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
+			Color tint = MenuTheme.PlayerTint(i);
 			cursors.Add(new MenuCursor(sources[i], i, tint, new Vector2(860.0f + i * 200.0f, 960.0f)));
 		}
 

@@ -21,6 +21,13 @@ Smash rules, not health bars.
 - Losing a stock resets your percent to 0 and respawns you on a platform above the stage,
   briefly invulnerable.
 - Default match: 3 stocks, no time limit. Last fighter standing wins.
+- **Two to four players**, every one for themselves (Eric, 2026-10-16). Fighter select has four
+  seats; any can be a person or the computer, and two or more filled start a fight. A player keeps
+  their seat's number, colour (`MenuTheme.PlayerTint`) and controller into the match - P1 and P3
+  fighting are P1 and P3, not P1 and P2. With three or more in a fight, or two of the same
+  fighter, every head carries a tag, "P1" or "CPU" in the seat's colour, sized to the screen so it
+  reads however far out the camera pulls (`Fighter.DrawPlayerTag`). The three big stages are made
+  for three and four (`StageData.Large`).
 - **The last KO plays in slow motion** - a quarter speed for 50 frames, easing back over 24
   (`MatchManager.TickEndSlowMotion`). The winner is still in play through it: jump off the edge
   and he is KO'd like anyone, blast and all, but he has still won. The camera never follows
@@ -156,6 +163,8 @@ polish, they are the feature:
   never turns him round. A special in the air is still committed to.
 - **Camera** that smoothly frames all living fighters, with a minimum zoom so two players
   standing together do not fill the screen, and a maximum so a far-flung player stays visible.
+  How far out it may go is the stage's (`StageData.CameraMinZoom`): a big stage lets it pull
+  further back, so four players at its far corners are all on screen.
 - **Telegraphs** for anything fast and strong. A move that crosses the stage in a few frames
   must spend its startup showing that it is coming, or it is unfair: EdgeLord's Blur Slash
   glints and flashes for 22 frames, then goes in 5.

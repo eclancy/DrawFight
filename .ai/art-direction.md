@@ -67,10 +67,33 @@ girder across the top hung with spotlights (`PlatformLook.StageDeck`, `AmpStack`
 Its spotlights are pale and see-through, so they light a fighter rather than hide one.
 
 **`OutsideTheLines`** is for nature stages. Plain paper, no rules, indigo outlines, and crayon
-fill that deliberately **overshoots the line**. Used by Open Plains. The overshoot is the single
+fill that deliberately **overshoots the line**. Used by Open Plains, and by Playground. The overshoot is the single
 detail that reads as a child did this rather than a computer — keep it turned up.
 
 Switching a stage between the two should be a one-line change, and it is: `StageData.Style`.
+
+## The big stages
+
+Three stages made for three and four players (Eric, 2026-10-16), each about half as wide again as
+Big Show, built from platform looks like every other stage - no stage has drawing code of its own:
+
+- **Playground** (`OutsideTheLines`): recess on a playing field that ends at both sides - a slide
+  (`SlideTower`: the deck is the platform; the slide is coloured in with no ink, because you
+  cannot stand on it), monkey bars seen end on (`MonkeyBars`), a sandbox (`Sandbox`), a swing set
+  whose swings are thin and pass-through (`SwingSet`), and two trees.
+- **Building Site** (`ExerciseBook`, day): Lugnut's world - two pads of dug earth (`Dirt`) with a
+  pit between them you can fall into, a scaffold plank across it, tower cranes with beams hanging
+  over it, a site office (`SiteCabin`, hazard stripes in yellow and pale grey, never black), cones.
+- **Kitchen Counter** (`PinnedPages`): the kitchen the story happens in, drawn on one big sheet on
+  the fridge - kitchen units (`Countertop`: the worktop is what you stand on), a sink set between
+  them to drop into and climb out of (`Sink`), a toaster and a pile of cookbooks on the worktop,
+  shelves and wall cupboards above (`WallCabinet`: the top is a soft platform and the cupboard
+  under it is pencilled, not inked - furniture on a wall, not a wall). A window over the sink is
+  drawn on the page (`StageData.OnPage`, props drawn over the sheets rather than behind them).
+
+Each player has a colour - blue, orange, green, pink (`MenuTheme.PlayerTint`) - light, like
+everything outside a fighter, on their cursor, their HUD tag, their tag over their head and their
+shield.
 
 ## Night is pale
 

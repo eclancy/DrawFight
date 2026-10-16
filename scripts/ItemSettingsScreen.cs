@@ -27,20 +27,8 @@ public partial class ItemSettingsScreen : Node2D
 	public override void _Ready()
 	{
 		settings = GameRoot.Instance.Items;
-		bool[] cpu = GameRoot.Instance.CpuPlayers;
-		int humans = 0;
-		foreach (bool isCpu in cpu) if (!isCpu) humans++;
-		cursors = new MenuCursor[Mathf.Max(1, humans)];
-		IInputSource[] sources = ControllerAssignment.ForPlayers(cursors.Length);
 		Vector2 viewport = GetViewportRect().Size;
-
-		for (int player = 0, next = 0; player < cpu.Length && next < cursors.Length; player++)
-		{
-			if (cpu[player] && humans > 0) continue;
-			Color tint = player == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
-			cursors[next] = new MenuCursor(sources[next], player, tint, new Vector2(viewport.X * (0.4f + player * 0.2f), 200.0f));
-			next++;
-		}
+		cursors = GameRoot.Instance.HumanCursors(viewport, 200.0f);
 
 		for (int i = 0; i < frequencyButtons.Length; i++)
 		{

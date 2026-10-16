@@ -60,7 +60,7 @@
 #   fight WHO [WHO] [at STAGE] [level N] [boss]
 #   finale                                    DoomBot on the fridge: "== finale" here, then "== beaten"
 #   ending [with WHO] [at STAGE]              "== ending", no fight
-# Stages: fridge, plains, rooftops, bigshow. A fight's scene before is the player's own
+# Stages: fridge, plains, rooftops, bigshow, playground, site, kitchen. A fight's scene before is the player's own
 # "== vs WHO" if they wrote one, or else that fighter's "== challenger" (two of them: "== team");
 # the scene after is the player's "== beat WHO", or their "== won", or that fighter's
 # "== defeated" ("== team defeated").

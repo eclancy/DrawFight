@@ -36,13 +36,8 @@ public partial class StageSelectScreen : Node2D
 
 	public override void _Ready()
 	{
-		bool[] cpu = GameRoot.Instance.CpuPlayers;
-		int humans = 0;
-		foreach (bool isCpu in cpu) if (!isCpu) humans++;
-		cursors = new MenuCursor[Mathf.Max(1, humans)];
-
-		IInputSource[] sources = ControllerAssignment.ForPlayers(cursors.Length);
 		Vector2 viewport = GetViewportRect().Size;
+		cursors = GameRoot.Instance.HumanCursors(viewport, 900.0f);
 
 		for (int i = 0; i < stages.Length; i++) stages[i] = StageCatalog.Get(i);
 
@@ -60,16 +55,6 @@ public partial class StageSelectScreen : Node2D
 		}
 
 		for (int i = 0; i < stages.Length; i++) previews[i] = BuildPreview(stages[i], cards[i].Size);
-
-		// Humans keep their player number and colour; the CPU's seat is simply skipped.
-		for (int player = 0, next = 0; player < cpu.Length && next < cursors.Length; player++)
-		{
-			if (cpu[player] && humans > 0) continue;
-			Color tint = player == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
-			cursors[next] = new MenuCursor(sources[next], player, tint,
-				new Vector2(viewport.X * (0.4f + player * 0.2f), 900.0f));
-			next++;
-		}
 
 		var layer = new CanvasLayer();
 		AddChild(layer);
@@ -203,10 +188,12 @@ public partial class StageSelectScreen : Node2D
 		nameLabel.Text = stage.DisplayName;
 
 		// The blurb names the thing that changes how the stage plays, not the scenery. What a
-		// player needs from this screen is "can I fall off the bottom here".
-		blurbLabel.Text = stage.HasBottomBlastZone
-			? "Watch the gaps. You can fall off the bottom here."
-			: "The ground runs the whole way. You can only be knocked off the sides or the top.";
+		// player needs from this screen is "can I fall off the bottom here" - and whether it is
+		// one of the big ones made for three or four.
+		blurbLabel.Text = (stage.Large ? "A big stage, for three or four players. " : "")
+			+ (stage.HasBottomBlastZone
+				? "Watch the gaps. You can fall off the bottom here."
+				: "The ground runs the whole way. You can only be knocked off the sides or the top.");
 	}
 
 	public override void _Draw()

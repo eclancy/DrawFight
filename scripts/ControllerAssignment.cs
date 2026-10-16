@@ -30,9 +30,14 @@ public static class ControllerAssignment
 				continue;
 			}
 
-			sources[i] = keyboardsUsed++ == 0
-				? KeyboardInputSource.Player1()
-				: KeyboardInputSource.Player2();
+			// The keyboard has room for two players. Past that, a seat with no pad has no controller
+			// at all - two seats on the same keys would join, pick and fight as one.
+			sources[i] = keyboardsUsed++ switch
+			{
+				0 => KeyboardInputSource.Player1(),
+				1 => KeyboardInputSource.Player2(),
+				_ => null,
+			};
 		}
 
 		return sources;

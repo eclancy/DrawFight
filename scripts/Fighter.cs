@@ -31,6 +31,13 @@ public partial class Fighter : CharacterBody2D
 	public MatchManager Match { get; set; }
 	public int PlayerIndex { get; private set; }
 
+	/// <summary>
+	/// Which seat on the select screen this player sat in, 0 to 3: their player number and colour
+	/// (MenuTheme.PlayerTint). Not the same as PlayerIndex when a seat was left empty - P1 and P3
+	/// fighting are fighters 0 and 1 in seats 0 and 2.
+	/// </summary>
+	public int Seat;
+
 	public float Percent { get; private set; }
 	public int Stocks { get; set; }
 	public FighterState State { get; private set; } = FighterState.Airborne;
@@ -405,6 +412,7 @@ public partial class Fighter : CharacterBody2D
 		Data = data;
 		Controller = controller;
 		PlayerIndex = playerIndex;
+		Seat = playerIndex;
 		Match = match;
 		Stocks = Tuning.DefaultStocks;
 		poseRng = new System.Random(playerIndex * 977 + 13);
@@ -4167,7 +4175,7 @@ public partial class Fighter : CharacterBody2D
 	void DrawShield(CanvasItem canvas)
 	{
 		if (shieldFlashFrames > 0) shieldFlashFrames--;
-		Color tint = PlayerIndex == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
+		Color tint = MenuTheme.PlayerTint(Seat);
 		DrawShieldBreak(canvas, tint);
 		if (!IsBlocking && !(State == FighterState.Hitstun && blockedStun)) return;
 		float wear = ShieldWear;
@@ -4294,6 +4302,33 @@ public partial class Fighter : CharacterBody2D
 		DrawBurnFlames(overlay);
 		DrawHotClaws(overlay);
 		DrawItemOverlay(overlay);
+		DrawPlayerTag(overlay);
+	}
+
+	/// <summary>
+	/// "P1" to "P4" over his head in his seat's colour - "CPU" for the computer - in a fight of
+	/// three or more, or with two of the same fighter, so everyone always knows which one is theirs
+	/// (Eric, 2026-10-16). Sized to the screen, not the world, so it reads however far out a big
+	/// stage pulls the camera; paper-outlined like every HUD label, and no box behind it.
+	/// </summary>
+	void DrawPlayerTag(CanvasItem canvas)
+	{
+		if (Match == null || !Match.ShowPlayerTags || !Visible || IsWaitingToRespawn) return;
+		float zoom = Mathf.Max(0.25f, GetViewport()?.GetCamera2D()?.Zoom.X ?? 1.0f);
+		float k = 1.0f / zoom;
+		Color tint = MenuTheme.PlayerTint(Seat);
+		string text = Controller is CpuInputSource ? "CPU" : $"P{Seat + 1}";
+		Font font = ThemeDB.FallbackFont;
+		int size = Mathf.RoundToInt(28.0f * k);
+		float top = -bodySize.Y * 0.5f - 16.0f * k;
+		var tip = new Vector2(0.0f, top);
+		var paper = new Color(0.98f, 0.97f, 0.94f);
+		Vector2[] arrow = { tip, tip + new Vector2(-11.0f, -14.0f) * k, tip + new Vector2(11.0f, -14.0f) * k };
+		canvas.DrawColoredPolygon(new[] { arrow[0] + new Vector2(0.0f, 4.0f) * k, arrow[1] + new Vector2(-4.0f, -2.0f) * k, arrow[2] + new Vector2(4.0f, -2.0f) * k }, paper);
+		canvas.DrawColoredPolygon(arrow, tint);
+		var at = new Vector2(-100.0f * k, top - 20.0f * k);
+		canvas.DrawStringOutline(font, at, text, HorizontalAlignment.Center, 200.0f * k, size, Mathf.RoundToInt(9.0f * k), paper);
+		canvas.DrawString(font, at, text, HorizontalAlignment.Center, 200.0f * k, size, tint);
 	}
 
 	/// <summary>

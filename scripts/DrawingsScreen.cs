@@ -35,7 +35,7 @@ public partial class DrawingsScreen : Node2D
 		IInputSource[] sources = ControllerAssignment.ForPlayers(pads);
 		for (int i = 0; i < sources.Length; i++)
 		{
-			cursors.Add(new MenuCursor(sources[i], i, i == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent,
+			cursors.Add(new MenuCursor(sources[i], i, MenuTheme.PlayerTint(i),
 				new Vector2(380.0f + i * 120.0f, 420.0f)));
 		}
 		pointers = new OnePointer(cursors);

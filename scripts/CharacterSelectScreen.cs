@@ -12,12 +12,14 @@ using Godot;
 /// Each fighter gets a short description of how it plays, never a list of its moves. Finding
 /// out what a fighter's specials do is part of playing it.
 ///
-/// Nothing starts on its own. Once every seat is picked, the screen says so and waits for a
-/// player to press Start - so someone still reading a description is not rushed into a fight.
+/// Nothing starts on its own. Once two or more seats are filled and everyone in one has picked, the
+/// screen says so and waits for a player to press Start - so someone still reading a description is
+/// not rushed into a fight.
 ///
-/// A seat nobody has joined offers a CPU button, so one person can play alone. Any joined player
-/// can add the CPU, change its fighter or remove it; and whoever owns that seat's controller
-/// takes it back just by pressing A.
+/// Four seats, for up to four players (Eric, 2026-10-16); a seat nobody sits in simply sits the
+/// fight out. Each offers a CPU button, so one person can play alone or fill a four-way fight with
+/// the computer. Any joined player can add a CPU, change its fighter or remove it; and whoever owns
+/// that seat's controller takes it back just by pressing A.
 /// </summary>
 public partial class CharacterSelectScreen : Node2D
 {
@@ -28,6 +30,9 @@ public partial class CharacterSelectScreen : Node2D
 		public int Index = -1;
 		public Label Name;
 		public Label Credit;
+		/// <summary>"Player 2", or "Player 2 - CPU" while the computer sits there.</summary>
+		public Label Heading;
+		public int Seat;
 		public Label Blurb;
 		public Label State;
 		public Color Tint;
@@ -48,7 +53,7 @@ public partial class CharacterSelectScreen : Node2D
 	/// </summary>
 	public bool ForStory;
 
-	readonly Slot[] slots = new Slot[2];
+	readonly Slot[] slots = new Slot[GameRoot.MaxPlayers];
 	readonly Card[] cards = new Card[FighterCatalog.Count];
 
 	static readonly Rect2 QuitBox = new Rect2(1640.0f, 64.0f, 200.0f, 76.0f);
@@ -59,9 +64,11 @@ public partial class CharacterSelectScreen : Node2D
 	const float CardHeight = 350.0f;
 	const float CardGap = 44.0f;
 
-	const float PanelTop = 600.0f;
-	const float PanelWidth = 640.0f;
-	const float PanelHeight = 330.0f;
+	const float PanelTop = 572.0f;
+	/// <summary>A story's one panel is wide; four seats share the row.</summary>
+	float PanelWidth => ForStory ? 640.0f : 410.0f;
+	const float PanelHeight = 358.0f;
+	const float PanelGap = 16.0f;
 
 	/// <summary>"Press Start to fight", shown once everyone has picked.</summary>
 	Label startPrompt;
@@ -145,7 +152,7 @@ public partial class CharacterSelectScreen : Node2D
 		for (int i = 0; i < slots.Length; i++)
 		{
 			Rect2 panel = PanelRect(i, viewport);
-			Color tint = i == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
+			Color tint = MenuTheme.PlayerTint(i);
 
 			var slot = new Slot
 			{
@@ -153,30 +160,41 @@ public partial class CharacterSelectScreen : Node2D
 				Tint = tint,
 			};
 
-			if (!ForStory || i == 0) root.AddChild(MenuTheme.MakeLabel($"Player {i + 1}", panel.Position + new Vector2(36.0f, 22.0f), 34, tint));
+			slot.Seat = i;
+			slot.Heading = MenuTheme.MakeLabel($"Player {i + 1}", panel.Position + new Vector2(36.0f, 22.0f), 34, tint);
+			if (!ForStory || i == 0) root.AddChild(slot.Heading);
 
 			var column = new VBoxContainer
 			{
-				Position = panel.Position + new Vector2(36.0f, 76.0f),
+				Position = panel.Position + new Vector2(36.0f, ForStory ? 76.0f : 68.0f),
 				Size = new Vector2(PanelWidth - 72.0f, 0.0f),
 			};
-			column.AddThemeConstantOverride("separation", 6);
+			column.AddThemeConstantOverride("separation", ForStory ? 6 : 2);
 			root.AddChild(column);
 
-			slot.Name = MenuTheme.MakeLabel("", Vector2.Zero, 52, MenuTheme.Text);
-			slot.Credit = MenuTheme.MakeLabel("", Vector2.Zero, 28, MenuTheme.Soft);
-			slot.Blurb = MenuTheme.MakeLabel("", Vector2.Zero, 25, MenuTheme.Soft);
+			slot.Name = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 52 : 44, MenuTheme.Text);
+			slot.Credit = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 28 : 24, MenuTheme.Soft);
+			slot.Blurb = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 25 : 20, MenuTheme.Soft);
 			slot.State = MenuTheme.MakeLabel("", Vector2.Zero, 30, tint);
 
 			// Who drew it sits on the name's own line, so crediting the artist costs no room the
-			// description needs.
-			var heading = new HBoxContainer();
-			heading.AddThemeConstantOverride("separation", 18);
-			slot.Name.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
-			slot.Credit.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
-			heading.AddChild(slot.Name);
-			heading.AddChild(slot.Credit);
-			column.AddChild(heading);
+			// description needs - in the story's wide panel. Four seats across leave no room beside
+			// the name, so there it goes under it.
+			if (ForStory)
+			{
+				var heading = new HBoxContainer();
+				heading.AddThemeConstantOverride("separation", 18);
+				slot.Name.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
+				slot.Credit.SizeFlagsVertical = Control.SizeFlags.ShrinkEnd;
+				heading.AddChild(slot.Name);
+				heading.AddChild(slot.Credit);
+				column.AddChild(heading);
+			}
+			else
+			{
+				column.AddChild(slot.Name);
+				column.AddChild(slot.Credit);
+			}
 			foreach (Label label in new[] { slot.Blurb, slot.State })
 			{
 				label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
@@ -193,7 +211,7 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			// Coming back from stage select, a CPU picked earlier is still sitting there.
-			if (GameRoot.Instance.CpuPlayers[i])
+			if (GameRoot.Instance.CpuPlayers[i] && GameRoot.Instance.SelectedFighters[i] >= 0)
 			{
 				slot.Joined = slot.IsCpu = true;
 				slot.Index = GameRoot.Instance.SelectedFighters[i];
@@ -243,10 +261,11 @@ public partial class CharacterSelectScreen : Node2D
 
 	Rect2 PanelRect(int player, Vector2 viewport)
 	{
-		const float Gap = 60.0f;
 		if (ForStory) return new Rect2((viewport.X - PanelWidth) * 0.5f, PanelTop, PanelWidth, PanelHeight);
-		float left = (viewport.X - (PanelWidth * 2.0f + Gap)) * 0.5f;
-		return new Rect2(left + player * (PanelWidth + Gap), PanelTop, PanelWidth, PanelHeight);
+		// Four across, inside the page's margin rule.
+		const float Margin = 170.0f;
+		float left = Margin + (viewport.X - Margin - 20.0f - (PanelWidth * slots.Length + PanelGap * (slots.Length - 1))) * 0.5f;
+		return new Rect2(left + player * (PanelWidth + PanelGap), PanelTop, PanelWidth, PanelHeight);
 	}
 
 	public override void _Input(InputEvent @event)
@@ -267,8 +286,8 @@ public partial class CharacterSelectScreen : Node2D
 	{
 		Rect2 panel = PanelRect(player, GetViewportRect().Size);
 		const float W = 170.0f;
-		const float H = 58.0f;
-		return new Rect2(panel.End.X - 24.0f - W - which * (W + 14.0f), panel.End.Y - 24.0f - H, W, H);
+		const float H = 48.0f;
+		return new Rect2(panel.End.X - 24.0f - W - which * (W + 14.0f), panel.End.Y - 14.0f - H, W, H);
 	}
 
 	/// <summary>
@@ -317,8 +336,8 @@ public partial class CharacterSelectScreen : Node2D
 
 		DrawRect(box, new Color(1.0f, 1.0f, 1.0f, 0.85f));
 		CrayonBrush.InkRect(this, box, ink, ink == MenuTheme.Rule ? 3.0f : 6.0f, seed, 2.2f);
-		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + 11.0f), text,
-			HorizontalAlignment.Center, box.Size.X, 30, MenuTheme.Text);
+		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + 10.0f), text,
+			HorizontalAlignment.Center, box.Size.X, 28, MenuTheme.Text);
 	}
 
 	int CardUnder(Vector2 point)
@@ -330,18 +349,23 @@ public partial class CharacterSelectScreen : Node2D
 		return -1;
 	}
 
-	/// <summary>Every seat is filled and picked, and at least one of them is a person.</summary>
+	/// <summary>
+	/// Two or more seats filled, everyone in one has picked, and at least one of them is a person.
+	/// An empty seat sits the fight out.
+	/// </summary>
 	bool EveryoneReady()
 	{
 		if (ForStory) return slots[0].Locked;
-		bool ready = true;
+		int seated = 0;
 		bool anyHuman = false;
 		foreach (Slot slot in slots)
 		{
-			ready &= slot.Joined && slot.Locked;
+			if (!slot.Joined) continue;
+			if (!slot.Locked) return false;
+			seated++;
 			anyHuman |= slot.Human;
 		}
-		return ready && anyHuman;
+		return seated >= 2 && anyHuman;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -451,8 +475,8 @@ public partial class CharacterSelectScreen : Node2D
 
 		for (int i = 0; i < slots.Length; i++)
 		{
-			GameRoot.Instance.SelectedFighters[i] = slots[i].Index;
-			GameRoot.Instance.CpuPlayers[i] = slots[i].IsCpu;
+			GameRoot.Instance.SelectedFighters[i] = slots[i].Joined ? slots[i].Index : -1;
+			GameRoot.Instance.CpuPlayers[i] = slots[i].Joined && slots[i].IsCpu;
 		}
 		GameRoot.Instance.GoStageSelect();
 	}
@@ -464,6 +488,7 @@ public partial class CharacterSelectScreen : Node2D
 	{
 		foreach (Slot slot in slots)
 		{
+			if (slot.Heading != null) slot.Heading.Text = slot.Joined && slot.IsCpu ? $"Player {slot.Seat + 1} - CPU" : $"Player {slot.Seat + 1}";
 			if (ForStory && slot != slots[0])
 			{
 				slot.State.Text = "";
@@ -475,7 +500,9 @@ public partial class CharacterSelectScreen : Node2D
 				slot.Name.Text = "";
 				slot.Credit.Text = "";
 				slot.Blurb.Text = "";
-				slot.State.Text = "Press A to join";
+				// A seat with no controller of its own - no pad for it, and the keyboard's two seats
+				// taken - can still be the computer.
+				slot.State.Text = slot.Cursor.Nav.Source == null ? "Plug in a pad to join" : "Press A to join";
 				continue;
 			}
 
@@ -484,7 +511,8 @@ public partial class CharacterSelectScreen : Node2D
 				slot.Name.Text = FighterCatalog.NameOf(slot.Index);
 				slot.Credit.Text = FighterCatalog.CreditOf(slot.Index);
 				slot.Blurb.Text = FighterCatalog.BlurbOf(slot.Index);
-				slot.State.Text = "CPU";
+				// Said in the heading: down here it would sit on the CPU buttons.
+				slot.State.Text = "";
 				continue;
 			}
 

@@ -104,6 +104,13 @@ of his own drawings.
 Mostly camera and stage sizing plus gamepad handling, but it changes how the stage should be
 built, so it wants to land before there are many stages.
 
+**Status: built (2026-10-16).** Four seats on fighter select, any of them the computer; two or
+more start a fight. Seats keep their number, colour and controller into the match (the keyboard
+has room for two; seats three and four need pads). Tags over heads in fights of three or more.
+Three big stages made for it - Playground, Building Site, Kitchen Counter - each with its own
+camera range (`StageData.CameraMinZoom`). Teams in versus are not built (story mode's two-on-one
+has them).
+
 ## M7 — CPU opponents
 
 So he can play alone. A state-machine AI at "fun for a kid" quality, with a difficulty setting

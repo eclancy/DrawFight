@@ -14,12 +14,32 @@ public partial class GameRoot : Node2D
 {
 	public static GameRoot Instance { get; private set; }
 
-	public const int PlayerCount = 2;
+	/// <summary>Seats on the fighter select screen: up to four players in a fight (Eric, 2026-10-16).</summary>
+	public const int MaxPlayers = 4;
 
-	public int[] SelectedFighters = { 0, 1 };
+	/// <summary>The fighter in each seat, or -1 for a seat nobody sat in.</summary>
+	public int[] SelectedFighters = { 0, 1, -1, -1 };
 
-	/// <summary>Which players the computer plays, chosen on the fighter select screen.</summary>
-	public bool[] CpuPlayers = { false, false };
+	/// <summary>Which seats the computer plays, chosen on the fighter select screen.</summary>
+	public bool[] CpuPlayers = { false, false, false, false };
+
+	/// <summary>
+	/// A cursor for every person playing, in their seat's colour on their seat's controller - the
+	/// screens between fighter select and the fight (stage select, item settings). A CPU has none.
+	/// </summary>
+	public MenuCursor[] HumanCursors(Vector2 viewport, float y)
+	{
+		IInputSource[] sources = ControllerAssignment.ForPlayers(MaxPlayers);
+		var cursors = new System.Collections.Generic.List<MenuCursor>();
+		for (int seat = 0; seat < MaxPlayers; seat++)
+		{
+			if (SelectedFighters[seat] < 0 || CpuPlayers[seat]) continue;
+			cursors.Add(new MenuCursor(sources[seat], seat, MenuTheme.PlayerTint(seat),
+				new Vector2(viewport.X * (0.2f + seat * 0.2f), y)));
+		}
+		if (cursors.Count == 0) cursors.Add(new MenuCursor(sources[0], 0, MenuTheme.PlayerTint(0), new Vector2(viewport.X * 0.5f, y)));
+		return cursors.ToArray();
+	}
 	public int SelectedStage;
 
 	/// <summary>The item settings, saved between games (ItemSettings.Save).</summary>
@@ -70,14 +90,15 @@ public partial class GameRoot : Node2D
 			if (arg.StartsWith("--stage=")) SelectedStage = arg.Substring(8).ToInt();
 			if (arg.StartsWith("--fighters="))
 			{
-				// "--fighters=2,0": player one is fighter 2, player two is fighter 0.
+				// "--fighters=2,0": player one is fighter 2, player two is fighter 0. Up to four.
 				string[] picks = arg.Substring(11).Split(',');
-				for (int i = 0; i < picks.Length && i < SelectedFighters.Length; i++)
+				for (int i = 0; i < SelectedFighters.Length; i++)
 				{
-					SelectedFighters[i] = picks[i].ToInt();
+					SelectedFighters[i] = i < picks.Length ? picks[i].ToInt() : -1;
 				}
 			}
-			if (arg == "--cpu") CpuPlayers[1] = true;
+			// Every seat after the first is the computer.
+			if (arg == "--cpu") for (int i = 1; i < CpuPlayers.Length; i++) CpuPlayers[i] = true;
 			if (arg == "--parade") startAt = "parade";
 			if (arg.StartsWith("--only=")) paradeOnly = arg.Substring(7).ToInt();
 			if (arg.StartsWith("--size=")) paradeSize = arg.Substring(7).ToInt();
@@ -293,11 +314,24 @@ public partial class GameRoot : Node2D
 
 	public void GoMatch()
 	{
+		// The seats somebody sat in, in seat order: P1 and P3 fighting are fighters 0 and 1, and
+		// keep seats 0 and 2 - their numbers, colours and controllers.
+		var fighters = new System.Collections.Generic.List<int>();
+		var cpu = new System.Collections.Generic.List<bool>();
+		var seats = new System.Collections.Generic.List<int>();
+		for (int seat = 0; seat < MaxPlayers; seat++)
+		{
+			if (SelectedFighters[seat] < 0) continue;
+			fighters.Add(SelectedFighters[seat]);
+			cpu.Add(CpuPlayers[seat]);
+			seats.Add(seat);
+		}
 		var match = new MatchManager
 		{
 			StageIndex = SelectedStage,
-			FighterIndices = (int[])SelectedFighters.Clone(),
-			CpuPlayers = (bool[])CpuPlayers.Clone(),
+			FighterIndices = fighters.ToArray(),
+			CpuPlayers = cpu.ToArray(),
+			Seats = seats.ToArray(),
 			Items = Items,
 			OnlyItem = OnlyItem,
 		};

@@ -23,6 +23,15 @@ public partial class MatchManager : Node2D
 
 	/// <summary>Which players the computer plays. Set by GameRoot, like the fighters.</summary>
 	public bool[] CpuPlayers = { false, false };
+
+	/// <summary>The select-screen seat each fighter sat in (Fighter.Seat); null when they are seats 0, 1, 2...</summary>
+	public int[] Seats;
+
+	/// <summary>
+	/// A tag over every head (Fighter.DrawPlayerTag): in versus, once there are three or more in
+	/// the fight or two of the same fighter. Two different fighters are told apart at a glance.
+	/// </summary>
+	public bool ShowPlayerTags { get; private set; }
 	CpuInputSource[] cpus;
 
 	/// <summary>
@@ -209,6 +218,8 @@ public partial class MatchManager : Node2D
 			SpawnFighter(FighterCatalog.Get(FighterIndices[i]), i);
 		}
 		AssignControllers();
+		ShowPlayerTags = Story == null && (FighterIndices.Length >= 3
+			|| new System.Collections.Generic.HashSet<int>(FighterIndices).Count < FighterIndices.Length);
 
 		fx = new HitFx();
 		AddChild(fx);
@@ -216,13 +227,13 @@ public partial class MatchManager : Node2D
 		debugDraw = new DebugDraw { Match = this };
 		AddChild(debugDraw);
 
-		camera = new GameCamera { Bounds = stage.BlastZone, Limits = stage.Backdrop };
+		camera = new GameCamera { Bounds = stage.BlastZone, Limits = stage.Backdrop, MinZoom = stage.Data.CameraMinZoom };
 		AddChild(camera);
 		fx.Camera = camera;
 
 		hud = new MatchHud();
 		AddChild(hud);
-		hud.Build(Fighters);
+		hud.Build(Fighters, seats: Story == null);
 
 		countdownFrames = CountdownStepFrames * 3 + FightBannerFrames;
 
@@ -296,6 +307,7 @@ public partial class MatchManager : Node2D
 	{
 		var fighter = new Fighter();
 		fighter.Configure(data, null, index, this);
+		if (Seats != null && index < Seats.Length) fighter.Seat = Seats[index];
 		fighter.GlobalPosition = stage.SpawnPoints[index % stage.SpawnPoints.Length];
 		FaceInward(fighter);
 		AddChild(fighter);
@@ -326,13 +338,11 @@ public partial class MatchManager : Node2D
 		}
 
 		// A CPU keeps its slot through hot-plugging: plugging in a pad should not replace the
-		// computer player, and the humans still get pads in connection order.
+		// computer player. Each person plays on their seat's controller - the one they joined
+		// and picked with on the select screen.
 		cpus ??= new CpuInputSource[Fighters.Count];
-		int humans = 0;
-		for (int i = 0; i < Fighters.Count; i++) if (!IsCpu(i)) humans++;
-		IInputSource[] sources = ControllerAssignment.ForPlayers(Mathf.Max(1, humans));
+		IInputSource[] sources = ControllerAssignment.ForPlayers(GameRoot.MaxPlayers);
 
-		int next = 0;
 		for (int i = 0; i < Fighters.Count; i++)
 		{
 			if (IsCpu(i))
@@ -346,7 +356,7 @@ public partial class MatchManager : Node2D
 			}
 			else
 			{
-				Fighters[i].Controller = sources[next++];
+				Fighters[i].Controller = sources[Mathf.Clamp(Fighters[i].Seat, 0, sources.Length - 1)];
 			}
 		}
 	}

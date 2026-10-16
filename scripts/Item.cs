@@ -1557,7 +1557,7 @@ public partial class Item : CharacterBody2D
 		// The drawing's own little marker of whose side it is on.
 		if (OwnerFighter != null && figure != null)
 		{
-			Color tint = OwnerFighter.PlayerIndex == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent;
+			Color tint = MenuTheme.PlayerTint(OwnerFighter.Seat);
 			DrawCircle(new Vector2(0.0f, -150.0f), 9.0f, tint);
 		}
 	}

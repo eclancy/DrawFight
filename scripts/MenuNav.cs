@@ -17,6 +17,19 @@ public static class MenuTheme
 	public static readonly Color Accent = new Color(0.96f, 0.62f, 0.32f);
 	public static readonly Color AccentTwo = new Color(0.36f, 0.72f, 0.98f);
 
+	/// <summary>
+	/// Each player's colour, by seat - on their cursor, their HUD tag, their tag over their head in
+	/// a match, their shield: blue, orange, green, pink. Light, like everything outside a fighter
+	/// (.ai/art-direction.md), and far enough apart to tell four of them apart across a room.
+	/// </summary>
+	public static Color PlayerTint(int seat) => (seat % 4) switch
+	{
+		0 => AccentTwo,
+		1 => Accent,
+		2 => new Color(0.40f, 0.78f, 0.38f),
+		_ => new Color(0.88f, 0.48f, 0.82f),
+	};
+
 	/// <summary>The ruled page every menu sits on, drawn to fill a viewport of any size.</summary>
 	public static void DrawPage(CanvasItem canvas, Vector2 size)
 	{

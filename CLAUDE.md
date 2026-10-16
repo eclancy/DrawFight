@@ -24,8 +24,8 @@ Everything is built in code, with no `.tscn` beyond a two-line `scenes/Main.tscn
 needed one yet.
 
 **Screen flow** is owned by `GameRoot`, which swaps screens as its own children rather than
-changing Godot scenes: title → main menu, then either versus (character select → stage select
-(→ item settings) → match → title), a story ("Whose story?" → each chapter a match that opens
+changing Godot scenes: title → main menu, then either versus (character select, two to four
+players → stage select (→ item settings) → match → title), a story ("Whose story?" → each chapter a match that opens
 on its scene → main menu), or draw a fighter (your drawings → the drawing screen → sending it
 in). Selections live in ordinary fields on `GameRoot`, so there is no global for a screen to
 forget to write.
@@ -159,14 +159,16 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   game: Circy, Elim's drawing, standing idle in his parade cell (shoot it first with
   `--parade --only=2 --shot=70`). The icon is never drawn separately; if Circy is re-cut, re-shoot
   and re-crop per the script's docstring.
-- **`"$GODOT_BIN" --path . -- --stage=N --shot=120`** — boot straight into one stage and
-  screenshot it. `F4` cycles stages while playing.
+- **`"$GODOT_BIN" --path . -- --match --stage=N --shot=120`** — boot straight into a match on
+  one stage and screenshot it (`--stage` alone only picks it). `F4` cycles stages while playing.
+  Stages 4-6 are the big ones for three and four players.
 - **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--drawings`** each boot straight to
   that screen, so a screen can be checked without clicking through the flow to reach it;
   **`--draw`** and **`--send`** open the newest saved drawing (or a new one) in the drawing or
   sending screen. **`--fighters=2,0`**
-  picks the matchup (player one, player two) by catalog index, and **`--cpu`** makes player two
-  the computer.
+  picks the matchup (player one, player two - up to four, `--fighters=2,0,1,3`) by catalog
+  index, and **`--cpu`** makes every player after the first the computer: a four-way fight to
+  watch is `--match --stage=5 --fighters=3,1,4,5 --cpu`.
 - **`"$GODOT_BIN" --path . -- --story=edgelord --shots=60,400,900`** — play a fighter's story
   (`--story=edgelord:2` from its third chapter, counting the opening as 0;
   `--story=edgelord:0:after` at the scene after chapter 0's fight; `--storyselect` opens

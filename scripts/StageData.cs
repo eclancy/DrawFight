@@ -109,6 +109,48 @@ public enum PlatformLook
 	/// Flambé's story.
 	/// </summary>
 	Girder,
+
+	// --- The playground ---
+
+	/// <summary>A slide's deck: posts down to the ground, a ladder up its back and the slide down its front.</summary>
+	SlideTower,
+
+	/// <summary>Monkey bars - the bars seen end on - on a ladder at each end.</summary>
+	MonkeyBars,
+
+	/// <summary>A swing set's top bar, on splayed legs, with swings hanging from it.</summary>
+	SwingSet,
+
+	/// <summary>A low wooden sandbox on the ground, full of sand, a spade stuck in it. You stand on the sand.</summary>
+	Sandbox,
+
+	// --- The building site ---
+
+	/// <summary>Dug earth: a cross-section of soil and stones, packed hard along the top.</summary>
+	Dirt,
+
+	/// <summary>A portable site office on the ground: corrugated walls, a window and a door. You stand on its roof.</summary>
+	SiteCabin,
+
+	// --- The kitchen ---
+
+	/// <summary>A kitchen unit: the worktop along the top, which you stand on, and cupboards and drawers below it.</summary>
+	Countertop,
+
+	/// <summary>A sink between two units: the steel basin down to its floor, which you stand on, and the tap above.</summary>
+	Sink,
+
+	/// <summary>A toaster standing on the counter. You stand on its top.</summary>
+	Toaster,
+
+	/// <summary>A stack of cookbooks lying on the counter.</summary>
+	Books,
+
+	/// <summary>A wall cupboard: its top you can drop through, its doors pencilled in below.</summary>
+	WallCabinet,
+
+	/// <summary>A wall shelf on two brackets.</summary>
+	Shelf,
 }
 
 /// <summary>One collidable surface, plus how to draw it.</summary>
@@ -130,7 +172,7 @@ public sealed class StagePlatform
 }
 
 /// <summary>Scenery. Never collidable - if a fighter can stand on it, it is a platform.</summary>
-public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline }
+public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline, Window, Cone }
 
 public sealed class StageProp
 {
@@ -195,6 +237,16 @@ public partial class StageData : Resource
 	/// </summary>
 	[Export] public bool HasBottomBlastZone { get; set; } = true;
 
+	/// <summary>
+	/// How far out the camera may pull back, as a zoom. A big stage made for four players lets it go
+	/// further, or two fighters at its far ends could not both be on screen; nowhere goes so far that
+	/// a fighter is a speck.
+	/// </summary>
+	[Export] public float CameraMinZoom { get; set; } = 0.42f;
+
+	/// <summary>Made for three or four players (Eric, 2026-10-16). The stage select says so.</summary>
+	[Export] public bool Large { get; set; }
+
 	public const float DefaultBlastLeft = -1560.0f;
 	public const float DefaultBlastRight = 1560.0f;
 	public const float DefaultBlastTop = -1280.0f;
@@ -204,6 +256,9 @@ public partial class StageData : Resource
 
 	public StagePlatform[] Platforms = System.Array.Empty<StagePlatform>();
 	public StageProp[] Props = System.Array.Empty<StageProp>();
+
+	/// <summary>Scenery drawn on the pages rather than behind them, on a paper stage: the kitchen's window.</summary>
+	public StageProp[] OnPage = System.Array.Empty<StageProp>();
 	public Vector2[] SpawnPoints = { Vector2.Zero };
 	public Vector2 RespawnPoint = new Vector2(0.0f, -620.0f);
 

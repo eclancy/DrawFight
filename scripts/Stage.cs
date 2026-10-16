@@ -120,6 +120,7 @@ public partial class Stage : Node2D
 		}
 		if (Data.Style == StageStyle.TapedPage) DrawTapedPage(Data.PageRect);
 		if (Data.Style == StageStyle.PinnedPages) foreach (PinnedPage page in Data.Pages) DrawPinnedPage(page);
+		foreach (StageProp prop in Data.OnPage) DrawProp(prop);
 		foreach (StagePlatform platform in Data.Platforms) DrawPlatform(platform);
 
 		DrawBlastZoneHint();
@@ -336,6 +337,18 @@ public partial class Stage : Node2D
 			case PlatformLook.StageDeck: DrawStageDeck(platform, seed); break;
 			case PlatformLook.AmpStack: DrawAmpStack(platform, seed); break;
 			case PlatformLook.Girder: DrawGirder(platform, seed); break;
+			case PlatformLook.SlideTower: DrawSlideTower(platform, seed); break;
+			case PlatformLook.MonkeyBars: DrawMonkeyBars(platform, seed); break;
+			case PlatformLook.SwingSet: DrawSwingSet(platform, seed); break;
+			case PlatformLook.Sandbox: DrawSandbox(platform, seed); break;
+			case PlatformLook.Dirt: DrawDirt(platform, seed); break;
+			case PlatformLook.SiteCabin: DrawSiteCabin(platform, seed); break;
+			case PlatformLook.Countertop: DrawCountertop(platform, seed); break;
+			case PlatformLook.Sink: DrawSink(platform, seed); break;
+			case PlatformLook.Toaster: DrawToaster(platform, seed); break;
+			case PlatformLook.Books: DrawBooks(platform, seed); break;
+			case PlatformLook.WallCabinet: DrawWallCabinet(platform, seed); break;
+			case PlatformLook.Shelf: DrawShelf(platform, seed); break;
 			default: DrawLedge(platform, seed); break;
 		}
 	}
@@ -802,6 +815,358 @@ public partial class Stage : Node2D
 		OutlinePlatform(r, platform.OneWay, seed);
 	}
 
+
+	// --- The playground ------------------------------------------------------------------------
+
+	static readonly Color PlayRed = new Color(0.95f, 0.50f, 0.42f);
+	static readonly Color PlayBlue = new Color(0.46f, 0.70f, 0.94f);
+	static readonly Color Sand = new Color(0.97f, 0.88f, 0.62f);
+
+	/// <summary>A ladder of two rails and rungs, from <paramref name="top"/> straight down to <paramref name="bottom"/>.</summary>
+	void DrawLadder(float x, float top, float bottom, float width, Color colour, int seed)
+	{
+		CrayonBrush.InkLine(this, new Vector2(x - width * 0.5f, top), new Vector2(x - width * 0.5f, bottom), Data.Ink, 4.0f, seed, 0.8f);
+		CrayonBrush.InkLine(this, new Vector2(x + width * 0.5f, top), new Vector2(x + width * 0.5f, bottom), Data.Ink, 4.0f, seed + 1, 0.8f);
+		int k = 0;
+		for (float y = top + 34.0f; y < bottom - 10.0f; y += 52.0f, k++)
+		{
+			CrayonBrush.InkLine(this, new Vector2(x - width * 0.5f, y), new Vector2(x + width * 0.5f, y), colour, 6.0f, seed + 10 + k, 0.6f);
+		}
+	}
+
+	/// <summary>
+	/// A slide. The rectangle is the deck at the top, which you stand on; a post at each end goes
+	/// down to the ground, the ladder up its back, and the slide itself runs down its front to the
+	/// grass - coloured in, no ink round it, because you cannot stand on it.
+	/// </summary>
+	void DrawSlideTower(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		float ground = Data.GroundLine;
+		foreach (float x in new[] { r.Position.X + 14.0f, r.End.X - 14.0f })
+		{
+			var post = new Rect2(x - 9.0f, r.End.Y, 18.0f, ground - r.End.Y);
+			DrawRect(post, Wood);
+			CrayonBrush.InkRect(this, post, Data.Ink, 2.5f, seed + Mathf.RoundToInt(x), 1.0f);
+		}
+		DrawLadder(r.Position.X - 30.0f, r.Position.Y - 10.0f, ground, 54.0f, Wood, seed + 3);
+
+		// The slide: a band from the front of the deck down to the ground, with its raised edge.
+		float run = (ground - r.Position.Y) * 1.25f;
+		Vector2 topLeft = new Vector2(r.End.X - 6.0f, r.Position.Y + 4.0f);
+		Vector2 bottomRight = new Vector2(r.End.X + run, ground - 6.0f);
+		Vector2 drop = new Vector2(0.0f, 30.0f);
+		DrawColoredPolygon(new[] { topLeft, bottomRight + new Vector2(30.0f, 0.0f), bottomRight + new Vector2(30.0f, 0.0f) + drop * 0.6f, topLeft + drop },
+			new Color(PlayRed, 0.85f));
+		CrayonBrush.InkLine(this, topLeft - new Vector2(0.0f, 10.0f), bottomRight + new Vector2(30.0f, -10.0f),
+			new Color(PlayRed.R * 0.85f, PlayRed.G * 0.85f, PlayRed.B * 0.85f), 7.0f, seed + 5, 0.8f);
+
+		DrawRect(r, Wood);
+		CrayonBrush.CrayonFill(this, r, new Color(0.76f, 0.54f, 0.32f, 0.5f), seed, 9.0f, 0.0f, 5.0f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// Monkey bars from the side: the bars seen end on, as a row of rounds between two rails, on a
+	/// ladder at each end down to the ground. The rails are what you stand on.
+	/// </summary>
+	void DrawMonkeyBars(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		float ground = Data.GroundLine;
+		DrawLadder(r.Position.X + 26.0f, r.End.Y, ground, 50.0f, PlayBlue, seed + 1);
+		DrawLadder(r.End.X - 26.0f, r.End.Y, ground, 50.0f, PlayBlue, seed + 2);
+
+		DrawRect(r, new Color(PlayBlue, 0.35f));
+		for (float x = r.Position.X + 30.0f; x < r.End.X - 20.0f; x += 46.0f)
+		{
+			DrawCircle(new Vector2(x, r.GetCenter().Y), r.Size.Y * 0.36f, Data.Accent);
+		}
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), PlayBlue, 7.0f, seed + 3, 0.6f);
+		CrayonBrush.InkLine(this, new Vector2(r.Position.X, r.End.Y), r.End, PlayBlue, 7.0f, seed + 4, 0.6f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// A swing set: the top bar, which you stand on, on a pair of splayed legs at each end, and
+	/// swings hanging on chains - drawn thin, and you go through them.
+	/// </summary>
+	void DrawSwingSet(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		float ground = Data.GroundLine;
+		const float Splay = 110.0f;
+		int i = 0;
+		foreach (float x in new[] { r.Position.X + 12.0f, r.End.X - 12.0f })
+		{
+			CrayonBrush.InkLine(this, new Vector2(x, r.GetCenter().Y), new Vector2(x - Splay, ground), Data.Ink, 6.0f, seed + i, 1.0f);
+			CrayonBrush.InkLine(this, new Vector2(x, r.GetCenter().Y), new Vector2(x + Splay, ground), Data.Ink, 6.0f, seed + 5 + i, 1.0f);
+			CrayonBrush.InkLine(this, new Vector2(x, r.GetCenter().Y), new Vector2(x - Splay, ground), PlayBlue, 3.0f, seed + 10 + i, 1.0f);
+			CrayonBrush.InkLine(this, new Vector2(x, r.GetCenter().Y), new Vector2(x + Splay, ground), PlayBlue, 3.0f, seed + 15 + i, 1.0f);
+			i++;
+		}
+
+		int swings = Mathf.Max(1, Mathf.RoundToInt(r.Size.X / 220.0f));
+		float hang = Mathf.Min(300.0f, (ground - r.End.Y) * 0.72f);
+		for (int s = 0; s < swings; s++)
+		{
+			float x = r.Position.X + r.Size.X * (s + 0.5f) / swings;
+			// Each hangs a little off true, as if someone just got off it.
+			float lean = CrayonBrush.Noise(seed, s) * 18.0f;
+			var seat = new Rect2(x - 46.0f + lean, r.End.Y + hang, 92.0f, 16.0f);
+			foreach (float cx in new[] { seat.Position.X + 8.0f, seat.End.X - 8.0f })
+			{
+				CrayonBrush.InkLine(this, new Vector2(cx - lean, r.End.Y), new Vector2(cx, seat.Position.Y), new Color(Data.Ink, 0.6f), 2.0f, seed + 30 + s, 0.4f);
+			}
+			DrawRect(seat, s % 2 == 0 ? PlayRed : Data.Accent);
+		}
+
+		DrawRect(r, Steel);
+		DrawRect(new Rect2(r.Position.X, r.Position.Y + 4.0f, r.Size.X, r.Size.Y * 0.3f), new Color(1.0f, 1.0f, 1.0f, 0.4f));
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// A sandbox: a low wooden box on the ground, its sand heaped a little, a spade stuck upright
+	/// in one corner. The sand is the top you stand on.
+	/// </summary>
+	void DrawSandbox(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		DrawRect(r, Wood);
+		CrayonBrush.CrayonFill(this, r, new Color(0.76f, 0.54f, 0.32f, 0.5f), seed, 9.0f, 0.0f, 5.0f);
+		for (float y = r.Position.Y + 24.0f; y < r.End.Y - 6.0f; y += 22.0f)
+		{
+			CrayonBrush.InkLine(this, new Vector2(r.Position.X + 6.0f, y), new Vector2(r.End.X - 6.0f, y), new Color(0.62f, 0.44f, 0.28f), 2.0f, seed + Mathf.RoundToInt(y), 0.6f);
+		}
+		// The sand along the top, with a heap of it, and the spade.
+		var sand = new Rect2(r.Position.X + 10.0f, r.Position.Y - 6.0f, r.Size.X - 20.0f, 18.0f);
+		DrawRect(sand, Sand);
+		Vector2 heap = new Vector2(r.Position.X + r.Size.X * 0.62f, r.Position.Y);
+		DrawColoredPolygon(new[] { heap + new Vector2(-70.0f, 2.0f), heap + new Vector2(0.0f, -14.0f), heap + new Vector2(70.0f, 2.0f) }, Sand);
+		float spadeX = r.Position.X + 40.0f;
+		CrayonBrush.InkLine(this, new Vector2(spadeX, r.Position.Y - 4.0f), new Vector2(spadeX + 14.0f, r.Position.Y - 74.0f), PlayRed, 6.0f, seed + 7, 0.4f);
+		DrawColoredPolygon(new[] { new Vector2(spadeX - 14.0f, r.Position.Y + 2.0f), new Vector2(spadeX + 14.0f, r.Position.Y + 2.0f),
+			new Vector2(spadeX + 10.0f, r.Position.Y - 26.0f), new Vector2(spadeX - 10.0f, r.Position.Y - 26.0f) }, PlayBlue);
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 5.0f, seed + 77, 1.6f);
+	}
+
+	// --- The building site ----------------------------------------------------------------------
+
+	/// <summary>
+	/// Dug earth seen in cross-section: soil coloured in, a band of it packed harder along the top,
+	/// and stones in it. Solid ground, with a heavy line along the top where people land.
+	/// </summary>
+	void DrawDirt(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		DrawRect(r, Data.GroundFill);
+		CrayonBrush.CrayonFill(this, r, Data.GroundCrayon, seed, 14.0f, 0.0f, 8.0f);
+		var packed = new Rect2(r.Position.X, r.Position.Y, r.Size.X, 34.0f);
+		DrawRect(packed, new Color(Data.GroundCrayon.R * 0.92f, Data.GroundCrayon.G * 0.9f, Data.GroundCrayon.B * 0.88f, 0.7f));
+		var stone = new Color(0.80f, 0.77f, 0.72f);
+		for (int i = 0; i < r.Size.X * r.Size.Y / 22000.0f; i++)
+		{
+			float x = r.Position.X + 30.0f + (r.Size.X - 60.0f) * (0.5f + 0.5f * CrayonBrush.Noise(seed, i));
+			float y = r.Position.Y + 70.0f + (r.Size.Y - 100.0f) * (0.5f + 0.5f * CrayonBrush.Noise(seed + 1, i));
+			float size = 9.0f + 9.0f * Mathf.Abs(CrayonBrush.Noise(seed + 2, i));
+			DrawCircle(new Vector2(x, y), size, stone);
+			DrawArc(new Vector2(x, y), size, 0.0f, Mathf.Tau, 14, new Color(Data.GroundCrayon.R * 0.8f, Data.GroundCrayon.G * 0.8f, Data.GroundCrayon.B * 0.8f), 2.0f, true);
+		}
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 5.0f, seed + 77, 1.6f);
+	}
+
+	/// <summary>
+	/// A site office, the kind that comes on a lorry: corrugated walls, a window and a door, and a
+	/// strip of hazard stripes along the bottom. Its roof is where you stand.
+	/// </summary>
+	void DrawSiteCabin(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		DrawRect(r, Data.PropFill);
+		CrayonBrush.CrayonFill(this, r, Data.PropCrayon, seed, 14.0f, 0.0f, 8.0f);
+		for (float x = r.Position.X + 20.0f; x < r.End.X - 10.0f; x += 26.0f)
+		{
+			CrayonBrush.InkLine(this, new Vector2(x, r.Position.Y + 10.0f), new Vector2(x, r.End.Y - 30.0f),
+				new Color(Data.PropCrayon.R * 0.9f, Data.PropCrayon.G * 0.9f, Data.PropCrayon.B * 0.9f), 2.5f, seed + Mathf.RoundToInt(x), 0.5f);
+		}
+		var window = new Rect2(r.Position.X + 36.0f, r.Position.Y + 40.0f, r.Size.X * 0.36f, r.Size.Y * 0.36f);
+		DrawRect(window, Data.SkyBottom);
+		CrayonBrush.InkRect(this, window, Data.Ink, 2.5f, seed + 3, 1.2f);
+		var door = new Rect2(r.End.X - 30.0f - r.Size.X * 0.22f, r.Position.Y + 34.0f, r.Size.X * 0.22f, r.Size.Y - 64.0f);
+		DrawRect(door, Data.PlatformCrayon);
+		CrayonBrush.InkRect(this, door, Data.Ink, 2.5f, seed + 4, 1.2f);
+		DrawCircle(new Vector2(door.Position.X + 12.0f, door.GetCenter().Y), 4.0f, Data.Ink);
+		// Hazard stripes along the bottom: yellow and pale grey, never black.
+		var stripes = new Rect2(r.Position.X, r.End.Y - 26.0f, r.Size.X, 26.0f);
+		DrawRect(stripes, Data.Accent);
+		for (float x = stripes.Position.X; x < stripes.End.X - 20.0f; x += 40.0f)
+		{
+			DrawColoredPolygon(new[] { new Vector2(x, stripes.End.Y), new Vector2(x + 20.0f, stripes.End.Y),
+				new Vector2(x + 40.0f, stripes.Position.Y), new Vector2(x + 20.0f, stripes.Position.Y) }, Data.PropCrayon);
+		}
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 6.0f, seed + 77, 2.0f);
+	}
+
+	// --- The kitchen ----------------------------------------------------------------------------
+
+	/// <summary>Cupboard doors across a rectangle, each with a knob - pencilled, the way the furniture is.</summary>
+	void DrawCupboards(Rect2 area, float doorWidth, Color fill, int seed)
+	{
+		DrawRect(area, fill);
+		CrayonBrush.PencilFill(this, area, new Color(Data.PropCrayon, 0.7f), seed, 6.0f, 2.2f);
+		int doors = Mathf.Max(1, Mathf.RoundToInt(area.Size.X / doorWidth));
+		float w = area.Size.X / doors;
+		for (int d = 0; d < doors; d++)
+		{
+			var door = new Rect2(area.Position.X + d * w + 10.0f, area.Position.Y + 12.0f, w - 20.0f, area.Size.Y - 24.0f);
+			CrayonBrush.PencilRect(this, door, new Color(Data.PropCrayon.R * 0.8f, Data.PropCrayon.G * 0.8f, Data.PropCrayon.B * 0.8f), 2.5f, seed + d);
+			float knobX = d % 2 == 0 ? door.End.X - 16.0f : door.Position.X + 16.0f;
+			DrawCircle(new Vector2(knobX, door.Position.Y + Mathf.Min(40.0f, door.Size.Y * 0.3f)), 6.0f, Steel);
+		}
+	}
+
+	/// <summary>
+	/// A kitchen unit. The rectangle is the whole of it, standing on the floor: the worktop along
+	/// the top - what you stand on, a heavy line along it - then a row of drawers, cupboards below,
+	/// and the kick board at the bottom.
+	/// </summary>
+	void DrawCountertop(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		const float Top = 40.0f;
+		const float Drawers = 70.0f;
+		const float Kick = 34.0f;
+		var drawers = new Rect2(r.Position.X + 6.0f, r.Position.Y + Top, r.Size.X - 12.0f, Drawers);
+		var cupboards = new Rect2(r.Position.X + 6.0f, drawers.End.Y, r.Size.X - 12.0f, r.Size.Y - Top - Drawers - Kick);
+		DrawCupboards(cupboards, 200.0f, Data.PropFill, seed + 1);
+		DrawRect(drawers, Data.PropFill);
+		CrayonBrush.PencilFill(this, drawers, new Color(Data.PropCrayon, 0.7f), seed + 2, 6.0f, 2.2f);
+		int count = Mathf.Max(1, Mathf.RoundToInt(drawers.Size.X / 200.0f));
+		for (int d = 0; d < count; d++)
+		{
+			var front = new Rect2(drawers.Position.X + d * drawers.Size.X / count + 10.0f, drawers.Position.Y + 10.0f, drawers.Size.X / count - 20.0f, Drawers - 20.0f);
+			CrayonBrush.PencilRect(this, front, new Color(Data.PropCrayon.R * 0.8f, Data.PropCrayon.G * 0.8f, Data.PropCrayon.B * 0.8f), 2.5f, seed + 20 + d);
+			CrayonBrush.InkLine(this, new Vector2(front.GetCenter().X - 24.0f, front.GetCenter().Y), new Vector2(front.GetCenter().X + 24.0f, front.GetCenter().Y), Steel, 6.0f, seed + 40 + d, 0.3f);
+		}
+		var kick = new Rect2(r.Position.X + 16.0f, r.End.Y - Kick, r.Size.X - 32.0f, Kick);
+		DrawRect(kick, new Color(Data.PropCrayon.R * 0.9f, Data.PropCrayon.G * 0.9f, Data.PropCrayon.B * 0.9f));
+
+		var worktop = new Rect2(r.Position.X, r.Position.Y, r.Size.X, Top);
+		DrawRect(worktop, Data.PlatformCrayon);
+		CrayonBrush.PencilFill(this, worktop, new Color(Data.PlatformCrayon.R * 0.85f, Data.PlatformCrayon.G * 0.82f, Data.PlatformCrayon.B * 0.8f), seed + 3, 5.0f, 2.2f);
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 6.0f, seed + 77, 1.6f);
+		CrayonBrush.InkLine(this, new Vector2(r.Position.X, r.Position.Y + Top), new Vector2(r.End.X, r.Position.Y + Top), Data.Ink, 3.0f, seed + 78, 1.2f);
+	}
+
+	/// <summary>
+	/// A sink set into the worktop between two units. The rectangle is the cupboard under it, its
+	/// top the floor of the basin; the steel basin is drawn from the worktop down to it, and the tap
+	/// curves over it from the wall.
+	/// </summary>
+	void DrawSink(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		float rim = Data.GroundLine;
+		var basin = new Rect2(r.Position.X, rim, r.Size.X, r.Position.Y - rim);
+		DrawRect(basin, new Color(0.84f, 0.87f, 0.90f));
+		CrayonBrush.PencilFill(this, basin, new Color(0.66f, 0.70f, 0.76f, 0.6f), seed, 6.0f, 2.2f);
+		DrawRect(new Rect2(basin.Position.X + 20.0f, basin.Position.Y + 10.0f, 18.0f, basin.Size.Y - 20.0f), new Color(1.0f, 1.0f, 1.0f, 0.55f));
+
+		// The tap, from the wall behind, curving over the basin.
+		float tapX = r.GetCenter().X + r.Size.X * 0.2f;
+		var tapColour = new Color(0.74f, 0.77f, 0.82f);
+		CrayonBrush.InkLine(this, new Vector2(tapX, rim), new Vector2(tapX, rim - 170.0f), tapColour, 14.0f, seed + 1, 0.3f);
+		DrawArc(new Vector2(tapX - 50.0f, rim - 170.0f), 50.0f, Mathf.Pi, Mathf.Tau, 16, tapColour, 14.0f, true);
+		CrayonBrush.InkLine(this, new Vector2(tapX - 100.0f, rim - 170.0f), new Vector2(tapX - 100.0f, rim - 130.0f), tapColour, 14.0f, seed + 2, 0.3f);
+		DrawCircle(new Vector2(tapX + 34.0f, rim - 40.0f), 14.0f, PlayRed);
+
+		DrawCupboards(r, 180.0f, Data.PropFill, seed + 3);
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 5.0f, seed + 77, 1.4f);
+	}
+
+	/// <summary>A toaster: rounded and pale, two slots in its top, its lever and dial, on chrome feet. You stand on its top.</summary>
+	void DrawToaster(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		var body = new Color(0.66f, 0.84f, 0.82f);
+		DrawRect(r, body);
+		CrayonBrush.PencilFill(this, r, new Color(0.50f, 0.70f, 0.70f, 0.6f), seed, 5.0f, 2.2f);
+		DrawRect(new Rect2(r.Position.X + 16.0f, r.Position.Y + 18.0f, 20.0f, r.Size.Y - 50.0f), new Color(1.0f, 1.0f, 1.0f, 0.5f));
+		foreach (float fx in new[] { 0.3f, 0.66f })
+		{
+			var slot = new Rect2(r.Position.X + r.Size.X * fx - 30.0f, r.Position.Y + 4.0f, 60.0f, 10.0f);
+			DrawRect(slot, new Color(0.56f, 0.60f, 0.62f));
+		}
+		var lever = new Rect2(r.End.X - 4.0f, r.Position.Y + r.Size.Y * 0.35f, 26.0f, 16.0f);
+		DrawRect(lever, Steel);
+		CrayonBrush.InkRect(this, lever, Data.Ink, 2.0f, seed + 1, 0.6f);
+		DrawCircle(new Vector2(r.GetCenter().X, r.End.Y - 40.0f), 14.0f, Steel);
+		DrawArc(new Vector2(r.GetCenter().X, r.End.Y - 40.0f), 14.0f, 0.0f, Mathf.Tau, 16, Data.Ink, 2.0f, true);
+		foreach (float x in new[] { r.Position.X + 20.0f, r.End.X - 44.0f })
+		{
+			DrawRect(new Rect2(x, r.End.Y - 6.0f, 24.0f, 6.0f), Steel);
+		}
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 5.0f, seed + 77, 1.4f);
+	}
+
+	/// <summary>A pile of cookbooks lying flat: each its own colour, page edges along one side.</summary>
+	void DrawBooks(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		Color[] covers = { PlayRed, PlayBlue, new Color(0.56f, 0.80f, 0.52f), Data.Accent };
+		int books = Mathf.Max(2, Mathf.RoundToInt(r.Size.Y / 46.0f));
+		float h = r.Size.Y / books;
+		for (int b = 0; b < books; b++)
+		{
+			// Not quite squared up, the way a pile of books never is.
+			float shift = CrayonBrush.Noise(seed, b) * 16.0f;
+			var book = new Rect2(r.Position.X + 6.0f + shift, r.End.Y - (b + 1) * h, r.Size.X - 12.0f, h);
+			DrawRect(book, covers[(b + seed) & 3]);
+			var pages = new Rect2(book.End.X - 22.0f, book.Position.Y + 6.0f, 18.0f, h - 12.0f);
+			DrawRect(pages, new Color(0.98f, 0.96f, 0.90f));
+			CrayonBrush.InkRect(this, book, Data.Ink, 2.5f, seed + b, 1.0f);
+		}
+		OutlinePlatform(r, platform.OneWay, seed);
+		CrayonBrush.InkLine(this, r.Position, new Vector2(r.End.X, r.Position.Y), Data.Ink, 5.0f, seed + 77, 1.4f);
+	}
+
+	/// <summary>
+	/// A wall cupboard. Its top is the platform, dashed: you jump up through the cupboard to stand
+	/// on it. The cupboard under it is pencilled, not inked - furniture on the wall, not a wall.
+	/// </summary>
+	void DrawWallCabinet(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		var body = new Rect2(r.Position.X + 12.0f, r.End.Y, r.Size.X - 24.0f, 220.0f);
+		DrawCupboards(body, 200.0f, new Color(Data.PropFill, 0.9f), seed + 1);
+		CrayonBrush.PencilRect(this, body, new Color(Data.PropCrayon.R * 0.75f, Data.PropCrayon.G * 0.75f, Data.PropCrayon.B * 0.75f), 3.0f, seed + 2);
+		DrawRect(r, Data.PlatformCrayon);
+		CrayonBrush.PencilFill(this, r, new Color(Data.PlatformCrayon.R * 0.85f, Data.PlatformCrayon.G * 0.82f, Data.PlatformCrayon.B * 0.8f), seed + 3, 5.0f, 2.2f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>A plank on two wall brackets.</summary>
+	void DrawShelf(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		foreach (float x in new[] { r.Position.X + r.Size.X * 0.2f, r.End.X - r.Size.X * 0.2f })
+		{
+			DrawColoredPolygon(new[] { new Vector2(x - 6.0f, r.End.Y), new Vector2(x + 6.0f, r.End.Y), new Vector2(x + 6.0f, r.End.Y + 70.0f) }, Steel);
+			CrayonBrush.InkLine(this, new Vector2(x, r.End.Y), new Vector2(x, r.End.Y + 70.0f), Steel, 5.0f, seed + Mathf.RoundToInt(x), 0.3f);
+			CrayonBrush.InkLine(this, new Vector2(x, r.End.Y + 70.0f), new Vector2(x + 50.0f, r.End.Y), Steel, 4.0f, seed + Mathf.RoundToInt(x) + 1, 0.3f);
+		}
+		DrawRect(r, Wood);
+		CrayonBrush.CrayonFill(this, r, new Color(0.76f, 0.54f, 0.32f, 0.5f), seed, 9.0f, 0.0f, 5.0f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
 	// --- Props ---------------------------------------------------------------
 
 	void DrawProp(StageProp prop)
@@ -958,6 +1323,39 @@ public partial class Stage : Node2D
 			case PropKind.FridgeMagnet:
 				DrawFridgeMagnet(centre, r.Size.X * 0.5f, prop.Seed);
 				break;
+
+			case PropKind.Window:
+			{
+				// A window on the wall: sky through the glass, a pale frame and curtains, no ink -
+				// it is on the wall behind the fight.
+				var frame = new Color(Data.PropCrayon.R * 0.9f, Data.PropCrayon.G * 0.9f, Data.PropCrayon.B * 0.9f);
+				DrawRect(r, new Color(0.98f, 0.97f, 0.94f));
+				var glass = r.Grow(-16.0f);
+				CrayonBrush.SkyBands(this, glass, new Color(0.62f, 0.80f, 0.95f), new Color(0.90f, 0.95f, 0.98f), 12);
+				CrayonBrush.InkLine(this, new Vector2(glass.GetCenter().X, glass.Position.Y), new Vector2(glass.GetCenter().X, glass.End.Y), frame, 8.0f, prop.Seed, 0.6f);
+				CrayonBrush.InkLine(this, new Vector2(glass.Position.X, glass.GetCenter().Y), new Vector2(glass.End.X, glass.GetCenter().Y), frame, 8.0f, prop.Seed + 1, 0.6f);
+				CrayonBrush.PencilRect(this, r, frame, 3.0f, prop.Seed + 2);
+				var curtain = new Color(Data.Accent.R, Data.Accent.G, Data.Accent.B, 0.55f);
+				DrawColoredPolygon(new[] { r.Position + new Vector2(-30.0f, -10.0f), r.Position + new Vector2(r.Size.X * 0.22f, -10.0f),
+					new Vector2(r.Position.X + r.Size.X * 0.08f, r.End.Y + 20.0f), new Vector2(r.Position.X - 40.0f, r.End.Y + 20.0f) }, curtain);
+				DrawColoredPolygon(new[] { new Vector2(r.End.X + 30.0f, r.Position.Y - 10.0f), new Vector2(r.End.X - r.Size.X * 0.22f, r.Position.Y - 10.0f),
+					new Vector2(r.End.X - r.Size.X * 0.08f, r.End.Y + 20.0f), new Vector2(r.End.X + 40.0f, r.End.Y + 20.0f) }, curtain);
+				break;
+			}
+
+			case PropKind.Cone:
+			{
+				// A traffic cone: orange, a pale band round it, on a square foot. No ink - scenery.
+				var orange = new Color(0.98f, 0.60f, 0.30f);
+				var foot = new Rect2(r.Position.X, r.End.Y - r.Size.Y * 0.12f, r.Size.X, r.Size.Y * 0.12f);
+				DrawRect(foot, orange);
+				float half = r.Size.X * 0.36f;
+				DrawColoredPolygon(new[] { new Vector2(centre.X - half, foot.Position.Y), new Vector2(centre.X + half, foot.Position.Y),
+					new Vector2(centre.X + half * 0.18f, r.Position.Y), new Vector2(centre.X - half * 0.18f, r.Position.Y) }, orange);
+				float bandY = r.Position.Y + r.Size.Y * 0.42f;
+				DrawRect(new Rect2(centre.X - half * 0.62f, bandY, half * 1.24f, r.Size.Y * 0.14f), new Color(0.98f, 0.97f, 0.94f));
+				break;
+			}
 		}
 	}
 
