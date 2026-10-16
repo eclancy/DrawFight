@@ -109,6 +109,17 @@ _______________________________________________
 _______________________________________________
 ```
 
+### 8. What are they like?
+
+What do they like doing when they aren't fighting? Are they grumpy, shy, silly, a show-off? How
+do they talk? And should we call them he, she or they?
+
+```
+_______________________________________________
+
+_______________________________________________
+```
+
 ---
 
 **Also:** if your character has a pet, a sidekick, or a smaller monster that hangs around with

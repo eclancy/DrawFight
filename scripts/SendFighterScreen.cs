@@ -45,6 +45,7 @@ public partial class SendFighterScreen : Node2D
 		("recover", "A move for getting back onto the stage", "This one has to go UP. Rocket boots, a huge jump, wings, a grappling hook.", 0),
 		("protect", "A move that protects them", "A shield, a counter-attack, a trap, turning invisible for a second.", 0),
 		("story", "7. What's their story?", "Every drawing in DrawFight is fighting for a place on the fridge. Why is yours? Do they want to stay up there, grab the best spot, or keep the whole fridge to themselves? Who are their friends, and who can't they stand? Make up anything you like. This becomes their story in the game.", 0),
+		("like", "8. What are they like?", "What do they like doing when they aren't fighting? Are they grumpy, shy, silly, a show-off? How do they talk? And should we call them he, she or they?", 0),
 		("catchphrase", "Do they have a catchphrase?", "Something they shout when they show off. Like \"Too hot for you!\"", 80),
 		("extra", "Anything else?", "A pet or sidekick you drew, what their taunt should be...", 0),
 	};

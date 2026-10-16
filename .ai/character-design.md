@@ -447,7 +447,10 @@ reaches them through their challenger scene, so nobody else's story is rewritten
 The rules for writing them:
 
 - **Their personality, their voice.** Lines come from how they were described and drawn: their
-  catchphrase, their taunt, the way they move. A fast fighter talks fast; a robot talks like one.
+  catchphrase, their taunt, the way they move - and the sheet's "What are they like?" (hobbies,
+  attitude, how they talk, and whether the story calls them he, she or they; asked from
+  2026-10-16, after Circy's pictures and Triguy's catchphrases had to be our call). What they like
+  doing when they aren't fighting is what they are doing when a challenger finds them. A fast fighter talks fast; a robot talks like one.
 - **Their moves and their weakness are the jokes.** DoomBot overheats when he is mocked, so the
   roast starts his boss fight at full heat. A fighter's own specials, props and the items are
   what a scene is staged with - nothing new is drawn for a story.
