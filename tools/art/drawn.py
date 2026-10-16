@@ -128,7 +128,8 @@ def pencil_coverage(size, seed):
     changing from patch to patch, so nothing lines up into rows; a faint mottle of pigment on the
     paper's grain; and a few specks where the pencil skipped the tooth. Every mark is a few pixels
     across and low in contrast, so at match size it is texture, not detail, and nothing finer than
-    a pixel shimmers as he moves. Seeded, so a re-cut comes out the same.
+    a pixel shimmers as he moves. Seeded, so a re-cut comes out the same. The drawing screen's
+    solid fill is coloured with the same recipe (Painter.BuildColouring) - change one, change both.
     """
     w, h = size
     rnd = random.Random(seed)

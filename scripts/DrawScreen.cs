@@ -157,6 +157,7 @@ public partial class DrawScreen : Node2D
 
 	public override void _Ready()
 	{
+		Painter.Prewarm();
 		Doc ??= Drawing.New();
 		_ = Painter.Grain;
 		if (FighterIntake.State == FighterIntake.Link.Unknown) FighterIntake.Check();

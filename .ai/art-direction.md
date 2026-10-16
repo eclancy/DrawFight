@@ -143,7 +143,10 @@ round the page - the desk, the panels, the buttons - keeps to the menus' look an
   so a kid's colouring in and the game's own pencil art look like the same pencils. Going over
   it again fills it in; a light pencil over a dark line barely shows, so colouring in never
   hides an outline.
-- **The paint bucket fills in pencil** by default (solid if asked), and tucks a couple of pixels
+- **The paint bucket fills in pencil** by default - or solid if asked, and solid is still
+  coloured pencil, pressed on, with the same subtle unevenness as the stand-ins' colouring
+  (`Painter.BuildColouring`, the recipe of `tools/art/drawn.py`), never flat colour (Eric,
+  2026-10-16) - and tucks a couple of pixels
   under the lines it fills, so there is no pale fringe between colour and line.
 - **The marker is for outlines**, even all the way along however slowly it is drawn.
 

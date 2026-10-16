@@ -28,8 +28,20 @@ public sealed class Painter
 
 	static byte[] grain;
 
+	/// <summary>Built on a worker the moment the drawing screen opens (Prewarm): it takes a second or two.</summary>
+	static readonly Lazy<byte[]> colouring = new Lazy<byte[]>(BuildColouring);
+
 	/// <summary>The paper's tooth, 0-255 per pixel: high where a pencil catches first.</summary>
 	public static byte[] Grain => grain ??= BuildGrain();
+
+	/// <summary>
+	/// How much colour a coloured pencil pressed on hard leaves at each pixel, 0-255: the solid
+	/// fill (BuildColouring).
+	/// </summary>
+	public static byte[] Colouring => colouring.Value;
+
+	/// <summary>Starts building the solid fill's colouring in the background, so the first fill does not wait for it.</summary>
+	public static void Prewarm() => System.Threading.Tasks.Task.Run(() => colouring.Value);
 
 	readonly byte[] original = new byte[W * H * 4];
 	readonly byte[] under = new byte[W * H * 4];
@@ -234,7 +246,9 @@ public sealed class Painter
 	/// reaches a couple of pixels under the lines that bound it, so no pale fringe is left between
 	/// the colour and the line, and it goes behind anything already on the layer - so filling
 	/// inside a line drawn on the same layer never paints over the line. Click on a line itself,
-	/// though, and the line is recoloured.
+	/// though, and the line is recoloured. <paramref name="pencil"/> fills it lightly, the paper's
+	/// tooth showing through; otherwise it is coloured in solid - but still in coloured pencil,
+	/// pressed on, never flat colour (Eric, 2026-10-16).
 	/// </summary>
 	public static Edit Fill(DrawingPage page, DrawingLayer layer, Vector2I at, Color colour, bool pencil)
 	{
@@ -296,7 +310,7 @@ public sealed class Painter
 
 		byte[] before = PixelEdit.Cut(layer.Pixels, rect);
 		bool recolour = layer.Pixels[seed * 4 + 3] >= 128;
-		byte[] tooth = Grain;
+		byte[] tooth = pencil ? Grain : Colouring;
 		float cr = colour.R, cg = colour.G, cb = colour.B;
 		for (int y = rect.Position.Y; y < rect.End.Y; y++)
 		{
@@ -304,7 +318,7 @@ public sealed class Painter
 			{
 				int i = y * W + x;
 				if (region[i] == 0) continue;
-				float a = pencil ? Mathf.SmoothStep(0.06f, 0.5f, tooth[i] / 255.0f) * 0.94f : 1.0f;
+				float a = pencil ? Mathf.SmoothStep(0.06f, 0.5f, tooth[i] / 255.0f) * 0.94f : tooth[i] / 255.0f;
 				if (recolour) Lay(layer.Pixels, layer.Pixels, i * 4, cr, cg, cb, a);
 				else Behind(layer.Pixels, i * 4, cr, cg, cb, a);
 			}
@@ -379,6 +393,132 @@ public sealed class Painter
 		layer.Pixels = moved;
 		layer.TouchAll();
 		return new PixelEdit(page, layer, all, before, (byte[])moved.Clone());
+	}
+
+	// --- Coloured in solid ------------------------------------------------------------------------
+
+	/// <summary>
+	/// A page coloured in solid with a coloured pencil, pressed on: the same recipe the stand-ins
+	/// and items are coloured in (pencil_coverage in tools/art/drawn.py), so a kid's solid fill and
+	/// the game's own art are the same pencils. Not rows of strokes: pressed harder and softer in
+	/// broad swells; coloured a patch at a time, the short strokes in each going one way and the
+	/// way wandering from patch to patch; a faint mottle on the paper's grain; and a few specks
+	/// where the pencil skipped the tooth. Hashed, so it is the same page every time.
+	/// </summary>
+	static byte[] BuildColouring()
+	{
+		var rnd = new Hash(20261016);
+		float[] pressure = SoftNoise(ref rnd, 64, 210.0f / 255.0f, 1.0f);
+		float[] grainy = SoftNoise(ref rnd, 6, 208.0f / 255.0f, 1.0f);
+		float[] skips = SoftNoise(ref rnd, 5, 0.0f, 1.0f);
+
+		// The strokes: each darkens what it crosses to its own pressure, the darkest one winning.
+		var marks = new float[W * H];
+		Array.Fill(marks, 1.0f);
+		float slant = rnd.Range(25.0f, 60.0f);
+		const float Spacing = 62.0f;
+		for (int row = 0; row < H / Spacing + 2; row++)
+		{
+			for (int col = 0; col < W / Spacing + 2; col++)
+			{
+				float cx = (col - 0.5f + rnd.Range(-0.4f, 0.4f)) * Spacing;
+				float cy = (row - 0.5f + rnd.Range(-0.4f, 0.4f)) * Spacing;
+				float angle = slant + rnd.Range(-40.0f, 40.0f);
+				int strokes = 22 + (int)rnd.Range(0.0f, 13.0f);
+				for (int s = 0; s < strokes; s++)
+				{
+					float a = Mathf.DegToRad(angle + rnd.Range(-7.0f, 7.0f));
+					var dir = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+					var across = new Vector2(-dir.Y, dir.X);
+					var mid = new Vector2(cx, cy) + dir * rnd.Range(-Spacing * 0.6f, Spacing * 0.6f)
+						+ across * rnd.Range(-Spacing * 0.6f, Spacing * 0.6f);
+					float half = rnd.Range(10.0f, 24.0f);
+					float width = rnd.Range(0.5f, 1.1f);
+					float tone = rnd.Range(210.0f, 238.0f) / 255.0f;
+					Stroke(marks, mid - dir * half, mid + dir * half, width, tone);
+				}
+			}
+		}
+
+		var cover = new byte[W * H];
+		for (int i = 0; i < cover.Length; i++)
+		{
+			// Specks of bare paper: a few, small, soft-edged.
+			float skip = skips[i];
+			float tooth = skip < 18.0f / 255.0f ? Mathf.Lerp(0.647f, 0.894f, Mathf.SmoothStep(0.04f, 0.075f, skip))
+				: Mathf.Lerp(0.894f, 1.0f, Mathf.SmoothStep(0.11f, 0.15f, skip));
+			float c = pressure[i] * grainy[i] * marks[i] * tooth;
+			// Never so light the colour washes out: colouring in, a kid presses on.
+			cover[i] = (byte)Mathf.Clamp(50.0f + c * 205.0f, 0.0f, 255.0f);
+		}
+		return cover;
+	}
+
+	/// <summary>One short pencil stroke, soft at its edges, into <paramref name="marks"/>.</summary>
+	static void Stroke(float[] marks, Vector2 from, Vector2 to, float halfWidth, float tone)
+	{
+		float reach = halfWidth + 1.5f;
+		int x0 = Math.Max(0, (int)(Mathf.Min(from.X, to.X) - reach));
+		int x1 = Math.Min(W - 1, (int)(Mathf.Max(from.X, to.X) + reach));
+		int y0 = Math.Max(0, (int)(Mathf.Min(from.Y, to.Y) - reach));
+		int y1 = Math.Min(H - 1, (int)(Mathf.Max(from.Y, to.Y) + reach));
+		Vector2 along = to - from;
+		float lengthSq = Mathf.Max(0.0001f, along.LengthSquared());
+		for (int y = y0; y <= y1; y++)
+		{
+			for (int x = x0; x <= x1; x++)
+			{
+				var p = new Vector2(x + 0.5f, y + 0.5f);
+				float t = Mathf.Clamp((p - from).Dot(along) / lengthSq, 0.0f, 1.0f);
+				float d = p.DistanceTo(from + along * t);
+				// A pencil stroke is soft-edged and thin: about as blurred as the art scripts' (drawn.py).
+				float on = Mathf.Clamp(halfWidth + 0.5f - d, 0.0f, 1.0f) * 0.85f;
+				if (on <= 0.0f) continue;
+				int i = y * W + x;
+				marks[i] = Mathf.Min(marks[i], Mathf.Lerp(1.0f, tone, on));
+			}
+		}
+	}
+
+	/// <summary>Smooth values from lo to hi changing over about <paramref name="cell"/> pixels: a hashed grid, eased between.</summary>
+	static float[] SoftNoise(ref Hash rnd, int cell, float lo, float hi)
+	{
+		int gw = W / cell + 3, gh = H / cell + 3;
+		var grid = new float[gw * gh];
+		for (int i = 0; i < grid.Length; i++) grid[i] = rnd.Range(lo, hi);
+		var values = new float[W * H];
+		for (int y = 0; y < H; y++)
+		{
+			float gy = y / (float)cell;
+			int iy = (int)gy;
+			float ty = Mathf.SmoothStep(0.0f, 1.0f, gy - iy);
+			for (int x = 0; x < W; x++)
+			{
+				float gx = x / (float)cell;
+				int ix = (int)gx;
+				float tx = Mathf.SmoothStep(0.0f, 1.0f, gx - ix);
+				float top = Mathf.Lerp(grid[iy * gw + ix], grid[iy * gw + ix + 1], tx);
+				float bottom = Mathf.Lerp(grid[(iy + 1) * gw + ix], grid[(iy + 1) * gw + ix + 1], tx);
+				values[y * W + x] = Mathf.Lerp(top, bottom, ty);
+			}
+		}
+		return values;
+	}
+
+	/// <summary>A run of hashed numbers - the same every time, so a page is never coloured two ways.</summary>
+	struct Hash
+	{
+		uint state;
+
+		public Hash(uint seed) => state = seed == 0 ? 1u : seed;
+
+		public float Range(float lo, float hi)
+		{
+			state ^= state << 13;
+			state ^= state >> 17;
+			state ^= state << 5;
+			return lo + (hi - lo) * (state / 4294967296.0f);
+		}
 	}
 
 	// --- The paper's tooth -----------------------------------------------------------------------
