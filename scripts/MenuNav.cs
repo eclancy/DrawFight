@@ -18,6 +18,19 @@ public static class MenuTheme
 	public static readonly Color AccentTwo = new Color(0.36f, 0.72f, 0.98f);
 
 	/// <summary>
+	/// A team's colour in a team fight - red, blue, green - on the team's panels, tags and
+	/// shields. Light, like every player colour.
+	/// </summary>
+	public static Color TeamTint(int team) => (team % 3) switch
+	{
+		0 => new Color(0.94f, 0.42f, 0.40f),
+		1 => new Color(0.36f, 0.62f, 0.96f),
+		_ => new Color(0.36f, 0.74f, 0.36f),
+	};
+
+	public static string TeamName(int team) => (team % 3) switch { 0 => "Red", 1 => "Blue", _ => "Green" };
+
+	/// <summary>
 	/// Each player's colour, by seat - on their cursor, their HUD tag, their tag over their head in
 	/// a match, their shield: blue, orange, green, pink. Light, like everything outside a fighter
 	/// (.ai/art-direction.md), and far enough apart to tell four of them apart across a room.

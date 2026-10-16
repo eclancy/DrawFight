@@ -23,6 +23,12 @@ public partial class GameRoot : Node2D
 	/// <summary>Which seats the computer plays, chosen on the fighter select screen.</summary>
 	public bool[] CpuPlayers = { false, false, false, false };
 
+	/// <summary>A team fight rather than every one for themselves, chosen on the fighter select screen.</summary>
+	public bool TeamBattle;
+
+	/// <summary>Each seat's team in a team fight: 0 red, 1 blue, 2 green. Two against two to start with.</summary>
+	public int[] SeatTeams = { 0, 1, 0, 1 };
+
 	/// <summary>
 	/// A cursor for every person playing, in their seat's colour on their seat's controller - the
 	/// screens between fighter select and the fight (stage select, item settings). A CPU has none.
@@ -99,6 +105,8 @@ public partial class GameRoot : Node2D
 			}
 			// Every seat after the first is the computer.
 			if (arg == "--cpu") for (int i = 1; i < CpuPlayers.Length; i++) CpuPlayers[i] = true;
+			// A team fight, seats on red, blue, red, blue.
+			if (arg == "--teams") TeamBattle = true;
 			if (arg == "--parade") startAt = "parade";
 			if (arg.StartsWith("--only=")) paradeOnly = arg.Substring(7).ToInt();
 			if (arg.StartsWith("--size=")) paradeSize = arg.Substring(7).ToInt();
@@ -319,19 +327,25 @@ public partial class GameRoot : Node2D
 		var fighters = new System.Collections.Generic.List<int>();
 		var cpu = new System.Collections.Generic.List<bool>();
 		var seats = new System.Collections.Generic.List<int>();
+		var teams = new System.Collections.Generic.List<int>();
 		for (int seat = 0; seat < MaxPlayers; seat++)
 		{
 			if (SelectedFighters[seat] < 0) continue;
 			fighters.Add(SelectedFighters[seat]);
 			cpu.Add(CpuPlayers[seat]);
 			seats.Add(seat);
+			teams.Add(SeatTeams[seat]);
 		}
+		// A team fight needs two teams in it; everyone on one is every one for themselves.
+		bool teamBattle = TeamBattle && new System.Collections.Generic.HashSet<int>(teams).Count >= 2;
 		var match = new MatchManager
 		{
 			StageIndex = SelectedStage,
 			FighterIndices = fighters.ToArray(),
 			CpuPlayers = cpu.ToArray(),
 			Seats = seats.ToArray(),
+			Teams = teamBattle ? teams.ToArray() : null,
+			TeamBattle = teamBattle,
 			Items = Items,
 			OnlyItem = OnlyItem,
 		};

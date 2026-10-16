@@ -28,6 +28,12 @@ public partial class MatchManager : Node2D
 	public int[] Seats;
 
 	/// <summary>
+	/// A versus team fight (Teams set from the fighter select's red, blue and green): the colours,
+	/// tags and the winning banner are the team's. Story mode's two-on-one has Teams too, but not this.
+	/// </summary>
+	public bool TeamBattle;
+
+	/// <summary>
 	/// A tag over every head (Fighter.DrawPlayerTag): in versus, once there are three or more in
 	/// the fight or two of the same fighter. Two different fighters are told apart at a glance.
 	/// </summary>
@@ -218,7 +224,7 @@ public partial class MatchManager : Node2D
 			SpawnFighter(FighterCatalog.Get(FighterIndices[i]), i);
 		}
 		AssignControllers();
-		ShowPlayerTags = Story == null && (FighterIndices.Length >= 3
+		ShowPlayerTags = Story == null && (TeamBattle || FighterIndices.Length >= 3
 			|| new System.Collections.Generic.HashSet<int>(FighterIndices).Count < FighterIndices.Length);
 
 		fx = new HitFx();
@@ -345,6 +351,7 @@ public partial class MatchManager : Node2D
 
 		for (int i = 0; i < Fighters.Count; i++)
 		{
+			Fighters[i].IsComputer = IsCpu(i);
 			if (IsCpu(i))
 			{
 				if (cpus[i] == null)
@@ -525,7 +532,9 @@ public partial class MatchManager : Node2D
 			matchOver = true;
 			MusicPlayer.Stop();
 			SfxPlayer.Ui("game_set");
-			winner = last != null ? $"{last.Data.DisplayName} wins!" : "Draw!";
+			winner = last == null ? "Draw!"
+				: TeamBattle ? $"{MenuTheme.TeamName(TeamOf(last))} Team wins!"
+				: $"{last.Data.DisplayName} wins!";
 			victor = last;
 			// The winners celebrate, once they stand still.
 			if (last != null)
@@ -558,8 +567,11 @@ public partial class MatchManager : Node2D
 		if (director != null && director.DrivesCamera) director.DriveCamera((float)delta);
 		else if (director == null && victor != null && endFrames > EndSlowFrames && victor.State != FighterState.Eliminated)
 		{
-			// Won: in on the winner, celebrating, with the banner over his head.
-			camera.FrameOn(victor.GlobalPosition + new Vector2(0.0f, -victor.Data.BodySize.Y * 0.2f), 1.3f, 2.5f, (float)delta);
+			// Won: in on the winner, celebrating, with the banner over his head - or on the whole
+			// winning team, together.
+			var winners = Fighters.FindAll(f => f.Celebrating && f.State != FighterState.Eliminated && !f.IsWaitingToRespawn);
+			if (winners.Count > 1) camera.FrameFighters(winners, (float)delta);
+			else camera.FrameOn(victor.GlobalPosition + new Vector2(0.0f, -victor.Data.BodySize.Y * 0.2f), 1.3f, 2.5f, (float)delta);
 		}
 		else camera.FrameFighters(Fighters, (float)delta);
 

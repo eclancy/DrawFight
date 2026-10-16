@@ -108,8 +108,8 @@ built, so it wants to land before there are many stages.
 more start a fight. Seats keep their number, colour and controller into the match (the keyboard
 has room for two; seats three and four need pads). Tags over heads in fights of three or more.
 Three big stages made for it - Playground, Building Site, Kitchen Counter - each with its own
-camera range (`StageData.CameraMinZoom`). Teams in versus are not built (story mode's two-on-one
-has them).
+camera range (`StageData.CameraMinZoom`). Teams too: red, blue and green, no friendly fire, picked
+per seat on fighter select.
 
 ## M7 — CPU opponents
 

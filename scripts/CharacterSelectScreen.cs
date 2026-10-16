@@ -20,6 +20,10 @@ using Godot;
 /// fight out. Each offers a CPU button, so one person can play alone or fill a four-way fight with
 /// the computer. Any joined player can add a CPU, change its fighter or remove it; and whoever owns
 /// that seat's controller takes it back just by pressing A.
+///
+/// "Teams" up by the title turns it into a team fight (Eric, 2026-10-16): each seat gets a team
+/// button - red, blue, green - and two teams or more start one. A person sets their own team; any
+/// person can set a CPU's.
 /// </summary>
 public partial class CharacterSelectScreen : Node2D
 {
@@ -57,6 +61,19 @@ public partial class CharacterSelectScreen : Node2D
 	readonly Card[] cards = new Card[FighterCatalog.Count];
 
 	static readonly Rect2 QuitBox = new Rect2(1640.0f, 64.0f, 200.0f, 76.0f);
+
+	/// <summary>Every one for themselves, or teams.</summary>
+	static readonly Rect2 TeamsBox = new Rect2(1180.0f, 64.0f, 420.0f, 76.0f);
+
+	bool TeamBattle
+	{
+		get => GameRoot.Instance.TeamBattle;
+		set => GameRoot.Instance.TeamBattle = value;
+	}
+
+	int[] Teams => GameRoot.Instance.SeatTeams;
+
+	Vector2 mouse = new Vector2(-100.0f, -100.0f);
 
 	const float CardTop = 196.0f;
 	/// <summary>Cards shrink as the roster grows, so the row always fits between the margins.</summary>
@@ -272,12 +289,14 @@ public partial class CharacterSelectScreen : Node2D
 	{
 		if (@event is InputEventMouseMotion motion)
 		{
+			mouse = motion.Position;
 			mouseOverQuit = QuitBox.HasPoint(motion.Position);
 		}
-		else if (@event is InputEventMouseButton click && click.Pressed
-			&& click.ButtonIndex == MouseButton.Left && QuitBox.HasPoint(click.Position))
+		else if (@event is InputEventMouseButton click && click.Pressed && click.ButtonIndex == MouseButton.Left)
 		{
-			GetTree().Quit();
+			mouse = click.Position;
+			if (QuitBox.HasPoint(click.Position)) GetTree().Quit();
+			else if (!ForStory && TryTeamButtons(click.Position, null)) SfxPlayer.Ui("ui_select");
 		}
 	}
 
@@ -325,6 +344,44 @@ public partial class CharacterSelectScreen : Node2D
 		return false;
 	}
 
+	/// <summary>A seat's team button, on its name's line, in a team fight.</summary>
+	Rect2 TeamButton(int player)
+	{
+		Rect2 panel = PanelRect(player, GetViewportRect().Size);
+		return new Rect2(panel.End.X - 20.0f - 124.0f, panel.Position.Y + 78.0f, 124.0f, 48.0f);
+	}
+
+	/// <summary>
+	/// The Teams switch, or a seat's team button: a person's own, or any CPU's. <paramref name="by"/>
+	/// is who pressed it, or null for the mouse, which can set anyone's. True if it was one.
+	/// </summary>
+	bool TryTeamButtons(Vector2 point, Slot by)
+	{
+		if (TeamsBox.HasPoint(point))
+		{
+			TeamBattle = !TeamBattle;
+			return true;
+		}
+		if (!TeamBattle) return false;
+		for (int i = 0; i < slots.Length; i++)
+		{
+			Slot seat = slots[i];
+			if (!seat.Joined || !TeamButton(i).HasPoint(point)) continue;
+			if (by != null && seat.Human && seat != by) continue;
+			Teams[i] = (Teams[i] + 1) % 3;
+			return true;
+		}
+		return false;
+	}
+
+	/// <summary>The teams the seated players are on - two or more makes a team fight.</summary>
+	int TeamsSeated()
+	{
+		var seen = new System.Collections.Generic.HashSet<int>();
+		foreach (Slot slot in slots) if (slot.Joined) seen.Add(Teams[slot.Seat]);
+		return seen.Count;
+	}
+
 	/// <summary>A small crayon button, outlined in the colour of any cursor over it.</summary>
 	void DrawButton(Rect2 box, string text, int seed)
 	{
@@ -337,6 +394,20 @@ public partial class CharacterSelectScreen : Node2D
 		DrawRect(box, new Color(1.0f, 1.0f, 1.0f, 0.85f));
 		CrayonBrush.InkRect(this, box, ink, ink == MenuTheme.Rule ? 3.0f : 6.0f, seed, 2.2f);
 		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + 10.0f), text,
+			HorizontalAlignment.Center, box.Size.X, 28, MenuTheme.Text);
+	}
+
+	/// <summary>A team button: filled with the team's colour, its name on it, outlined by any cursor over it.</summary>
+	void DrawTeamButton(Rect2 box, int team, int seed)
+	{
+		Color ink = MenuTheme.Ink;
+		foreach (Slot slot in slots)
+		{
+			if (slot.Human && box.HasPoint(slot.Cursor.Position)) ink = slot.Tint;
+		}
+		DrawRect(box, MenuTheme.TeamTint(team).Lightened(0.35f));
+		CrayonBrush.InkRect(this, box, ink, ink == MenuTheme.Ink ? 3.0f : 6.0f, seed, 2.2f);
+		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + 10.0f), MenuTheme.TeamName(team).ToUpper(),
 			HorizontalAlignment.Center, box.Size.X, 28, MenuTheme.Text);
 	}
 
@@ -365,7 +436,7 @@ public partial class CharacterSelectScreen : Node2D
 			seated++;
 			anyHuman |= slot.Human;
 		}
-		return seated >= 2 && anyHuman;
+		return seated >= 2 && anyHuman && (!TeamBattle || TeamsSeated() >= 2);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -425,7 +496,7 @@ public partial class CharacterSelectScreen : Node2D
 				return;
 			}
 
-			if (!ForStory && TryCpuButtons(cursor.Position))
+			if (!ForStory && (TryTeamButtons(cursor.Position, slot) || TryCpuButtons(cursor.Position)))
 			{
 				SfxPlayer.Ui("ui_select");
 				continue;
@@ -458,9 +529,12 @@ public partial class CharacterSelectScreen : Node2D
 
 		bool everyoneReady = EveryoneReady();
 
-		// The prompt pulses gently so it catches the eye without shouting.
+		// The prompt pulses gently so it catches the eye without shouting. Everyone picked, but all
+		// on one team, it says what is missing instead.
 		promptFrames = everyoneReady ? promptFrames + 1 : 0;
-		startPrompt.Visible = everyoneReady;
+		bool oneTeam = !ForStory && TeamBattle && !everyoneReady && TeamsSeated() < 2 && EveryonePicked();
+		startPrompt.Text = oneTeam ? "Everyone's on one team!" : ForStory ? "Press Start to begin!" : "Press Start to fight!";
+		startPrompt.Visible = everyoneReady || oneTeam;
 		startPrompt.Scale = Vector2.One * (1.0f + 0.05f * Mathf.Sin(promptFrames * 0.12f));
 
 		if (!startFight || !everyoneReady) return;
@@ -479,6 +553,19 @@ public partial class CharacterSelectScreen : Node2D
 			GameRoot.Instance.CpuPlayers[i] = slots[i].Joined && slots[i].IsCpu;
 		}
 		GameRoot.Instance.GoStageSelect();
+	}
+
+	/// <summary>Two or more seated, and every one of them has picked.</summary>
+	bool EveryonePicked()
+	{
+		int seated = 0;
+		foreach (Slot slot in slots)
+		{
+			if (!slot.Joined) continue;
+			if (!slot.Locked) return false;
+			seated++;
+		}
+		return seated >= 2;
 	}
 
 	/// <summary>Whether a fighter's story can be played yet.</summary>
@@ -564,9 +651,13 @@ public partial class CharacterSelectScreen : Node2D
 			Slot slot = slots[i];
 			if (ForStory && i > 0) continue;
 			Rect2 panel = PanelRect(i, viewport);
-			DrawRect(panel, new Color(1.0f, 1.0f, 1.0f, slot.Joined ? 0.55f : 0.3f));
-			CrayonBrush.InkRect(this, panel, slot.Locked ? slot.Tint : MenuTheme.Rule,
+			// In a team fight a seat is washed in its team's colour, and edged in it once picked.
+			bool teamed = TeamBattle && !ForStory && slot.Joined;
+			Color edge = teamed ? MenuTheme.TeamTint(Teams[i]) : slot.Tint;
+			DrawRect(panel, teamed ? new Color(MenuTheme.TeamTint(Teams[i]), 0.16f) : new Color(1.0f, 1.0f, 1.0f, slot.Joined ? 0.55f : 0.3f));
+			CrayonBrush.InkRect(this, panel, slot.Locked ? edge : MenuTheme.Rule,
 				slot.Locked ? 6.0f : 3.0f, 51 + i * 7, 2.6f);
+			if (teamed) DrawTeamButton(TeamButton(i), Teams[i], 97 + i);
 		}
 
 		for (int i = 0; i < slots.Length && !ForStory; i++)
@@ -583,6 +674,14 @@ public partial class CharacterSelectScreen : Node2D
 			{
 				DrawButton(CpuButton(i, 0), "CPU", 95 + i);
 			}
+		}
+
+		if (!ForStory)
+		{
+			bool teamsHot = TeamsBox.HasPoint(mouse);
+			foreach (Slot slot in slots) teamsHot |= slot.Human && TeamsBox.HasPoint(slot.Cursor.Position);
+			MenuTheme.DrawButton(this, TeamsBox, TeamBattle ? "Teams" : "Every one for themselves", 79, teamsHot, TeamBattle,
+				fontSize: TeamBattle ? 40 : 28);
 		}
 
 		bool quitHovered = mouseOverQuit;

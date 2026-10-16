@@ -38,6 +38,15 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	public int Seat;
 
+	/// <summary>The computer plays him - still so once the fight is won and it has put its controller down.</summary>
+	public bool IsComputer;
+
+	/// <summary>
+	/// His colour in a match: his team's in a team fight, so a side reads as one at a glance, and
+	/// otherwise his seat's. On his tag, his shield and his HUD column.
+	/// </summary>
+	public Color SideTint => Match != null && Match.TeamBattle ? MenuTheme.TeamTint(Match.TeamOf(this)) : MenuTheme.PlayerTint(Seat);
+
 	public float Percent { get; private set; }
 	public int Stocks { get; set; }
 	public FighterState State { get; private set; } = FighterState.Airborne;
@@ -4175,7 +4184,7 @@ public partial class Fighter : CharacterBody2D
 	void DrawShield(CanvasItem canvas)
 	{
 		if (shieldFlashFrames > 0) shieldFlashFrames--;
-		Color tint = MenuTheme.PlayerTint(Seat);
+		Color tint = SideTint;
 		DrawShieldBreak(canvas, tint);
 		if (!IsBlocking && !(State == FighterState.Hitstun && blockedStun)) return;
 		float wear = ShieldWear;
@@ -4316,8 +4325,8 @@ public partial class Fighter : CharacterBody2D
 		if (Match == null || !Match.ShowPlayerTags || !Visible || IsWaitingToRespawn) return;
 		float zoom = Mathf.Max(0.25f, GetViewport()?.GetCamera2D()?.Zoom.X ?? 1.0f);
 		float k = 1.0f / zoom;
-		Color tint = MenuTheme.PlayerTint(Seat);
-		string text = Controller is CpuInputSource ? "CPU" : $"P{Seat + 1}";
+		Color tint = SideTint;
+		string text = IsComputer ? "CPU" : $"P{Seat + 1}";
 		Font font = ThemeDB.FallbackFont;
 		int size = Mathf.RoundToInt(28.0f * k);
 		float top = -bodySize.Y * 0.5f - 16.0f * k;

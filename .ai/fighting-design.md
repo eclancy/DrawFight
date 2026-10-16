@@ -28,6 +28,12 @@ Smash rules, not health bars.
   fighter, every head carries a tag, "P1" or "CPU" in the seat's colour, sized to the screen so it
   reads however far out the camera pulls (`Fighter.DrawPlayerTag`). The three big stages are made
   for three and four (`StageData.Large`).
+- **Teams** (Eric, 2026-10-16): "Teams" on fighter select gives every seat a team - red, blue or
+  green, two against two to start with - and two teams or more start a team fight. **No friendly
+  fire**: nothing a teammate does hits you - attacks, throws, projectiles, hazards, items -
+  the same rule as story mode's two-on-one (`MatchManager.Allies`). A team wins when every other
+  team is out, and everyone left on it celebrates. Tags, shields and HUD tags take the team's
+  colour (`Fighter.SideTint`); the banner says "Blue Team wins!".
 - **The last KO plays in slow motion** - a quarter speed for 50 frames, easing back over 24
   (`MatchManager.TickEndSlowMotion`). The winner is still in play through it: jump off the edge
   and he is KO'd like anyone, blast and all, but he has still won. The camera never follows
