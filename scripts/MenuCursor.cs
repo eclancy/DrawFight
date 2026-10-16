@@ -35,6 +35,12 @@ public sealed class MenuCursor
 	public void Update(Vector2 viewport)
 	{
 		Nav.Poll();
+		Move(viewport);
+	}
+
+	/// <summary>Moves with the stick as last polled - for a screen that polls first and decides after (OnePointer).</summary>
+	public void Move(Vector2 viewport)
+	{
 		Vector2 stick = Nav.Stick;
 		if (stick.LengthSquared() > 1.0f) stick = stick.Normalized();
 

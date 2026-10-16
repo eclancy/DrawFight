@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 /// <summary>
@@ -12,7 +13,8 @@ using Godot;
 /// one part per layer, named, is exactly what the importer's layered path wants and "a
 /// nine-year-old naming layers is not a spec" (.ai/art-pipeline.md).
 ///
-/// Mouse, pen and touch draw; a pad's cursor can too, with A held down. Everything is saved as
+/// Mouse, pen and touch draw; a pad's cursor can too, with A held down - one or the other, never
+/// both: whichever was used last is the pointer, and the only one shown (OnePointer). Everything is saved as
 /// it goes - a minute after a change, and on the way out - so nothing is ever lost to Escape or
 /// to closing the window.
 /// </summary>
@@ -119,7 +121,10 @@ public partial class DrawScreen : Node2D
 	bool penInverted;
 	bool spaceHeld;
 
-	MenuCursor padCursor;
+	/// <summary>The pad's cursor - one, the first pad's - and whether it or the mouse is the pointer.</summary>
+	readonly List<MenuCursor> padCursors = new List<MenuCursor>();
+	OnePointer pointers;
+	MenuCursor padCursor => pointers?.Current;
 	bool padWasHeld;
 	Node2D cursorLayer;
 
@@ -190,7 +195,11 @@ public partial class DrawScreen : Node2D
 		picker.ColorChanged += c => colour = new Color(c.R, c.G, c.B);
 		root.AddChild(picker);
 
-		cursorLayer = MenuCursor.MakeOverlay(this, c => padCursor?.Draw(c));
+		// A pad plugged in has its cursor from the start, so a pad that chose to come here is the
+		// pointer straight away (OnePointer.StartWith).
+		if (Input.GetConnectedJoypads().Count > 0) AddPadCursor();
+		pointers = new OnePointer(padCursors);
+		cursorLayer = MenuCursor.MakeOverlay(this, c => pointers.Draw(c));
 	}
 
 	/// <summary>Text boxes in the menus' look: white, ink-edged, big enough to read.</summary>
@@ -222,6 +231,7 @@ public partial class DrawScreen : Node2D
 	public override void _ExitTree()
 	{
 		Input.UseAccumulatedInput = true;
+		OnePointer.Leave();
 	}
 
 	public override void _Notification(int what)
@@ -254,26 +264,34 @@ public partial class DrawScreen : Node2D
 
 	public override void _PhysicsProcess(double delta)
 	{
-		// A pad's cursor turns up when a pad does; the keyboard is for shortcuts here.
-		if (padCursor == null && frames % 30 == 0 && Input.GetConnectedJoypads().Count > 0)
-		{
-			padCursor = new MenuCursor(ControllerAssignment.ForPlayers(1)[0], 0, MenuTheme.AccentTwo, View.GetCenter());
-		}
-		if (padCursor == null) return;
+		// A pad's cursor can turn up when a pad does; the keyboard is for shortcuts here.
+		if (padCursors.Count == 0 && frames % 30 == 0 && Input.GetConnectedJoypads().Count > 0) AddPadCursor();
 
-		Vector2 was = padCursor.Position;
-		padCursor.Update(GetViewportRect().Size);
-		bool held = padCursor.Nav.Held;
-		if (padCursor.Nav.Confirm) Press(padCursor.Position, 1.0f);
-		else if (held && padCursor.Position != was) MoveTo(padCursor.Position, 1.0f);
-		if (!held && padWasHeld) Release(padCursor.Position);
+		// Only one pointer at a time (OnePointer): a pad taking over ends whatever the mouse was
+		// in the middle of, and the touch that hands over does nothing else.
+		bool wasPad = OnePointer.UsingPad;
+		Vector2 was = padCursor?.Position ?? Vector2.Zero;
+		MenuCursor pad = pointers.Tick(GetViewportRect().Size, pointer);
+		if (OnePointer.UsingPad && !wasPad)
+		{
+			if (drag != Drag.None) Release(pointer);
+			padWasHeld = padCursor != null && padCursor.Nav.Held;
+		}
+		if (pad == null) return;
+
+		bool held = pad.Nav.Held;
+		if (pad.Nav.Confirm) Press(pad.Position, 1.0f);
+		else if (held && pad.Position != was) MoveTo(pad.Position, 1.0f);
+		if (!held && padWasHeld) Release(pad.Position);
 		padWasHeld = held;
-		if (padCursor.Cancel)
+		if (pad.Cancel)
 		{
 			if (popup != Popup.None) ClosePopup();
 			else Undo();
 		}
 	}
+
+	void AddPadCursor() => padCursors.Add(new MenuCursor(ControllerAssignment.ForPlayers(1)[0], 0, MenuTheme.AccentTwo, View.GetCenter()));
 
 	// --- Input ----------------------------------------------------------------------------------
 
@@ -290,6 +308,13 @@ public partial class DrawScreen : Node2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		// The mouse taking back over from a pad: the pad's stroke ends where its cursor is.
+		if (@event is InputEventMouse && OnePointer.UsingPad)
+		{
+			if (drag != Drag.None && padCursor != null) Release(padCursor.Position);
+			padWasHeld = false;
+			pointers.MouseUsed();
+		}
 		switch (@event)
 		{
 			case InputEventMouseMotion motion:
@@ -922,8 +947,8 @@ public partial class DrawScreen : Node2D
 
 	// --- Drawing the panels ---------------------------------------------------------------------------
 
-	bool Hot(Rect2 rect) => popup == Popup.None && (rect.HasPoint(pointer) || padCursor != null && rect.HasPoint(padCursor.Position));
-	bool PopupHot(Rect2 rect) => rect.HasPoint(pointer) || padCursor != null && rect.HasPoint(padCursor.Position);
+	bool Hot(Rect2 rect) => popup == Popup.None && rect.HasPoint(pointers.At(pointer));
+	bool PopupHot(Rect2 rect) => rect.HasPoint(pointers.At(pointer));
 
 	public override void _Draw()
 	{
@@ -959,7 +984,7 @@ public partial class DrawScreen : Node2D
 	void DrawBrushOutline()
 	{
 		if (popup != Popup.None || !ToolHasSize) return;
-		Vector2 at = padCursor != null && !View.HasPoint(pointer) ? padCursor.Position : pointer;
+		Vector2 at = pointers.At(pointer);
 		if (!View.HasPoint(at)) return;
 		float radius = BrushSize * 0.5f * ViewScale;
 		if (radius < 3.0f) return;

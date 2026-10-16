@@ -83,6 +83,9 @@ public sealed class MenuNav
 
 	readonly IInputSource source;
 	int heldDirection;
+
+	/// <summary>What drives it: a pad, the keyboard.</summary>
+	public IInputSource Source => source;
 	int repeatCountdown;
 
 	public MenuNav(IInputSource source)

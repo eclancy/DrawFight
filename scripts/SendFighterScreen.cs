@@ -110,11 +110,14 @@ public partial class SendFighterScreen : Node2D
 				cursors.Add(new MenuCursor(sources[i], i, i == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent, SendBox.GetCenter()));
 			}
 		}
-		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
-		{
-			foreach (MenuCursor cursor in cursors) cursor.Draw(canvas);
-		});
+		pointers = new OnePointer(cursors);
+		cursorLayer = MenuCursor.MakeOverlay(this, canvas => pointers.Draw(canvas));
 	}
+
+	/// <summary>The mouse or one pad - whichever was used last - and never both (OnePointer).</summary>
+	OnePointer pointers;
+
+	public override void _ExitTree() => OnePointer.Leave();
 
 	int Total
 	{
@@ -205,6 +208,7 @@ public partial class SendFighterScreen : Node2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		if (@event is InputEventMouse) pointers.MouseUsed();
 		if (@event is InputEventMouseMotion motion) mouse = motion.Position;
 		if (@event is InputEventMouseButton click && click.Pressed && click.ButtonIndex == MouseButton.Left)
 		{
@@ -216,9 +220,9 @@ public partial class SendFighterScreen : Node2D
 	public override void _PhysicsProcess(double delta)
 	{
 		Vector2 viewport = GetViewportRect().Size;
-		foreach (MenuCursor cursor in cursors)
+		MenuCursor cursor = pointers.Tick(viewport, mouse);
+		if (cursor != null)
 		{
-			cursor.Update(viewport);
 			if (cursor.Cancel && phase == Phase.Editing)
 			{
 				Back();
@@ -429,12 +433,7 @@ public partial class SendFighterScreen : Node2D
 
 	// --- Drawing ---------------------------------------------------------------------------------
 
-	bool Hot(Rect2 rect)
-	{
-		if (rect.HasPoint(mouse)) return true;
-		foreach (MenuCursor cursor in cursors) if (rect.HasPoint(cursor.Position)) return true;
-		return false;
-	}
+	bool Hot(Rect2 rect) => rect.HasPoint(pointers.At(mouse));
 
 	public override void _Draw()
 	{

@@ -29,18 +29,23 @@ public partial class DrawingsScreen : Node2D
 		FighterIntake.Check();
 		saved = Drawing.ListSaved();
 
+		// A cursor for each pad - not the keyboard, which is the mouse's partner here, and whose
+		// keys would otherwise hide the mouse (OnePointer).
 		int pads = Input.GetConnectedJoypads().Count;
-		IInputSource[] sources = ControllerAssignment.ForPlayers(Mathf.Max(1, pads));
+		IInputSource[] sources = ControllerAssignment.ForPlayers(pads);
 		for (int i = 0; i < sources.Length; i++)
 		{
 			cursors.Add(new MenuCursor(sources[i], i, i == 0 ? MenuTheme.AccentTwo : MenuTheme.Accent,
 				new Vector2(380.0f + i * 120.0f, 420.0f)));
 		}
-		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
-		{
-			foreach (MenuCursor cursor in cursors) cursor.Draw(canvas);
-		});
+		pointers = new OnePointer(cursors);
+		cursorLayer = MenuCursor.MakeOverlay(this, canvas => pointers.Draw(canvas));
 	}
+
+	/// <summary>The mouse or one pad - whichever was used last - and never both (OnePointer).</summary>
+	OnePointer pointers;
+
+	public override void _ExitTree() => OnePointer.Leave();
 
 	int CardCount => saved.Count + 1;
 
@@ -72,6 +77,7 @@ public partial class DrawingsScreen : Node2D
 			else Back();
 			return;
 		}
+		if (@event is InputEventMouse) pointers.MouseUsed();
 		if (@event is InputEventMouseMotion motion) mouse = motion.Position;
 		if (@event is not InputEventMouseButton click || !click.Pressed) return;
 		mouse = click.Position;
@@ -84,10 +90,9 @@ public partial class DrawingsScreen : Node2D
 	{
 		FighterIntake.CheckEvery(20.0f);
 		Vector2 viewport = GetViewportRect().Size;
-		foreach (MenuCursor cursor in cursors)
+		MenuCursor cursor = pointers.Tick(viewport, mouse);
+		if (cursor != null && !leaving)
 		{
-			if (leaving) return;
-			cursor.Update(viewport);
 			// A cursor pushed against the top or bottom of the screen scrolls the cards.
 			if (cursor.Position.Y > viewport.Y - 30.0f) scroll = Mathf.Min(MaxScroll, scroll + 14.0f);
 			if (cursor.Position.Y < 160.0f && cursor.Nav.Stick.Y < -0.5f) scroll = Mathf.Max(0.0f, scroll - 14.0f);
@@ -154,12 +159,7 @@ public partial class DrawingsScreen : Node2D
 		}
 	}
 
-	bool Hot(Rect2 rect)
-	{
-		if (rect.HasPoint(mouse)) return true;
-		foreach (MenuCursor cursor in cursors) if (rect.HasPoint(cursor.Position)) return true;
-		return false;
-	}
+	bool Hot(Rect2 rect) => rect.HasPoint(pointers.At(mouse));
 
 	public override void _Draw()
 	{

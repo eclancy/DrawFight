@@ -110,7 +110,10 @@ menu and the fighter select screen. In a story scene, **A** hurries the line on 
 B** skips the scene.
 
 **The drawing screen** is for a mouse, a pen or a touch screen; a pad's stick moves a cursor and
-holding **A** draws, **B** undoes.
+holding **A** draws, **B** undoes. Only one points at a time: whichever you used last. Touch the
+pad and its cursor appears where the mouse was (that first touch does nothing else) and the
+mouse pointer hides; move the mouse and the pad's cursor goes. The same on your drawings and on
+sending one in.
 
 | Drawing | |
 |---|---|

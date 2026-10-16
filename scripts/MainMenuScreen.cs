@@ -91,6 +91,7 @@ public partial class MainMenuScreen : Node2D
 		else if (@event is InputEventMouseButton click && click.Pressed && click.ButtonIndex == MouseButton.Left)
 		{
 			mouse = click.Position;
+			OnePointer.StartWith(false);
 			Press(click.Position);
 		}
 	}
@@ -119,7 +120,12 @@ public partial class MainMenuScreen : Node2D
 				GameRoot.Instance.GoTitle();
 				return;
 			}
-			if (cursor.Confirm) Press(cursor.Position);
+			if (cursor.Confirm)
+			{
+				// A pad picked it: drawing a fighter starts with the pad as the pointer.
+				OnePointer.StartWith(cursor.Nav.Source is GamepadInputSource);
+				Press(cursor.Position);
+			}
 		}
 		QueueRedraw();
 		cursorLayer.QueueRedraw();
