@@ -108,7 +108,7 @@ public partial class SendFighterScreen : Node2D
 			IInputSource[] sources = ControllerAssignment.ForPlayers(pads);
 			for (int i = 0; i < sources.Length; i++)
 			{
-				cursors.Add(new MenuCursor(sources[i], i, MenuTheme.PlayerTint(i), SendBox.GetCenter()));
+				cursors.Add(new MenuCursor(sources[i], -1, MenuTheme.PlayerTint(i), SendBox.GetCenter()));
 			}
 		}
 		pointers = new OnePointer(cursors);

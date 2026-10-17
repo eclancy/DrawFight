@@ -26,11 +26,6 @@ public partial class StoryMapScreen : Node2D
 		navs = new[] { new MenuNav(ControllerAssignment.ForPlayers(1)[0]), new MenuNav(KeyboardInputSource.Player1()) };
 	}
 
-	public override void _Input(InputEvent @event)
-	{
-		if (@event is InputEventMouseButton click && click.Pressed && click.ButtonIndex == MouseButton.Left) Play();
-	}
-
 	public override void _PhysicsProcess(double delta)
 	{
 		frames++;

@@ -17,9 +17,11 @@ using Godot;
 /// not rushed into a fight.
 ///
 /// Four seats, for up to four players (Eric, 2026-10-16); a seat nobody sits in simply sits the
-/// fight out. Each offers a CPU button, so one person can play alone or fill a four-way fight with
-/// the computer. Any joined player can add a CPU, change its fighter or remove it; and whoever owns
-/// that seat's controller takes it back just by pressing A.
+/// fight out. Players are numbered in the order they press a button (Eric, 2026-10-16): whoever
+/// presses A first is Player 1, whatever they are holding - a pad, or either half of the keyboard -
+/// the next is Player 2, and so on, each into the lowest empty seat; with none left, they take a
+/// CPU's. B with nothing picked gets up out of the seat. Each seat offers a CPU button, so one
+/// person can play alone or fill a four-way fight with the computer. The mouse does nothing here.
 ///
 /// "Teams" up by the title turns it into a team fight (Eric, 2026-10-16): each seat gets a team
 /// button - red, blue, green - and two teams or more start one. A person sets their own team; any
@@ -40,10 +42,23 @@ public partial class CharacterSelectScreen : Node2D
 		public Label Blurb;
 		public Label State;
 		public Color Tint;
+		/// <summary>Whoever sits here (ControllerAssignment.Devices), or null for nobody, or the computer.</summary>
+		public Device Device;
 		public bool Locked => Index >= 0;
 		public bool IsCpu;
 		public bool Human => Joined && !IsCpu;
 	}
+
+	/// <summary>A controller that can join, with the one cursor it drives, seated or not.</summary>
+	sealed class Device
+	{
+		public string Key;
+		public MenuCursor Cursor;
+		public Slot Seat;
+	}
+
+	/// <summary>Every controller there is (ControllerAssignment.Devices), each polled once a frame.</summary>
+	readonly System.Collections.Generic.List<Device> devices = new System.Collections.Generic.List<Device>();
 
 	sealed class Card
 	{
@@ -73,8 +88,6 @@ public partial class CharacterSelectScreen : Node2D
 
 	int[] Teams => GameRoot.Instance.SeatTeams;
 
-	Vector2 mouse = new Vector2(-100.0f, -100.0f);
-
 	const float CardTop = 196.0f;
 	/// <summary>Cards shrink as the roster grows, so the row always fits between the margins.</summary>
 	static readonly float CardWidth = Mathf.Min(300.0f, (1540.0f - (FighterCatalog.Count - 1) * 44.0f) / FighterCatalog.Count);
@@ -91,13 +104,12 @@ public partial class CharacterSelectScreen : Node2D
 	Label startPrompt;
 	int promptFrames;
 
-	bool mouseOverQuit;
 	Node2D cursorLayer;
 
 	public override void _Ready()
 	{
-		IInputSource[] sources = ControllerAssignment.ForPlayers(slots.Length);
 		Vector2 viewport = GetViewportRect().Size;
+		SyncDevices();
 
 		var layer = new CanvasLayer();
 		AddChild(layer);
@@ -171,11 +183,7 @@ public partial class CharacterSelectScreen : Node2D
 			Rect2 panel = PanelRect(i, viewport);
 			Color tint = MenuTheme.PlayerTint(i);
 
-			var slot = new Slot
-			{
-				Cursor = new MenuCursor(sources[i], i, tint, panel.GetCenter()),
-				Tint = tint,
-			};
+			var slot = new Slot { Tint = tint };
 
 			slot.Seat = i;
 			slot.Heading = MenuTheme.MakeLabel($"Player {i + 1}", panel.Position + new Vector2(36.0f, 22.0f), 34, tint);
@@ -220,18 +228,29 @@ public partial class CharacterSelectScreen : Node2D
 
 			slots[i] = slot;
 
-			// A story is one player's: already in.
+			// A story is one player's: already in, on whichever controller touches it (TickStory).
 			if (ForStory)
 			{
-				slot.Joined = i == 0;
+				if (i == 0) Sit(devices[0], slot);
 				continue;
 			}
 
-			// Coming back from stage select, a CPU picked earlier is still sitting there.
-			if (GameRoot.Instance.CpuPlayers[i] && GameRoot.Instance.SelectedFighters[i] >= 0)
+			// Coming back, everyone is still sitting where they were with what they picked: the
+			// computer, and anyone whose controller is still here.
+			int picked = GameRoot.Instance.SelectedFighters[i];
+			if (GameRoot.Instance.CpuPlayers[i] && picked >= 0)
 			{
 				slot.Joined = slot.IsCpu = true;
-				slot.Index = GameRoot.Instance.SelectedFighters[i];
+				slot.Index = picked;
+			}
+			else if (picked >= 0 && ControllerAssignment.IsConnected(GameRoot.Instance.SeatDevices[i]))
+			{
+				Device device = devices.Find(d => d.Key == GameRoot.Instance.SeatDevices[i]);
+				if (device != null && device.Seat == null)
+				{
+					Sit(device, slot);
+					slot.Index = picked;
+				}
 			}
 		}
 
@@ -245,7 +264,7 @@ public partial class CharacterSelectScreen : Node2D
 		{
 			foreach (Slot slot in slots)
 			{
-				if (slot.Human) slot.Cursor.Draw(canvas);
+				if (slot.Human && slot.Cursor != null) slot.Cursor.Draw(canvas);
 			}
 		});
 
@@ -285,19 +304,77 @@ public partial class CharacterSelectScreen : Node2D
 		return new Rect2(left + player * (PanelWidth + PanelGap), PanelTop, PanelWidth, PanelHeight);
 	}
 
-	public override void _Input(InputEvent @event)
+	// --- Who sits where ---------------------------------------------------------------------
+
+	/// <summary>Every controller there is now, each with its cursor - a pad plugged in joins the list.</summary>
+	void SyncDevices()
 	{
-		if (@event is InputEventMouseMotion motion)
+		foreach (string key in ControllerAssignment.Devices())
 		{
-			mouse = motion.Position;
-			mouseOverQuit = QuitBox.HasPoint(motion.Position);
+			if (devices.Exists(d => d.Key == key)) continue;
+			devices.Add(new Device
+			{
+				Key = key,
+				Cursor = new MenuCursor(ControllerAssignment.Open(key), -1, MenuTheme.Soft, new Vector2(-200.0f, -200.0f)),
+			});
 		}
-		else if (@event is InputEventMouseButton click && click.Pressed && click.ButtonIndex == MouseButton.Left)
-		{
-			mouse = click.Position;
-			if (QuitBox.HasPoint(click.Position)) GetTree().Quit();
-			else if (!ForStory && TryTeamButtons(click.Position, null)) SfxPlayer.Ui("ui_select");
-		}
+	}
+
+	/// <summary>A controller sits down in a seat: its cursor takes the seat's number and colour.</summary>
+	void Sit(Device device, Slot slot)
+	{
+		slot.Joined = true;
+		slot.IsCpu = false;
+		slot.Index = -1;
+		slot.Device = device;
+		slot.Cursor = device.Cursor;
+		device.Seat = slot;
+		device.Cursor.Player = slot.Seat;
+		device.Cursor.Tint = slot.Tint;
+		device.Cursor.Position = PanelRect(slot.Seat, GetViewportRect().Size).GetCenter();
+	}
+
+	/// <summary>Up out of a seat: it is empty again, and the controller can sit anywhere.</summary>
+	void Stand(Slot slot)
+	{
+		if (slot.Device != null) slot.Device.Seat = null;
+		slot.Device = null;
+		slot.Cursor = null;
+		slot.Joined = false;
+		slot.Index = -1;
+	}
+
+	/// <summary>
+	/// A controller nobody is sitting at pressed A: into the lowest empty seat, or, with none, the
+	/// lowest seat the computer has. False if every seat has a person in it.
+	/// </summary>
+	bool Join(Device device)
+	{
+		Slot seat = System.Array.Find(slots, s => !s.Joined) ?? System.Array.Find(slots, s => s.IsCpu);
+		if (seat == null) return false;
+		Sit(device, seat);
+		SfxPlayer.Ui("ui_select");
+		return true;
+	}
+
+	/// <summary>
+	/// Whose story it is: one seat, driven by whichever controller was touched last - so it never
+	/// matters which one is holding it. True when another controller takes over: that touch does
+	/// nothing else.
+	/// </summary>
+	bool TickStory(Device device)
+	{
+		Slot seat = slots[0];
+		if (seat.Device == device) return false;
+		MenuNav nav = device.Cursor.Nav;
+		if (!nav.Confirm && !nav.Cancel && !nav.Start && nav.Stick.LengthSquared() < 0.09f) return false;
+		Vector2 at = seat.Cursor?.Position ?? device.Cursor.Position;
+		if (seat.Device != null) seat.Device.Seat = null;
+		int picked = seat.Index;
+		Sit(device, seat);
+		seat.Index = picked;
+		device.Cursor.Position = at;
+		return true;
 	}
 
 	/// <summary>The CPU buttons live in the bottom corner of a seat's panel.</summary>
@@ -353,7 +430,7 @@ public partial class CharacterSelectScreen : Node2D
 
 	/// <summary>
 	/// The Teams switch, or a seat's team button: a person's own, or any CPU's. <paramref name="by"/>
-	/// is who pressed it, or null for the mouse, which can set anyone's. True if it was one.
+	/// is who pressed it. True if it was one.
 	/// </summary>
 	bool TryTeamButtons(Vector2 point, Slot by)
 	{
@@ -388,7 +465,7 @@ public partial class CharacterSelectScreen : Node2D
 		Color ink = MenuTheme.Rule;
 		foreach (Slot slot in slots)
 		{
-			if (slot.Human && box.HasPoint(slot.Cursor.Position)) ink = slot.Tint;
+			if (slot.Human && slot.Cursor != null && box.HasPoint(slot.Cursor.Position)) ink = slot.Tint;
 		}
 
 		DrawRect(box, new Color(1.0f, 1.0f, 1.0f, 0.85f));
@@ -403,7 +480,7 @@ public partial class CharacterSelectScreen : Node2D
 		Color ink = MenuTheme.Ink;
 		foreach (Slot slot in slots)
 		{
-			if (slot.Human && box.HasPoint(slot.Cursor.Position)) ink = slot.Tint;
+			if (slot.Human && slot.Cursor != null && box.HasPoint(slot.Cursor.Position)) ink = slot.Tint;
 		}
 		DrawRect(box, MenuTheme.TeamTint(team).Lightened(0.35f));
 		CrayonBrush.InkRect(this, box, ink, ink == MenuTheme.Ink ? 3.0f : 6.0f, seed, 2.2f);
@@ -445,11 +522,23 @@ public partial class CharacterSelectScreen : Node2D
 		bool readyBefore = EveryoneReady();
 		bool startFight = false;
 
+		// Every controller is read once a frame, seated or not. One nobody is sitting at joins on A;
+		// that press does nothing else.
+		SyncDevices();
+		foreach (Device device in devices) device.Cursor.Nav.Poll();
+		var justSat = new System.Collections.Generic.HashSet<Slot>();
+		foreach (Device device in devices)
+		{
+			if (ForStory && TickStory(device)) justSat.Add(slots[0]);
+			else if (device.Seat == null && device.Cursor.Confirm && Join(device)) justSat.Add(device.Seat);
+		}
+
 		foreach (Slot slot in slots)
 		{
 			if (ForStory && slot != slots[0]) continue;
+			if (!slot.Human || slot.Cursor == null || justSat.Contains(slot)) continue;
 			MenuCursor cursor = slot.Cursor;
-			cursor.Update(viewport);
+			cursor.Move(viewport);
 
 			// With everyone picked, Start fights. Checked first, because Start also counts as A
 			// and would otherwise re-pick whatever card the cursor happens to be resting on.
@@ -459,23 +548,10 @@ public partial class CharacterSelectScreen : Node2D
 				continue;
 			}
 
-			if (!slot.Joined || slot.IsCpu)
-			{
-				// Pressing A on this seat's own controller joins it - replacing a CPU if one is
-				// sitting there, because a person who wants to play always beats the computer.
-				if (cursor.Confirm)
-				{
-					slot.Joined = true;
-					slot.IsCpu = false;
-					slot.Index = -1;
-					SfxPlayer.Ui("ui_select");
-				}
-				continue;
-			}
-
 			if (cursor.Cancel)
 			{
-				// B takes a pick back; with nothing picked it goes back to the main menu.
+				// B takes a pick back; with nothing picked it gets up out of the seat, and the last
+				// person to get up goes back to the main menu.
 				SfxPlayer.Ui("ui_back");
 				if (slot.Locked)
 				{
@@ -483,8 +559,13 @@ public partial class CharacterSelectScreen : Node2D
 				}
 				else
 				{
-					GameRoot.Instance.GoMainMenu();
-					return;
+					if (!ForStory) Stand(slot);
+					if (ForStory || !System.Array.Exists(slots, s => s.Human))
+					{
+						GameRoot.Instance.GoMainMenu();
+						return;
+					}
+					continue;
 				}
 			}
 
@@ -543,6 +624,7 @@ public partial class CharacterSelectScreen : Node2D
 
 		if (ForStory)
 		{
+			GameRoot.Instance.SeatDevices[0] = slots[0].Device?.Key;
 			GameRoot.Instance.GoStory(StoryScript.IdOf(FighterCatalog.Get(slots[0].Index)));
 			return;
 		}
@@ -551,6 +633,7 @@ public partial class CharacterSelectScreen : Node2D
 		{
 			GameRoot.Instance.SelectedFighters[i] = slots[i].Joined ? slots[i].Index : -1;
 			GameRoot.Instance.CpuPlayers[i] = slots[i].Joined && slots[i].IsCpu;
+			GameRoot.Instance.SeatDevices[i] = slots[i].Human ? slots[i].Device?.Key : null;
 		}
 		GameRoot.Instance.GoStageSelect();
 	}
@@ -587,9 +670,7 @@ public partial class CharacterSelectScreen : Node2D
 				slot.Name.Text = "";
 				slot.Credit.Text = "";
 				slot.Blurb.Text = "";
-				// A seat with no controller of its own - no pad for it, and the keyboard's two seats
-				// taken - can still be the computer.
-				slot.State.Text = slot.Cursor.Nav.Source == null ? "Plug in a pad to join" : "Press A to join";
+				slot.State.Text = "Press A to join";
 				continue;
 			}
 
@@ -605,7 +686,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			// Show what the cursor is over until something is picked, so a player can read a
 			// fighter's description before committing to it.
-			int shown = slot.Locked ? slot.Index : CardUnder(slot.Cursor.Position);
+			int shown = slot.Locked ? slot.Index : slot.Cursor != null ? CardUnder(slot.Cursor.Position) : -1;
 			slot.Name.Text = shown >= 0 ? FighterCatalog.NameOf(shown) : "";
 			slot.Credit.Text = shown >= 0 ? FighterCatalog.CreditOf(shown) : "";
 			slot.Blurb.Text = shown >= 0 ? FighterCatalog.BlurbOf(shown) : "";
@@ -678,21 +759,20 @@ public partial class CharacterSelectScreen : Node2D
 
 		if (!ForStory)
 		{
-			bool teamsHot = TeamsBox.HasPoint(mouse);
-			foreach (Slot slot in slots) teamsHot |= slot.Human && TeamsBox.HasPoint(slot.Cursor.Position);
+			bool teamsHot = false;
+			foreach (Slot slot in slots) teamsHot |= slot.Human && slot.Cursor != null && TeamsBox.HasPoint(slot.Cursor.Position);
 			MenuTheme.DrawButton(this, TeamsBox, TeamBattle ? "Teams" : "Every one for themselves", 79, teamsHot, TeamBattle,
 				fontSize: TeamBattle ? 40 : 28);
 		}
 
-		bool quitHovered = mouseOverQuit;
+		bool quitHovered = false;
 		Color quitInk = MenuTheme.Rule;
 		foreach (Slot slot in slots)
 		{
-			if (!slot.Joined || !QuitBox.HasPoint(slot.Cursor.Position)) continue;
+			if (!slot.Human || slot.Cursor == null || !QuitBox.HasPoint(slot.Cursor.Position)) continue;
 			quitInk = slot.Tint;
 			quitHovered = true;
 		}
-		if (mouseOverQuit && quitInk == MenuTheme.Rule) quitInk = MenuTheme.Ink;
 
 		DrawRect(QuitBox, new Color(1.0f, 1.0f, 1.0f, 0.55f));
 		CrayonBrush.InkRect(this, QuitBox, quitInk, quitHovered ? 6.0f : 3.0f, 77, 2.6f);

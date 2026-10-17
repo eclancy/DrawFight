@@ -3,8 +3,9 @@ using Godot;
 
 /// <summary>
 /// After PRESS START: what to do. Fight (versus), play a story, or draw a fighter
-/// and send it in. Three big cards and a cursor, like every other menu - and the mouse works too,
-/// because the drawing screen is a mouse-and-tablet place and a kid heading there has one in hand.
+/// and send it in. Three big cards and a cursor, like every other menu. The mouse is for the
+/// drawing screens only (Eric, 2026-10-16). Nobody is a player number yet: that is decided on
+/// fighter select, by who presses a button first.
 ///
 /// The versus card is Elim's two fighters, standing about on their own rigs: the menu shows the
 /// game's own drawings rather than anything drawn for the menu.
@@ -22,7 +23,6 @@ public partial class MainMenuScreen : Node2D
 	readonly List<MenuCursor> cursors = new List<MenuCursor>();
 	readonly List<FighterRig> rigs = new List<FighterRig>();
 	Node2D cursorLayer;
-	Vector2 mouse = new Vector2(-100.0f, -100.0f);
 	int hovered = -1;
 	int frame;
 	bool leaving;
@@ -34,7 +34,7 @@ public partial class MainMenuScreen : Node2D
 		for (int i = 0; i < sources.Length; i++)
 		{
 			Color tint = MenuTheme.PlayerTint(i);
-			cursors.Add(new MenuCursor(sources[i], i, tint, new Vector2(860.0f + i * 200.0f, 960.0f)));
+			cursors.Add(new MenuCursor(sources[i], -1, tint, new Vector2(860.0f + i * 200.0f, 960.0f)));
 		}
 
 		// Circy and Triguy: Elim's drawings, facing off on the versus card.
@@ -76,24 +76,6 @@ public partial class MainMenuScreen : Node2D
 	{
 		for (int i = 0; i < 3; i++) if (CardRect((Choice)i).HasPoint(point)) return i;
 		return -1;
-	}
-
-	public override void _Input(InputEvent @event)
-	{
-		if (leaving) return;
-		if (@event is InputEventMouseMotion motion)
-		{
-			mouse = motion.Position;
-			int over = CardUnder(mouse);
-			if (over >= 0 && over != hovered) SfxPlayer.Ui("ui_move");
-			hovered = over;
-		}
-		else if (@event is InputEventMouseButton click && click.Pressed && click.ButtonIndex == MouseButton.Left)
-		{
-			mouse = click.Position;
-			OnePointer.StartWith(false);
-			Press(click.Position);
-		}
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -170,7 +152,7 @@ public partial class MainMenuScreen : Node2D
 		DrawCard(Choice.Story, "Story", "Fight for a place on the fridge.");
 		DrawCard(Choice.Draw, "Draw a fighter", "Draw your own and send it in.");
 
-		bool quitHot = QuitBox.HasPoint(mouse);
+		bool quitHot = false;
 		foreach (MenuCursor cursor in cursors) quitHot |= QuitBox.HasPoint(cursor.Position);
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, quitHot, fontSize: 38);
 

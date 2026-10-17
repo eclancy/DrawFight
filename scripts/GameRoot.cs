@@ -23,6 +23,23 @@ public partial class GameRoot : Node2D
 	/// <summary>Which seats the computer plays, chosen on the fighter select screen.</summary>
 	public bool[] CpuPlayers = { false, false, false, false };
 
+	/// <summary>
+	/// The controller in each seat (ControllerAssignment.Devices), or null: whoever pressed a
+	/// button to sit there on fighter select. P1 is the first to press, not the first pad.
+	/// </summary>
+	public string[] SeatDevices = new string[MaxPlayers];
+
+	/// <summary>
+	/// The controller a seat plays on: whoever sat in it - or, booted straight into a match with
+	/// nobody having sat anywhere (--match), the pads in order, then the keyboard.
+	/// </summary>
+	public IInputSource SourceForSeat(int seat)
+	{
+		if (seat >= 0 && seat < SeatDevices.Length && SeatDevices[seat] != null) return ControllerAssignment.Open(SeatDevices[seat]);
+		IInputSource[] order = ControllerAssignment.ForPlayers(MaxPlayers);
+		return order[Mathf.Clamp(seat, 0, order.Length - 1)];
+	}
+
 	/// <summary>A team fight rather than every one for themselves, chosen on the fighter select screen.</summary>
 	public bool TeamBattle;
 
@@ -35,15 +52,14 @@ public partial class GameRoot : Node2D
 	/// </summary>
 	public MenuCursor[] HumanCursors(Vector2 viewport, float y)
 	{
-		IInputSource[] sources = ControllerAssignment.ForPlayers(MaxPlayers);
 		var cursors = new System.Collections.Generic.List<MenuCursor>();
 		for (int seat = 0; seat < MaxPlayers; seat++)
 		{
 			if (SelectedFighters[seat] < 0 || CpuPlayers[seat]) continue;
-			cursors.Add(new MenuCursor(sources[seat], seat, MenuTheme.PlayerTint(seat),
+			cursors.Add(new MenuCursor(SourceForSeat(seat), seat, MenuTheme.PlayerTint(seat),
 				new Vector2(viewport.X * (0.2f + seat * 0.2f), y)));
 		}
-		if (cursors.Count == 0) cursors.Add(new MenuCursor(sources[0], 0, MenuTheme.PlayerTint(0), new Vector2(viewport.X * 0.5f, y)));
+		if (cursors.Count == 0) cursors.Add(new MenuCursor(SourceForSeat(0), 0, MenuTheme.PlayerTint(0), new Vector2(viewport.X * 0.5f, y)));
 		return cursors.ToArray();
 	}
 	public int SelectedStage;
@@ -361,6 +377,9 @@ public partial class GameRoot : Node2D
 		}
 
 		currentScreen = screen;
+		// The mouse is for the drawing screens only (Eric, 2026-10-16): everywhere else its pointer
+		// is hidden, and those screens show it again themselves (OnePointer).
+		Input.MouseMode = Input.MouseModeEnum.Hidden;
 		AddChild(screen);
 
 		// The click that changed screens is spent: without this it carries on into the new

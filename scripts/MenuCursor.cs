@@ -11,8 +11,9 @@ using Godot;
 public sealed class MenuCursor
 {
 	public readonly MenuNav Nav;
-	public readonly int Player;
-	public readonly Color Tint;
+	/// <summary>The player number it shows, from 0 - or -1 for a cursor that is nobody's yet.</summary>
+	public int Player;
+	public Color Tint;
 	public Vector2 Position;
 
 	/// <summary>Pixels per frame at full deflection.</summary>
@@ -79,6 +80,7 @@ public sealed class MenuCursor
 		}, Tint);
 		canvas.DrawCircle(centre, Radius, new Color(1.0f, 1.0f, 1.0f, 0.9f));
 		canvas.DrawArc(centre, Radius, 0.0f, Mathf.Tau, 28, Tint, 6.0f);
+		if (Player < 0) return;
 		canvas.DrawString(ThemeDB.FallbackFont, centre + new Vector2(-15.0f, 9.0f), $"P{Player + 1}",
 			HorizontalAlignment.Left, -1, 24, MenuTheme.Text);
 	}

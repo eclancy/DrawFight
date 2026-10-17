@@ -10,7 +10,8 @@ using Godot;
 /// does nothing else, so a nudge of the stick never draws, clicks or undoes anything by itself.
 ///
 /// Which one is in use is remembered from screen to screen, so the next screen starts with the
-/// same. Select screens with a cursor for every player are not one person, and do not use this.
+/// same. Select screens with a cursor for every player are not one person, and do not use this -
+/// and nowhere else takes the mouse at all: its pointer is hidden off these screens.
 /// </summary>
 public sealed class OnePointer
 {
@@ -97,9 +98,9 @@ public sealed class OnePointer
 		if (Input.MouseMode != want) Input.MouseMode = want;
 	}
 
-	/// <summary>Off a screen that uses this: the mouse pointer back, for the screens that do not.</summary>
+	/// <summary>Off a screen that uses this: the mouse pointer goes - the other screens have no use for it.</summary>
 	public static void Leave()
 	{
-		if (Input.MouseMode != Input.MouseModeEnum.Visible) Input.MouseMode = Input.MouseModeEnum.Visible;
+		if (Input.MouseMode != Input.MouseModeEnum.Hidden) Input.MouseMode = Input.MouseModeEnum.Hidden;
 	}
 }

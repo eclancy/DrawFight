@@ -121,13 +121,6 @@ public partial class TitleScreen : Node2D
 		GameRoot.Instance.GoMainMenu();
 	}
 
-	/// <summary>A click starts too: a kid heading for the drawing screen has a mouse in hand.</summary>
-	public override void _Input(InputEvent @event)
-	{
-		if (leaving || @event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) return;
-		Leave();
-	}
-
 	/// <summary>One fighter swings, the other takes it, both reset. On a loop, forever.</summary>
 	void AnimateBrawl()
 	{

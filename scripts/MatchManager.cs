@@ -347,7 +347,6 @@ public partial class MatchManager : Node2D
 		// computer player. Each person plays on their seat's controller - the one they joined
 		// and picked with on the select screen.
 		cpus ??= new CpuInputSource[Fighters.Count];
-		IInputSource[] sources = ControllerAssignment.ForPlayers(GameRoot.MaxPlayers);
 
 		for (int i = 0; i < Fighters.Count; i++)
 		{
@@ -363,7 +362,8 @@ public partial class MatchManager : Node2D
 			}
 			else
 			{
-				Fighters[i].Controller = sources[Mathf.Clamp(Fighters[i].Seat, 0, sources.Length - 1)];
+				Fighters[i].Controller = GameRoot.Instance != null ? GameRoot.Instance.SourceForSeat(Fighters[i].Seat)
+					: ControllerAssignment.ForPlayers(GameRoot.MaxPlayers)[Mathf.Clamp(Fighters[i].Seat, 0, GameRoot.MaxPlayers - 1)];
 			}
 		}
 	}

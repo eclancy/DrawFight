@@ -105,8 +105,9 @@ With no second pad, P2 is the number pad: `8`/`4`/`5`/`6` move, `1` jump, `2` at
 `0` block, `9` grab, `7` taunt.
 
 After **Start**, the main menu: **Versus**, **Story** or **Draw a fighter**. The
-mouse works in the menus too. In menus, each player presses **A** to join, then drags a cursor
-with the left stick and presses **A** to pick; **B** takes a pick back. **QUIT** is on the main
+mouse is only for the drawing screens; everywhere else it does nothing and its pointer is hidden.
+In menus, each player presses **A** to join, then drags a cursor with the left stick and presses
+**A** to pick; **B** takes a pick back. **QUIT** is on the main
 menu and the fighter select screen. In a story scene, **A** hurries the line on and **holding
 B** skips the scene.
 
@@ -125,11 +126,13 @@ sending one in.
 | Ctrl+Z, Ctrl+Y, Ctrl+S | undo, redo, save (it saves by itself too) |
 | a pen turned round | its eraser rubs out |
 
-**Up to four players:** fighter select has four seats. Each person presses **A** on their own
-controller to sit in theirs - the keyboard has room for two, so players three and four need
-pads - and any seat can be the computer instead: **CPU** puts it there, **CHANGE** cycles its
-fighter and **REMOVE** takes it out, and someone pressing A on that seat's controller takes it
-back. Two or more seats filled and picked, and **Start** fights. **Playing alone** is the same:
+**Up to four players:** fighter select has four seats, and players are numbered in the order
+they press **A**: the first to press is Player 1, whatever they are holding, the next Player 2, and
+so on. Any pad counts, and so do both halves of the keyboard (arrows and letters, or the number
+pad). **B** with nothing picked gets up out of the seat. Any seat can be the computer instead:
+**CPU** puts it there, **CHANGE** cycles its fighter and **REMOVE** takes it out; with every seat
+taken, someone new pressing A takes a CPU's. Two or more seats filled and picked, and **Start**
+fights. **Playing alone** is the same:
 press **CPU** in another seat.
 
 **Teams:** press **Every one for themselves** at the top of fighter select to switch to

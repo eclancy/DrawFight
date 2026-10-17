@@ -291,7 +291,7 @@ public partial class DrawScreen : Node2D
 		}
 	}
 
-	void AddPadCursor() => padCursors.Add(new MenuCursor(ControllerAssignment.ForPlayers(1)[0], 0, MenuTheme.AccentTwo, View.GetCenter()));
+	void AddPadCursor() => padCursors.Add(new MenuCursor(ControllerAssignment.ForPlayers(1)[0], -1, MenuTheme.AccentTwo, View.GetCenter()));
 
 	// --- Input ----------------------------------------------------------------------------------
 

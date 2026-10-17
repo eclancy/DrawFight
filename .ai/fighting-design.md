@@ -22,9 +22,12 @@ Smash rules, not health bars.
   briefly invulnerable.
 - Default match: 3 stocks, no time limit. Last fighter standing wins.
 - **Two to four players**, every one for themselves (Eric, 2026-10-16). Fighter select has four
-  seats; any can be a person or the computer, and two or more filled start a fight. A player keeps
-  their seat's number, colour (`MenuTheme.PlayerTint`) and controller into the match - P1 and P3
-  fighting are P1 and P3, not P1 and P2. With three or more in a fight, or two of the same
+  seats; any can be a person or the computer, and two or more filled start a fight. Players are
+  numbered in the order they press A, not by which pad is plugged in where: the first controller
+  to press - any pad, or either half of the keyboard - sits as P1 (`ControllerAssignment.Devices`,
+  `GameRoot.SeatDevices`). A player keeps their seat's number, colour (`MenuTheme.PlayerTint`) and
+  controller into the match - P1 and P3 fighting are P1 and P3, not P1 and P2. The mouse plays no
+  part outside the drawing screens (Eric, 2026-10-16). With three or more in a fight, or two of the same
   fighter, every head carries a tag, "P1" or "CPU" in the seat's colour, sized to the screen so it
   reads however far out the camera pulls (`Fighter.DrawPlayerTag`). The three big stages are made
   for three and four (`StageData.Large`).

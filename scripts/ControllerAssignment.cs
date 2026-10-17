@@ -16,6 +16,33 @@ public static class ControllerAssignment
 	/// <summary>The layout every pad uses. F3 swaps it; see .ai/fighting-design.md.</summary>
 	public static GamepadLayout Layout = GamepadLayout.Standard();
 
+	/// <summary>
+	/// Every controller that can play, each by a name that stays the same from screen to screen:
+	/// each pad plugged in ("pad:0"), then the keyboard's two sets of keys - "keys:1", the arrows
+	/// and letters, and "keys:2", the number pad. A seat remembers the name of whoever sat in it.
+	/// </summary>
+	public static List<string> Devices()
+	{
+		var list = new List<string>();
+		foreach (int pad in Input.GetConnectedJoypads()) list.Add($"pad:{pad}");
+		list.Add("keys:1");
+		list.Add("keys:2");
+		return list;
+	}
+
+	/// <summary>A controller by its name (Devices), or null for none.</summary>
+	public static IInputSource Open(string key)
+	{
+		if (key == "keys:1") return KeyboardInputSource.Player1();
+		if (key == "keys:2") return KeyboardInputSource.Player2();
+		if (key != null && key.StartsWith("pad:")) return new GamepadInputSource(key.Substring(4).ToInt(), Layout);
+		return null;
+	}
+
+	/// <summary>Whether that controller is here: the keyboard always is; a pad while it is plugged in.</summary>
+	public static bool IsConnected(string key) =>
+		key != null && (key.StartsWith("keys:") || key.StartsWith("pad:") && Input.GetConnectedJoypads().Contains(key.Substring(4).ToInt()));
+
 	public static IInputSource[] ForPlayers(int count)
 	{
 		Godot.Collections.Array<int> pads = Input.GetConnectedJoypads();
