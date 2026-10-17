@@ -812,6 +812,7 @@ public partial class Fighter : CharacterBody2D
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
 		// A hand on his hip only while he is just standing; turned on below.
 		rig.HandOnHip = false;
+		rig.Sitting = IsSitting;
 		rig.ArmBackLimit = StrikingPose ? FighterRig.ArmBackMost : Data.ArmReachBack;
 
 		switch (State)
@@ -4349,6 +4350,7 @@ public partial class Fighter : CharacterBody2D
 		if (State == FighterState.Eliminated || rig == null || !rig.Loaded) return;
 		DrawShield(overlay);
 		DrawTauntBubble(overlay);
+		DrawLunchInHand(overlay);
 		DrawChoiceMenu(overlay);
 		DrawSpinBlades(overlay, true);
 		DrawBlinkGlint(overlay);

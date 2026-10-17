@@ -105,7 +105,8 @@ With no second pad, P2 is the number pad: `8`/`4`/`5`/`6` move, `1` jump, `2` at
 `0` block, `9` grab, `7` taunt.
 
 After **Start**, the main menu: **Versus**, **Story** or **Draw a fighter**. The
-mouse is only for the drawing screens; everywhere else it does nothing and its pointer is hidden.
+mouse is only for the drawing screens; everywhere else it does nothing and its pointer is hidden,
+and even there it only shows once you move the mouse.
 In menus, each player presses **A** to join, then drags a cursor with the left stick and presses
 **A** to pick; **B** takes a pick back. **QUIT** is on the main
 menu and the fighter select screen. In a story scene, **A** hurries the line on and **holding

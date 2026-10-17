@@ -38,13 +38,25 @@ public sealed class OnePointer
 	/// Which one the next of these screens starts with: whatever chose to go there - a pad's cursor
 	/// on the main menu, or the mouse - so a pad never has to be touched once just to show up.
 	/// </summary>
-	public static void StartWith(bool pad) => UsingPad = pad;
+	public static void StartWith(bool pad)
+	{
+		UsingPad = pad;
+		MouseSeen = false;
+	}
+
+	/// <summary>
+	/// The mouse has moved since the drawing screens were entered. Until it does, its pointer stays
+	/// hidden even with no pad in use: coming from the menus on the keyboard, nobody is holding the
+	/// mouse, and a pointer nobody is using sitting on the screen is clutter (Eric, 2026-10-16).
+	/// </summary>
+	public static bool MouseSeen { get; private set; }
 
 	/// <summary>The mouse, a pen or a finger did something: it is the pointer now.</summary>
 	public void MouseUsed()
 	{
-		if (!UsingPad) return;
+		if (!UsingPad && MouseSeen) return;
 		UsingPad = false;
+		MouseSeen = true;
 		Apply();
 	}
 
@@ -94,7 +106,7 @@ public sealed class OnePointer
 	void Apply()
 	{
 		if (UsingPad && pads.Count == 0) UsingPad = false;
-		Input.MouseModeEnum want = UsingPad ? Input.MouseModeEnum.Hidden : Input.MouseModeEnum.Visible;
+		Input.MouseModeEnum want = !UsingPad && MouseSeen ? Input.MouseModeEnum.Visible : Input.MouseModeEnum.Hidden;
 		if (Input.MouseMode != want) Input.MouseMode = want;
 	}
 

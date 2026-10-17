@@ -371,7 +371,10 @@ In order, each step usable before the next:
    `.ai/audio-direction.md`. The reveal is staged: `stage bare` takes the other drawings off the
    door, `dark on` dims it to night lavender, `eye at` opens his red eye up in the dark, `pile at`
    heaps the taken-down drawings behind him, and `page at` pins up the drawing of DoomBot in his
-   ending (`StoryBoard`).
+   ending (`StoryBoard`). `table at` sets a lunch table, and `pose sit` / `pose eat` sit someone
+   at it on a stool (`FighterRig.Sitting`) - Flambe and Lugnut at lunch, before every fight
+   against the two of them (Eric, 2026-10-16). A scene never walks anyone off a drop
+   (`MatchManager.WalkableTo`), and no car comes down City Rooftops' street while one plays.
 4. **Two-on-one** - **built, 2026-10-15.** `MatchManager.Teams`: teammates cannot hit, grab,
    splash or trap each other, a CPU only goes after the other side, and a side is out when
    everyone on it is. The HUD and camera already take any number. A piece of M6, done early.

@@ -24,7 +24,8 @@
 #                                   happy, sad, smug
 #   player pose cheer               a pose, held until "pose none": cheer, slump, point, shrug,
 #                                   laugh, stomp, tremble, crossarms, wave, fist, flex, hips,
-#                                   think, facepalm, present, beckon, nod, bow. Whoever is talking
+#                                   think, facepalm, present, beckon, nod, bow, sit, eat (sat at
+#                                   a "table", taking bites of lunch). Whoever is talking
 #                                   talks with their hands anyway, in the way the line is said;
 #                                   a pose is for the moment that needs more. DoomBot, standing,
 #                                   turns to face you, the way Eric drew him.
@@ -44,6 +45,8 @@
 #   board at -560 -820 / board clear      where "writes" lines go on the fridge
 #   stage bare / stage full         the other drawings off the fridge door, or back on it
 #   pile at 520 / pile clear        a heap of taken-down drawings on the floor
+#   table at 537 / table clear      a table set for lunch; whoever sits by it gets a stool. It
+#                                   is cleared away when the fight starts
 #   dark on / dark off              the lights down
 #   eye at 0 -900 / eye close       a red eye opening up there in the dark
 #   page at 380 -560 / page clear   a new drawing pinned up on the door, with a magnet
@@ -215,18 +218,24 @@ lugnut pose none
 camera wide
 fight
 
+# Lunch, on the stage, the two of them at their table (Eric, 2026-10-16).
 == vs lugnut flambe
 cast player at -420
-cast lugnut at 260 facing left
-cast flambe offstage
+cast lugnut at 260 facing right
+cast flambe at 485 facing left
+table at 372
+lugnut pose eat &
+flambe pose eat
 music story
-camera two player lugnut
+camera two lugnut flambe cut
+wait 60
+camera two player lugnut slow
+lugnut pose none
+lugnut face player
 lugnut pose beckon
 lugnut: Round two, robot. And this time I brought a friend.
 lugnut pose none
-flambe drop at 480
-shake 30
-flambe face player
+flambe pose none
 flambe look smug
 flambe pose bow
 flambe (hot): Order up.

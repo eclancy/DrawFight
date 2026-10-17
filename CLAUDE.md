@@ -75,7 +75,7 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
    readability at match size: widening every line uniformly, in place, when it is too thin to
    see - Circy's and Triguy's `LINE_BOOST` - on Eric's own DoomBot at his request, a dark
    ring round the outside edge - and, on Eric's call, Circy's front foot redrawn flat, and
-   Triguy's white coloured in light green with a sheen on his hat, not a line of his moved. Each
+   Triguy's white coloured in with a white pencil and a sheen on his hat, not a line of his moved. Each
    was asked for by name; none is a precedent for the next drawing. Eyes and mouths are lifted out
    whole and moved - squashed to blink, stretched to talk - never redrawn, and at rest the face
    is exactly as drawn (Eric's call, 2026-10-11). See `.ai/art-pipeline.md`.)

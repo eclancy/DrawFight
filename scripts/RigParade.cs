@@ -346,6 +346,8 @@ public partial class RigParade : Node2D
 				}
 				// A pose struck reaches as far as a match lets it (Fighter.StrikingPose).
 				if (!talk) rig.ArmBackLimit = FighterRig.ArmBackMost;
+				// Sat down, the legs keep their bend, as in a scene (FighterRig.Sitting).
+				rig.Sitting = names[i] == "sit" || names[i] == "eat";
 				// Held, as a scene holds it: settled where the springs come to rest, not one step there.
 				for (int step = 0; step < 60; step++) rig.ApplyDirect(pose, 0.75f);
 				label = names[i];

@@ -75,7 +75,11 @@ public partial class StreetTraffic : Node2D
 	{
 		float dt = (float)delta;
 
-		if (--nextCarFrames <= 0)
+		// No new cars while a story scene plays: a scene is not a fight, and nobody standing in
+		// it gets run over (Eric, 2026-10-16). The ones already on the road drive on through.
+		bool scene = Match != null && Match.InStoryScene;
+		if (scene) nextCarFrames = Mathf.Max(nextCarFrames, MinGapFrames);
+		else if (--nextCarFrames <= 0)
 		{
 			SpawnCar();
 			nextCarFrames = rng.RandiRange(MinGapFrames, MaxGapFrames);
@@ -119,7 +123,7 @@ public partial class StreetTraffic : Node2D
 
 	void HitFighters(Car car)
 	{
-		if (Match == null) return;
+		if (Match == null || Match.InStoryScene) return;
 		Rect2 body = CarRect(car);
 		foreach (Fighter fighter in Match.Fighters)
 		{

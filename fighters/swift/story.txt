@@ -65,33 +65,36 @@ flambe pose slump
 flambe: Too hot for me? ...That's new.
 end
 
-# Flambe and Lugnut on their lunch break, the two of them against whoever walks up.
+# Flambe and Lugnut on their lunch break, sat at a table together, the two of them against
+# whoever walks up. Everyone stands on one roof of City Rooftops - the player on the next one -
+# so nobody walks off into the street (Eric, 2026-10-16).
 == team
-cast player at -620
-cast flambe at 300 facing right
-cast lugnut at 520 facing left
+cast player at -250 facing right
+cast flambe at 425 facing right
+cast lugnut at 650 facing left
+table at 537
+flambe pose eat &
+lugnut pose eat
 music story
-camera two flambe lugnut
-narrator: Up on the roof, Flambe and Lugnut were sharing lunch.
+camera two flambe lugnut cut
+narrator: Flambe and Lugnut were on their lunch break. Same table. Every day.
 wait 30
-player walk to -100
+player walk to 40 &
+camera two player lugnut slow
+flambe pose sit &
+lugnut pose sit
 flambe face player
-lugnut face player
 flambe look shocked
 lugnut look shocked
 wait 20
 lugnut look happy
-lugnut pose present
 lugnut: You hungry?
-lugnut pose none
 flambe look smug
 flambe pose fist
 flambe (hot): For a fight.
 flambe pose none
 lugnut look sad
-lugnut pose shrug
 lugnut: ...I was gonna offer half a sandwich.
-lugnut pose none
 lugnut look angry
 lugnut pose flex
 lugnut: Break's over.
@@ -100,9 +103,9 @@ camera wide
 fight
 
 == team defeated
-cast player at -300
-cast flambe at 200 facing left
-cast lugnut at 420 facing left
+cast player at -100 facing right
+cast flambe at 425 facing left
+cast lugnut at 650 facing left
 music story
 flambe pose slump
 lugnut pose facepalm

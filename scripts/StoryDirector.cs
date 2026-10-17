@@ -103,7 +103,7 @@ public partial class StoryDirector : Node
 		match.AddChild(overlay);
 
 		// On the fridge door: behind the fighters, in front of the stage.
-		board = new StoryBoard();
+		board = new StoryBoard { Match = match };
 		match.AddChild(board);
 		match.MoveChild(board, stage.GetIndex() + 1);
 	}
@@ -353,6 +353,10 @@ public partial class StoryDirector : Node
 				board.Pile(step.Arg(0) == "clear" ? (float?)null : step.Number(1, 0), Match.FloorAt(step.Number(1, 0)));
 				return true;
 
+			case "table":
+				board.Table(step.Arg(0) == "clear" ? (float?)null : step.Number(1, 0), Match.FloorAt(step.Number(1, 0)));
+				return true;
+
 			case "dark":
 				board.Dark = step.Arg(0) == "on";
 				return true;
@@ -407,6 +411,7 @@ public partial class StoryDirector : Node
 						run.TargetX = other.GlobalPosition.X + (side == 0 ? -1 : side) * 170.0f;
 					}
 					else run.TargetX = PlaceX(step.Arg(1), actor);
+					run.TargetX = Match.WalkableTo(actor.GlobalPosition.X, run.TargetX);
 				}
 				float dx = run.TargetX - actor.GlobalPosition.X;
 				if (Mathf.Abs(dx) < (step.Verb == "walk" ? 14.0f : 40.0f) || run.Frames > 420) return true;
@@ -656,6 +661,9 @@ public partial class StoryDirector : Node
 		foreach (Fighter fighter in Match.Fighters) fighter.ClearStoryLook();
 		board.Dark = false;
 		board.CloseEye();
+		// Lunch is cleared away for the fight: drawn solid, a table you fell through would say it
+		// was ground you could stand on.
+		board.Table(null, 0.0f);
 
 		if (how == "fight" && !afterFight)
 		{

@@ -33,12 +33,14 @@ The other drawings are front or three-quarter views shown whole: his three taunt
 crying pose for his puddle, and three effects - the spike that comes up out of the puddle, the
 trampoline, and the jagged outline that goes round him while he is invincible.
 
-COLOUR, on Eric's call (2026-10-15): Elim drew him white, and at match size his eyes, his teeth
-and his hat ran into the white. So the white of his body - the one big white shape in each
-drawing - is coloured in a light green (BODY_LIGHT), a shade deeper round its rim so it reads as
-a solid thing; the gaps between his teeth are filled white in the mouth piece, so they stay white
-as it moves; and his hat gets a sheen along its top edges (HAT_SHEEN), so it reads as a shiny top
-hat rather than a black blot. Every line stays exactly where and as Elim drew it: this colours in
+COLOUR, on Eric's call: Elim drew him white, and white he stays (2026-10-16 - for a day he was
+light green, 2026-10-15). But blank paper reads as a hole, not a body, so the white of his body -
+the one big white shape in each drawing - is coloured in with a white pencil, the same coloured-
+pencil recipe as the stand-ins (drawn.pencil_coverage): strokes of white with a pale grey tooth
+showing between them, a shade deeper round its rim so it reads as a solid thing. The gaps between
+his teeth are filled clean white in the mouth piece, so they stay white as it moves; and his hat
+gets a sheen along its top edges (HAT_SHEEN), so it reads as a shiny top hat rather than a black
+blot. Every line stays exactly where and as Elim drew it: this colours in
 what he left white or filled black, after the cut, and never touches source/.
 """
 
@@ -51,6 +53,7 @@ import os
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 import cut_circy as circy
+import drawn
 import faces
 import linework
 from face_specs import FACES
@@ -79,11 +82,16 @@ EFFECTS = [
     ('outline', 'outline.png', 'centre'),
 ]
 
-# His colouring (see the note at the top): the body's light green, deeper at its rim, and the
-# sheen on his hat.
-BODY_LIGHT = (214, 240, 200)
-BODY_DEEP = (168, 212, 156)
+# His colouring (see the note at the top): white pencil over a pale grey tooth, deeper at the
+# rim, and the sheen on his hat.
+BODY_WHITE = (253, 253, 250)
+BODY_TOOTH = (188, 193, 208)
+BODY_RIM = (178, 182, 198)
 HAT_SHEEN = (110, 116, 140)
+
+# He is drawn several times as big as the stand-ins and shrunk further, so the pencil is laid down
+# small and scaled up: its strokes come out as wide at match size as theirs.
+PENCIL_SCALE = 6
 
 OUTLINE_GROW = 16      # px added around the white fill to take in the triangle's outline
 STRAY_PIXELS = 400     # a stroke smaller than this is a stray mark, given to the nearest limb
@@ -372,8 +380,8 @@ def _largest(small):
     return region
 
 
-def colour_body(img):
-    """The one big white shape - his body - coloured in light green, deeper toward its edge.
+def colour_body(img, seed):
+    """The one big white shape - his body - coloured in white pencil, deeper toward its edge.
     Smaller whites (an eye, the gaps in a mouth) stay white; nothing that is not white changes."""
     r, g, b, a = img.split()
     white = ImageChops.darker(ImageChops.darker(r, g), b).point(lambda v: 255 if v > 200 else 0)
@@ -382,8 +390,14 @@ def colour_body(img):
     body = _full(small, white)
     depth = small.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MinFilter(7))
     depth = depth.filter(ImageFilter.GaussianBlur(26 // SMALL)).resize(img.size, Image.BILINEAR)
-    shade = Image.composite(Image.new('RGBA', img.size, BODY_LIGHT + (255,)),
-                            Image.new('RGBA', img.size, BODY_DEEP + (255,)), depth)
+    w, h = img.size
+    cover = drawn.pencil_coverage((w // PENCIL_SCALE + 1, h // PENCIL_SCALE + 1), seed)
+    cover = cover.resize((w // PENCIL_SCALE * PENCIL_SCALE + PENCIL_SCALE, h // PENCIL_SCALE * PENCIL_SCALE + PENCIL_SCALE),
+                         Image.BICUBIC).crop((0, 0, w, h))
+    pencil = Image.composite(Image.new('RGBA', img.size, BODY_WHITE + (255,)),
+                             Image.new('RGBA', img.size, BODY_TOOTH + (255,)), cover)
+    rim = Image.blend(pencil, Image.new('RGBA', img.size, BODY_RIM + (255,)), 0.55)
+    shade = Image.composite(pencil, rim, depth)
     out = img.copy()
     out.paste(shade, (0, 0), body)
     return out
@@ -430,12 +444,12 @@ def colour_in(parts_dir, poses_dir):
         for step in steps:
             img = step(img)
         img.save(path)
-    redo(os.path.join(parts_dir, 'Torso.png'), colour_body)
+    redo(os.path.join(parts_dir, 'Torso.png'), lambda img: colour_body(img, 'triguy-torso'))
     redo(os.path.join(parts_dir, 'FaceMouth.png'), fill_teeth)
     redo(os.path.join(parts_dir, 'Hat.png'), hat_sheen)
     redo(os.path.join(poses_dir, 'hat.png'), hat_sheen)
     for name, _ in BODY_POSES:
-        redo(os.path.join(poses_dir, name + '.png'), colour_body, hat_sheen)
+        redo(os.path.join(poses_dir, name + '.png'), lambda img, name=name: colour_body(img, 'triguy-' + name), hat_sheen)
     print('coloured in')
 
 

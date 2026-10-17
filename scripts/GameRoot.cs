@@ -403,6 +403,13 @@ public partial class GameRoot : Node2D
 	public override void _Process(double delta)
 	{
 		framesElapsed++;
+		// No mouse pointer anywhere but the drawing screens, whatever turned it on - a window
+		// regaining focus, a screen that forgot to put it away (Eric, 2026-10-16).
+		if (!(currentScreen is DrawScreen || currentScreen is DrawingsScreen || currentScreen is SendFighterScreen)
+			&& Input.MouseMode != Input.MouseModeEnum.Hidden)
+		{
+			Input.MouseMode = Input.MouseModeEnum.Hidden;
+		}
 		if (ShotFrames.Contains(framesElapsed)) CallDeferred(nameof(Capture), $"shot_{framesElapsed:00000}");
 		if (ScreenshotRequestFrames > 0 && framesElapsed >= ScreenshotRequestFrames)
 		{

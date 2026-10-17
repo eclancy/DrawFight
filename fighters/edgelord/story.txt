@@ -196,15 +196,21 @@ narrator: (The mohawk.)
 camera wide
 fight
 
+# At lunch together, one roof over from him (Eric, 2026-10-16).
 == vs flambe lugnut
-cast player at -780 facing right
-cast flambe at 420 facing left
-cast lugnut at 640 facing left
+cast player at -200 facing right
+cast flambe at 425 facing right
+cast lugnut at 650 facing left
+table at 537
+flambe pose eat &
+lugnut pose eat
 music story
-camera two flambe lugnut
-lugnut pose crossarms
+camera two flambe lugnut cut
+wait 70
+lugnut look angry
+lugnut pose sit
 lugnut: Heard you've been cutting people out of the picture.
-lugnut pose none
+flambe face player
 flambe pose point
 flambe: So we're putting you back in it.
 flambe pose none

@@ -464,8 +464,10 @@ small path rather than bending the rig.
   Stretch does, no line redrawn - until both stand straight with their feet flat, under him.
 - **Coloured in where the drawing is white** (Triguy's, Eric's call 2026-10-15): at match size
   his eyes, teeth and hat ran into the white of his body. `colour_in` in
-  `tools/art/cut_triguy.py` colours the one big white shape in each drawing light green, a shade
-  deeper round its rim; fills the gaps his mouth's own lines close in white, in the mouth piece,
+  `tools/art/cut_triguy.py` colours the one big white shape in each drawing in white pencil - the
+  stand-ins' coloured-pencil recipe (`drawn.pencil_coverage`), white strokes over a pale grey
+  tooth, a shade deeper round its rim - so he stays white, as Elim drew him, but reads as a
+  coloured-in body rather than a hole in the page (Eric, 2026-10-16; for a day it was light green); fills the gaps his mouth's own lines close in white, in the mouth piece,
   so the teeth stay white as it moves; and puts a sheen along the top edges of his hat - the
   biggest thick black shape, never a line - so it reads as a shiny top hat. Not one of his lines
   moves or changes: only what he left white or filled black is coloured, after the cut.

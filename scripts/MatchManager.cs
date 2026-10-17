@@ -309,6 +309,25 @@ public partial class MatchManager : Node2D
 		return x;
 	}
 
+	/// <summary>
+	/// How far toward toX someone at fromX can walk in a scene before the ground drops away - the
+	/// edge of a roof, not the street below it. A scene walks people up to each other; it never
+	/// walks them off a building (Eric, 2026-10-16: on City Rooftops they ended up in the road).
+	/// </summary>
+	public float WalkableTo(float fromX, float toX)
+	{
+		const float Margin = 50.0f, Drop = 120.0f;
+		float floor = FloorAt(fromX);
+		float dir = Mathf.Sign(toX - fromX);
+		if (dir == 0.0f) return toX;
+		for (float at = fromX; dir * (toX - at) > 0.0f; at += dir * 10.0f)
+		{
+			float ahead = SolidTop(at + dir * Margin);
+			if (float.IsPositiveInfinity(ahead) || ahead > floor + Drop) return at;
+		}
+		return toX;
+	}
+
 	void SpawnFighter(FighterData data, int index)
 	{
 		var fighter = new Fighter();

@@ -313,8 +313,8 @@ public partial class DrawScreen : Node2D
 		{
 			if (drag != Drag.None && padCursor != null) Release(padCursor.Position);
 			padWasHeld = false;
-			pointers.MouseUsed();
 		}
+		if (@event is InputEventMouse) pointers.MouseUsed();
 		switch (@event)
 		{
 			case InputEventMouseMotion motion:

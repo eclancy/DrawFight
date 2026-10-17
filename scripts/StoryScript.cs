@@ -79,7 +79,7 @@ public static class StoryScript
 	static readonly string[] SceneWords =
 	{
 		"wait", "camera", "shake", "music", "sound", "board", "include", "cast", "fight", "end",
-		"stage", "pile", "dark", "eye", "page",
+		"stage", "pile", "table", "dark", "eye", "page",
 	};
 
 	static Dictionary<string, Dictionary<string, StoryScene>> scripts;
@@ -284,6 +284,9 @@ public static class StoryScript
 				return;
 			case "pile":
 				if (!(step.Arg(0) == "clear" || step.Arg(0) == "at" && step.Arg(1).IsValidFloat())) Bad("pile is \"pile at X\" or \"pile clear\"");
+				return;
+			case "table":
+				if (!(step.Arg(0) == "clear" || step.Arg(0) == "at" && step.Arg(1).IsValidFloat())) Bad("table is \"table at X\" or \"table clear\"");
 				return;
 			case "dark":
 				if (step.Arg(0) is not ("on" or "off")) Bad("dark is \"dark on\" or \"dark off\"");

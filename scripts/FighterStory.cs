@@ -15,6 +15,60 @@ public partial class Fighter
 	/// </summary>
 	public string StoryPose = "";
 
+	/// <summary>Sat down at a story's table, on the ground.</summary>
+	bool IsSitting => (StoryPose == "sit" || StoryPose == "eat") && State == FighterState.Grounded && IsOnFloor();
+
+	/// <summary>
+	/// Where the stool under him has its seat, and how wide it is, while he sits - under his thighs,
+	/// at the height planting his feet brought his hips down to - or null standing.
+	/// </summary>
+	public (Vector2 seat, float width)? SeatNow()
+	{
+		if (!IsSitting || rig == null || !rig.Loaded) return null;
+		Vector2? front = rig.JointGlobal(RigBone.LegFrontUpper), back = rig.JointGlobal(RigBone.LegBackUpper);
+		if (front == null || back == null) return null;
+		float under = Mathf.Max(front.Value.Y, back.Value.Y) + Data.BodySize.Y * 0.035f;
+		float x = (front.Value.X + back.Value.X) * 0.5f - Facing * Data.BodySize.X * 0.08f;
+		return (new Vector2(x, under), Data.BodySize.X * 0.62f);
+	}
+
+	static readonly Color LunchInk = new Color(0.19f, 0.31f, 0.61f);
+
+	/// <summary>
+	/// His lunch in his hand while a story has him eat - half a sandwich, or a spoon - drawn over
+	/// the hand holding it, so it goes up to his mouth and back down with every bite.
+	/// </summary>
+	void DrawLunchInHand(Node2D canvas)
+	{
+		if (StoryPose != "eat" || !IsSitting) return;
+		Vector2? grip = rig.JointGlobal(RigBone.PropFront) ?? rig.JointGlobal(RigBone.ArmFrontLower);
+		if (grip == null) return;
+		Vector2 at = canvas.ToLocal(grip.Value);
+		float s = Data.BodySize.Y * 0.15f;
+		if (Data.Lunch == "spoon")
+		{
+			// Handle out of his fist, the bowl up, with a bit of custard in it.
+			Vector2 bowl = at + new Vector2(Facing * s * 0.55f, -s * 0.7f);
+			canvas.DrawLine(at, bowl, LunchInk, 5.0f, true);
+			canvas.DrawLine(at, bowl, new Color(0.86f, 0.87f, 0.90f), 2.5f, true);
+			canvas.DrawCircle(bowl, s * 0.24f, LunchInk);
+			canvas.DrawCircle(bowl, s * 0.24f - 2.0f, new Color(0.86f, 0.87f, 0.90f));
+			canvas.DrawCircle(bowl + new Vector2(0.0f, -1.0f), s * 0.13f, new Color(0.98f, 0.86f, 0.52f));
+			return;
+		}
+		// Half a sandwich, the cut side up: bread, and the egg salad showing along the cut.
+		Vector2[] half =
+		{
+			at + new Vector2(-Facing * s * 0.45f, s * 0.15f),
+			at + new Vector2(Facing * s * 0.55f, s * 0.15f),
+			at + new Vector2(Facing * s * 0.05f, -s * 0.8f),
+		};
+		canvas.DrawColoredPolygon(half, new Color(0.96f, 0.86f, 0.62f));
+		canvas.DrawLine(half[1] + (half[2] - half[1]) * 0.1f, half[2] + (half[1] - half[2]) * 0.1f,
+			new Color(0.98f, 0.88f, 0.36f), 4.0f, true);
+		canvas.DrawPolyline(new[] { half[0], half[1], half[2], half[0] }, LunchInk, 2.5f, true);
+	}
+
 	/// <summary>One of his own whole drawings shown instead of his puppet - Triguy's surprised face
 	/// (rig.json "poses") - for as long as a story holds it; "" for none.</summary>
 	public string StoryShow = "";
@@ -74,10 +128,11 @@ public partial class Fighter
 		if (!string.IsNullOrEmpty(pose) && (faceOn || State == FighterState.Grounded || State == FighterState.Airborne)
 			&& StrikePose(pose, faceOn))
 		{
-			// His hands are busy: a hammer on the shoulder is put down for it.
+			// His hands are busy: a hammer on the shoulder is put down for it - and sitting down to
+			// eat, whatever he carries.
 			rig.HandOnHip = false;
 			rig.CarryOnShoulder = false;
-			if (Data.ShouldersProp) rig.SetPartVisible(RigBone.PropFront, false);
+			if (Data.ShouldersProp || IsSitting) rig.SetPartVisible(RigBone.PropFront, false);
 			rig.ApplyDirect(storyPose, 0.75f);
 			return;
 		}
@@ -148,6 +203,19 @@ public partial class Fighter
 				storyPose.Set(RigBone.ArmFrontLower, storyPose[RigBone.ArmFrontLower] * (1.0f + 0.14f * pump));
 				storyPose.Set(RigBone.ArmBackLower, storyPose[RigBone.ArmBackLower] * (1.0f + 0.14f * pump));
 				break;
+			case "eat":
+			{
+				// A bite every couple of seconds: his lunch up to his mouth, a moment chewing, and
+				// back down to the table.
+				int t = (fxFrames + PlayerIndex * 37) % 110;
+				float up = t < 16 ? t / 16.0f : t < 50 ? 1.0f : t < 66 ? 1.0f - (t - 50) / 16.0f : 0.0f;
+				up = up * up * (3.0f - 2.0f * up);
+				storyPose.Set(upper, Mathf.Lerp(storyPose[upper], -16.0f, up));
+				storyPose.Set(lower, Mathf.Lerp(storyPose[lower], -140.0f, up));
+				float chew = t >= 16 && t < 50 ? 2.5f * Mathf.Sin(t * 0.9f) : 0.0f;
+				storyPose.Set(RigBone.Head, storyPose[RigBone.Head] - 5.0f * up + chew);
+				break;
+			}
 			case "laugh":
 				// Rocking back and forward with it.
 				storyPose.Set(RigBone.Torso, storyPose[RigBone.Torso] + 7.0f * Mathf.Sin(fxFrames * 0.45f));

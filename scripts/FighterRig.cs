@@ -628,6 +628,13 @@ public partial class FighterRig : Node2D
 	public void SetStanding(bool on) => standing = on;
 
 	/// <summary>
+	/// Sat down (a story's "sit"): the legs keep the pose's bend - thighs out level, shins down -
+	/// instead of standing on flat feet, and planting brings the soles to the floor, which brings
+	/// the hips down to stool height. Whoever drives the rig sets it each frame.
+	/// </summary>
+	public bool Sitting;
+
+	/// <summary>
 	/// No fighter has an ankle - a foot is drawn on the end of its shin - so a foot is flat at
 	/// exactly one angle of its shin, and that angle is read off the drawing (<see cref="SoleOf"/>).
 	/// So, standing: each shin is turned until its sole is level, and the thigh is turned until
@@ -1908,7 +1915,7 @@ public partial class FighterRig : Node2D
 
 		ShowTurns();
 		PlaceLimbRoots();
-		standBlend = Mathf.MoveToward(standBlend, standing && planted ? 1.0f : 0.0f, 0.2f);
+		standBlend = Mathf.MoveToward(standBlend, standing && planted && !Sitting ? 1.0f : 0.0f, 0.2f);
 		if (standBlend > 0.0f) StandOnFeet(standBlend);
 		for (int l = 0; l < Limbs.Length; l++) KeepBoneInRange(l);
 

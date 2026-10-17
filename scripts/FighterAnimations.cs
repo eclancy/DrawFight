@@ -978,14 +978,27 @@ public static class FighterAnimations
 		"beckon" => Beckon,
 		"nod" => Nod,
 		"bow" => Bow,
+		"sit" => Sit,
+		"eat" => Sit,
 		_ => null,
 	};
 
 	public static readonly string[] StoryPoses =
 	{
 		"cheer", "slump", "point", "shrug", "laugh", "stomp", "tremble", "crossarms",
-		"wave", "fist", "flex", "hips", "think", "facepalm", "present", "beckon", "nod", "bow",
+		"wave", "fist", "flex", "hips", "think", "facepalm", "present", "beckon", "nod", "bow", "sit", "eat",
 	};
+
+	/// <summary>
+	/// Sat on a stool at a table: thighs out level, shins straight down, forearms resting on the
+	/// table in front of him. The legs keep this bend rather than standing (FighterRig.Sitting);
+	/// planting his feet on the floor brings him down to sitting height. "eat" is this, taking bites
+	/// (Fighter.StrikePose).
+	/// </summary>
+	static readonly Pose Sit = new Pose(new Vector2(0, 0),
+		(Torso, -4), (Head, -4),
+		(AFU, -34), (AFL, -60), (ABU, -24), (ABL, -64),
+		(LFU, -80), (LFL, 80), (LBU, -72), (LBL, 74));
 
 	/// <summary>
 	/// Both arms flung up and out in a V, up on his toes, each to its own side of his body (Eric,

@@ -223,6 +223,9 @@ public partial class FighterData : Resource
 	/// <summary>How he celebrates a win, standing still once it is won: a story pose (FighterAnimations.StoryPose).</summary>
 	public string VictoryPose = "cheer";
 
+	/// <summary>What is in his hand when a story has him eat: "sandwich", or "spoon" for a dessert.</summary>
+	public string Lunch = "sandwich";
+
 	/// <summary>One of his own drawings held up to celebrate instead (Triguy's), or empty.</summary>
 	public string VictoryShow = "";
 
@@ -276,6 +279,8 @@ public partial class FighterData : Resource
 		data.Throws = Grabs.Flambe();
 		// A fist punched up at the lights, the way he is drawn.
 		data.VictoryPose = "fist";
+		// A spoon for his creme brulee, which he torched himself.
+		data.Lunch = "spoon";
 		data.VictoryFace = "smug";
 		return data;
 	}
