@@ -69,6 +69,13 @@ public class KeyboardInputSource : IInputSource
 
 	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown, grabWasDown;
 
+	/// <summary>
+	/// Read once already. A button that is down the first time it is read was pressed before we
+	/// were listening - the press that left the last screen - so it is held, not pressed: every
+	/// press is a button going down while this is watching (Eric, 2026-10-16).
+	/// </summary>
+	bool primed;
+
 	public KeyboardInputSource(
 		Key left, Key right, Key up, Key down,
 		Key jump, Key attack, Key special, Key block, Key taunt, Key grab)
@@ -106,6 +113,16 @@ public class KeyboardInputSource : IInputSource
 		bool startDown = Input.IsPhysicalKeyPressed(Key.Enter) || Input.IsPhysicalKeyPressed(Key.Space);
 		bool tauntDown = Input.IsPhysicalKeyPressed(taunt);
 		bool grabDown = Input.IsPhysicalKeyPressed(grab);
+		if (!primed)
+		{
+			primed = true;
+			jumpWasDown = jumpDown;
+			attackWasDown = attackDown;
+			specialWasDown = specialDown;
+			startWasDown = startDown;
+			tauntWasDown = tauntDown;
+			grabWasDown = grabDown;
+		}
 
 		var state = new InputState
 		{

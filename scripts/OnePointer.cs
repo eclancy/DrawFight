@@ -88,7 +88,7 @@ public sealed class OnePointer
 		if (UsingPad) Current?.Draw(canvas);
 	}
 
-	static bool Touched(MenuNav nav) => nav.Stick.LengthSquared() > StickTouch * StickTouch || nav.AnyPress || nav.Held;
+	static bool Touched(MenuNav nav) => nav.Stick.LengthSquared() > StickTouch * StickTouch || nav.AnyPress;
 
 	/// <summary>The mouse pointer shown only while it is the pointer - and never with no pad to stand in for it.</summary>
 	void Apply()

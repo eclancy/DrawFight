@@ -89,11 +89,11 @@ public partial class Fighter
 		switch (State)
 		{
 			case FighterState.Attacking when currentMove != null:
-				if (currentMove == Data.Taunt)
+				if (IsTaunt(currentMove))
 				{
 					// Showing off: pleased with themselves, and saying their line.
 					f = FaceState.Smug;
-					if (moveFrame >= currentMove.StartupFrames && !string.IsNullOrEmpty(Data.TauntLine))
+					if (moveFrame >= currentMove.StartupFrames && !string.IsNullOrEmpty(tauntLine))
 					{
 						f.Open = 0.2f + 0.6f * Mathf.Abs(Mathf.Sin(moveFrame * 0.45f));
 					}
@@ -196,7 +196,7 @@ public partial class Fighter
 		}
 
 		float speed = 18.0f;
-		float want = State == FighterState.Attacking && currentMove != Data.Taunt
+		float want = State == FighterState.Attacking && !IsTaunt(currentMove)
 			? SwordWrist(currentMove, moveFrame, out speed)
 			: State == FighterState.Hitstun || State == FighterState.Dodging ? -40.0f : HeldWrist;
 		wristNow = Mathf.MoveToward(wristNow, want, speed);

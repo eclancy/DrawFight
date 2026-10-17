@@ -119,6 +119,9 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 	readonly GamepadLayout layout;
 
 	bool jumpWasDown, attackWasDown, specialWasDown, startWasDown, tauntWasDown, grabWasDown;
+
+	/// <summary>Read once already - see KeyboardInputSource: a button already down when we start listening is held, not pressed.</summary>
+	bool primed;
 	bool smashStickWasOut;
 
 	bool Pressed(JoyButton button) => button != JoyButton.Invalid && Input.IsJoyButtonPressed(device, button);
@@ -141,7 +144,8 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 		// held direction, so the fighter just stands still until it comes back.
 		if (!IsConnected)
 		{
-			jumpWasDown = attackWasDown = specialWasDown = startWasDown = false;
+			// Plugged back in, whatever is held then was held before.
+			primed = false;
 			return InputState.None;
 		}
 
@@ -164,6 +168,17 @@ public class GamepadInputSource : IInputSource, IHapticInputSource
 		// smashes should be easy, not a test of flicking.
 		var smash = new Vector2(Input.GetJoyAxis(device, JoyAxis.RightX), Input.GetJoyAxis(device, JoyAxis.RightY));
 		bool smashOut = smash.Length() > (smashStickWasOut ? 0.4f : 0.65f);
+		if (!primed)
+		{
+			primed = true;
+			jumpWasDown = jumpDown;
+			attackWasDown = attackDown;
+			specialWasDown = specialDown;
+			startWasDown = startDown;
+			tauntWasDown = tauntDown;
+			grabWasDown = grabDown;
+			smashStickWasOut = smashOut;
+		}
 		Vector2 smashWay = Mathf.Abs(smash.X) >= Mathf.Abs(smash.Y)
 			? new Vector2(Mathf.Sign(smash.X), 0.0f) : new Vector2(0.0f, Mathf.Sign(smash.Y));
 

@@ -48,6 +48,26 @@ public partial class Hazard : Node2D
 	int beamDir = 1;
 	bool beamStopped;
 
+	/// <summary>Which way a beam points: the way it was fired, tipped down by its move's angle.</summary>
+	Vector2 BeamDirection
+	{
+		get
+		{
+			float a = Mathf.DegToRad(move.BeamDegrees);
+			return new Vector2(beamDir * Mathf.Cos(a), Mathf.Sin(a));
+		}
+	}
+
+	/// <summary>How far a beam can reach from where it starts before it meets solid ground.</summary>
+	float BeamRoom()
+	{
+		if (move.BeamDegrees == 0.0f) return move.Reach;
+		var space = GetWorld2D().DirectSpaceState;
+		var ray = PhysicsRayQueryParameters2D.Create(GlobalPosition, GlobalPosition + BeamDirection * move.Reach, 0b01);
+		var hit = space.IntersectRay(ray);
+		return hit.Count > 0 ? GlobalPosition.DistanceTo((Vector2)hit["position"]) : move.Reach;
+	}
+
 	/// <summary>Frames a beam stays up after it hits something, so the hit is seen.</summary>
 	const int BeamHoldFrames = 8;
 
@@ -358,7 +378,8 @@ public partial class Hazard : Node2D
 				return;
 			}
 			GlobalPosition = owner.BeamOrigin();
-			if (!beamStopped) beamLength = Mathf.Min(move.Reach, beamLength + Mathf.Abs(velocity.X) * dt);
+			if (!beamStopped) beamLength = beamLength + Mathf.Abs(velocity.X) * dt;
+			beamLength = Mathf.Min(beamLength, BeamRoom());
 		}
 		else if (move.Special == SpecialKind.Walker)
 		{
@@ -710,7 +731,7 @@ public partial class Hazard : Node2D
 
 		for (int i = 0; i <= steps; i++)
 		{
-			Vector2 point = GlobalPosition + new Vector2(beamDir * length * i / steps, 0.0f);
+			Vector2 point = GlobalPosition + (move.Beam ? BeamDirection : new Vector2(beamDir, 0.0f)) * length * i / steps;
 			nearest = new Vector2(
 				Mathf.Clamp(point.X, body.Position.X, body.End.X),
 				Mathf.Clamp(point.Y, body.Position.Y, body.End.Y));
@@ -804,9 +825,9 @@ public partial class Hazard : Node2D
 		float burst = size.X * BeamBurstFraction;
 		float length = beamLength / s;
 
-		// Texture x runs from the tip back toward the hands.
-		DrawSetTransformMatrix(new Transform2D(0.0f, new Vector2(-beamDir * s, s), 0.0f,
-			new Vector2(beamDir * beamLength, 0.0f)));
+		// Texture x runs from the tip back toward the hands, tipped down by the beam's angle.
+		DrawSetTransformMatrix(new Transform2D(beamDir * Mathf.DegToRad(move.BeamDegrees), new Vector2(-beamDir * s, s), 0.0f,
+			BeamDirection * beamLength));
 
 		if (length <= burst)
 		{
@@ -1003,11 +1024,18 @@ public partial class Hazard : Node2D
 
 		if (move.Beam)
 		{
-			// No drawing for this beam: a plain crayon beam from the hands to its far end.
-			Vector2 tip = new Vector2(beamDir * beamLength, 0.0f);
+			// No drawing for this beam: a plain crayon beam from the hands to its far end - and where
+			// an angled one meets the floor, a splash of light on it.
+			Vector2 tip = BeamDirection * beamLength;
 			DrawLine(Vector2.Zero, tip, body, radius * 2.0f);
 			DrawCircle(tip, radius, body);
 			DrawLine(Vector2.Zero, tip, new Color(1.0f, 0.95f, 0.85f, 0.9f), radius * 0.7f);
+			if (move.BeamDegrees != 0.0f && beamLength < move.Reach - 1.0f)
+			{
+				float flicker = 1.0f + 0.25f * Mathf.Sin(ageFrames * 1.3f);
+				DrawCircle(tip, radius * 2.2f * flicker, new Color(body, 0.35f));
+				DrawCircle(tip, radius * 1.1f * flicker, new Color(1.0f, 0.95f, 0.85f, 0.8f));
+			}
 			return;
 		}
 

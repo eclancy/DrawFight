@@ -32,7 +32,7 @@ public static class Grabs
 		PropArt = "-",
 		StartupFrames = 6, ActiveFrames = 4, EndlagFrames = 26,
 		Damage = 0.0f, BaseKnockback = 0.0f, KnockbackGrowth = 0.0f,
-		HitboxRadius = 40.0f,
+		HitboxRadius = Fighter.GrabCatchRadius,
 		Special = SpecialKind.Grab,
 		Sound = "swing_light",
 	};

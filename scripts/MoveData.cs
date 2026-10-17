@@ -319,8 +319,18 @@ public partial class MoveData : Resource
 	/// </summary>
 	[Export] public bool Beam { get; set; } = false;
 
+	/// <summary>A taunt struck as one of the shared story poses (FighterAnimations.StoryPose) - a flex, a bow - instead of an attack animation; empty for none.</summary>
+	[Export] public string TauntPose { get; set; } = "";
+
 	/// <summary>How far a <see cref="Beam"/> reaches, in pixels.</summary>
 	[Export] public float Reach { get; set; } = 0.0f;
+
+	/// <summary>
+	/// How far below level a <see cref="Beam"/> points, in degrees, the way he faces: DoomBot's eye
+	/// laser comes down from head height at the floor ahead of him, where everyone shorter is. It
+	/// stops where it meets solid ground. Zero is level, out of the hands (Circy's).
+	/// </summary>
+	[Export] public float BeamDegrees { get; set; } = 0.0f;
 
 	/// <summary>
 	/// A projectile fired as a burst: this many shots, <see cref="BurstInterval"/> frames apart,
@@ -755,6 +765,7 @@ public partial class MoveData : Resource
 			TetherLength = TetherLength,
 			Beam = Beam,
 			Reach = Reach,
+			BeamDegrees = BeamDegrees,
 			BurstCount = BurstCount,
 			BurstInterval = BurstInterval,
 			Streak = Streak,

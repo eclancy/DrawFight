@@ -200,19 +200,19 @@ public partial class FighterData : Resource
 	public MoveData[] Moves = System.Array.Empty<MoveData>();
 
 	/// <summary>
-	/// What this fighter does when it taunts: a pose held for a moment, open to attack. Built by
-	/// <see cref="Taunts"/>. Null means no taunt.
+	/// His three taunts - up, sideways, down on the stick - each a pose held for a moment, open to
+	/// attack. Built by <see cref="global::Taunts"/>. Empty means no taunt.
 	/// </summary>
-	public MoveData Taunt;
+	public MoveData[] Taunts = System.Array.Empty<MoveData>();
+
+	/// <summary>What he says in a speech bubble for each taunt, in the same order; a "[picture]" for Circy.</summary>
+	public string[] TauntLines = System.Array.Empty<string>();
 
 	/// <summary>The grab (block plus attack on the ground) - see <see cref="Grabs"/>.</summary>
 	public MoveData Grab = Grabs.Grab();
 
 	/// <summary>The four throws a grab leads to: forward, back, up, down. Built by <see cref="Grabs"/>.</summary>
 	public MoveData[] Throws = System.Array.Empty<MoveData>();
-
-	/// <summary>What the fighter says in a speech bubble while taunting. Empty says nothing.</summary>
-	public string TauntLine = "";
 
 	/// <summary>
 	/// Drawn face on (DoomBot): standing in a story scene, and celebrating a win, he turns to face
@@ -266,8 +266,13 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire(),
 			CharacterNormals.Swift, CharacterNormals.SwiftJab());
-		data.Taunt = Taunts.Make(AttackAnim.HangUp, propArt: "");
-		data.TauntLine = "Too hot for you!";
+		data.Taunts = new[]
+		{
+			global::Taunts.Pose("fist"),
+			global::Taunts.Pose("present"),
+			global::Taunts.Pose("bow"),
+		};
+		data.TauntLines = new[] { "Too hot for you!", "Order up!", "Bon appétit, mon ami." };
 		data.Throws = Grabs.Flambe();
 		// A fist punched up at the lights, the way he is drawn.
 		data.VictoryPose = "fist";
@@ -301,8 +306,13 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Construction(),
 			CharacterNormals.Lug, CharacterNormals.LugJab());
-		data.Taunt = Taunts.Make(AttackAnim.OverheadArc, propArt: "tool_sledgehammer", extra: "hardhat");
-		data.TauntLine = "Break's over!";
+		data.Taunts = new[]
+		{
+			global::Taunts.Make(AttackAnim.OverheadArc, propArt: "tool_sledgehammer", extra: "hardhat"),
+			global::Taunts.Pose("hips", extra: "hardhat"),
+			global::Taunts.Pose("flex"),
+		};
+		data.TauntLines = new[] { "Break's over!", "Safety first!", "Built to code." };
 		data.Throws = Grabs.Construction();
 		// Flexing, the way he is drawn.
 		data.VictoryPose = "flex";
@@ -343,8 +353,13 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.EdgeLord(),
 			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());
-		data.Taunt = Taunts.Make(AttackAnim.PointUp, propArt: "sword_claymore");
-		data.TauntLine = "Try to keep up.";
+		data.Taunts = new[]
+		{
+			global::Taunts.Make(AttackAnim.PointUp, propArt: "sword_claymore"),
+			global::Taunts.Pose("crossarms"),
+			global::Taunts.Pose("hips"),
+		};
+		data.TauntLines = new[] { "Try to keep up.", "Too sharp for you.", "A cut above." };
 		data.Throws = Grabs.EdgeLord();
 		// Too cool to cheer.
 		data.VictoryPose = "crossarms";
@@ -421,7 +436,13 @@ public partial class FighterData : Resource
 			CharacterNormals.DoomBot, CharacterNormals.DoomBotJab());
 		// His moves are authored at the size he used to be; every hitbox grows with him.
 		foreach (MoveData move in data.Moves) move?.ScaleReach(Size);
-		data.Taunt = Taunts.Make(AttackAnim.Spread);
+		data.Taunts = new[]
+		{
+			global::Taunts.Make(AttackAnim.Spread),
+			global::Taunts.Pose("point"),
+			global::Taunts.Pose("laugh"),
+		};
+		data.TauntLines = new[] { "BEEP. BOOP. DOOM.", "TARGET ACQUIRED.", "HA. HA. HA." };
 		data.Throws = Grabs.DoomBot();
 		return data;
 	}
@@ -463,8 +484,15 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy(),
 			CharacterNormals.Circy, CharacterNormals.CircyJab());
-		// Circy is Elim's: he does a star jump, and says nothing Elim did not give him to say.
-		data.Taunt = Taunts.Make(AttackAnim.Spread, propArt: "");
+		// Circy is Elim's: he does a star jump, and talks only in pictures (Eric's call for his
+		// story, 2026-10-15) - never words Elim did not give him.
+		data.Taunts = new[]
+		{
+			global::Taunts.Make(AttackAnim.Spread, propArt: ""),
+			global::Taunts.Pose("wave"),
+			global::Taunts.Pose("cheer"),
+		};
+		data.TauntLines = new[] { "[star]", "[heart]", "[fridge] [heart]" };
 		data.Throws = Grabs.Circy();
 		return data;
 	}
@@ -506,10 +534,16 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Triguy(),
 			CharacterNormals.Triguy, CharacterNormals.TriguyJab());
-		// His three taunts, picked at random, exactly as Elim asked - only for show here. The same
-		// three poses with invincibility are his neutral special (Specials.ShowOff).
-		data.Taunt = Taunts.Posed(Specials.TriguyPoses);
-		data.TauntLine = "That's, really kewl";
+		// His three taunts, exactly as Elim asked - one at random with the stick still - only for
+		// show here. The same three poses with invincibility are his neutral special
+		// (Specials.ShowOff). He only ever says his catchphrase, every way it goes.
+		data.Taunts = new[]
+		{
+			global::Taunts.Posed(Specials.TriguyPoses[0]),
+			global::Taunts.Posed(Specials.TriguyPoses[1]),
+			global::Taunts.Posed(Specials.TriguyPoses[2]),
+		};
+		data.TauntLines = new[] { "that's, really kewl", "not kewl.", "THAT'S, REALLY KEWL." };
 		data.Throws = Grabs.Triguy();
 		// He wins by holding up Elim's own drawing of him going "pog".
 		data.VictoryShow = "taunt_pog";

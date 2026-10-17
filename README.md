@@ -92,7 +92,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | LT or RT | block, behind a shield — reduces damage and knockback, never negates it |
 | RB, or LT/RT + X | grab — catches someone even while they block; then the stick picks a throw |
 | LT/RT + stick | roll, spot dodge, air dodge |
-| LB | taunt — a pose and a line; does nothing but show off, and leaves you open |
+| LB | taunt — a pose and a line, three each (stick up, sideways or down picks one); does nothing but show off, and leaves you open |
 | X beside an item | pick it up. With one in hand, X uses it — swings it, throws it, sprays it, drinks it in |
 | RB holding an item | throw it, the way the stick points (down on the ground sets it down) |
 | hold ↓ | crouch (ducks high attacks); attack from it for a low sweep |

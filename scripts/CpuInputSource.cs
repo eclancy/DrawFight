@@ -219,9 +219,9 @@ public sealed class CpuInputSource : IInputSource
 		}
 
 		// Someone sitting in block right in front: grab them - that is what a grab is for. It has
-		// to face them, and the grab reaches just past the front of its body.
+		// to face them, and the grab reaches an arm's length past the front of its body.
 		if (self.IsOnFloor() && target.IsBlocking && self.Facing == toward && Mathf.Abs(dy) < 80.0f
-			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + 50.0f
+			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + Fighter.GrabOut + Fighter.GrabCatchRadius * 0.6f
 			&& Randf() < AttackChance)
 		{
 			heldStick = Vector2.Zero;
@@ -372,7 +372,10 @@ public sealed class CpuInputSource : IInputSource
 			foreach (float degrees in angles)
 			{
 				float a = Mathf.DegToRad(degrees);
-				Vector2 velocity = move.ShotAngles.Length > 0
+				float tip = Mathf.DegToRad(move.BeamDegrees);
+				Vector2 velocity = move.Beam && move.BeamDegrees != 0.0f
+					? new Vector2(Mathf.Cos(tip) * dir, Mathf.Sin(tip)) * move.SpecialSpeed
+					: move.ShotAngles.Length > 0
 					? new Vector2(Mathf.Cos(a) * dir, -Mathf.Sin(a)) * move.SpecialSpeed
 					: new Vector2(dir * move.SpecialSpeed, move.LaunchLift > 0.0f ? -move.LaunchLift
 						: move.SpecialGravity > 0.0f ? -120.0f : 0.0f);

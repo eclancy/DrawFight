@@ -486,7 +486,7 @@ public partial class Fighter : CharacterBody2D
 
 	void CueMoveSound(MoveData move)
 	{
-		moveCue = move == Data.Taunt
+		moveCue = IsTaunt(move)
 			? new SfxCatalog.Cue("taunt", 1)
 			: SfxCatalog.ForMove(move, ChargeFreezeFrame(move));
 	}
@@ -842,6 +842,13 @@ public partial class Fighter : CharacterBody2D
 				rig.Advance();
 				break;
 
+			case FighterState.Attacking when currentMove != null && !string.IsNullOrEmpty(currentMove.TauntPose):
+				// A taunt struck as a story pose - a flex, a bow - with its motion.
+				rig.SetStanding(IsOnFloor());
+				rig.HandOnHip = false;
+				if (StrikePose(currentMove.TauntPose, false)) rig.ApplyDirect(storyPose, moveFrame < currentMove.StartupFrames ? 0.45f : 0.75f);
+				break;
+
 			case FighterState.Attacking when currentMove != null:
 				// Sampled against the move's own frame counts, so the strike pose arrives on
 				// the exact frame the hitbox does.
@@ -859,6 +866,7 @@ public partial class Fighter : CharacterBody2D
 						Facing, rig.HandEmpty(currentMove.PropArt));
 				}
 				if (!Data.Robotic) PlaceHeldArt();
+				ReachForGrab();
 				break;
 
 			case FighterState.Hitstun:
@@ -1104,10 +1112,12 @@ public partial class Fighter : CharacterBody2D
 		if (TryStartAttack(input)) return;
 
 		// Taunt: standing on the ground, and nothing else going on.
-		if (input.TauntPressed && Data.Taunt != null)
+		if (input.TauntPressed && Data.Taunts.Length > 0)
 		{
 			attackBufferFrames = specialBufferFrames = 0;
-			BeginMove(Data.Taunt, MoveSlot.Jab);
+			int pick = PickTaunt(input.Move);
+			tauntLine = pick < Data.TauntLines.Length ? Data.TauntLines[pick] : "";
+			BeginMove(Data.Taunts[pick], MoveSlot.Jab);
 			Velocity = new Vector2(0.0f, Velocity.Y);
 			return;
 		}
@@ -1503,7 +1513,7 @@ public partial class Fighter : CharacterBody2D
 
 	bool CanCutEndlag(int activeEnd)
 	{
-		if (currentMove.Special != SpecialKind.None || currentMove == Data.Taunt || currentMove == grabKick
+		if (currentMove.Special != SpecialKind.None || IsTaunt(currentMove) || currentMove == grabKick
 			|| grabbed != null || whiffExtraFrames > 0 || currentMove.ComboNext != null && comboQueued) return false;
 		int from = activeEnd + Mathf.CeilToInt(currentMove.EndlagFrames * (1.0f - CuttableEndlag));
 		return moveFrame >= from && moveFrame < currentMove.TotalFrames;
@@ -1734,7 +1744,7 @@ public partial class Fighter : CharacterBody2D
 		grabKick = null;
 		State = FighterState.Attacking;
 		CueMoveSound(move);
-		if (move != Data.Taunt && move.Special != SpecialKind.Vent) AddHeat(Heat.PerAttack);
+		if (!IsTaunt(move) && move.Special != SpecialKind.Vent) AddHeat(Heat.PerAttack);
 
 		StartSpecialMotion(move);
 	}
@@ -3367,7 +3377,18 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>Where a reeled-in fighter ends up: just in front of the hand.</summary>
-	Vector2 GrabHand() => GrabShoulder(RigBone.ArmFrontUpper) + new Vector2(Facing * bodySize.X * 0.7f, 0.0f);
+	/// <summary>
+	/// Where whoever he holds is held: out at arm's length in front of him, not hugged to his chest
+	/// (Eric, 2026-10-16: the arms should stick out further), and lifted just clear of the floor
+	/// rather than hoisted up to his shoulders - a giant still lifts someone small.
+	/// </summary>
+	Vector2 GrabHand()
+	{
+		Vector2 shoulder = GrabShoulder(RigBone.ArmFrontUpper);
+		float held = grabbed != null ? grabbed.bodySize.Y * 0.5f : 60.0f;
+		float clear = GlobalPosition.Y + bodySize.Y * 0.5f - held - 10.0f;
+		return new Vector2(shoulder.X + Facing * (bodySize.X * 0.5f + 46.0f), Mathf.Max(shoulder.Y, clear));
+	}
 
 	/// <summary>
 	/// A command grab's arms come out of the drawing's own shoulders when it has them - DoomBot's
@@ -3552,11 +3573,37 @@ public partial class Fighter : CharacterBody2D
 	public bool IsHoldingGrab => State == FighterState.Attacking && currentMove == Data.Grab && grabbed != null;
 
 	/// <summary>
-	/// Where a grab catches: just past the front of his body, at about the middle of an ordinary
-	/// fighter - so a giant's grab still finds someone his chest is above.
+	/// Where a grab catches: an arm's length out past the front of his body (Eric, 2026-10-16: it
+	/// had to be nearly touching), at about the middle of an ordinary fighter - so a giant's grab
+	/// still finds someone his chest is above.
 	/// </summary>
-	Vector2 GrabReach() => GlobalPosition + new Vector2(Facing * (bodySize.X * 0.5f + 20.0f),
+	Vector2 GrabReach() => GlobalPosition + new Vector2(Facing * (bodySize.X * 0.5f + GrabOut),
 		bodySize.Y * 0.5f - Mathf.Min(bodySize.Y * 0.55f, 72.0f));
+
+	/// <summary>How far past the front of the body a grab's catch is, and how wide.</summary>
+	public const float GrabOut = 60.0f;
+	public const float GrabCatchRadius = 52.0f;
+
+	/// <summary>
+	/// A grab's arms, both of them, out straight at the catch - or on whoever is held - put on over
+	/// the pose: reaching out through the startup, held there through the catch and the hold, and
+	/// drawn back in after a miss. Posed as a jab they reached for the middle of his own body.
+	/// </summary>
+	void ReachForGrab()
+	{
+		if (rig == null || currentMove != Data.Grab) return;
+		int startup = Mathf.Max(1, currentMove.StartupFrames);
+		int activeEnd = startup + currentMove.ActiveFrames;
+		float amount = grabbed != null || moveFrame <= activeEnd
+			? Mathf.Clamp(moveFrame / (float)startup, 0.0f, 1.0f)
+			: Mathf.Clamp(1.0f - (moveFrame - activeEnd) / (currentMove.EndlagFrames * 0.5f), 0.0f, 1.0f);
+		if (amount <= 0.0f) return;
+		// Held, the hands are on the near side of whoever it is.
+		Vector2 target = grabbed != null ? grabbed.GlobalPosition - new Vector2(Facing * grabbed.bodySize.X * 0.35f, 0.0f)
+			: GrabReach() + new Vector2(Facing * GrabCatchRadius * 0.5f, 0.0f);
+		rig.ReachArm(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, target, amount);
+		rig.ReachArm(RigBone.ArmBackUpper, RigBone.ArmBackLower, target + new Vector2(-Facing * 12.0f, -14.0f), amount);
+	}
 
 	/// <summary>
 	/// A grab: reaching out through the active frames for anyone right in front. Caught, he holds
@@ -4346,8 +4393,8 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	void DrawTauntBubble(CanvasItem canvas)
 	{
-		if (State != FighterState.Attacking || currentMove == null || currentMove != Data.Taunt) return;
-		if (string.IsNullOrEmpty(Data.TauntLine) || moveFrame < currentMove.StartupFrames) return;
+		if (State != FighterState.Attacking || currentMove == null || !IsTaunt(currentMove)) return;
+		if (string.IsNullOrEmpty(tauntLine) || moveFrame < currentMove.StartupFrames) return;
 
 		int shown = moveFrame - currentMove.StartupFrames;
 		int left = currentMove.TotalFrames - moveFrame;
@@ -4356,7 +4403,12 @@ public partial class Fighter : CharacterBody2D
 
 		Font font = ThemeDB.FallbackFont;
 		const int FontSize = 30;
-		Vector2 textSize = font.GetStringSize(Data.TauntLine, HorizontalAlignment.Left, -1, FontSize);
+		// Circy talks in pictures: "[heart]" is a drawn heart, not the word.
+		string[] pictures = tauntLine.StartsWith("[") ? tauntLine.Replace("[", "").Replace("]", "").Split(' ') : null;
+		const float Picture = 54.0f;
+		Vector2 textSize = pictures != null
+			? new Vector2(pictures.Length * Picture + (pictures.Length - 1) * 12.0f, Picture)
+			: font.GetStringSize(tauntLine, HorizontalAlignment.Left, -1, FontSize);
 		Vector2 size = (textSize + new Vector2(36.0f, 20.0f)) * (0.7f + 0.3f * pop);
 		var centre = new Vector2(Facing * 30.0f, -bodySize.Y * 1.05f - size.Y * 0.5f);
 		var box = new Rect2(centre - size * 0.5f, size);
@@ -4367,12 +4419,52 @@ public partial class Fighter : CharacterBody2D
 		canvas.DrawColoredPolygon(new[] { tailTop + new Vector2(-10.0f, 0.0f), tailTop + new Vector2(10.0f, 0.0f), new Vector2(Facing * 6.0f, -bodySize.Y * 0.62f) }, paper);
 		canvas.DrawRect(box, paper);
 		canvas.DrawRect(box, ink, false, 3.0f);
-		if (pop >= 1.0f)
+		if (pop >= 1.0f && pictures != null)
 		{
-			canvas.DrawString(font, new Vector2(box.Position.X, centre.Y + textSize.Y * 0.32f), Data.TauntLine,
+			for (int i = 0; i < pictures.Length; i++)
+			{
+				var at = new Vector2(centre.X - textSize.X * 0.5f + Picture * 0.5f + i * (Picture + 12.0f), centre.Y);
+				StoryPictures.Draw(canvas, pictures[i], at, Picture, MenuTheme.Ink, fade, 61 + i);
+			}
+		}
+		else if (pop >= 1.0f)
+		{
+			canvas.DrawString(font, new Vector2(box.Position.X, centre.Y + textSize.Y * 0.32f), tauntLine,
 				HorizontalAlignment.Center, box.Size.X, FontSize, ink);
 		}
 	}
+
+	/// <summary>The line of the taunt playing now.</summary>
+	string tauntLine = "";
+
+	int lastTaunt = -1;
+
+	/// <summary>One of his taunts.</summary>
+	public bool IsTaunt(MoveData move) => move != null && System.Array.IndexOf(Data.Taunts, move) >= 0;
+
+	/// <summary>
+	/// Which taunt: the stick up, sideways or down picks one; held still, any - but not the one
+	/// just done. In a story scene, always the first, so a scene plays the same every time.
+	/// </summary>
+	int PickTaunt(Vector2 stick)
+	{
+		int count = Data.Taunts.Length;
+		int pick;
+		if (count <= 1) pick = 0;
+		else if (Match != null && Match.InStoryScene) pick = 0;
+		else if (stick.Y < -0.5f) pick = 0;
+		else if (stick.Y > 0.5f) pick = Mathf.Min(2, count - 1);
+		else if (Mathf.Abs(stick.X) > 0.5f) pick = 1;
+		else
+		{
+			pick = tauntRng.Next(count - (lastTaunt >= 0 ? 1 : 0));
+			if (lastTaunt >= 0 && pick >= lastTaunt) pick++;
+		}
+		lastTaunt = pick;
+		return pick;
+	}
+
+	readonly System.Random tauntRng = new System.Random();
 
 	/// <summary>The four swords on offer, each pointing the way it sits, popping open around him.</summary>
 	void DrawChoiceMenu(CanvasItem canvas)
@@ -5270,7 +5362,7 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>Hot enough that his normals burn (FighterData.HotHitsFrom), and this is one of them.</summary>
 	bool HitsHot(MoveData move) =>
 		Data.HotHitsFrom > 0.0f && HeatFraction >= Data.HotHitsFrom
-		&& move.Special == SpecialKind.None && move != Data.Taunt && move.HitboxRadius > 0.0f;
+		&& move.Special == SpecialKind.None && !IsTaunt(move) && move.HitboxRadius > 0.0f;
 
 	static readonly RigBone[] Forearms = { RigBone.ArmBackLower, RigBone.ArmFrontLower };
 
@@ -5424,7 +5516,7 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	MoveData SizedNormal(MoveData move)
 	{
-		if (sizeLevel == SizeLevels.Normal || move.Special != SpecialKind.None || move == Data.Taunt || move.BallForm) return move;
+		if (sizeLevel == SizeLevels.Normal || move.Special != SpecialKind.None || IsTaunt(move) || move.BallForm) return move;
 		if (!sizedNormals.TryGetValue((move, sizeLevel), out MoveData sized))
 		{
 			float frames = SizeLevels.AttackFrames(sizeLevel);

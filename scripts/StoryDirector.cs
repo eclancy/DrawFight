@@ -123,7 +123,7 @@ public partial class StoryDirector : Node
 		shotZoom = -1.0f;
 		shotSpeed = 4.0f;
 
-		humans = new[] { ControllerAssignment.ForPlayers(1)[0], KeyboardInputSource.Player1() };
+		humans = EveryController();
 		inputs.Clear();
 		foreach (Fighter fighter in Match.Fighters)
 		{
@@ -179,8 +179,12 @@ public partial class StoryDirector : Node
 	/// <summary>A pad was plugged in or out mid-scene: listen to the new one.</summary>
 	public void RefreshControllers()
 	{
-		humans = new[] { ControllerAssignment.ForPlayers(1)[0], KeyboardInputSource.Player1() };
+		humans = EveryController();
 	}
+
+	/// <summary>Anyone can hurry a line on or skip a scene: every pad, and the keyboard.</summary>
+	static IInputSource[] EveryController() =>
+		ControllerAssignment.Devices().ConvertAll(ControllerAssignment.Open).ToArray();
 
 	// --- Running ----------------------------------------------------------------------
 

@@ -38,6 +38,9 @@ public partial class StoryOverlay : CanvasLayer
 
 		public bool Typed => Shown >= Glyphs.Count;
 
+		/// <summary>Frames it has stood fully typed.</summary>
+		internal int TypedFrames;
+
 		/// <summary>Typed, and read (or hurried on).</summary>
 		public bool Finished;
 	}
@@ -116,11 +119,22 @@ public partial class StoryOverlay : CanvasLayer
 	}
 
 	/// <summary>A button pressed: a line still typing finishes typing, a typed one is done.</summary>
+	/// <summary>
+	/// How long a line stands fully typed before A can send it on: a quarter of a second, so the
+	/// press that finished the typing - or a second press just after it - never throws the words
+	/// away before they are read (Eric, 2026-10-16).
+	/// </summary>
+	const int ReadBeforeHurry = 15;
+
 	public void Hurry(Line line)
 	{
 		if (line == null) return;
-		if (!line.Typed) line.Shown = line.Glyphs.Count;
-		else line.Finished = true;
+		if (!line.Typed)
+		{
+			line.Shown = line.Glyphs.Count;
+			line.TypedFrames = 0;
+		}
+		else if (line.TypedFrames >= ReadBeforeHurry) line.Finished = true;
 	}
 
 	static int FontSizeOf(string mood) => mood switch
@@ -282,6 +296,7 @@ public partial class StoryOverlay : CanvasLayer
 		}
 
 		if (line.Speaker != null) line.Speaker.Talking = false;
+		line.TypedFrames++;
 		if (--line.Hold <= 0) line.Finished = true;
 	}
 

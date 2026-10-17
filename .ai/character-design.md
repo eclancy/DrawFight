@@ -250,8 +250,8 @@ any of them:
   stops at an edge, and goes off as `Burst` when it touches someone or runs out of time. It never
   hits by itself. DoomBot's MiniBot.
 - `PoseArts` - whole drawings of the fighter, one picked at random each time, shown in place of
-  the puppet for the whole move. Triguy's three taunts (his taunt and his neutral special) and
-  his crying.
+  the puppet for the whole move. Triguy's three taunts (one drawing each, and all three for his
+  neutral special) and his crying.
 - `InvincibleFrames` + `AuraArt` - nothing can hit or catch him for that many frames from the end
   of the startup, with that drawing standing behind him. Triguy's Show Off: keep the window short
   and the recovery after it long enough to punish - the counterplay is waiting it out.
@@ -416,7 +416,10 @@ middle of an ordinary fighter (a command grab's hands go out and down to 70 pixe
 floor), and check with the attack parade and a match, not the KO table, which ignores height.
 
 **A taunt never does anything.** It is a pose and a line, nothing else: no hit, no summon, no
-buff, no heat. When a fun idea needs a home, it goes in a move slot - DoomBot's MiniBot is his
+buff, no heat. Everyone has three (Eric, 2026-10-16), each with its own line in their own voice -
+`FighterData.Taunts` and `TauntLines` - struck with an attack animation, a story pose
+(`Taunts.Pose`) or the kid's own drawing (`Taunts.Posed`). A kid's three come from the kid
+first: Triguy's are Elim's three, and Circy, who talks in pictures, says his in pictures. When a fun idea needs a home, it goes in a move slot - DoomBot's MiniBot is his
 down tilt and Lug's traffic cone is his, not their taunts.
 
 ## Every fighter brings a story

@@ -121,7 +121,8 @@ Talks in rock and kitchen: "Order up." "Let's crank it to eleven." "Too hot for 
 **Wants:** the middle of the fridge. Eye level. The headliner spot. "Every show needs a
 headliner. This kitchen is my stage."
 
-- **Opening.** On the middle page, an air guitar (his taunt). He flicks his lighter and the
+- **Opening.** On the middle page, a fist pumped in the air (his first taunt - a scene's
+  `taunt` is always a fighter's first, so it plays the same every time). He flicks his lighter and the
   flame roars up. "Let's turn up the heat."
 - **Fights:** Triguy, Circy, EdgeLord, Lugnut, then EdgeLord and Triguy together, then DoomBot.
 - **Lugnut (his best friend).** On the **Big Show** stage - a concert stage drawn on a page of

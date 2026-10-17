@@ -307,7 +307,7 @@ match both work, not as the intended way to play.
 | **LT** or **RT**   | block — reduces damage and knockback       |
 | **LT/RT** + stick  | dodge roll / spot dodge / air dodge        |
 | **RB**             | grab; holding an item, throw it            |
-| **LB**             | taunt (on the ground)                      |
+| **LB**             | taunt (on the ground) - three each: stick `↑` `→` `↓` picks one, still is any |
 | hold `↓` + **A**    | drop through a soft platform               |
 | Start              | pause: resume, or back to fighter select   |
 
@@ -454,8 +454,9 @@ see `.ai/character-design.md`.
 ## Grabs and throws
 
 **Everyone grabs**, with one button - RB, the way Smash's shoulder buttons grab - or with block
-plus attack, which still works (Eric, 2026-10-10). A grab on the ground reaches just past the
-front of the body at about the middle of an ordinary fighter (so a giant's grab finds people
+plus attack, which still works (Eric, 2026-10-10). A grab on the ground reaches an arm's length
+past the front of the body (`Fighter.GrabOut`, longer on Eric's call, 2026-10-16), both arms out
+straight at it, at about the middle of an ordinary fighter (so a giant's grab finds people
 too) and catches whoever is there - **blocking or not**. That is what grabs are for: the answer to someone who just holds
 block. While he holds them - four arrows round him say so - the stick picks one of four throws:
 forward, back, up, down. The stick has to be pushed after the catch: whatever it was held to as
