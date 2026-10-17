@@ -80,6 +80,12 @@ public partial class CharacterSelectScreen : Node2D
 	/// <summary>Every one for themselves, or teams.</summary>
 	static readonly Rect2 TeamsBox = new Rect2(1180.0f, 64.0f, 420.0f, 76.0f);
 
+	/// <summary>
+	/// How many items: Off, Low, Medium, High, a press at a time - set here as well as on stage select
+	/// (which also picks which items), so it is to hand before the fight (Eric, 2026-10-16).
+	/// </summary>
+	static readonly Rect2 ItemsBox = new Rect2(840.0f, 64.0f, 310.0f, 76.0f);
+
 	bool TeamBattle
 	{
 		get => GameRoot.Instance.TeamBattle;
@@ -577,6 +583,15 @@ public partial class CharacterSelectScreen : Node2D
 				return;
 			}
 
+			if (!ForStory && ItemsBox.HasPoint(cursor.Position))
+			{
+				ItemSettings items = GameRoot.Instance.Items;
+				items.Frequency = (ItemFrequency)(((int)items.Frequency + 1) % 4);
+				items.Save();
+				SfxPlayer.Ui("ui_select");
+				continue;
+			}
+
 			if (!ForStory && (TryTeamButtons(cursor.Position, slot) || TryCpuButtons(cursor.Position)))
 			{
 				SfxPlayer.Ui("ui_select");
@@ -763,6 +778,12 @@ public partial class CharacterSelectScreen : Node2D
 			foreach (Slot slot in slots) teamsHot |= slot.Human && slot.Cursor != null && TeamsBox.HasPoint(slot.Cursor.Position);
 			MenuTheme.DrawButton(this, TeamsBox, TeamBattle ? "Teams" : "Every one for themselves", 79, teamsHot, TeamBattle,
 				fontSize: TeamBattle ? 40 : 28);
+
+			bool itemsHot = false;
+			foreach (Slot slot in slots) itemsHot |= slot.Human && slot.Cursor != null && ItemsBox.HasPoint(slot.Cursor.Position);
+			ItemFrequency frequency = GameRoot.Instance.Items.Frequency;
+			MenuTheme.DrawButton(this, ItemsBox, "Items: " + ItemSettings.Describe(frequency), 81, itemsHot,
+				frequency != ItemFrequency.Off, fontSize: 34);
 		}
 
 		bool quitHovered = false;
