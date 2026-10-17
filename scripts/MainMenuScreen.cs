@@ -20,7 +20,18 @@ public partial class MainMenuScreen : Node2D
 	const float CardGap = 45.0f;
 	const float CardTop = 250.0f;
 
+	/// <summary>The cursors of the controllers that have been touched here - only those are shown.</summary>
 	readonly List<MenuCursor> cursors = new List<MenuCursor>();
+
+	/// <summary>
+	/// Every other controller, waiting: its cursor appears the first time its stick moves or a button
+	/// goes down, not before - four pads plugged in put four arrows on the menu that nobody was
+	/// holding (Eric, 2026-10-17).
+	/// </summary>
+	readonly List<MenuCursor> waiting = new List<MenuCursor>();
+
+	/// <summary>Which controller (ControllerAssignment.Devices) each cursor is.</summary>
+	readonly Dictionary<MenuCursor, string> keyOf = new Dictionary<MenuCursor, string>();
 	readonly List<FighterRig> rigs = new List<FighterRig>();
 	Node2D cursorLayer;
 	int hovered = -1;
@@ -29,12 +40,11 @@ public partial class MainMenuScreen : Node2D
 
 	public override void _Ready()
 	{
-		int pads = Input.GetConnectedJoypads().Count;
-		IInputSource[] sources = ControllerAssignment.ForPlayers(Mathf.Max(1, pads));
-		for (int i = 0; i < sources.Length; i++)
+		foreach (string key in ControllerAssignment.Devices())
 		{
-			Color tint = MenuTheme.PlayerTint(i);
-			cursors.Add(new MenuCursor(sources[i], -1, tint, new Vector2(860.0f + i * 200.0f, 960.0f)));
+			var cursor = new MenuCursor(ControllerAssignment.Open(key), -1, MenuTheme.Soft, new Vector2(960.0f, 960.0f));
+			keyOf[cursor] = key;
+			waiting.Add(cursor);
 		}
 
 		// Circy and Triguy: Elim's drawings, facing off on the versus card.
@@ -84,6 +94,17 @@ public partial class MainMenuScreen : Node2D
 		foreach (FighterRig rig in rigs) if (rig.Loaded) rig.Advance();
 
 		Vector2 viewport = GetViewportRect().Size;
+		for (int i = waiting.Count - 1; i >= 0; i--)
+		{
+			MenuCursor touched = waiting[i];
+			touched.Nav.Poll();
+			if (touched.Nav.Stick.LengthSquared() < 0.09f && !touched.Nav.AnyPress) continue;
+			waiting.RemoveAt(i);
+			touched.Tint = MenuTheme.PlayerTint(cursors.Count);
+			touched.Position = new Vector2(860.0f + cursors.Count * 200.0f, 960.0f);
+			cursors.Add(touched);
+		}
+
 		foreach (MenuCursor cursor in cursors)
 		{
 			if (leaving) break;
@@ -106,14 +127,14 @@ public partial class MainMenuScreen : Node2D
 			{
 				// A pad picked it: drawing a fighter starts with the pad as the pointer.
 				OnePointer.StartWith(cursor.Nav.Source is GamepadInputSource);
-				Press(cursor.Position);
+				Press(cursor.Position, keyOf[cursor]);
 			}
 		}
 		QueueRedraw();
 		cursorLayer.QueueRedraw();
 	}
 
-	void Press(Vector2 point)
+	void Press(Vector2 point, string key)
 	{
 		if (leaving) return;
 		if (QuitBox.HasPoint(point))
@@ -126,6 +147,8 @@ public partial class MainMenuScreen : Node2D
 			case Choice.Versus:
 				leaving = true;
 				SfxPlayer.Ui("ui_select");
+				// Whoever picked Versus is in already, as Player 1.
+				GameRoot.Instance.VersusStarter = key;
 				GameRoot.Instance.GoCharacterSelect();
 				break;
 			case Choice.Draw:

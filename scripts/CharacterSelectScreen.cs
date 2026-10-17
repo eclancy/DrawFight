@@ -260,6 +260,16 @@ public partial class CharacterSelectScreen : Node2D
 			}
 		}
 
+		// Whoever chose Versus is already sitting down: Player 1, or the lowest seat free.
+		string starter = GameRoot.Instance.VersusStarter;
+		GameRoot.Instance.VersusStarter = null;
+		Device first = ForStory || starter == null ? null : devices.Find(d => d.Key == starter);
+		if (first != null && first.Seat == null)
+		{
+			Slot seat = System.Array.Find(slots, s => !s.Joined);
+			if (seat != null) Sit(first, seat);
+		}
+
 		var quitLabel = MenuTheme.MakeLabel("QUIT", QuitBox.Position, 40, MenuTheme.Text);
 		quitLabel.Size = QuitBox.Size;
 		quitLabel.HorizontalAlignment = HorizontalAlignment.Center;

@@ -30,6 +30,12 @@ public partial class GameRoot : Node2D
 	public string[] SeatDevices = new string[MaxPlayers];
 
 	/// <summary>
+	/// The controller that picked Versus on the main menu: fighter select sits it down as Player 1
+	/// straight away, so the A that chose Versus is the A that joined (Eric, 2026-10-17). Used once.
+	/// </summary>
+	public string VersusStarter;
+
+	/// <summary>
 	/// The controller a seat plays on: whoever sat in it - or, booted straight into a match with
 	/// nobody having sat anywhere (--match), the pads in order, then the keyboard.
 	/// </summary>
