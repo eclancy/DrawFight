@@ -249,7 +249,13 @@ public partial class MatchManager : Node2D
 		debugDraw = new DebugDraw { Match = this };
 		AddChild(debugDraw);
 
-		camera = new GameCamera { Bounds = stage.BlastZone, Limits = stage.Backdrop, MinZoom = stage.Data.CameraMinZoom };
+		camera = new GameCamera
+		{
+			Bounds = stage.BlastZone,
+			Limits = stage.Backdrop,
+			Floor = stage.ArtBottom,
+			MinZoom = stage.Data.CameraMinZoom,
+		};
 		AddChild(camera);
 		fx.Camera = camera;
 

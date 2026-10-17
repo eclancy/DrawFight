@@ -25,6 +25,14 @@ public partial class GameCamera : Camera2D
 	/// </summary>
 	public Rect2 Limits = new Rect2(-100000.0f, -100000.0f, 200000.0f, 200000.0f);
 
+	/// <summary>
+	/// The lowest the bottom of the screen ever goes: where the stage's drawing ends (Stage.ArtBottom).
+	/// Wins over everything else - zoomed far out, the view rises rather than showing what is under
+	/// the stage - so a fall off the bottom, even after the match is over, never pulls the camera
+	/// down past the art.
+	/// </summary>
+	public float Floor = 100000.0f;
+
 	float shake;
 	Vector2 shakeOffset;
 	readonly RandomNumberGenerator rng = new RandomNumberGenerator();
@@ -99,8 +107,20 @@ public partial class GameCamera : Camera2D
 			? new Vector2(rng.RandfRange(-shake, shake), rng.RandfRange(-shake, shake))
 			: Vector2.Zero;
 
+		z = Mathf.Max(z, FittingZoom());
 		Zoom = new Vector2(z, z);
 		GlobalPosition = InsideLimits(smoothed, z) + shakeOffset;
+	}
+
+	/// <summary>
+	/// The furthest out the camera can go and still have nothing but art on screen: the painted
+	/// backdrop's width, and from its top down to the Floor.
+	/// </summary>
+	float FittingZoom()
+	{
+		Vector2 viewport = GetViewportRect().Size;
+		float tall = Mathf.Min(Floor, Limits.End.Y) - Limits.Position.Y;
+		return Mathf.Max(viewport.X / Mathf.Max(1.0f, Limits.Size.X), viewport.Y / Mathf.Max(1.0f, tall));
 	}
 
 	/// <summary>A centre moved in until the whole screen round it is inside Limits.</summary>
@@ -109,13 +129,14 @@ public partial class GameCamera : Camera2D
 		Vector2 half = GetViewportRect().Size / (2.0f * zoom);
 		float Axis(float c, float low, float high, float h) =>
 			high - low <= h * 2.0f ? (low + high) * 0.5f : Mathf.Clamp(c, low + h, high - h);
-		return new Vector2(Axis(centre.X, Limits.Position.X, Limits.End.X, half.X),
-			Axis(centre.Y, Limits.Position.Y, Limits.End.Y, half.Y));
+		float y = Axis(centre.Y, Limits.Position.Y, Limits.End.Y, half.Y);
+		return new Vector2(Axis(centre.X, Limits.Position.X, Limits.End.X, half.X), Mathf.Min(y, Floor - half.Y));
 	}
 
 	/// <summary>A cut: there at once, no easing.</summary>
 	public void CutTo(Vector2 centre, float zoom)
 	{
+		zoom = Mathf.Max(zoom, FittingZoom());
 		Zoom = new Vector2(zoom, zoom);
 		GlobalPosition = InsideLimits(centre, zoom) + shakeOffset;
 	}

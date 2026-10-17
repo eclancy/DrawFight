@@ -105,6 +105,27 @@ public partial class Stage : Node2D
 	/// <summary>Everything painted behind the stage. The camera never looks past it (GameCamera.Limits).</summary>
 	public Rect2 Backdrop => Data.BlastZone.Grow(BackdropPad);
 
+	/// <summary>
+	/// Where the stage's own drawing ends at the bottom: the foot of its lowest solid ground, or of
+	/// the page or pages it is drawn on, whichever is lower. The camera never looks below it (Eric,
+	/// 2026-10-17): someone falling to a KO goes off the bottom of the screen, and the view stays
+	/// on the stage instead of chasing them down into blank backdrop.
+	/// </summary>
+	public float ArtBottom
+	{
+		get
+		{
+			float bottom = float.NegativeInfinity;
+			foreach (StagePlatform platform in Data.Platforms)
+			{
+				if (!platform.OneWay) bottom = Mathf.Max(bottom, platform.Rect.End.Y);
+			}
+			if (Data.Style == StageStyle.TapedPage) bottom = Mathf.Max(bottom, Data.PageRect.End.Y);
+			if (Data.Style == StageStyle.PinnedPages) foreach (PinnedPage page in Data.Pages) bottom = Mathf.Max(bottom, page.Rect.End.Y);
+			return float.IsNegativeInfinity(bottom) ? Backdrop.End.Y : Mathf.Min(bottom, Backdrop.End.Y);
+		}
+	}
+
 	public override void _Draw()
 	{
 		if (Data == null) return;
