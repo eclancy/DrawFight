@@ -20,18 +20,12 @@ public partial class MainMenuScreen : Node2D
 	const float CardGap = 45.0f;
 	const float CardTop = 250.0f;
 
-	/// <summary>The cursors of the controllers that have been touched here - only those are shown.</summary>
-	readonly List<MenuCursor> cursors = new List<MenuCursor>();
+	/// <summary>The options: a small gear beside QUIT (Eric, 2026-10-17).</summary>
+	static readonly Rect2 GearBox = new Rect2(1540.0f, 64.0f, 76.0f, 76.0f);
 
-	/// <summary>
-	/// Every other controller, waiting: its cursor appears the first time its stick moves or a button
-	/// goes down, not before - four pads plugged in put four arrows on the menu that nobody was
-	/// holding (Eric, 2026-10-17).
-	/// </summary>
-	readonly List<MenuCursor> waiting = new List<MenuCursor>();
-
-	/// <summary>Which controller (ControllerAssignment.Devices) each cursor is.</summary>
-	readonly Dictionary<MenuCursor, string> keyOf = new Dictionary<MenuCursor, string>();
+	/// <summary>A cursor for each controller, shown once it is touched (TouchCursors).</summary>
+	TouchCursors touch;
+	List<MenuCursor> cursors => touch.Shown;
 	readonly List<FighterRig> rigs = new List<FighterRig>();
 	Node2D cursorLayer;
 	int hovered = -1;
@@ -40,12 +34,9 @@ public partial class MainMenuScreen : Node2D
 
 	public override void _Ready()
 	{
-		foreach (string key in ControllerAssignment.Devices())
-		{
-			var cursor = new MenuCursor(ControllerAssignment.Open(key), -1, MenuTheme.Soft, new Vector2(960.0f, 960.0f));
-			keyOf[cursor] = key;
-			waiting.Add(cursor);
-		}
+		// Back from the options, the controller that went there is still pointing.
+		touch = new TouchCursors(new Vector2(860.0f, 960.0f), GameRoot.Instance.MenuReturnKey);
+		GameRoot.Instance.MenuReturnKey = null;
 
 		// Circy and Triguy: Elim's drawings, facing off on the versus card.
 		Rect2 versus = CardRect(Choice.Versus);
@@ -94,16 +85,7 @@ public partial class MainMenuScreen : Node2D
 		foreach (FighterRig rig in rigs) if (rig.Loaded) rig.Advance();
 
 		Vector2 viewport = GetViewportRect().Size;
-		for (int i = waiting.Count - 1; i >= 0; i--)
-		{
-			MenuCursor touched = waiting[i];
-			touched.Nav.Poll();
-			if (touched.Nav.Stick.LengthSquared() < 0.09f && !touched.Nav.AnyPress) continue;
-			waiting.RemoveAt(i);
-			touched.Tint = MenuTheme.PlayerTint(cursors.Count);
-			touched.Position = new Vector2(860.0f + cursors.Count * 200.0f, 960.0f);
-			cursors.Add(touched);
-		}
+		touch.Tick();
 
 		foreach (MenuCursor cursor in cursors)
 		{
@@ -127,7 +109,7 @@ public partial class MainMenuScreen : Node2D
 			{
 				// A pad picked it: drawing a fighter starts with the pad as the pointer.
 				OnePointer.StartWith(cursor.Nav.Source is GamepadInputSource);
-				Press(cursor.Position, keyOf[cursor]);
+				Press(cursor.Position, touch.KeyOf(cursor));
 			}
 		}
 		QueueRedraw();
@@ -140,6 +122,13 @@ public partial class MainMenuScreen : Node2D
 		if (QuitBox.HasPoint(point))
 		{
 			GetTree().Quit();
+			return;
+		}
+		if (GearBox.HasPoint(point))
+		{
+			leaving = true;
+			SfxPlayer.Ui("ui_select");
+			GameRoot.Instance.GoOptions(key);
 			return;
 		}
 		switch ((Choice)CardUnder(point))
@@ -179,7 +168,27 @@ public partial class MainMenuScreen : Node2D
 		foreach (MenuCursor cursor in cursors) quitHot |= QuitBox.HasPoint(cursor.Position);
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, quitHot, fontSize: 38);
 
+		bool gearHot = false;
+		foreach (MenuCursor cursor in cursors) gearHot |= GearBox.HasPoint(cursor.Position);
+		MenuTheme.DrawButton(this, GearBox, "", 78, gearHot);
+		DrawGear(this, GearBox.GetCenter(), 25.0f, MenuTheme.Ink);
+
 		DrawString(font, new Vector2(190.0f, 1050.0f), $"v{UpdateScreen.CurrentVersion}", HorizontalAlignment.Left, -1, 26, MenuTheme.Soft);
+	}
+
+	/// <summary>A gear: eight square teeth round a wheel with a hole in it.</summary>
+	public static void DrawGear(CanvasItem canvas, Vector2 at, float radius, Color ink)
+	{
+		const int Teeth = 8;
+		var points = new List<Vector2>();
+		for (int i = 0; i < Teeth * 4; i++)
+		{
+			float a = Mathf.Tau * (i - 0.5f) / (Teeth * 4);
+			float r = (i % 4) < 2 ? radius : radius * 0.74f;
+			points.Add(at + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r);
+		}
+		canvas.DrawColoredPolygon(points.ToArray(), ink);
+		canvas.DrawCircle(at, radius * 0.32f, MenuTheme.Paper);
 	}
 
 	void DrawCard(Choice choice, string title, string blurb)

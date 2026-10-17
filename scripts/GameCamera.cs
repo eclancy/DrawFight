@@ -37,7 +37,7 @@ public partial class GameCamera : Camera2D
 
 	public void AddShake(float knockback)
 	{
-		shake = Mathf.Min(Tuning.ScreenShakeMax, shake + knockback * Tuning.ScreenShakePerKnockback);
+		shake = Mathf.Min(Tuning.ScreenShakeMax * GameOptions.ShakeScale, shake + knockback * Tuning.ScreenShakePerKnockback * GameOptions.ShakeScale);
 	}
 
 	/// <summary>The part of the world on screen right now, shake and all.</summary>

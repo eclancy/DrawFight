@@ -69,7 +69,7 @@ public partial class MatchHud : CanvasLayer
 			if (seats)
 			{
 				Label tag = MakeLabel(root, 28, fighters[i].SideTint, 9);
-				tag.Text = fighters[i].IsComputer ? "CPU" : $"P{fighters[i].Seat + 1}";
+				tag.Text = fighters[i].TagText;
 				tag.Position = new Vector2(left, 808.0f);
 				tag.Size = new Vector2(Column, 36.0f);
 			}

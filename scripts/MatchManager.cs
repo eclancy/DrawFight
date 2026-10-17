@@ -33,6 +33,9 @@ public partial class MatchManager : Node2D
 	/// </summary>
 	public bool TeamBattle;
 
+	/// <summary>The name each fighter's player gave themselves, by fighter, or null (versus only).</summary>
+	public string[] Names;
+
 	/// <summary>
 	/// A tag over every head (Fighter.DrawPlayerTag): in versus, once there are three or more in
 	/// the fight or two of the same fighter. Two different fighters are told apart at a glance.
@@ -224,7 +227,20 @@ public partial class MatchManager : Node2D
 			SpawnFighter(FighterCatalog.Get(FighterIndices[i]), i);
 		}
 		AssignControllers();
-		ShowPlayerTags = Story == null && (TeamBattle || FighterIndices.Length >= 3
+		bool named = false;
+		for (int i = 0; i < Fighters.Count; i++)
+		{
+			if (Story != null) continue;
+			// A versus fight starts with the lives the options say.
+			Fighters[i].Stocks = GameOptions.Stocks;
+			if (Names != null && i < Names.Length && !string.IsNullOrEmpty(Names[i]))
+			{
+				Fighters[i].PlayerName = Names[i];
+				named = true;
+			}
+		}
+		// Anyone with a name wears it over their head, whatever the fight.
+		ShowPlayerTags = Story == null && (TeamBattle || named || FighterIndices.Length >= 3
 			|| new System.Collections.Generic.HashSet<int>(FighterIndices).Count < FighterIndices.Length);
 
 		fx = new HitFx();
@@ -740,6 +756,8 @@ public partial class MatchManager : Node2D
 				ControllerAssignment.Layout = ControllerAssignment.Layout.IsStandardLayout
 					? GamepadLayout.Smash()
 					: GamepadLayout.Standard();
+				GameOptions.SmashLayout = !ControllerAssignment.Layout.IsStandardLayout;
+				GameOptions.Save();
 				ReassignControllers();
 				GD.Print($"MatchManager: pad layout is now " +
 					$"{(ControllerAssignment.Layout.IsStandardLayout ? "Standard" : "Smash")}");

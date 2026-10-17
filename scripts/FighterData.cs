@@ -70,6 +70,20 @@ public partial class FighterData : Resource
 	[Export] public float VisualScale { get; set; } = 1.0f;
 
 	/// <summary>
+	/// His colour in a team fight (TeamLook): the hue, in degrees, that is most him - turned to his
+	/// team's - and how far either side of it counts, and how strong a colour has to be to count,
+	/// so skin of a near hue is left alone. -1 for none.
+	/// </summary>
+	[Export] public float TeamHue { get; set; } = -1.0f;
+	[Export] public float TeamHueWidth { get; set; } = 20.0f;
+	[Export] public float TeamMinSaturation { get; set; } = 0.35f;
+
+	/// <summary>Greys and whites from this brightness to that (0 to 1) tinted toward his team's colour, this much - for a mostly white or grey fighter.</summary>
+	[Export] public float TeamGreyFrom { get; set; } = 0.0f;
+	[Export] public float TeamGreyTo { get; set; } = 0.0f;
+	[Export] public float TeamGreyAmount { get; set; } = 0.0f;
+
+	/// <summary>
 	/// How much bigger than the shared library this fighter plays its animations. The library is
 	/// authored once for everyone; a fighter whose drawing is stiff or whose character is wild
 	/// can push every pose further from rest.
@@ -279,6 +293,13 @@ public partial class FighterData : Resource
 		data.Throws = Grabs.Flambe();
 		// A fist punched up at the lights, the way he is drawn.
 		data.VictoryPose = "fist";
+		// In a team: his red trousers and his jacket take the team's colour.
+		data.TeamHue = 350.0f;
+		data.TeamHueWidth = 22.0f;
+		data.TeamMinSaturation = 0.38f;
+		data.TeamGreyFrom = 0.18f;
+		data.TeamGreyTo = 0.52f;
+		data.TeamGreyAmount = 0.7f;
 		// A spoon for his creme brulee, which he torched himself.
 		data.Lunch = "spoon";
 		data.VictoryFace = "smug";
@@ -321,6 +342,10 @@ public partial class FighterData : Resource
 		data.Throws = Grabs.Construction();
 		// Flexing, the way he is drawn.
 		data.VictoryPose = "flex";
+		// In a team: his hi-vis vest and hard hat - never his skin, a paler orange.
+		data.TeamHue = 38.0f;
+		data.TeamHueWidth = 16.0f;
+		data.TeamMinSaturation = 0.5f;
 		data.VictoryFace = "smug";
 		return data;
 	}
@@ -365,6 +390,10 @@ public partial class FighterData : Resource
 			global::Taunts.Pose("hips"),
 		};
 		data.TauntLines = new[] { "Try to keep up.", "Too sharp for you.", "A cut above." };
+		// In a team: all his red - on the red team he is just himself.
+		data.TeamHue = 356.0f;
+		data.TeamHueWidth = 42.0f;
+		data.TeamMinSaturation = 0.3f;
 		data.Throws = Grabs.EdgeLord();
 		// Too cool to cheer.
 		data.VictoryPose = "crossarms";
@@ -448,6 +477,13 @@ public partial class FighterData : Resource
 			global::Taunts.Pose("laugh"),
 		};
 		data.TauntLines = new[] { "BEEP. BOOP. DOOM.", "TARGET ACQUIRED.", "HA. HA. HA." };
+		// In a team: his red hands, boots and lamp, and a wash of the colour over his grey plating.
+		data.TeamHue = 350.0f;
+		data.TeamHueWidth = 26.0f;
+		data.TeamMinSaturation = 0.38f;
+		data.TeamGreyFrom = 0.45f;
+		data.TeamGreyTo = 0.98f;
+		data.TeamGreyAmount = 0.45f;
 		data.Throws = Grabs.DoomBot();
 		return data;
 	}
@@ -498,6 +534,10 @@ public partial class FighterData : Resource
 			global::Taunts.Pose("cheer"),
 		};
 		data.TauntLines = new[] { "[star]", "[heart]", "[fridge] [heart]" };
+		// In a team: his yellow.
+		data.TeamHue = 54.0f;
+		data.TeamHueWidth = 24.0f;
+		data.TeamMinSaturation = 0.4f;
 		data.Throws = Grabs.Circy();
 		return data;
 	}
@@ -549,6 +589,10 @@ public partial class FighterData : Resource
 			global::Taunts.Posed(Specials.TriguyPoses[2]),
 		};
 		data.TauntLines = new[] { "that's, really kewl", "not kewl.", "THAT'S, REALLY KEWL." };
+		// In a team: his white body coloured in the team's pale colour.
+		data.TeamGreyFrom = 0.68f;
+		data.TeamGreyTo = 1.05f;
+		data.TeamGreyAmount = 0.6f;
 		data.Throws = Grabs.Triguy();
 		// He wins by holding up Elim's own drawing of him going "pog".
 		data.VictoryShow = "taunt_pog";

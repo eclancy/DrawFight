@@ -471,6 +471,11 @@ small path rather than bending the rig.
   so the teeth stay white as it moves; and puts a sheen along the top edges of his hat - the
   biggest thick black shape, never a line - so it reads as a shiny top hat. Not one of his lines
   moves or changes: only what he left white or filled black is coloured, after the cut.
+- **Team colours** (Eric's call, 2026-10-17): in a team fight a fighter's own colour turns to his
+  team's, at match time, by a shader on his parts (`TeamLook`, `FighterData.TeamHue` and
+  `TeamGrey*`): one hue turned, or a white or grey body tinted - never black, so no line changes,
+  and on the team that is already his colour he stays exactly as drawn. Nothing under `fighters/`
+  is touched.
 - **EdgeLord's thickness** (Eric's own drawing, his call 2026-10-15): he drew the right-hand
   edge of the V doubled down to his arm, giving the body depth; `color_edgelord.py` carries a
   second line on down from there to the point of the V, at the same gap (`edge_depth_line`).

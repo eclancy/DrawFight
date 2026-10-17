@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 /// <summary>
@@ -26,6 +27,12 @@ using Godot;
 /// "Teams" up by the title turns it into a team fight (Eric, 2026-10-16): each seat gets a team
 /// button - red, blue, green - and two teams or more start one. A person sets their own team; any
 /// person can set a CPU's.
+///
+/// Anyone sitting down can give themselves a name (Eric, 2026-10-17): the Name button in their
+/// seat opens a picker over it - the names saved on this computer (PlayerNames) to pick from, and
+/// letters to spell a new one with the cursor, or typed on the keyboard by someone playing on it.
+/// The name goes over their head and under their percent in the fight. Names are deleted in the
+/// options.
 /// </summary>
 public partial class CharacterSelectScreen : Node2D
 {
@@ -42,6 +49,11 @@ public partial class CharacterSelectScreen : Node2D
 		public Label Blurb;
 		public Label State;
 		public Color Tint;
+		/// <summary>The name this seat gave itself, or null.</summary>
+		public string PlayerName;
+		/// <summary>The name picker is open over this seat, with what has been spelled so far.</summary>
+		public bool Naming;
+		public string Draft = "";
 		/// <summary>Whoever sits here (ControllerAssignment.Devices), or null for nobody, or the computer.</summary>
 		public Device Device;
 		public bool Locked => Index >= 0;
@@ -111,6 +123,7 @@ public partial class CharacterSelectScreen : Node2D
 	int promptFrames;
 
 	Node2D cursorLayer;
+	Node2D namingLayer;
 
 	public override void _Ready()
 	{
@@ -256,6 +269,7 @@ public partial class CharacterSelectScreen : Node2D
 				{
 					Sit(device, slot);
 					slot.Index = picked;
+					slot.PlayerName = GameRoot.Instance.SeatNames[i];
 				}
 			}
 		}
@@ -276,6 +290,8 @@ public partial class CharacterSelectScreen : Node2D
 		quitLabel.VerticalAlignment = VerticalAlignment.Center;
 		root.AddChild(quitLabel);
 
+		// The name pickers, over the cards and labels but under every cursor.
+		namingLayer = MenuCursor.MakeOverlay(this, DrawPickers);
 		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
 		{
 			foreach (Slot slot in slots)
@@ -358,6 +374,8 @@ public partial class CharacterSelectScreen : Node2D
 		slot.Cursor = null;
 		slot.Joined = false;
 		slot.Index = -1;
+		slot.PlayerName = null;
+		slot.Naming = false;
 	}
 
 	/// <summary>
@@ -391,6 +409,217 @@ public partial class CharacterSelectScreen : Node2D
 		seat.Index = picked;
 		device.Cursor.Position = at;
 		return true;
+	}
+
+	// --- Names ----------------------------------------------------------------------------
+
+	/// <summary>A person's Name button, where a CPU seat has its CPU button.</summary>
+	Rect2 NameButton(int player) => CpuButton(player, 0);
+
+	/// <summary>The seat whose name is being typed on the keyboard, if one is.</summary>
+	Slot typingSlot;
+
+	static readonly string[] Keys =
+	{
+		"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
+		"P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "SPACE", "DEL", "CLEAR", "OK",
+	};
+
+	const int KeyColumns = 6;
+	const int SavedShown = 4;
+
+	/// <summary>The picker, over the seat's own column - so four can name themselves at once.</summary>
+	Rect2 PickerRect(int player)
+	{
+		Rect2 panel = PanelRect(player, GetViewportRect().Size);
+		return new Rect2(panel.Position.X, 36.0f, panel.Size.X, 528.0f);
+	}
+
+	Rect2 FieldRect(int player)
+	{
+		Rect2 p = PickerRect(player);
+		return new Rect2(p.Position.X + 16.0f, p.Position.Y + 16.0f, p.Size.X - 32.0f, 64.0f);
+	}
+
+	Rect2 SavedRect(int player, int i)
+	{
+		Rect2 p = PickerRect(player);
+		float w = (p.Size.X - 32.0f - 10.0f) * 0.5f;
+		return new Rect2(p.Position.X + 16.0f + i % 2 * (w + 10.0f), p.Position.Y + 94.0f + i / 2 * 54.0f, w, 46.0f);
+	}
+
+	Rect2 KeyRect(int player, int i)
+	{
+		Rect2 p = PickerRect(player);
+		const float Gap = 6.0f;
+		float w = (p.Size.X - 32.0f - Gap * (KeyColumns - 1)) / KeyColumns;
+		const float H = 56.0f;
+		return new Rect2(p.Position.X + 16.0f + i % KeyColumns * (w + Gap), p.Position.Y + 212.0f + i / KeyColumns * (H + Gap), w, H);
+	}
+
+	/// <summary>The names saved here to offer a seat: the most recent ones nobody else is using right now.</summary>
+	List<string> Offered(Slot slot)
+	{
+		var offered = new List<string>();
+		foreach (string name in PlayerNames.All)
+		{
+			if (offered.Count >= SavedShown) break;
+			if (System.Array.Exists(slots, s => s != slot && s.Human && s.PlayerName == name)) continue;
+			offered.Add(name);
+		}
+		return offered;
+	}
+
+	void TickNaming(Slot slot, Vector2 viewport)
+	{
+		MenuCursor cursor = slot.Cursor;
+		// On the keyboard, the letters are typed, so its keys do not also drive the cursor.
+		if (slot == typingSlot) return;
+		cursor.Move(viewport);
+		if (cursor.Cancel)
+		{
+			CloseNaming(slot, false);
+			return;
+		}
+		if (cursor.Nav.Start)
+		{
+			CloseNaming(slot, true);
+			return;
+		}
+		if (!cursor.Confirm) return;
+
+		List<string> offered = Offered(slot);
+		for (int i = 0; i < offered.Count; i++)
+		{
+			if (!SavedRect(slot.Seat, i).HasPoint(cursor.Position)) continue;
+			slot.Draft = offered[i];
+			CloseNaming(slot, true);
+			return;
+		}
+		for (int i = 0; i < Keys.Length; i++)
+		{
+			if (!KeyRect(slot.Seat, i).HasPoint(cursor.Position)) continue;
+			PressKey(slot, Keys[i]);
+			return;
+		}
+	}
+
+	void PressKey(Slot slot, string key)
+	{
+		switch (key)
+		{
+			case "OK": CloseNaming(slot, true); return;
+			case "DEL": if (slot.Draft.Length > 0) slot.Draft = slot.Draft.Substring(0, slot.Draft.Length - 1); break;
+			case "CLEAR": slot.Draft = ""; break;
+			case "SPACE": Type(slot, ' '); break;
+			default: Type(slot, key[0]); break;
+		}
+		SfxPlayer.Ui("ui_move");
+	}
+
+	/// <summary>A letter onto the name: capital at the start of each word, small after.</summary>
+	static void Type(Slot slot, char c)
+	{
+		if (slot.Draft.Length >= PlayerNames.MaxLength) return;
+		if (c == ' ' && (slot.Draft.Length == 0 || slot.Draft.EndsWith(" "))) return;
+		bool startOfWord = slot.Draft.Length == 0 || slot.Draft.EndsWith(" ");
+		slot.Draft += startOfWord ? char.ToUpper(c) : char.ToLower(c);
+	}
+
+	void CloseNaming(Slot slot, bool keep)
+	{
+		slot.Naming = false;
+		if (typingSlot == slot) typingSlot = null;
+		if (keep)
+		{
+			string name = slot.Draft.Trim();
+			slot.PlayerName = name.Length > 0 ? name : null;
+			if (slot.PlayerName != null) PlayerNames.Use(slot.PlayerName);
+			SfxPlayer.Ui("ui_ready");
+		}
+		else SfxPlayer.Ui("ui_back");
+	}
+
+	/// <summary>Someone playing on the keyboard types their name: letters, numbers, Backspace, Enter to keep it, Escape to leave it.</summary>
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (typingSlot == null || @event is not InputEventKey key || !key.Pressed) return;
+		GetViewport().SetInputAsHandled();
+		switch (key.Keycode)
+		{
+			case Key.Enter:
+			case Key.KpEnter:
+				CloseNaming(typingSlot, true);
+				return;
+			case Key.Escape:
+				CloseNaming(typingSlot, false);
+				return;
+			case Key.Backspace:
+				if (typingSlot.Draft.Length > 0) typingSlot.Draft = typingSlot.Draft.Substring(0, typingSlot.Draft.Length - 1);
+				return;
+			case Key.Tab:
+			{
+				// Tab steps through the names saved here.
+				List<string> offered = Offered(typingSlot);
+				if (offered.Count == 0) return;
+				int at = offered.IndexOf(typingSlot.Draft);
+				typingSlot.Draft = offered[(at + 1) % offered.Count];
+				return;
+			}
+		}
+		char c = (char)key.Unicode;
+		if (char.IsLetterOrDigit(c) || c == ' ' || c == '-') Type(typingSlot, c);
+	}
+
+	void DrawPickers(CanvasItem canvas)
+	{
+		Font font = ThemeDB.FallbackFont;
+		foreach (Slot slot in slots)
+		{
+			if (!slot.Naming) continue;
+			int seat = slot.Seat;
+			Rect2 box = PickerRect(seat);
+			canvas.DrawRect(new Rect2(box.Position + new Vector2(8.0f, 10.0f), box.Size), new Color(0.0f, 0.0f, 0.0f, 0.08f));
+			canvas.DrawRect(box, MenuTheme.Paper);
+			CrayonBrush.InkRect(canvas, box, slot.Tint, 6.0f, 870 + seat, 2.4f);
+
+			Rect2 field = FieldRect(seat);
+			canvas.DrawRect(field, Colors.White);
+			CrayonBrush.InkRect(canvas, field, MenuTheme.Ink, 3.0f, 880 + seat, 1.6f);
+			bool blink = (Engine.GetPhysicsFrames() / 30) % 2 == 0;
+			string shown = slot.Draft.Length > 0 ? slot.Draft + (blink ? "_" : " ") : (blink ? "_" : "");
+			MenuTheme.DrawCentredText(canvas, field, shown, 40, MenuTheme.Text);
+			if (slot.Draft.Length == 0)
+			{
+				canvas.DrawString(font, new Vector2(field.Position.X + 12.0f, field.End.Y - 8.0f), "Your name", HorizontalAlignment.Left, -1, 20, MenuTheme.Soft);
+			}
+
+			List<string> offered = Offered(slot);
+			for (int i = 0; i < offered.Count; i++)
+			{
+				Rect2 r = SavedRect(seat, i);
+				MenuTheme.DrawButton(canvas, r, offered[i], 890 + seat * 9 + i, slot.Cursor != null && r.HasPoint(slot.Cursor.Position),
+					chosen: true, fontSize: 26, hotTint: slot.Tint);
+			}
+			if (offered.Count == 0)
+			{
+				canvas.DrawString(font, new Vector2(box.Position.X + 20.0f, box.Position.Y + 150.0f),
+					slot == typingSlot ? "Type it, then Enter." : "Spell it out below.", HorizontalAlignment.Left, box.Size.X - 40.0f, 26, MenuTheme.Soft);
+			}
+
+			for (int i = 0; i < Keys.Length; i++)
+			{
+				Rect2 r = KeyRect(seat, i);
+				bool hot = slot != typingSlot && slot.Cursor != null && r.HasPoint(slot.Cursor.Position);
+				MenuTheme.DrawButton(canvas, r, Keys[i], 900 + seat * 31 + i, hot, chosen: Keys[i] == "OK",
+					fontSize: Keys[i].Length > 2 ? 17 : 28, hotTint: slot.Tint);
+			}
+			if (slot == typingSlot)
+			{
+				canvas.DrawString(font, new Vector2(box.Position.X + 16.0f, box.End.Y - 6.0f), "Typing: Enter keeps it, Tab for saved",
+					HorizontalAlignment.Left, box.Size.X - 32.0f, 18, MenuTheme.Soft);
+			}
+		}
 	}
 
 	/// <summary>The CPU buttons live in the bottom corner of a seat's panel.</summary>
@@ -554,6 +783,11 @@ public partial class CharacterSelectScreen : Node2D
 			if (ForStory && slot != slots[0]) continue;
 			if (!slot.Human || slot.Cursor == null || justSat.Contains(slot)) continue;
 			MenuCursor cursor = slot.Cursor;
+			if (slot.Naming)
+			{
+				TickNaming(slot, viewport);
+				continue;
+			}
 			cursor.Move(viewport);
 
 			// With everyone picked, Start fights. Checked first, because Start also counts as A
@@ -598,6 +832,15 @@ public partial class CharacterSelectScreen : Node2D
 				ItemSettings items = GameRoot.Instance.Items;
 				items.Frequency = (ItemFrequency)(((int)items.Frequency + 1) % 4);
 				items.Save();
+				SfxPlayer.Ui("ui_select");
+				continue;
+			}
+
+			if (!ForStory && NameButton(slot.Seat).HasPoint(cursor.Position))
+			{
+				slot.Naming = true;
+				slot.Draft = slot.PlayerName ?? "";
+				if (slot.Device != null && slot.Device.Key.StartsWith("keys:")) typingSlot = slot;
 				SfxPlayer.Ui("ui_select");
 				continue;
 			}
@@ -659,6 +902,7 @@ public partial class CharacterSelectScreen : Node2D
 			GameRoot.Instance.SelectedFighters[i] = slots[i].Joined ? slots[i].Index : -1;
 			GameRoot.Instance.CpuPlayers[i] = slots[i].Joined && slots[i].IsCpu;
 			GameRoot.Instance.SeatDevices[i] = slots[i].Human ? slots[i].Device?.Key : null;
+			GameRoot.Instance.SeatNames[i] = slots[i].Human ? slots[i].PlayerName : null;
 		}
 		GameRoot.Instance.GoStageSelect();
 	}
@@ -683,7 +927,12 @@ public partial class CharacterSelectScreen : Node2D
 	{
 		foreach (Slot slot in slots)
 		{
-			if (slot.Heading != null) slot.Heading.Text = slot.Joined && slot.IsCpu ? $"Player {slot.Seat + 1} - CPU" : $"Player {slot.Seat + 1}";
+			if (slot.Heading != null)
+			{
+				slot.Heading.Text = slot.Joined && slot.IsCpu ? $"Player {slot.Seat + 1} - CPU"
+					: slot.Human && !string.IsNullOrEmpty(slot.PlayerName) ? $"P{slot.Seat + 1}  {slot.PlayerName}"
+					: $"Player {slot.Seat + 1}";
+			}
 			if (ForStory && slot != slots[0])
 			{
 				slot.State.Text = "";
@@ -795,6 +1044,16 @@ public partial class CharacterSelectScreen : Node2D
 			MenuTheme.DrawButton(this, ItemsBox, "Items: " + ItemSettings.Describe(frequency), 81, itemsHot,
 				frequency != ItemFrequency.Off, fontSize: 34);
 		}
+
+		for (int i = 0; i < slots.Length && !ForStory; i++)
+		{
+			Slot seat = slots[i];
+			if (!seat.Human || seat.Naming) continue;
+			bool hot = seat.Cursor != null && NameButton(i).HasPoint(seat.Cursor.Position);
+			MenuTheme.DrawButton(this, NameButton(i), string.IsNullOrEmpty(seat.PlayerName) ? "Name" : "Rename", 85 + i, hot,
+				fontSize: 26, hotTint: seat.Tint);
+		}
+		namingLayer.QueueRedraw();
 
 		bool quitHovered = false;
 		Color quitInk = MenuTheme.Rule;

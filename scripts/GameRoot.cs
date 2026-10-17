@@ -35,6 +35,12 @@ public partial class GameRoot : Node2D
 	/// </summary>
 	public string VersusStarter;
 
+	/// <summary>The controller that went to the options, still pointing when it comes back to the main menu.</summary>
+	public string MenuReturnKey;
+
+	/// <summary>The name each seat gave itself on fighter select, or null (PlayerNames).</summary>
+	public string[] SeatNames = new string[MaxPlayers];
+
 	/// <summary>
 	/// The controller a seat plays on: whoever sat in it - or, booted straight into a match with
 	/// nobody having sat anywhere (--match), the pads in order, then the keyboard.
@@ -93,6 +99,8 @@ public partial class GameRoot : Node2D
 
 		RegressionChecks.RunAll();
 		Items.Load();
+		GameOptions.Load();
+		PlayerNames.Load();
 
 		// Pads are reassigned live everywhere, not just in a match: a controller that goes to
 		// sleep on the title screen and wakes on character select has to just work.
@@ -145,6 +153,7 @@ public partial class GameRoot : Node2D
 			if (arg == "--stages") startAt = "stages";
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
+			if (arg == "--options") startAt = "options";
 			if (arg == "--drawings") startAt = "drawings";
 			if (arg == "--draw") startAt = "draw";
 			if (arg == "--send") startAt = "send";
@@ -174,11 +183,9 @@ public partial class GameRoot : Node2D
 		// The game plays fullscreen (Eric's call, 2026-10-04) - set here rather than in
 		// project.godot so a screenshot run (--shot) or "--windowed" stays a 1920x1080 window
 		// instead of taking over the screen. F11 switches while playing.
+		// Fullscreen or a window is an option now (OptionsScreen); the run's own flags still win.
 		bool windowed = shotAfter > 0 || System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--windowed") >= 0;
-		if (!windowed && !DisplayServer.GetName().Equals("headless", System.StringComparison.OrdinalIgnoreCase))
-		{
-			DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
-		}
+		GameOptions.Apply(!windowed);
 
 		switch (startAt)
 		{
@@ -197,6 +204,7 @@ public partial class GameRoot : Node2D
 			case "storymap": GoStory(storyMapFor); break;
 			case "stages": GoStageSelect(); break;
 			case "items": GoItemSettings(); break;
+			case "options": GoOptions(null); break;
 			case "menu": GoMainMenu(); break;
 			case "story": GoStoryChapter(); break;
 			case "drawings": GoDrawings(); break;
@@ -249,6 +257,9 @@ public partial class GameRoot : Node2D
 	public void GoStorySelect() => Show(new CharacterSelectScreen { ForStory = true });
 	public void GoStageSelect() => Show(new StageSelectScreen());
 	public void GoItemSettings() => Show(new ItemSettingsScreen());
+
+	/// <summary>The options, opened by <paramref name="key"/>'s controller (the gear on the main menu).</summary>
+	public void GoOptions(string key) => Show(new OptionsScreen { OpenedBy = key });
 
 	// --- Story -----------------------------------------------------------------------
 
@@ -350,6 +361,7 @@ public partial class GameRoot : Node2D
 		var cpu = new System.Collections.Generic.List<bool>();
 		var seats = new System.Collections.Generic.List<int>();
 		var teams = new System.Collections.Generic.List<int>();
+		var names = new System.Collections.Generic.List<string>();
 		for (int seat = 0; seat < MaxPlayers; seat++)
 		{
 			if (SelectedFighters[seat] < 0) continue;
@@ -357,6 +369,7 @@ public partial class GameRoot : Node2D
 			cpu.Add(CpuPlayers[seat]);
 			seats.Add(seat);
 			teams.Add(SeatTeams[seat]);
+			names.Add(CpuPlayers[seat] ? null : SeatNames[seat]);
 		}
 		// A team fight needs two teams in it; everyone on one is every one for themselves.
 		bool teamBattle = TeamBattle && new System.Collections.Generic.HashSet<int>(teams).Count >= 2;
@@ -370,6 +383,7 @@ public partial class GameRoot : Node2D
 			TeamBattle = teamBattle,
 			Items = Items,
 			OnlyItem = OnlyItem,
+			Names = names.ToArray(),
 		};
 		Show(match);
 	}
@@ -450,8 +464,9 @@ public partial class GameRoot : Node2D
 				case Key.F12: Capture($"shot_{framesElapsed}"); break;
 				// The game starts fullscreen (project.godot); F11 drops to a window and back.
 				case Key.F11:
-					DisplayServer.WindowSetMode(DisplayServer.WindowGetMode() == DisplayServer.WindowMode.Fullscreen
-						? DisplayServer.WindowMode.Windowed : DisplayServer.WindowMode.Fullscreen);
+					GameOptions.Fullscreen = DisplayServer.WindowGetMode() != DisplayServer.WindowMode.Fullscreen;
+					GameOptions.Save();
+					GameOptions.Apply(true);
 					break;
 				case Key.Escape: GetTree().Quit(); break;
 			}

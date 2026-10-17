@@ -458,6 +458,16 @@ public partial class Fighter : CharacterBody2D
 		footWidth = rig != null ? rig.StanceWidth() : bodySize.X * 0.5f;
 		ShapeBody();
 
+		// One of his own whole drawings held in place of the puppet (DrawHeldPose), on its own
+		// layer so it can wear his team's colours like the puppet does.
+		heldPoseLayer = new Node2D();
+		AddChild(heldPoseLayer);
+		heldPoseLayer.Draw += () =>
+		{
+			string held = rig != null && rig.Loaded && !IsDrawnAsBall && State != FighterState.Eliminated ? HeldPoseName() : null;
+			if (held != null) DrawHeldPose(heldPoseLayer, held);
+		};
+
 		// Added after the rig, so it draws over it.
 		overlay = new Node2D();
 		AddChild(overlay);
@@ -509,6 +519,8 @@ public partial class Fighter : CharacterBody2D
 	{
 		QueueRedraw();
 		overlay?.QueueRedraw();
+		heldPoseLayer?.QueueRedraw();
+		if (!teamLookDone) WearTeamLook();
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -4375,10 +4387,10 @@ public partial class Fighter : CharacterBody2D
 		float zoom = Mathf.Max(0.25f, GetViewport()?.GetCamera2D()?.Zoom.X ?? 1.0f);
 		float k = 1.0f / zoom;
 		Color tint = SideTint;
-		string text = IsComputer ? "CPU" : $"P{Seat + 1}";
+		string text = TagText;
 		Font font = ThemeDB.FallbackFont;
 		int size = Mathf.RoundToInt(28.0f * k);
-		float top = -bodySize.Y * 0.5f - 16.0f * k;
+		float top = -TagLift() - 14.0f * k;
 		var tip = new Vector2(0.0f, top);
 		var paper = new Color(0.98f, 0.97f, 0.94f);
 		Vector2[] arrow = { tip, tip + new Vector2(-11.0f, -14.0f) * k, tip + new Vector2(11.0f, -14.0f) * k };
@@ -4387,6 +4399,29 @@ public partial class Fighter : CharacterBody2D
 		var at = new Vector2(-100.0f * k, top - 20.0f * k);
 		canvas.DrawStringOutline(font, at, text, HorizontalAlignment.Center, 200.0f * k, size, Mathf.RoundToInt(9.0f * k), paper);
 		canvas.DrawString(font, at, text, HorizontalAlignment.Center, 200.0f * k, size, tint);
+	}
+
+	/// <summary>The name a player gave themselves on fighter select, or null.</summary>
+	public string PlayerName;
+
+	/// <summary>What the tag over his head and under his percent says: his player's name, "P1", or "CPU".</summary>
+	public string TagText => IsComputer ? "CPU" : !string.IsNullOrEmpty(PlayerName) ? PlayerName : $"P{Seat + 1}";
+
+	float tagLift;
+
+	/// <summary>
+	/// How far above his middle the top of his drawing is, standing - hair, hat and all - measured
+	/// once he first stands, so the tag sits clear over the art rather than on his head (Eric,
+	/// 2026-10-17: it was in the way of the characters' art) and does not bob with every move.
+	/// </summary>
+	float TagLift()
+	{
+		float floor = bodySize.Y * 0.5f + bodySize.Y * 0.18f;
+		if (tagLift > 0.0f) return tagLift;
+		if (rig == null || !rig.Loaded || State != FighterState.Grounded || !IsOnFloor()) return floor + bodySize.Y * 0.25f;
+		Rect2 art = rig.BodyBounds(this);
+		tagLift = Mathf.Max(floor, -art.Position.Y + bodySize.Y * 0.08f);
+		return tagLift;
 	}
 
 	/// <summary>
@@ -4773,7 +4808,21 @@ public partial class Fighter : CharacterBody2D
 	/// A held pose, standing on his feet and mirrored with his facing. Moved and scaled only.
 	/// The bomb swells in and out as the fuse runs down, so "about to go off" is visible.
 	/// </summary>
-	void DrawHeldPose(string name)
+	Node2D heldPoseLayer;
+	bool teamLookDone;
+
+	/// <summary>In a team fight, his team's colours on the puppet and his drawings (TeamLook).</summary>
+	void WearTeamLook()
+	{
+		teamLookDone = true;
+		if (Match == null || !Match.TeamBattle || rig == null) return;
+		ShaderMaterial look = TeamLook.For(Data, Match.TeamOf(this));
+		if (look == null) return;
+		TeamLook.Wear(rig, look);
+		heldPoseLayer.Material = look;
+	}
+
+	void DrawHeldPose(Node2D canvas, string name)
 	{
 		RigArt art = rig.PoseArtFor(name);
 		float s = rig.PoseScale(name);
@@ -4786,9 +4835,9 @@ public partial class Fighter : CharacterBody2D
 		}
 
 		Vector2 feet = new Vector2(0.0f, bodySize.Y * 0.5f);
-		DrawSetTransform(feet, 0.0f, new Vector2(s * Facing, s));
-		DrawTexture(art.Texture, -art.Anchor, rig.Modulate);
-		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+		canvas.DrawSetTransform(feet, 0.0f, new Vector2(s * Facing, s));
+		canvas.DrawTexture(art.Texture, -art.Anchor, rig.Modulate);
+		canvas.DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
 	}
 
 	// --- Heat ------------------------------------------------------------------------
@@ -5586,7 +5635,7 @@ public partial class Fighter : CharacterBody2D
 			DrawResizeHint();
 			if (IsDrawnAsBall && State == FighterState.Attacking && currentMove != null && currentMove.FxFlame) DrawFireball();
 			if (IsDrawnAsBall) DrawBall(1.0f, rollAngle);
-			else if (pose != null) DrawHeldPose(pose);
+			else if (pose != null) { /* on heldPoseLayer */ }
 			else if (IsBombArmed) DrawBomb();
 			DrawDiveGlow();
 			DrawBlinkTrail();
