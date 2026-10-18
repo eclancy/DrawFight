@@ -1,0 +1,48 @@
+# What changed in each version, newest first - shown in the game under Options > What's new
+# (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
+# notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
+
+== 0.7.2 | 2026-10-18
+Now installs with a single setup file: download it, run it, and play from the Start menu or the desktop.
+Computer players come in Easy, Medium and Hard - pick on the fighter select screen.
+
+== 0.7.1 | 2026-10-17
+An Items button on the fighter select screen: Off, Low, Medium or High.
+
+== 0.7.0 | 2026-10-17
+Three taunts for every fighter, each with its own line.
+Players join in the order they press A.
+Flambé and Lugnut sit down to lunch in story mode.
+Triguy is white again, coloured in with a white pencil.
+DoomBot's eye laser shoots down at an angle.
+Grabs reach further.
+No mouse pointer anywhere but the drawing screens.
+
+== 0.6.0 | 2026-10-16
+Story mode! Every fighter has their own story: an opening, five fights (one of them two against one), DoomBot's big reveal, and an ending.
+Up to four players in versus, any of them the computer - every one for themselves, or in teams.
+Three big new stages for four players: Playground, Building Site and Kitchen Counter.
+Fighters talk with their hands, and celebrate when they win.
+Flambé and Lugnut have new faces and new coloured pencil.
+In the drawing screen, solid fill colours in with coloured pencil.
+
+== 0.5.0 | 2026-10-12
+Items to pick up and use, and a grab button.
+A main menu, and a drawing screen to draw your own fighter.
+Faces that move, and the Big Show stage.
+Triguy's Hat Toss, shields that crack, and limbs that bend the right way.
+
+== 0.4.0 | 2026-10-09
+Triguy joins, drawn by Elim.
+Lugnut and Flambé redrawn in coloured pencil.
+Grabs, ledges to hang on, and shields.
+
+== 0.3.0 | 2026-10-04
+New abilities for every fighter, and a new Flambé.
+Floatier jumps, and feet that stand on the ground.
+
+== 0.2.0 | 2026-10-03
+DoomBot's moves, from Eric's sheet - with heat, and burning.
+
+== 0.1.0 | 2026-10-02
+The first download: Circy, EdgeLord, DoomBot, Flambé and Lugnut, stages, menus, a computer player, sound and music.

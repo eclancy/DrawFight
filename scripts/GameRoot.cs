@@ -162,6 +162,9 @@ public partial class GameRoot : Node2D
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--options") startAt = "options";
+			if (arg == "--changelog") startAt = "changelog";
+			if (arg == "--suggest") startAt = "suggest";
+			if (arg == "--newstage") startAt = "newstage";
 			if (arg == "--drawings") startAt = "drawings";
 			if (arg == "--draw") startAt = "draw";
 			if (arg == "--send") startAt = "send";
@@ -213,6 +216,9 @@ public partial class GameRoot : Node2D
 			case "stages": GoStageSelect(); break;
 			case "items": GoItemSettings(); break;
 			case "options": GoOptions(null); break;
+			case "changelog": GoChangelog(null); break;
+			case "suggest": GoSuggest(); break;
+			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
 			case "story": GoStoryChapter(); break;
 			case "drawings": GoDrawings(); break;
@@ -268,6 +274,12 @@ public partial class GameRoot : Node2D
 
 	/// <summary>The options, opened by <paramref name="key"/>'s controller (the gear on the main menu).</summary>
 	public void GoOptions(string key) => Show(new OptionsScreen { OpenedBy = key });
+
+	/// <summary>An idea for the game, typed and sent in (from the main menu).</summary>
+	public void GoSuggest() => Show(new SuggestScreen());
+
+	/// <summary>Every version's changes (from Options).</summary>
+	public void GoChangelog(string key) => Show(new ChangelogScreen { OpenedBy = key });
 
 	// --- Story -----------------------------------------------------------------------
 
@@ -436,7 +448,7 @@ public partial class GameRoot : Node2D
 		framesElapsed++;
 		// No mouse pointer anywhere but the drawing screens, whatever turned it on - a window
 		// regaining focus, a screen that forgot to put it away (Eric, 2026-10-16).
-		if (!(currentScreen is DrawScreen || currentScreen is DrawingsScreen || currentScreen is SendFighterScreen)
+		if (!(currentScreen is DrawScreen || currentScreen is DrawingsScreen || currentScreen is SendFighterScreen || currentScreen is SuggestScreen)
 			&& Input.MouseMode != Input.MouseModeEnum.Hidden)
 		{
 			Input.MouseMode = Input.MouseModeEnum.Hidden;

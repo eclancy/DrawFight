@@ -88,7 +88,9 @@ bash tools/release/release.sh 0.2.0 "New fighter: DoomBot. Ledge grabs are easie
 ```
 
 The quoted text is optional: it is what players see under "What's new" on
-`ecec.dev/games/drawfight`, so write it for them. Leave it out and the release just says how to
+`ecec.dev/games/drawfight`, and in the game itself (Options > What's new), so write it for them -
+one change a line. The script adds it to `assets/changelog.txt` (`tools/release/changelog.py`),
+which the game reads, and commits it with the version. Leave it out and the release just says how to
 download. This needs a clean working tree. The script sets the version, builds, exports, packages,
 compiles the installer, commits "Release v0.2.0", tags it, pushes, and runs `gh release create`.
 It takes a few minutes; the installer's maximum compression is most of it.

@@ -104,7 +104,8 @@ Keyboard: P1 arrow keys to move, `A` jump, `Q` attack, `W` special, `S` block, `
 With no second pad, P2 is the number pad: `8`/`4`/`5`/`6` move, `1` jump, `2` attack, `3` special,
 `0` block, `9` grab, `7` taunt.
 
-After **Start**, the main menu: **Versus**, **Story** or **Draw a fighter**. The
+After **Start**, the main menu: **Versus**, **Story** or **Draw your own** (a fighter or a
+stage), with **Ideas** up top for sending in a suggestion. The
 mouse is only for the drawing screens; everywhere else it does nothing and its pointer is hidden,
 and even there it only shows once you move the mouse.
 In menus, each player presses **A** to join, then drags a cursor with the left stick and presses
@@ -114,7 +115,8 @@ menu and the fighter select screen. In a story scene, **A** hurries the line on 
 B** skips the scene.
 
 **Options** - the gear beside QUIT: fullscreen or a window, music and sound volume, the pad's
-button layout (Standard or Smash), screen shake, and how many lives a versus fight starts with.
+button layout (Standard or Smash), screen shake, how many lives a versus fight starts with, and
+**What's new** - every version's changes.
 Every name saved on this computer is listed there too; press one twice to delete it.
 
 **Names** - on fighter select, **Name** in your seat lets you pick a saved name or spell a new one

@@ -44,6 +44,8 @@ echo "DrawFight $CURRENT -> $VERSION"
 
 # The version lives in project.godot, which is where the running game reads it from.
 sed -i "s/^config\/version=\".*\"$/config\/version=\"$VERSION\"/" project.godot
+# The notes also go in the game's own list of changes (Options > What's new).
+if [ -n "$CHANGES" ]; then python tools/release/changelog.py "$VERSION" "$CHANGES"; fi
 
 dotnet build DrawFight.sln -nologo -v q
 rm -rf build/windows build/release
@@ -51,16 +53,16 @@ mkdir -p build/windows
 # Godot does not create the export folder itself, and on an export error it can sit there
 # instead of exiting - hence the timeout.
 timeout 900 "$GODOT_BIN" --headless --path . --export-release "Windows Desktop" build/windows/DrawFight.exe \
-	> build/export.log 2>&1 || { tail -20 build/export.log; echo "export failed - see build/export.log" >&2; git checkout project.godot; exit 1; }
-[ -f build/windows/DrawFight.pck ] || { echo "export produced no .pck - see build/export.log" >&2; git checkout project.godot; exit 1; }
+	> build/export.log 2>&1 || { tail -20 build/export.log; echo "export failed - see build/export.log" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
+[ -f build/windows/DrawFight.pck ] || { echo "export produced no .pck - see build/export.log" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
 
 python tools/release/package.py "$VERSION"
 # Git Bash turns an argument starting with / into a path; ISCC's /Q and /D switches must not be.
 MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' "$ISCC" /Q "/DAppVersion=$VERSION" tools/release/installer.iss \
-	|| { echo "installer build failed" >&2; git checkout project.godot; exit 1; }
-[ -f build/release/DrawFight-Setup.exe ] || { echo "no installer in build/release" >&2; git checkout project.godot; exit 1; }
+	|| { echo "installer build failed" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
+[ -f build/release/DrawFight-Setup.exe ] || { echo "no installer in build/release" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
 
-git diff --quiet project.godot || git commit -q -m "Release v$VERSION" project.godot
+git diff --quiet project.godot assets/changelog.txt || git commit -q -m "Release v$VERSION" project.godot assets/changelog.txt
 git tag "v$VERSION"
 git push -q origin HEAD "v$VERSION"
 

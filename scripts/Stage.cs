@@ -49,13 +49,14 @@ public partial class Stage : Node2D
 
 			// Solid ground is layer 1, soft platforms are layer 2. Keeping them apart is what
 			// lets a fighter drop through a soft platform by masking layer 2 off for a few
-			// frames without also falling through the floor of the stage.
-			var body = new StaticBody2D
-			{
-				Position = platform.Rect.Position + platform.Rect.Size * 0.5f,
-				CollisionLayer = platform.OneWay ? 2u : 1u,
-				CollisionMask = 0,
-			};
+			// frames without also falling through the floor of the stage. One that moves is an
+			// AnimatableBody2D moved in step with physics, so whoever stands on it is carried.
+			PhysicsBody2D body = platform.Moves
+				? new AnimatableBody2D { SyncToPhysics = true }
+				: new StaticBody2D();
+			body.Position = platform.Rect.Position + platform.Rect.Size * 0.5f;
+			body.CollisionLayer = platform.OneWay ? 2u : 1u;
+			body.CollisionMask = 0;
 
 			body.AddChild(new CollisionShape2D
 			{
@@ -64,6 +65,16 @@ public partial class Stage : Node2D
 			});
 
 			AddChild(body);
+
+			if (platform.Moves)
+			{
+				// Drawn on its own, over the stage, where it has got to.
+				var view = new Node2D();
+				AddChild(view);
+				StagePlatform drawn = platform;
+				view.Draw += () => DrawMoving(view, drawn);
+				movers.Add((platform, body, view));
+			}
 
 			if (data.Traffic && platform.Look == PlatformLook.Road && Traffic == null)
 			{
@@ -379,9 +390,51 @@ public partial class Stage : Node2D
 	/// ground, a dashed one means you can drop through it. The mechanic becomes visible rather
 	/// than something a player discovers by dying.
 	/// </summary>
-	void OutlinePlatform(Rect2 rect, bool oneWay, int seed)
+	void OutlinePlatform(Rect2 rect, bool oneWay, int seed) => OutlinePlatform(this, rect, oneWay, seed);
+
+	void OutlinePlatform(CanvasItem canvas, Rect2 rect, bool oneWay, int seed)
 	{
-		CrayonBrush.InkRect(this, rect, Data.Ink, oneWay ? 3.0f : 4.5f, seed, 2.0f, dashed: oneWay);
+		CrayonBrush.InkRect(canvas, rect, Data.Ink, oneWay ? 3.0f : 4.5f, seed, 2.0f, dashed: oneWay);
+	}
+
+	// --- Moving platforms ------------------------------------------------------------------
+
+	readonly List<(StagePlatform platform, PhysicsBody2D body, Node2D view)> movers = new List<(StagePlatform, PhysicsBody2D, Node2D)>();
+	int moveFrames;
+
+	/// <summary>Where a moving platform has got to: a smooth swing out and back, once every TravelFrames.</summary>
+	Vector2 TravelNow(StagePlatform platform) =>
+		platform.Travel * Mathf.Sin(Mathf.Tau * (moveFrames % platform.TravelFrames) / platform.TravelFrames);
+
+	public override void _PhysicsProcess(double delta)
+	{
+		if (movers.Count == 0) return;
+		moveFrames++;
+		foreach ((StagePlatform platform, PhysicsBody2D body, Node2D view) in movers)
+		{
+			Vector2 offset = TravelNow(platform);
+			body.Position = platform.Rect.Position + platform.Rect.Size * 0.5f + offset;
+			view.Position = offset;
+			view.QueueRedraw();
+		}
+	}
+
+	void DrawMoving(CanvasItem canvas, StagePlatform platform)
+	{
+		int seed = Mathf.RoundToInt(platform.Rect.Position.X * 7.0f + platform.Rect.Position.Y * 13.0f);
+		if (platform.Look == PlatformLook.HangingBeam) DrawHangingBeam(canvas, platform, seed, true);
+	}
+
+	/// <summary>The beam hanging from a crane's jib, if one does: the one right under it, a cable's drop below.</summary>
+	StagePlatform LoadUnder(Rect2 jib)
+	{
+		foreach (StagePlatform p in Data.Platforms)
+		{
+			if (p.Look != PlatformLook.HangingBeam) continue;
+			float x = p.Rect.GetCenter().X;
+			if (Mathf.IsEqualApprox(p.Rect.Position.Y, jib.Position.Y + StageData.CraneDrop) && x > jib.Position.X && x < jib.End.X) return p;
+		}
+		return null;
 	}
 
 	void DrawLedge(StagePlatform platform, int seed)
@@ -617,6 +670,9 @@ public partial class Stage : Node2D
 	{
 		Rect2 jib = platform.Rect;
 		float mastX = jib.GetCenter().X;
+		// The front of the jib is the end its load hangs from; the counterweight goes on the back.
+		StagePlatform load = LoadUnder(jib);
+		int front = load == null || load.Rect.GetCenter().X >= mastX ? 1 : -1;
 		const float MastW = 46.0f;
 		float ground = Data.GroundLine - 6.0f;
 
@@ -640,20 +696,24 @@ public partial class Stage : Node2D
 		CrayonBrush.InkLine(this, peak, new Vector2(jib.Position.X + 14.0f, jib.Position.Y), Data.Ink, 2.0f, seed + 5, 0.6f);
 		CrayonBrush.InkLine(this, peak, new Vector2(jib.End.X - 14.0f, jib.Position.Y), Data.Ink, 2.0f, seed + 6, 0.6f);
 
-		// The counterweight on the back end, and the cab under the jib by the mast.
-		var weight = new Rect2(jib.Position.X + 12.0f, jib.End.Y, 64.0f, 54.0f);
+		// The counterweight on the back end, and the cab under the jib by the mast, on the front side.
+		var weight = new Rect2(front > 0 ? jib.Position.X + 12.0f : jib.End.X - 76.0f, jib.End.Y, 64.0f, 54.0f);
 		DrawRect(weight, Data.PropFill);
 		CrayonBrush.CrayonFill(this, weight, Data.PropCrayon, seed + 7, 10.0f, 0.0f, 6.0f);
 		CrayonBrush.InkRect(this, weight, Data.Ink, 3.0f, seed + 7, 1.0f);
-		var cab = new Rect2(mastX + MastW * 0.5f, jib.End.Y, 54.0f, 46.0f);
+		var cab = new Rect2(front > 0 ? mastX + MastW * 0.5f : mastX - MastW * 0.5f - 54.0f, jib.End.Y, 54.0f, 46.0f);
 		DrawRect(cab, CraneYellow);
 		DrawRect(new Rect2(cab.Position.X + 10.0f, cab.Position.Y + 8.0f, 34.0f, 20.0f), Data.GroundFill);
 		CrayonBrush.InkRect(this, cab, Data.Ink, 3.0f, seed + 8, 1.0f);
 
-		// The hook, on its trolley near the front end.
-		float hookX = jib.End.X - 50.0f;
-		CrayonBrush.InkLine(this, new Vector2(hookX, jib.End.Y), new Vector2(hookX, jib.End.Y + 80.0f), Data.Ink, 2.5f, seed + 9, 0.4f);
-		DrawArc(new Vector2(hookX + 7.0f, jib.End.Y + 88.0f), 9.0f, 0.0f, Mathf.Pi * 1.3f, 12, Data.Ink, 4.0f);
+		// With nothing on it, the bare hook near the front end; a load draws its own hook and
+		// trolley over the beam it carries (DrawHangingBeam), wherever that has run to.
+		if (load == null)
+		{
+			float hookX = front > 0 ? jib.End.X - 50.0f : jib.Position.X + 50.0f;
+			CrayonBrush.InkLine(this, new Vector2(hookX, jib.End.Y), new Vector2(hookX, jib.End.Y + 80.0f), Data.Ink, 2.5f, seed + 9, 0.4f);
+			DrawArc(new Vector2(hookX + 7.0f, jib.End.Y + 88.0f), 9.0f, 0.0f, Mathf.Pi * 1.3f, 12, Data.Ink, 4.0f);
+		}
 
 		// The jib itself: a lattice girder - top and bottom chords and a zigzag between.
 		DrawRect(jib, new Color(CraneYellow.R, CraneYellow.G, CraneYellow.B, 0.4f));
@@ -667,22 +727,45 @@ public partial class Stage : Node2D
 		OutlinePlatform(jib, platform.OneWay, seed);
 	}
 
-	/// <summary>A red steel beam hanging level on two cables from the crane above it.</summary>
 	void DrawHangingBeam(StagePlatform platform, int seed)
 	{
+		// A moving one is drawn by its own view, where it has run to (DrawMoving).
+		if (!platform.Moves) DrawHangingBeam(this, platform, seed, false);
+	}
+
+	/// <summary>
+	/// A red steel beam hanging level on two cables from the crane above it: the cables meet at the
+	/// hook, which hangs on its line from a trolley riding under the jib - straight above the beam,
+	/// so it is plainly carried by the crane, and goes wherever the trolley runs.
+	/// </summary>
+	void DrawHangingBeam(CanvasItem canvas, StagePlatform platform, int seed, bool moving)
+	{
 		Rect2 r = platform.Rect;
-		var hook = new Vector2(r.GetCenter().X, r.Position.Y - StageData.CraneDrop + 110.0f);
-		CrayonBrush.InkLine(this, new Vector2(r.Position.X + 20.0f, r.Position.Y), hook, Data.Ink, 2.5f, seed + 1, 0.5f);
-		CrayonBrush.InkLine(this, new Vector2(r.End.X - 20.0f, r.Position.Y), hook, Data.Ink, 2.5f, seed + 2, 0.5f);
+		float x = r.GetCenter().X;
+		float jibBottom = r.Position.Y - StageData.CraneDrop + 22.0f;
+		var hook = new Vector2(x, r.Position.Y - StageData.CraneDrop + 110.0f);
+
+		// The trolley, its wheels on the jib's bottom chord, and the hook's line down from it.
+		var trolley = new Rect2(x - 22.0f, jibBottom, 44.0f, 16.0f);
+		canvas.DrawRect(trolley, CraneYellow);
+		CrayonBrush.InkRect(canvas, trolley, Data.Ink, 2.6f, seed + 5, 0.6f);
+		canvas.DrawCircle(new Vector2(x - 12.0f, jibBottom + 1.0f), 5.0f, Data.Ink);
+		canvas.DrawCircle(new Vector2(x + 12.0f, jibBottom + 1.0f), 5.0f, Data.Ink);
+		CrayonBrush.InkLine(canvas, new Vector2(x, trolley.End.Y), hook, Data.Ink, 2.5f, seed + 6, 0.3f);
+		canvas.DrawArc(hook + new Vector2(5.0f, 6.0f), 7.0f, 0.0f, Mathf.Pi * 1.3f, 10, Data.Ink, 3.5f);
+
+		// The two cables, from the hook down to each end of the beam.
+		CrayonBrush.InkLine(canvas, new Vector2(r.Position.X + 20.0f, r.Position.Y), hook, Data.Ink, 2.5f, seed + 1, 0.5f);
+		CrayonBrush.InkLine(canvas, new Vector2(r.End.X - 20.0f, r.Position.Y), hook, Data.Ink, 2.5f, seed + 2, 0.5f);
 
 		var beam = new Color(0.90f, 0.40f, 0.34f);
-		DrawRect(r, beam);
-		DrawRect(new Rect2(r.Position.X, r.Position.Y + r.Size.Y * 0.3f, r.Size.X, r.Size.Y * 0.4f), new Color(0.80f, 0.34f, 0.30f));
-		for (float x = r.Position.X + 22.0f; x < r.End.X - 10.0f; x += 36.0f)
+		canvas.DrawRect(r, beam);
+		canvas.DrawRect(new Rect2(r.Position.X, r.Position.Y + r.Size.Y * 0.3f, r.Size.X, r.Size.Y * 0.4f), new Color(0.80f, 0.34f, 0.30f));
+		for (float bx = r.Position.X + 22.0f; bx < r.End.X - 10.0f; bx += 36.0f)
 		{
-			DrawCircle(new Vector2(x, r.GetCenter().Y), 3.5f, new Color(0.98f, 0.94f, 0.88f));
+			canvas.DrawCircle(new Vector2(bx, r.GetCenter().Y), 3.5f, new Color(0.98f, 0.94f, 0.88f));
 		}
-		OutlinePlatform(r, platform.OneWay, seed);
+		OutlinePlatform(canvas, r, platform.OneWay, seed);
 	}
 
 	/// <summary>

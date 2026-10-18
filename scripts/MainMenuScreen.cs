@@ -23,6 +23,9 @@ public partial class MainMenuScreen : Node2D
 	/// <summary>The options: a small gear beside QUIT (Eric, 2026-10-17).</summary>
 	static readonly Rect2 GearBox = new Rect2(1540.0f, 64.0f, 76.0f, 76.0f);
 
+	/// <summary>Send in an idea for the game (SuggestScreen; Eric, 2026-10-18).</summary>
+	static readonly Rect2 IdeasBox = new Rect2(1336.0f, 64.0f, 180.0f, 76.0f);
+
 	/// <summary>A cursor for each controller, shown once it is touched (TouchCursors).</summary>
 	TouchCursors touch;
 	List<MenuCursor> cursors => touch.Shown;
@@ -124,6 +127,13 @@ public partial class MainMenuScreen : Node2D
 			GetTree().Quit();
 			return;
 		}
+		if (IdeasBox.HasPoint(point))
+		{
+			leaving = true;
+			SfxPlayer.Ui("ui_select");
+			GameRoot.Instance.GoSuggest();
+			return;
+		}
 		if (GearBox.HasPoint(point))
 		{
 			leaving = true;
@@ -162,11 +172,15 @@ public partial class MainMenuScreen : Node2D
 
 		DrawCard(Choice.Versus, "Versus", "Fight a friend, or the computer.");
 		DrawCard(Choice.Story, "Story", "Fight for a place on the fridge.");
-		DrawCard(Choice.Draw, "Draw a fighter", "Draw your own and send it in.");
+		DrawCard(Choice.Draw, "Draw your own", "A fighter or a stage, sent in.");
 
 		bool quitHot = false;
 		foreach (MenuCursor cursor in cursors) quitHot |= QuitBox.HasPoint(cursor.Position);
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, quitHot, fontSize: 38);
+
+		bool ideasHot = false;
+		foreach (MenuCursor cursor in cursors) ideasHot |= IdeasBox.HasPoint(cursor.Position);
+		MenuTheme.DrawButton(this, IdeasBox, "Ideas", 79, ideasHot, fontSize: 34);
 
 		bool gearHot = false;
 		foreach (MenuCursor cursor in cursors) gearHot |= GearBox.HasPoint(cursor.Position);

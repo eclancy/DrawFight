@@ -93,6 +93,16 @@ public partial class DrawScreen : Node2D
 	/// <summary>A new layer on the fighter page is named for a body part, by button.</summary>
 	static readonly string[] PartNames = { "Head", "Body", "Front arm", "Back arm", "Front leg", "Back leg", "Held thing", "Just a layer" };
 
+	/// <summary>On a stage page, a new layer is named for a part of the stage, the same way.</summary>
+	static readonly string[] StagePartNames = { "Background", "Ground", "Platforms", "Hazard", "Moving part", "Just a layer" };
+
+	string[] LayerNames => Page.Kind == PageKind.Stage ? StagePartNames : PartNames;
+
+	/// <summary>The pages a drawing can add, and what each is called: a fighter's things, or a stage's.</summary>
+	PageKind[] AddableKinds => Doc.IsStage
+		? new[] { PageKind.Hazard, PageKind.Mover, PageKind.Extra }
+		: new[] { PageKind.Shot, PageKind.Held, PageKind.Extra };
+
 	readonly Painter painter = new Painter();
 	int toolIndex;
 	int toolBeforePick;
@@ -661,7 +671,7 @@ public partial class DrawScreen : Node2D
 		if (AddLayerBox.HasPoint(at))
 		{
 			if (Page.Layers.Count >= Drawing.MaxLayers) Toast($"A page can have {Drawing.MaxLayers} layers at most.");
-			else if (Page.Kind == PageKind.Fighter) OpenPopup(Popup.AddPart);
+			else if (Page.Kind == PageKind.Fighter || Page.Kind == PageKind.Stage) OpenPopup(Popup.AddPart);
 			else AddLayer($"Layer {Page.Layers.Count + 1}");
 			return true;
 		}
@@ -837,8 +847,12 @@ public partial class DrawScreen : Node2D
 				for (int i = 0; i < 3; i++)
 				{
 					if (!KindRect(i).HasPoint(at)) continue;
-					PageKind kind = (PageKind)(i + 1);
-					string name = kind switch { PageKind.Shot => "Shot", PageKind.Held => "Held thing", _ => "Extra" };
+					PageKind kind = AddableKinds[i];
+					string name = kind switch
+					{
+						PageKind.Shot => "Shot", PageKind.Held => "Held thing",
+						PageKind.Hazard => "Hazard", PageKind.Mover => "Moving part", _ => "Extra",
+					};
 					int same = 0;
 					foreach (DrawingPage p in Doc.Pages) if (p.Kind == kind) same++;
 					if (same > 0) name += $" {same + 1}";
@@ -853,11 +867,12 @@ public partial class DrawScreen : Node2D
 				break;
 
 			case Popup.AddPart:
-				for (int i = 0; i < PartNames.Length; i++)
+				string[] names = LayerNames;
+				for (int i = 0; i < names.Length; i++)
 				{
 					if (!PartRect(i).HasPoint(at)) continue;
 					popup = Popup.None;
-					AddLayer(i == PartNames.Length - 1 ? $"Layer {Page.Layers.Count + 1}" : PartNames[i]);
+					AddLayer(i == names.Length - 1 ? $"Layer {Page.Layers.Count + 1}" : names[i]);
 					return;
 				}
 				if (CancelBox.HasPoint(at) || !PopupBox.HasPoint(at)) ClosePopup();
@@ -931,18 +946,49 @@ public partial class DrawScreen : Node2D
 			PageKind.Fighter => "Side view, facing right",
 			PageKind.Shot => "Draw it flying to the right",
 			PageKind.Held => "Draw it standing up, handle at the bottom",
+			PageKind.Stage => "Draw it wide, like the guide",
+			PageKind.Hazard => "Draw the thing that hurts",
+			PageKind.Mover => "Draw the part that moves, on its own",
 			_ => "",
 		};
+		if (Page.Kind == PageKind.Stage) DrawStageGuide();
 		if (hint == "") return;
 		Font font = ThemeDB.FallbackFont;
 		var at = new Vector2(150.0f, 84.0f);
 		canvas.DrawString(font, at, hint, HorizontalAlignment.Left, -1, 34, HintInk);
-		if (Page.Kind == PageKind.Held) return;
+		if (Page.Kind != PageKind.Fighter && Page.Kind != PageKind.Shot) return;
 		float end = at.X + font.GetStringSize(hint, HorizontalAlignment.Left, -1, 34).X + 20.0f;
 		var tip = new Vector2(end + 70.0f, at.Y - 11.0f);
 		CrayonBrush.InkLine(canvas, new Vector2(end, tip.Y), tip, HintInk, 4.0f, 7, 1.0f);
 		CrayonBrush.InkLine(canvas, tip, tip + new Vector2(-16.0f, -12.0f), HintInk, 4.0f, 8, 0.5f);
 		CrayonBrush.InkLine(canvas, tip, tip + new Vector2(-16.0f, 12.0f), HintInk, 4.0f, 9, 0.5f);
+	}
+
+	/// <summary>
+	/// The stage guide, faint on the page and never part of the drawing - the same picture as the
+	/// drawing guide's "draw a stage" (ecec.dev/draw/guide): dashed edges where fighters get knocked
+	/// out, a wide ground, and dashed platforms you can jump through.
+	/// </summary>
+	void DrawStageGuide()
+	{
+		Font font = ThemeDB.FallbackFont;
+		var knock = new Color(0.86f, 0.36f, 0.34f, 0.55f);
+		CrayonBrush.InkLine(canvas, new Vector2(140.0f, 120.0f), new Vector2(140.0f, 1020.0f), knock, 4.0f, 21, 1.0f, dashed: true);
+		CrayonBrush.InkLine(canvas, new Vector2(1260.0f, 120.0f), new Vector2(1260.0f, 1020.0f), knock, 4.0f, 22, 1.0f, dashed: true);
+		CrayonBrush.InkLine(canvas, new Vector2(140.0f, 130.0f), new Vector2(1260.0f, 130.0f), knock, 4.0f, 23, 1.0f, dashed: true);
+		canvas.DrawString(font, new Vector2(140.0f, 176.0f), "knocked past here = you're out", HorizontalAlignment.Center, 1120.0f, 30, knock);
+
+		var ground = new Rect2(330.0f, 790.0f, 740.0f, 60.0f);
+		canvas.DrawRect(ground, new Color(HintInk, 0.12f));
+		CrayonBrush.InkRect(canvas, ground, HintInk, 4.0f, 24, 1.2f);
+		canvas.DrawString(font, new Vector2(ground.Position.X, ground.End.Y + 46.0f), "the ground", HorizontalAlignment.Center, ground.Size.X, 30, HintInk);
+
+		foreach (Rect2 platform in new[] { new Rect2(390.0f, 610.0f, 270.0f, 32.0f), new Rect2(740.0f, 610.0f, 270.0f, 32.0f), new Rect2(585.0f, 450.0f, 230.0f, 32.0f) })
+		{
+			CrayonBrush.InkRect(canvas, platform, HintInk, 3.0f, 25 + (int)platform.Position.X, 1.0f, dashed: true);
+		}
+		canvas.DrawString(font, new Vector2(150.0f, 560.0f), "things to", HorizontalAlignment.Left, -1, 28, HintInk);
+		canvas.DrawString(font, new Vector2(150.0f, 594.0f), "jump through", HorizontalAlignment.Left, -1, 28, HintInk);
 	}
 
 	// --- Drawing the panels ---------------------------------------------------------------------------
@@ -1190,7 +1236,9 @@ public partial class DrawScreen : Node2D
 		{
 			case Popup.AddPage:
 				MenuTheme.DrawCentredText(this, heading, "What goes on this page?", 42, MenuTheme.Text);
-				string[] kinds = { "Something they shoot or throw", "Something they hold", "Something else" };
+				string[] kinds = Doc.IsStage
+					? new[] { "A hazard - something that hurts", "A part that moves", "Something else" }
+					: new[] { "Something they shoot or throw", "Something they hold", "Something else" };
 				for (int i = 0; i < 3; i++) MenuTheme.DrawButton(this, KindRect(i), kinds[i], 830 + i, PopupHot(KindRect(i)), fontSize: 32);
 				MenuTheme.DrawButton(this, CancelBox, "Cancel", 834, PopupHot(CancelBox), fontSize: 30);
 				break;
@@ -1198,8 +1246,8 @@ public partial class DrawScreen : Node2D
 			case Popup.AddPart:
 				MenuTheme.DrawCentredText(this, heading, "What goes on this layer?", 42, MenuTheme.Text);
 				MenuTheme.DrawCentredText(this, new Rect2(box.Position + new Vector2(0.0f, 84.0f), new Vector2(box.Size.X, 40.0f)),
-					"One body part per layer makes the best fighter.", 26, MenuTheme.Soft);
-				for (int i = 0; i < PartNames.Length; i++) MenuTheme.DrawButton(this, PartRect(i), PartNames[i], 840 + i, PopupHot(PartRect(i)), fontSize: 30);
+					Page.Kind == PageKind.Stage ? "One part of the stage per layer makes the best stage." : "One body part per layer makes the best fighter.", 26, MenuTheme.Soft);
+				for (int i = 0; i < LayerNames.Length; i++) MenuTheme.DrawButton(this, PartRect(i), LayerNames[i], 840 + i, PopupHot(PartRect(i)), fontSize: 30);
 				MenuTheme.DrawButton(this, CancelBox, "Cancel", 849, PopupHot(CancelBox), fontSize: 30);
 				break;
 

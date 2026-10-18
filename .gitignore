@@ -30,3 +30,6 @@ tools/audio/_preview_*.wav
 
 # Exported game builds and release zips - published as GitHub Releases, never committed.
 build/
+
+# Stages and suggestions sent from the game (tools/intake/pull_submissions.sh): private, like fighters/incoming/.
+/incoming/

@@ -47,7 +47,10 @@ public partial class DrawingsScreen : Node2D
 
 	public override void _ExitTree() => OnePointer.Leave();
 
-	int CardCount => saved.Count + 1;
+	/// <summary>The cards before the saved drawings: a new fighter, and a new stage.</summary>
+	const int NewCards = 2;
+
+	int CardCount => saved.Count + NewCards;
 
 	Rect2 CardRect(int i)
 	{
@@ -144,16 +147,16 @@ public partial class DrawingsScreen : Node2D
 		if (point.Y < GridTop - 20.0f) return;
 		for (int i = 0; i < CardCount; i++)
 		{
-			if (i > 0 && DeleteRect(i).HasPoint(point))
+			if (i >= NewCards && DeleteRect(i).HasPoint(point))
 			{
 				SfxPlayer.Ui("ui_select");
-				confirmDelete = saved[i - 1].Id;
+				confirmDelete = saved[i - NewCards].Id;
 				return;
 			}
 			if (!CardRect(i).HasPoint(point)) continue;
 			leaving = true;
 			SfxPlayer.Ui("ui_select");
-			Drawing drawing = i == 0 ? Drawing.New() : Drawing.Load(saved[i - 1].Id);
+			Drawing drawing = i < NewCards ? Drawing.New(stage: i == 1) : Drawing.Load(saved[i - NewCards].Id);
 			GameRoot.Instance.OpenDrawing(drawing ?? Drawing.New());
 			return;
 		}
@@ -191,7 +194,7 @@ public partial class DrawingsScreen : Node2D
 
 		if (saved.Count == 0)
 		{
-			DrawString(font, new Vector2(190.0f, 660.0f), "Draw a fighter, then send it in to be put in the game.", HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
+			DrawString(font, new Vector2(190.0f, 660.0f), "Draw a fighter or a stage, then send it in to be put in the game.", HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
 			DrawString(font, new Vector2(190.0f, 706.0f), "Everything you draw is saved here.", HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
 		}
 
@@ -208,17 +211,25 @@ public partial class DrawingsScreen : Node2D
 		if (hot) CrayonBrush.InkRect(this, card.Grow(8.0f), MenuTheme.Accent, 6.0f, 860 + i, 2.6f);
 
 		var thumb = new Rect2(card.Position + new Vector2(12.0f, 12.0f), new Vector2(card.Size.X - 24.0f, (card.Size.X - 24.0f) * 0.75f));
-		if (i == 0)
+		if (i < NewCards)
 		{
 			DrawRect(thumb, MenuTheme.Paper);
-			Vector2 c = thumb.GetCenter();
-			CrayonBrush.InkLine(this, c + new Vector2(-60.0f, 0.0f), c + new Vector2(60.0f, 0.0f), MenuTheme.Ink, 12.0f, 841, 2.0f);
-			CrayonBrush.InkLine(this, c + new Vector2(0.0f, -60.0f), c + new Vector2(0.0f, 60.0f), MenuTheme.Ink, 12.0f, 842, 2.0f);
-			DrawString(font, new Vector2(card.Position.X, card.End.Y - 26.0f), "New drawing", HorizontalAlignment.Center, card.Size.X, 34, MenuTheme.Text);
+			Vector2 c = thumb.GetCenter() + new Vector2(0.0f, i == 1 ? -24.0f : 0.0f);
+			CrayonBrush.InkLine(this, c + new Vector2(-60.0f, 0.0f), c + new Vector2(60.0f, 0.0f), MenuTheme.Ink, 12.0f, 841 + i * 3, 2.0f);
+			CrayonBrush.InkLine(this, c + new Vector2(0.0f, -60.0f), c + new Vector2(0.0f, 60.0f), MenuTheme.Ink, 12.0f, 842 + i * 3, 2.0f);
+			if (i == 1)
+			{
+				// A little stage under the plus: ground and two dashed platforms.
+				Vector2 g = thumb.GetCenter() + new Vector2(0.0f, 70.0f);
+				CrayonBrush.InkRect(this, new Rect2(g.X - 100.0f, g.Y, 200.0f, 16.0f), MenuTheme.Ink, 4.0f, 848, 1.0f);
+				CrayonBrush.InkRect(this, new Rect2(g.X - 130.0f, g.Y - 50.0f, 70.0f, 10.0f), MenuTheme.Ink, 3.0f, 849, 1.0f, dashed: true);
+				CrayonBrush.InkRect(this, new Rect2(g.X + 60.0f, g.Y - 50.0f, 70.0f, 10.0f), MenuTheme.Ink, 3.0f, 850, 1.0f, dashed: true);
+			}
+			DrawString(font, new Vector2(card.Position.X, card.End.Y - 26.0f), i == 1 ? "New stage" : "New fighter", HorizontalAlignment.Center, card.Size.X, 34, MenuTheme.Text);
 			return;
 		}
 
-		SavedDrawing drawing = saved[i - 1];
+		SavedDrawing drawing = saved[i - NewCards];
 		if (drawing.Thumbnail != null) DrawTextureRect(drawing.Thumbnail, thumb, false);
 		else DrawRect(thumb, MenuTheme.Paper);
 		DrawRect(thumb, MenuTheme.Rule, false, 2.0f);

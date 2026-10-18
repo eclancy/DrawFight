@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using Godot;
 
 /// <summary>What a page of a drawing is for. It is sent along with the pictures, so whoever cuts
-/// the fighter up knows a fireball page from a sword page without guessing.</summary>
-public enum PageKind { Fighter, Shot, Held, Extra }
+/// the fighter up knows a fireball page from a sword page without guessing. A stage's pages are the
+/// stage itself, a hazard, or a part that moves.</summary>
+public enum PageKind { Fighter, Shot, Held, Extra, Stage, Hazard, Mover }
 
 /// <summary>
 /// A fighter drawn in the game's own drawing screen (DrawScreen): its pages, each page's layers,
@@ -38,6 +39,9 @@ public sealed class Drawing
 	public readonly List<DrawingPage> Pages = new List<DrawingPage>();
 	public int ActivePageIndex;
 
+	/// <summary>A stage rather than a fighter (Eric, 2026-10-18): its own pages, guide and questions, sent to the stage intake.</summary>
+	public bool IsStage;
+
 	/// <summary>Changed since it was last saved.</summary>
 	public bool Unsaved;
 
@@ -51,12 +55,15 @@ public sealed class Drawing
 	public string Folder => Root + "/" + Id;
 
 	/// <summary>What it is called: the fighter's name from the sheet, once there is one.</summary>
-	public string Title => Sheet.TryGetValue("name", out string name) && !string.IsNullOrWhiteSpace(name) ? name.Trim() : "Untitled fighter";
+	public string Title => Sheet.TryGetValue("name", out string name) && !string.IsNullOrWhiteSpace(name) ? name.Trim() : Untitled(IsStage);
 
-	public static Drawing New()
+	static string Untitled(bool stage) => stage ? "Untitled stage" : "Untitled fighter";
+
+	public static Drawing New(bool stage = false)
 	{
-		var drawing = new Drawing { Id = NewId(), Created = Now() };
-		drawing.AddPage(PageKind.Fighter, "Fighter");
+		var drawing = new Drawing { Id = NewId(), Created = Now(), IsStage = stage };
+		if (stage) drawing.AddPage(PageKind.Stage, "Stage");
+		else drawing.AddPage(PageKind.Fighter, "Fighter");
 		drawing.Unsaved = true;
 		return drawing;
 	}
@@ -116,7 +123,7 @@ public sealed class Drawing
 
 		var root = new Godot.Collections.Dictionary
 		{
-			["version"] = 1, ["created"] = Created, ["modified"] = Modified, ["nextLayer"] = nextLayer,
+			["version"] = 1, ["kind"] = IsStage ? "stage" : "fighter", ["created"] = Created, ["modified"] = Modified, ["nextLayer"] = nextLayer,
 			["activePage"] = ActivePageIndex, ["sheet"] = sheet, ["sent"] = sent, ["pages"] = pages,
 		};
 
@@ -161,6 +168,7 @@ public sealed class Drawing
 		if (Json.ParseString(file.GetAsText()).Obj is not Godot.Collections.Dictionary root) return null;
 
 		var drawing = new Drawing { Id = id };
+		drawing.IsStage = root.TryGetValue("kind", out Variant kindOf) && kindOf.AsString() == "stage";
 		drawing.Created = root.TryGetValue("created", out Variant created) ? created.AsString() : "";
 		drawing.Modified = root.TryGetValue("modified", out Variant modified) ? modified.AsString() : "";
 		drawing.nextLayer = root.TryGetValue("nextLayer", out Variant next) ? next.AsInt32() : 0;
@@ -201,7 +209,11 @@ public sealed class Drawing
 				drawing.Pages.Add(page);
 			}
 		}
-		if (drawing.Pages.Count == 0) drawing.AddPage(PageKind.Fighter, "Fighter");
+		if (drawing.Pages.Count == 0)
+		{
+			if (drawing.IsStage) drawing.AddPage(PageKind.Stage, "Stage");
+			else drawing.AddPage(PageKind.Fighter, "Fighter");
+		}
 		drawing.ActivePageIndex = root.TryGetValue("activePage", out Variant active)
 			? Mathf.Clamp(active.AsInt32(), 0, drawing.Pages.Count - 1) : 0;
 		return drawing;
@@ -219,7 +231,8 @@ public sealed class Drawing
 			using FileAccess file = FileAccess.Open(Root + "/" + id + "/drawing.json", FileAccess.ModeFlags.Read);
 			if (file == null) continue;
 			if (Json.ParseString(file.GetAsText()).Obj is not Godot.Collections.Dictionary root) continue;
-			string title = "Untitled fighter";
+			bool stage = root.TryGetValue("kind", out Variant kindOf) && kindOf.AsString() == "stage";
+			string title = Untitled(stage);
 			if (root.TryGetValue("sheet", out Variant sheet) && sheet.AsGodotDictionary().TryGetValue("name", out Variant name)
 				&& !string.IsNullOrWhiteSpace(name.AsString()))
 			{
@@ -230,6 +243,7 @@ public sealed class Drawing
 			{
 				Id = id,
 				Title = title,
+				IsStage = stage,
 				Modified = root.TryGetValue("modified", out Variant modified) ? modified.AsString() : "",
 				Sent = root.TryGetValue("sent", out Variant sent) && sent.AsGodotArray().Count > 0,
 				Thumbnail = thumb != null ? ImageTexture.CreateFromImage(thumb) : null,
@@ -326,6 +340,9 @@ public sealed class DrawingPage
 		PageKind.Fighter => "the fighter",
 		PageKind.Shot => "something they shoot or throw",
 		PageKind.Held => "something they hold",
+		PageKind.Stage => "the stage",
+		PageKind.Hazard => "a hazard - something that hurts",
+		PageKind.Mover => "a part that moves",
 		_ => "something else",
 	};
 
@@ -680,5 +697,6 @@ public sealed class SavedDrawing
 	public string Title;
 	public string Modified;
 	public bool Sent;
+	public bool IsStage;
 	public Texture2D Thumbnail;
 }

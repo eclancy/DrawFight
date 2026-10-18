@@ -18,6 +18,9 @@ public partial class OptionsScreen : Node2D
 	static readonly string[] RowNames = { "Screen", "Music", "Sounds", "Pad buttons", "Screen shake", "Lives (versus)" };
 
 	static readonly Rect2 BackBox = new Rect2(190.0f, 950.0f, 240.0f, 76.0f);
+
+	/// <summary>What changed in each version (ChangelogScreen).</summary>
+	static readonly Rect2 NewsBox = new Rect2(560.0f, 852.0f, 380.0f, 72.0f);
 	const float RowTop = 250.0f;
 	const float RowStep = 96.0f;
 	const float NamesLeft = 1060.0f;
@@ -69,6 +72,13 @@ public partial class OptionsScreen : Node2D
 		if (BackBox.HasPoint(point))
 		{
 			Leave(cursor);
+			return;
+		}
+		if (NewsBox.HasPoint(point))
+		{
+			leaving = true;
+			SfxPlayer.Ui("ui_select");
+			GameRoot.Instance.GoChangelog(touch.KeyOf(cursor));
 			return;
 		}
 
@@ -184,5 +194,7 @@ public partial class OptionsScreen : Node2D
 		}
 
 		MenuTheme.DrawButton(this, BackBox, "Back", 390, Hot(BackBox), fontSize: 38);
+		DrawString(font, new Vector2(190.0f, NewsBox.GetCenter().Y + 14.0f), $"Version {UpdateScreen.CurrentVersion}", HorizontalAlignment.Left, -1, 40, MenuTheme.Text);
+		MenuTheme.DrawButton(this, NewsBox, "What's new", 392, Hot(NewsBox), fontSize: 36);
 	}
 }

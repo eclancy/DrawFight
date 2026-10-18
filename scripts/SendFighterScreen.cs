@@ -37,6 +37,7 @@ public partial class SendFighterScreen : Node2D
 	{
 		("name", "1. What are they called?", "", 60),
 		("artist", "Who drew it?", "Just a first name, so we can say who made them.", 40),
+		("age", "How old are you?", "Only if you want it shown next to your name in the game. You can leave it out.", 3),
 		("what", "2. What are they?", "A robot? A wizard? A shark with legs? One or two sentences.", 0),
 		("amazing", "3. What are they AMAZING at?", "Pick one thing. Strong? Fast? Jumps really high? Floats? Impossible to knock over?", 0),
 		("terrible", "4. What are they TERRIBLE at?", "This is the most important question. Every fighter is bad at something, and that is what makes them fun to play and fun to fight. Slow? Easy to knock off? Bad at jumping? Short arms?", 0),
@@ -49,6 +50,25 @@ public partial class SendFighterScreen : Node2D
 		("catchphrase", "Do they have a catchphrase?", "Something they shout when they show off. Like \"Too hot for you!\"", 80),
 		("extra", "Anything else?", "A pet or sidekick you drew, what their taunt should be...", 0),
 	};
+
+	/// <summary>
+	/// A stage's sheet (Eric, 2026-10-18): the same kind of questions, about a place to fight -
+	/// what you stand on, what hurts, and what moves. The server files it with the stages.
+	/// </summary>
+	static readonly (string key, string question, string hint, int oneLine)[] StageQuestions =
+	{
+		("name", "1. What is your stage called?", "", 60),
+		("artist", "Who drew it?", "Just a first name, so we can say who made it.", 40),
+		("age", "How old are you?", "Only if you want it shown next to your name in the game. You can leave it out.", 3),
+		("what", "2. Where is it?", "A volcano? A treehouse? The top of the fridge? One or two sentences.", 0),
+		("ground", "3. What can you stand on?", "Which parts are solid ground, and which are platforms you can jump up through? Draw the jump-through ones with dashed lines.", 0),
+		("hazards", "4. Are there any hazards?", "Anything that hurts if you touch it? Lava, spikes, a falling anvil, a hungry plant... What does it do, and how often?", 0),
+		("moving", "5. Do any parts move?", "Platforms that slide, a lift going up and down, a crane, a boat on the waves, a door that opens... What moves, and how?", 0),
+		("look", "6. What is it like there?", "Day or night? Hot or cold? What can you hear? Who lives there?", 0),
+		("extra", "Anything else?", "Anything we should know about your stage.", 0),
+	};
+
+	(string key, string question, string hint, int oneLine)[] Asks => Doc.IsStage ? StageQuestions : Questions;
 
 	sealed class PageChoice
 	{
@@ -87,7 +107,7 @@ public partial class SendFighterScreen : Node2D
 			{
 				Page = page,
 				Layers = layers,
-				EachLayer = page.Kind == PageKind.Fighter && layers > 1,
+				EachLayer = (page.Kind == PageKind.Fighter || page.Kind == PageKind.Stage) && layers > 1,
 				Thumb = ImageTexture.CreateFromImage(thumb),
 			});
 		}
@@ -146,12 +166,12 @@ public partial class SendFighterScreen : Node2D
 		list.AddThemeConstantOverride("separation", 8);
 		form.AddChild(list);
 
-		var heading = new Label { Text = "Your character sheet" };
+		var heading = new Label { Text = Doc.IsStage ? "Your stage sheet" : "Your character sheet" };
 		heading.AddThemeFontSizeOverride("font_size", 44);
 		heading.AddThemeColorOverride("font_color", MenuTheme.Text);
 		list.AddChild(heading);
 
-		foreach ((string key, string question, string hint, int oneLine) in Questions)
+		foreach ((string key, string question, string hint, int oneLine) in Asks)
 		{
 			list.AddChild(new Control { CustomMinimumSize = new Vector2(0.0f, 14.0f) });
 			list.AddChild(Text(question, 30, MenuTheme.Text));
@@ -304,7 +324,7 @@ public partial class SendFighterScreen : Node2D
 		Doc.Sheet.TryGetValue("name", out string name);
 		if (string.IsNullOrWhiteSpace(name))
 		{
-			Say("Your fighter needs a name (question 1).", true);
+			Say(Doc.IsStage ? "Your stage needs a name (question 1)." : "Your fighter needs a name (question 1).", true);
 			form.ScrollVertical = 0;
 			fields["name"].GrabFocus();
 			SfxPlayer.Ui("ui_back");
@@ -372,7 +392,7 @@ public partial class SendFighterScreen : Node2D
 		}
 
 		var answers = new List<KeyValuePair<string, string>>();
-		foreach (var (key, _, _, _) in Questions)
+		foreach (var (key, _, _, _) in Asks)
 		{
 			Doc.Sheet.TryGetValue(key, out string answer);
 			answer = (answer ?? "").Trim();
@@ -383,7 +403,7 @@ public partial class SendFighterScreen : Node2D
 
 		Say("Sending...", false);
 		phase = Phase.Sending;
-		sending = FighterIntake.Send(answers, pictures);
+		sending = FighterIntake.Send(answers, pictures, Doc.IsStage ? "/api/draw/stage" : "/api/draw");
 	}
 
 	/// <summary>
@@ -473,7 +493,7 @@ public partial class SendFighterScreen : Node2D
 		}
 
 		bool ready = phase == Phase.Editing && FighterIntake.State == FighterIntake.Link.Online && !over && total > 0;
-		string label = phase == Phase.Editing ? "Send my fighter" : "Sending...";
+		string label = phase == Phase.Editing ? (Doc.IsStage ? "Send my stage" : "Send my fighter") : "Sending...";
 		MenuTheme.DrawButton(this, SendBox, label, 903, Hot(SendBox) && phase == Phase.Editing, ready, phase == Phase.Editing, 40);
 		if (message != "")
 		{
@@ -510,7 +530,7 @@ public partial class SendFighterScreen : Node2D
 		MenuTheme.DrawCentredText(this, new Rect2(0.0f, 450.0f, 1920.0f, 60.0f),
 			$"{name?.Trim()} is on the way into DrawFight. Thank you for drawing!", 40, MenuTheme.Text);
 		MenuTheme.DrawCentredText(this, new Rect2(0.0f, 520.0f, 1920.0f, 50.0f),
-			"It gets cut into pieces and put in the game, where it runs, jumps and fights.", 30, MenuTheme.Soft);
+			Doc.IsStage ? "It gets built into a stage, for everyone to fight on." : "It gets cut into pieces and put in the game, where it runs, jumps and fights.", 30, MenuTheme.Soft);
 		MenuTheme.DrawButton(this, DoneDrawingsBox, "My drawings", 930, Hot(DoneDrawingsBox), fontSize: 34);
 		MenuTheme.DrawButton(this, DoneMenuBox, "Main menu", 931, Hot(DoneMenuBox), fontSize: 34);
 	}

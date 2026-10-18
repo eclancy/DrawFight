@@ -91,8 +91,10 @@ public static class FighterIntake
 	/// Sends the answers and pictures. Returns null when the server took it, or what went wrong,
 	/// in words that can go straight on screen - the server's own message when it gave one.
 	/// </summary>
+	/// <param name="route">Where on the server: "/api/draw" for a fighter, "/api/draw/stage" for a
+	/// stage, "/api/draw/suggest" for a suggestion (no pictures).</param>
 	public static async Task<string> Send(IReadOnlyList<KeyValuePair<string, string>> fields,
-		IReadOnlyList<(string file, byte[] png)> pictures)
+		IReadOnlyList<(string file, byte[] png)> pictures, string route = "/api/draw")
 	{
 		try
 		{
@@ -106,7 +108,7 @@ public static class FighterIntake
 				form.Add(part, "photos", file);
 			}
 
-			using HttpResponseMessage response = await http.PostAsync(Base + "/api/draw", form);
+			using HttpResponseMessage response = await http.PostAsync(Base + route, form);
 			string body = await response.Content.ReadAsStringAsync();
 			link = (int)Link.Online;
 			if (response.IsSuccessStatusCode) return null;

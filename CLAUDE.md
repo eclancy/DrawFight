@@ -137,8 +137,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   drawn as separate parts in their own scripts (`FACE`). See "Faces" in `.ai/art-pipeline.md`.
 - **`bash tools/intake/pull_submissions.sh`** — "check for new fighters". Copies new
   submissions from the ecec.dev/draw form into `fighters/incoming/<id>/` (photos, `answers.json`,
-  `sheet.md`). That folder is gitignored: a kid's drawing only enters the public repo when it is
-  deliberately made into a fighter. The form and server live in the EricClancyEngineeringAndCrafts
+  `sheet.md`), and stages drawn in the game and suggestions typed in it into `incoming/stages/`
+  and `incoming/suggestions/`. Both folders are gitignored: a kid's drawing only enters the public
+  repo when it is deliberately made into a fighter or a stage. An `age` in `answers.json` goes in
+  `FighterData.ArtistAge`, shown after the artist's name. The form and server live in the EricClancyEngineeringAndCrafts
   repo (`public/draw/`, `intake/`, `docs/DEPLOYMENT.md`).
 - **`python tools/audio/build.py`** — regenerate every sound effect into `assets/sfx/` (about
   5 seconds). Add **`--music`** for the music in `assets/music/` - the menu, battle, story and
@@ -162,10 +164,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`"$GODOT_BIN" --path . -- --match --stage=N --shot=120`** — boot straight into a match on
   one stage and screenshot it (`--stage` alone only picks it). `F4` cycles stages while playing.
   Stages 4-6 are the big ones for three and four players.
-- **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--options`, `--drawings`** each boot straight to
+- **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--options`, `--changelog`, `--suggest`, `--drawings`** each boot straight to
   that screen, so a screen can be checked without clicking through the flow to reach it;
   **`--draw`** and **`--send`** open the newest saved drawing (or a new one) in the drawing or
-  sending screen. **`--fighters=2,0`**
+  sending screen, and **`--newstage`** a new stage drawing. **`--fighters=2,0`**
   picks the matchup (player one, player two - up to four, `--fighters=2,0,1,3`) by catalog
   index, and **`--cpu`** makes every player after the first the computer: a four-way fight to
   watch is `--match --stage=5 --fighters=3,1,4,5 --cpu`. **`--teams`** makes it a team fight,

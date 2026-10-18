@@ -502,11 +502,15 @@ public static class StageCatalog
 			// A scaffold plank across the pit, its poles standing on the edge of each side.
 			new StagePlatform(new Rect2(-540.0f, -210.0f, 1080.0f, 18.0f), true, PlatformLook.Scaffold),
 
-			// A tower crane each side, the jibs reaching out over the pit, a beam hanging off each.
+			// A tower crane each side, the jibs reaching out over the pit, a beam hanging off each -
+			// run in and out along the jib on its trolley, the two in step, so the way across the
+			// top keeps changing (Eric, 2026-10-18).
 			new StagePlatform(new Rect2(-1200.0f, -720.0f, 900.0f, 22.0f), true, PlatformLook.CraneJib),
 			new StagePlatform(new Rect2(300.0f, -720.0f, 900.0f, 22.0f), true, PlatformLook.CraneJib),
-			new StagePlatform(new Rect2(-470.0f, -720.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam),
-			new StagePlatform(new Rect2(300.0f, -720.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam),
+			new StagePlatform(new Rect2(-605.0f, -720.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam)
+				{ Travel = new Vector2(115.0f, 0.0f), TravelFrames = 420 },
+			new StagePlatform(new Rect2(435.0f, -720.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam)
+				{ Travel = new Vector2(-115.0f, 0.0f), TravelFrames = 420 },
 
 			// The site office, on the left.
 			new StagePlatform(new Rect2(-1850.0f, -210.0f, 400.0f, 210.0f), false, PlatformLook.SiteCabin),

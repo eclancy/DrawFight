@@ -163,6 +163,16 @@ public sealed class StagePlatform
 
 	public PlatformLook Look = PlatformLook.Ledge;
 
+	/// <summary>
+	/// A platform that moves (Eric, 2026-10-18: the building site's cranes shift their loads back
+	/// and forth): it swings from Rect by up to this much either way and back, once every
+	/// TravelFrames. Zero stays put. Anyone standing on it rides along.
+	/// </summary>
+	public Vector2 Travel;
+	public int TravelFrames = 360;
+
+	public bool Moves => Travel != Vector2.Zero && TravelFrames > 0;
+
 	public StagePlatform(Rect2 rect, bool oneWay, PlatformLook look)
 	{
 		Rect = rect;

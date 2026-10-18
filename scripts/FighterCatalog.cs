@@ -57,7 +57,9 @@ public static class FighterCatalog
 	public static string CreditOf(int index)
 	{
 		FighterData data = Get(index);
-		return string.IsNullOrEmpty(data.Artist) ? "a computer stand-in" : $"drawn by {data.Artist}";
+		if (string.IsNullOrEmpty(data.Artist)) return "a computer stand-in";
+		// Their age after their name, if they gave it (Eric, 2026-10-18).
+		return data.ArtistAge > 0 ? $"drawn by {data.Artist}, age {data.ArtistAge}" : $"drawn by {data.Artist}";
 	}
 
 	/// <summary>

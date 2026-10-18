@@ -95,6 +95,9 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public string Artist { get; set; } = "";
 
+	/// <summary>How old the kid who drew it was, if they said (the form's "How old are you?") - shown after their name. 0 for not given.</summary>
+	[Export] public int ArtistAge { get; set; }
+
 	/// <summary>
 	/// The colour of this fighter's swing trails. Transparent means use PlaceholderColor, the
 	/// fighter's own colour.
@@ -505,6 +508,7 @@ public partial class FighterData : Resource
 			DisplayName = "Circy",
 			VoicePitch = 1.3f,
 			Artist = "Elim",
+			ArtistAge = 9,
 			PlaceholderColor = new Color(0.98f, 0.86f, 0.30f),
 			Weight = WeightClass.Medium,
 			RunSpeed = 860.0f,
@@ -558,6 +562,7 @@ public partial class FighterData : Resource
 			DisplayName = "Triguy",
 			VoicePitch = 1.45f,
 			Artist = "Elim",
+			ArtistAge = 9,
 			// The blue Elim drew his tears and his trampoline in.
 			PlaceholderColor = new Color(0.10f, 0.40f, 1.0f),
 			Weight = WeightClass.Light,
