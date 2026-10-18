@@ -540,6 +540,12 @@ public partial class FighterRig : Node2D
 		{
 			Sprite2D foot = feet[(int)lower];
 			if (foot == null) continue;
+			// A kneeling leg's foot goes with its shin, toe down on the floor behind.
+			if (Kneeling && lower == RigBone.LegBackLower)
+			{
+				foot.Rotation = 0.0f;
+				continue;
+			}
 			float level = -(bones[(int)upper].Rotation + bones[(int)lower].Rotation);
 			foot.Rotation = Mathf.Clamp(level, -limit, limit) * plantBlend;
 		}
@@ -635,6 +641,22 @@ public partial class FighterRig : Node2D
 	public bool Sitting;
 
 	/// <summary>
+	/// Down on one knee (crouching; Eric, 2026-10-18): the back knee on the floor under the hips, its
+	/// shin laid out behind with the toe touching, and the front leg standing on its flat foot at the
+	/// height that leaves - solved for every fighter's legs, whatever shape they were drawn. Works
+	/// with standing (SetStanding), which solves the front leg. Whoever drives the rig sets it each
+	/// frame.
+	/// </summary>
+	public bool Kneeling;
+
+	/// <summary>How much lower than the pose says the hips sit to put the back knee on the floor - found frame by frame.</summary>
+	float kneelDrop;
+
+	/// <summary>How far the kneeling thigh leans back from straight down, and the shin from flat behind, in degrees.</summary>
+	const float KneelThighBack = 8.0f;
+	const float KneelShinDown = 4.0f;
+
+	/// <summary>
 	/// Degrees the back arm is swung forward from the pose, standing idle: an arm drawn hanging
 	/// behind a wide body is hidden by it (DoomBot's, Eric 2026-10-18), and forward of it shows.
 	/// Whoever drives the rig sets it each frame.
@@ -663,7 +685,7 @@ public partial class FighterRig : Node2D
 		int hip = (int)RigBone.Hip;
 		if (!present[hip]) return;
 		Vector2 at = bones[hip].Position;
-		at.Y = current.HipOffset.Y * 0.01f * LegLength * legStretch;
+		at.Y = current.HipOffset.Y * 0.01f * LegLength * legStretch + kneelDrop;
 
 		if (HasFeet)
 		{
@@ -754,6 +776,45 @@ public partial class FighterRig : Node2D
 			bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, thigh, blend);
 			bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, shinTurn - thigh, blend);
 		}
+	}
+
+	/// <summary>
+	/// The back leg down on its knee: the thigh straight down (leaning back a touch), the shin laid
+	/// out behind along the floor, so the knee and the toe both touch it. Then the hips are moved,
+	/// over the next frames, until the lowest point of that leg is exactly on the floor - the front
+	/// leg, solved by standing, follows them down onto its flat foot.
+	/// </summary>
+	void Kneel(float blend)
+	{
+		RigBone upper = RigBone.LegBackUpper, lower = RigBone.LegBackLower;
+		if (!present[(int)upper] || !present[(int)lower]) return;
+		Vector2 knee = bones[(int)lower].Position;
+		if (knee.Length() < 1.0f) return;
+
+		// Where the shin points as drawn: to its foot's ankle, or to its sole.
+		Vector2 shin;
+		if (feet[(int)lower] != null) shin = feet[(int)lower].Position;
+		else
+		{
+			(float, Vector2, Vector2 sole, bool)? flat = LevelSole(lower);
+			if (flat == null) return;
+			shin = flat.Value.sole;
+		}
+		if (shin.Length() < 1.0f) return;
+
+		float thighDir = Mathf.Pi * 0.5f + Mathf.DegToRad(KneelThighBack);
+		float shinDir = Mathf.Pi - Mathf.DegToRad(KneelShinDown);
+		float thigh = thighDir - knee.Angle();
+		float shinTurn = shinDir - shin.Angle();
+		bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, thigh, blend);
+		bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, shinTurn - thigh, blend);
+		if (feet[(int)lower] != null) feet[(int)lower].Rotation = 0.0f;
+
+		// The kneeling leg's lowest point onto the floor: the hips come down (or up) toward it.
+		float lowest = Mathf.Max(LowestInk(lower), feet[(int)lower] != null ? LowestInk(feet[(int)lower]) : float.MinValue);
+		if (lowest == float.MinValue) return;
+		float gap = LegLength * legStretch - lowest;
+		kneelDrop = Mathf.Clamp(kneelDrop + gap * 0.5f, 0.0f, LegLength * 0.8f);
 	}
 
 	/// <summary>
@@ -1925,6 +1986,8 @@ public partial class FighterRig : Node2D
 		PlaceLimbRoots();
 		standBlend = Mathf.MoveToward(standBlend, standing && planted && !Sitting ? 1.0f : 0.0f, 0.2f);
 		if (standBlend > 0.0f) StandOnFeet(standBlend);
+		if (Kneeling && standBlend > 0.0f) Kneel(standBlend);
+		else kneelDrop = Mathf.MoveToward(kneelDrop, 0.0f, LegLength * 0.08f);
 		for (int l = 0; l < Limbs.Length; l++) KeepBoneInRange(l);
 
 		plantBlend = Mathf.MoveToward(plantBlend, planted ? 1.0f : 0.0f, 0.25f);

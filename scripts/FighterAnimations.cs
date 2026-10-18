@@ -375,24 +375,27 @@ public static class FighterAnimations
 			(LFU, -6), (LFL, 6), (LBU, 6), (LBL, 4))));
 
 	/// <summary>
-	/// Holding down on the ground: knees deep, body folded well forward, guard up. Low enough that
-	/// it visibly ducks under a high attack, because the hurtbox really does shrink - to just over
-	/// half the standing height (Fighter.CrouchHeight). The body only drops because the feet are
-	/// planted (FighterRig.SetPlanted): bent legs pull the hip down to keep the soles on the floor.
+	/// Holding down on the ground: a squat, body folded well forward, guard up. Low enough that it
+	/// visibly ducks under a high attack, because the hurtbox really does shrink - to just over half
+	/// the standing height (Fighter.CrouchHeight). The legs are not posed: standing on the feet
+	/// (FighterRig.StandOnFeet) solves them, both soles flat on the floor and the knees bent as low
+	/// as the hips say, whatever shape each fighter's legs were drawn (Eric, 2026-10-18 - posed to
+	/// a kneel, a back leg swung that far turned round and left its foot in the air). The leg
+	/// angles here are standing ones, so nothing turns before the solver sets them.
 	/// </summary>
 	public static readonly AnimationClip Crouch = new AnimationClip("crouch", true,
-		(0, new Pose(new Vector2(0, 40),
+		(0, new Pose(new Vector2(0, 12),
 			(Torso, -34), (Head, 22),
 			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
-			(LFU, -84), (LFL, 136), (LBU, 56), (LBL, 118))),
-		(40, new Pose(new Vector2(0, 44),
+			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))),
+		(40, new Pose(new Vector2(0, 12),
 			(Torso, -36), (Head, 24),
 			(AFU, -36), (AFL, -74), (ABU, 18), (ABL, -54),
-			(LFU, -86), (LFL, 140), (LBU, 58), (LBL, 122))),
-		(80, new Pose(new Vector2(0, 40),
+			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))),
+		(80, new Pose(new Vector2(0, 12),
 			(Torso, -34), (Head, 22),
 			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
-			(LFU, -84), (LFL, 136), (LBU, 56), (LBL, 118))));
+			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))));
 
 	// --- Reacting ------------------------------------------------------------
 

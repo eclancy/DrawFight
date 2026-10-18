@@ -825,6 +825,7 @@ public partial class Fighter : CharacterBody2D
 		// A hand on his hip only while he is just standing; turned on below.
 		rig.HandOnHip = false;
 		rig.BackArmForward = 0.0f;
+		rig.Kneeling = false;
 		rig.Sitting = IsSitting;
 		rig.ArmBackLimit = StrikingPose ? FighterRig.ArmBackMost : Data.ArmReachBack;
 
@@ -895,6 +896,11 @@ public partial class Fighter : CharacterBody2D
 				break;
 
 			case FighterState.Grounded when IsCrouching:
+				// Down on one knee: the back knee and toe on the floor, the front foot flat - solved
+				// for each fighter's own legs (FighterRig.Kneeling), where a pose naming each leg's
+				// angle left some of them with a foot in the air (Eric, 2026-10-18).
+				rig.SetStanding(true);
+				rig.Kneeling = true;
 				rig.Play(FighterAnimations.Crouch);
 				rig.Advance();
 				break;

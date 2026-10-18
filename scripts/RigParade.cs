@@ -162,6 +162,8 @@ public partial class RigParade : Node2D
 				break;
 			case "crouch":
 				rig.SetPlanted(true);
+				rig.SetStanding(true);
+				rig.Kneeling = true;
 				rig.CarryOnShoulder = data.ShouldersProp;
 				rig.Play(FighterAnimations.Crouch);
 				rig.Advance();
@@ -714,7 +716,8 @@ public partial class RigParade : Node2D
 				string columnLabel = columns[index].label;
 				rig.SetPlanted(columnLabel != "jump" && columnLabel != "fall" && !columnLabel.EndsWith("air"));
 				// Standing on flat feet, as in a match (FighterRig.StandOnFeet).
-				rig.SetStanding(columnLabel == "idle" || columnLabel == "block" || columnLabel == "stretch");
+				rig.SetStanding(columnLabel == "idle" || columnLabel == "block" || columnLabel == "stretch" || columnLabel == "crouch");
+				rig.Kneeling = columnLabel == "crouch";
 
 				// Each attack shows the weapon it puts in his hand, or an empty hand, as in a match.
 				MoveData shown = Attacks ? MoveFor(data, columns[index].label) : null;

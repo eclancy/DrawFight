@@ -89,7 +89,7 @@ public partial class CharacterSelectScreen : Node2D
 
 	static readonly Rect2 QuitBox = new Rect2(1640.0f, 64.0f, 200.0f, 76.0f);
 
-	/// <summary>Every one for themselves, or teams.</summary>
+	/// <summary>Everyone for themselves, or teams.</summary>
 	static readonly Rect2 TeamsBox = new Rect2(1180.0f, 64.0f, 420.0f, 76.0f);
 
 	/// <summary>
@@ -1055,7 +1055,7 @@ public partial class CharacterSelectScreen : Node2D
 		{
 			bool teamsHot = false;
 			foreach (Slot slot in slots) teamsHot |= slot.Human && slot.Cursor != null && TeamsBox.HasPoint(slot.Cursor.Position);
-			MenuTheme.DrawButton(this, TeamsBox, TeamBattle ? "Teams" : "Every one for themselves", 79, teamsHot, TeamBattle,
+			MenuTheme.DrawButton(this, TeamsBox, TeamBattle ? "Teams" : "Everyone for themselves", 79, teamsHot, TeamBattle,
 				fontSize: TeamBattle ? 40 : 28);
 
 			bool itemsHot = false;

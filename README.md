@@ -36,7 +36,7 @@ played it.
 | **Fighting** | percent + knockback + stocks, hitlag, screen shake, DI, ledge grabs, dodges |
 | **Moves** | 17 per fighter — a jab combo (length set by weight), 3 tilts, 3 chargeable smashes, dash attack, 5 aerials, 4 specials, each with its own animation |
 | **Fighters** | 6 — **Circy**, the first fighter designed by a kid (Elim), and **Triguy**, his second, sent in through the submission form; **EdgeLord**, a sword fighter drawn by Eric and coloured by us; **DoomBot**, a rogue factory robot drawn and designed by Eric, with a furnace that heats up as he fights; and two stand-ins we drew in code: **Flambé**, a punk rocker, and **Lugnut**, a muscle-bound construction worker |
-| **Players** | 2 to 4 in versus, any of them the computer, every one for themselves or in teams (red, blue, green; no friendly fire); each player's colour and number on their cursor, the HUD and a tag over their head |
+| **Players** | 2 to 4 in versus, any of them the computer, everyone for themselves or in teams (red, blue, green; no friendly fire); each player's colour and number on their cursor, the HUD and a tag over their head |
 | **Stages** | 7 — Fridge Door, Open Plains, City Rooftops, and Big Show: a concert stage with a girder across the top and speakers loud enough to knock you back; and three big ones for three or four players: Playground (slide, monkey bars, sandbox, swings), Building Site (a pit in the middle, cranes swinging their loads in and out, scaffolding) and Kitchen Counter (a sink to drop into, a toaster, cupboards) |
 | **Items** | 30, all art supplies — a giant pencil to swing, a paint bucket to throw, glitter bombs, a magic marker that draws a platform, White-Out that rubs off damage. Off, low, medium or high from the Items button on fighter select or stage select, and each one on or off from stage select |
 | **Drawing** | draw a fighter in the game itself, on lined paper: marker, coloured pencil, paint bucket, eraser, layers (one per body part) and pages for the things a fighter uses. Saved as you go, and sent straight to ecec.dev - the same place as the website's form |
@@ -149,7 +149,7 @@ taken, someone new pressing A takes a CPU's. Two or more seats filled and picked
 fights. **Playing alone** is the same:
 press **CPU** in another seat.
 
-**Teams:** press **Every one for themselves** at the top of fighter select to switch to
+**Teams:** press **Everyone for themselves** at the top of fighter select to switch to
 **Teams**. Each seat gets a team button - red, blue or green; press yours to change it (anyone can
 change a CPU's). Teammates can't hurt each other, and a team wins when the other teams are out.
 

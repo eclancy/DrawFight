@@ -52,7 +52,7 @@ public partial class GameRoot : Node2D
 		return order[Mathf.Clamp(seat, 0, order.Length - 1)];
 	}
 
-	/// <summary>A team fight rather than every one for themselves, chosen on the fighter select screen.</summary>
+	/// <summary>A team fight rather than everyone for themselves, chosen on the fighter select screen.</summary>
 	public bool TeamBattle;
 
 	/// <summary>Each seat's team in a team fight: 0 red, 1 blue, 2 green. Two against two to start with.</summary>
@@ -393,7 +393,7 @@ public partial class GameRoot : Node2D
 			teams.Add(SeatTeams[seat]);
 			names.Add(CpuPlayers[seat] ? null : SeatNames[seat]);
 		}
-		// A team fight needs two teams in it; everyone on one is every one for themselves.
+		// A team fight needs two teams in it; everyone on one is everyone for themselves.
 		bool teamBattle = TeamBattle && new System.Collections.Generic.HashSet<int>(teams).Count >= 2;
 		var match = new MatchManager
 		{

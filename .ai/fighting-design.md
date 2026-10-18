@@ -21,7 +21,7 @@ Smash rules, not health bars.
 - Losing a stock resets your percent to 0 and respawns you on a platform above the stage,
   briefly invulnerable.
 - Default match: 3 stocks, no time limit. Last fighter standing wins.
-- **Two to four players**, every one for themselves (Eric, 2026-10-16). Fighter select has four
+- **Two to four players**, everyone for themselves (Eric, 2026-10-16). Fighter select has four
   seats; any can be a person or the computer, and two or more filled start a fight. Players are
   numbered in the order they press A, not by which pad is plugged in where: the first controller
   to press - any pad, or either half of the keyboard - sits as P1 (`ControllerAssignment.Devices`,
