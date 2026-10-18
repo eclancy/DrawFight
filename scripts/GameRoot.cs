@@ -58,6 +58,14 @@ public partial class GameRoot : Node2D
 	/// <summary>Each seat's team in a team fight: 0 red, 1 blue, 2 green. Two against two to start with.</summary>
 	public int[] SeatTeams = { 0, 1, 0, 1 };
 
+	/// <summary>Each CPU seat's difficulty on fighter select: 0 Easy, 1 Medium, 2 Hard.</summary>
+	public int[] CpuDifficulty = { 1, 1, 1, 1 };
+
+	/// <summary>The CPU level each difficulty plays at (CpuInputSource.Level).</summary>
+	public static int LevelFor(int difficulty) => difficulty switch { 0 => 1, 2 => 8, _ => 4 };
+
+	public static string DescribeDifficulty(int difficulty) => difficulty switch { 0 => "EASY", 2 => "HARD", _ => "MEDIUM" };
+
 	/// <summary>
 	/// A cursor for every person playing, in their seat's colour on their seat's controller - the
 	/// screens between fighter select and the fight (stage select, item settings). A CPU has none.
@@ -362,11 +370,13 @@ public partial class GameRoot : Node2D
 		var seats = new System.Collections.Generic.List<int>();
 		var teams = new System.Collections.Generic.List<int>();
 		var names = new System.Collections.Generic.List<string>();
+		var levels = new System.Collections.Generic.List<int>();
 		for (int seat = 0; seat < MaxPlayers; seat++)
 		{
 			if (SelectedFighters[seat] < 0) continue;
 			fighters.Add(SelectedFighters[seat]);
 			cpu.Add(CpuPlayers[seat]);
+			levels.Add(LevelFor(CpuDifficulty[seat]));
 			seats.Add(seat);
 			teams.Add(SeatTeams[seat]);
 			names.Add(CpuPlayers[seat] ? null : SeatNames[seat]);
@@ -384,6 +394,7 @@ public partial class GameRoot : Node2D
 			Items = Items,
 			OnlyItem = OnlyItem,
 			Names = names.ToArray(),
+			CpuLevels = levels.ToArray(),
 		};
 		Show(match);
 	}

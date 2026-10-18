@@ -69,8 +69,9 @@ public sealed class CpuInputSource : IInputSource
 	// level 4 is that tuning, and what versus plays; a story ramps from gentle to the boss.
 
 	/// <summary>
-	/// How well it plays, 1 (barely tries) to 9 (quick and relentless). 4 is the versus CPU. Set
-	/// before the match starts.
+	/// How well it plays, 1 (barely tries) to 9 (quick and relentless). Versus picks Easy (1),
+	/// Medium (4) or Hard (8) per CPU seat (Eric, 2026-10-18); a story ramps from 2 to its boss.
+	/// Set before the match starts.
 	/// </summary>
 	public int Level
 	{
@@ -87,9 +88,43 @@ public sealed class CpuInputSource : IInputSource
 			BlockChance = At(0.04f, 0.15f, 0.35f);
 			AttackChance = At(0.35f, 0.6f, 0.9f);
 			SideSpecialChance = At(0.05f, 0.12f, 0.2f);
+			GrabChance = At(0.0f, 0.0f, 0.18f);
+			if (Gentle)
+			{
+				// Easy: a sparring partner a four-year-old can beat up (Eric, 2026-10-18). Slow to
+				// react, mostly wandering, and when it does swing it is a jab or a tilt - never a
+				// smash, a special, a grab or a block. It still gets home when knocked off, so a
+				// KO is something the child did.
+				ReactionFrames = 44;
+				IdleChance = 0.72f;
+				BlockChance = 0.0f;
+				AttackChance = 0.22f;
+				SideSpecialChance = 0.0f;
+			}
 		}
 	}
 	int level = 4;
+
+	/// <summary>Easy: never a smash, special, grab or block, no steering out of a launch, and it walks rather than runs.</summary>
+	bool Gentle => level <= 1;
+
+	/// <summary>
+	/// Hard and above: it plays like someone who knows the game (Eric, 2026-10-18) - finishes its
+	/// jab combo when the first jab lands, chases a launched opponent with a jump and an aerial
+	/// (an up tilt or up throw into up airs), reacts fast while they are helpless, grabs, and throws
+	/// toward the nearest edge, or straight down at low damage to follow it up.
+	/// </summary>
+	bool Combos => level >= 7;
+
+	/// <summary>How often, next to someone not blocking, it grabs instead of swinging. Only at Hard.</summary>
+	float GrabChance;
+
+	/// <summary>Frames between decisions while the opponent is launched, at Hard: quick enough to follow up.</summary>
+	const int ComboReactionFrames = 4;
+
+	/// <summary>The jab it has already pressed on into the next hit of, so it presses once per jab.</summary>
+	MoveData chainedFrom;
+	bool wasAttacking;
 
 	/// <summary>Frames between decisions: the CPU's reaction time. About a third of a second at level 4.</summary>
 	int ReactionFrames = 20;
@@ -130,12 +165,19 @@ public sealed class CpuInputSource : IInputSource
 		frame++;
 		if (self == null || match == null || !self.IsInPlay) return InputState.None;
 
+		// Hard, out of its own move with them still flying: straight on to the next decision.
+		bool attacking = self.State == FighterState.Attacking;
+		if (Combos && wasAttacking && !attacking && TargetLaunched()) nextDecision = frame;
+		wasAttacking = attacking;
+
 		if (frame >= nextDecision)
 		{
 			Decide();
-			nextDecision = frame + ReactionFrames + RandiRange(-ReactionJitter, ReactionJitter);
+			bool chasing = Combos && TargetLaunched();
+			nextDecision = frame + (chasing ? ComboReactionFrames : ReactionFrames + RandiRange(-ReactionJitter, ReactionJitter));
 		}
 		if (jumpCooldown > 0) jumpCooldown--;
+		if (Combos && attacking) KeepComboGoing();
 
 		var state = new InputState
 		{
@@ -167,8 +209,9 @@ public sealed class CpuInputSource : IInputSource
 		{
 			case FighterState.Hitstun:
 			case FighterState.Tumbling:
-				// Lean back toward the middle of the stage, which also angles the launch (DI).
-				heldStick = new Vector2(Mathf.Sign(StageCentreX() - self.GlobalPosition.X), -0.6f);
+				// Lean back toward the middle of the stage, which also angles the launch (DI). Easy
+				// does not know to.
+				if (!Gentle) heldStick = new Vector2(Mathf.Sign(StageCentreX() - self.GlobalPosition.X), -0.6f);
 				return;
 
 			case FighterState.LedgeHang:
@@ -203,7 +246,8 @@ public sealed class CpuInputSource : IInputSource
 			return;
 		}
 
-		if (Randf() < IdleChance) return;
+		// Hard never stands about while someone is flying - that is when the combo is.
+		if (!(Combos && target.IsLaunched) && Randf() < IdleChance) return;
 
 		Vector2 toTarget = target.GlobalPosition - self.GlobalPosition;
 		float dx = toTarget.X;
@@ -211,7 +255,7 @@ public sealed class CpuInputSource : IInputSource
 		float distance = Mathf.Abs(dx);
 		int toward = dx >= 0.0f ? 1 : -1;
 
-		// Something is coming: sometimes block it.
+		// Something is coming: sometimes block it. (Easy never does: BlockChance is 0.)
 		if (self.IsOnFloor() && target.CurrentMove != null && distance < 170.0f && Randf() < BlockChance)
 		{
 			blockUntil = frame + RandiRange(12, 22);
@@ -227,6 +271,27 @@ public sealed class CpuInputSource : IInputSource
 			heldStick = Vector2.Zero;
 			blockUntil = frame + 2;
 			pressAttack = true;
+			return;
+		}
+
+		// Hard, next to someone who is not blocking: sometimes grab, for a throw.
+		if (GrabChance > 0.0f && self.IsOnFloor() && !target.IsLaunched && self.Facing == toward && Mathf.Abs(dy) < 80.0f
+			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + Fighter.GrabOut
+			&& Randf() < GrabChance)
+		{
+			heldStick = Vector2.Zero;
+			blockUntil = frame + 2;
+			pressAttack = true;
+			return;
+		}
+
+		// Hard, them launched up above: jump after them, the air jump too, to meet them with an aerial.
+		if (Combos && target.IsLaunched && dy < -90.0f && distance < 360.0f && jumpCooldown == 0
+			&& (self.IsOnFloor() || self.HasAirJump && self.Velocity.Y > -150.0f) && !NearBlastZone(toward))
+		{
+			pressJump = true;
+			jumpCooldown = 12;
+			heldStick = new Vector2(toward * 0.6f, 0.0f);
 			return;
 		}
 
@@ -264,6 +329,35 @@ public sealed class CpuInputSource : IInputSource
 
 		// Nothing lands from here: get to its own range - in, out, or turned round.
 		Space(target, toward, distance);
+		// Easy walks; running at a small child's fighter is not sparring.
+		if (Gentle) heldStick = new Vector2(Mathf.Clamp(heldStick.X, -0.45f, 0.45f), heldStick.Y);
+	}
+
+	bool TargetLaunched()
+	{
+		Fighter target = NearestOpponent();
+		return target != null && target.IsLaunched;
+	}
+
+	/// <summary>
+	/// Hard, mid-move, every frame: a jab that landed is pressed on into the rest of its combo, and
+	/// a grab is thrown - toward the nearest edge, or straight down at low damage to follow it up.
+	/// </summary>
+	void KeepComboGoing()
+	{
+		MoveData move = self.CurrentMove;
+		if (move == null) return;
+		if (move.ComboNext != null && move != chainedFrom && self.LandedThisMove)
+		{
+			chainedFrom = move;
+			pressAttack = true;
+		}
+		if (self.IsHolding)
+		{
+			Fighter held = self.Holding;
+			if (held != null && held.Percent < 50.0f) heldStick = new Vector2(0.0f, 1.0f);
+			else heldStick = new Vector2(self.GlobalPosition.X < StageCentreX() ? -1.0f : 1.0f, 0.0f);
+		}
 	}
 
 	/// <summary>
@@ -284,7 +378,7 @@ public sealed class CpuInputSource : IInputSource
 			Consider(MoveSlot.NeutralAir, Vector2.Zero, false, 1.0f, facing, body);
 			Consider(MoveSlot.ForwardAir, new Vector2(facing, 0.0f), false, 1.0f, facing, body);
 			Consider(MoveSlot.BackAir, new Vector2(-facing, 0.0f), false, 1.0f, facing, body);
-			Consider(MoveSlot.UpAir, new Vector2(0.0f, -1.0f), false, 1.0f, facing, body);
+			Consider(MoveSlot.UpAir, new Vector2(0.0f, -1.0f), false, Combos && target.IsLaunched ? 2.5f : 1.0f, facing, body);
 			Consider(MoveSlot.DownAir, new Vector2(0.0f, 1.0f), false, 1.0f, facing, body);
 			return;
 		}
@@ -303,10 +397,15 @@ public sealed class CpuInputSource : IInputSource
 		// At 0.7 the stick is a tilt; the smashes come with the d-pad flag, as a flick would.
 		Consider(MoveSlot.Jab, Vector2.Zero, false, 1.0f, facing, body);
 		Consider(MoveSlot.ForwardTilt, new Vector2(facing * 0.7f, 0.0f), false, 1.2f, facing, body);
-		Consider(MoveSlot.UpTilt, new Vector2(0.0f, -0.7f), false, 1.0f, facing, body);
+		Consider(MoveSlot.UpTilt, new Vector2(0.0f, -0.7f), false, Combos && target.IsLaunched ? 2.0f : 1.0f, facing, body);
 		Consider(MoveSlot.DownTilt, new Vector2(0.0f, 0.7f), false, 1.0f, facing, body);
-		// Smashes are slow: thrown now and then, and more once a hit could finish them.
-		float smash = target.Percent > 90.0f ? 1.2f : 0.4f;
+		// Smashes are slow: thrown now and then, and more once a hit could finish them. Never on Easy.
+		float smash = Gentle ? 0.0f : target.Percent > 90.0f ? 1.2f : 0.4f;
+		if (smash <= 0.0f)
+		{
+			// Easy keeps to its tilts and jab.
+			return;
+		}
 		// A forward smash turns him to face the way it is flicked, so it can go either way.
 		Consider(MoveSlot.ForwardSmash, new Vector2(toward, 0.0f), true, smash, toward, body);
 		Consider(MoveSlot.UpSmash, new Vector2(0.0f, -1.0f), true, smash, facing, body);
@@ -403,7 +502,7 @@ public sealed class CpuInputSource : IInputSource
 	void Attack()
 	{
 		// A down special now and then, close in - Circy's bomb, Flambe's fire cloud, Lug's girder.
-		if (self.IsOnFloor() && Randf() < 0.08f)
+		if (!Gentle && self.IsOnFloor() && Randf() < 0.08f)
 		{
 			heldStick = new Vector2(0.0f, 1.0f);
 			pressSpecial = true;

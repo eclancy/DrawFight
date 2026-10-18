@@ -626,9 +626,10 @@ public partial class CharacterSelectScreen : Node2D
 	Rect2 CpuButton(int player, int which)
 	{
 		Rect2 panel = PanelRect(player, GetViewportRect().Size);
-		const float W = 170.0f;
+		// Three across for a CPU: its difficulty, CHANGE and REMOVE.
+		const float W = 116.0f;
 		const float H = 48.0f;
-		return new Rect2(panel.End.X - 24.0f - W - which * (W + 14.0f), panel.End.Y - 14.0f - H, W, H);
+		return new Rect2(panel.End.X - 20.0f - W - which * (W + 6.0f), panel.End.Y - 14.0f - H, W, H);
 	}
 
 	/// <summary>
@@ -649,6 +650,13 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			if (!seat.IsCpu) continue;
+
+			if (CpuButton(i, 2).HasPoint(point))
+			{
+				int[] difficulty = GameRoot.Instance.CpuDifficulty;
+				difficulty[i] = (difficulty[i] + 1) % 3;
+				return true;
+			}
 
 			if (CpuButton(i, 1).HasPoint(point))
 			{
@@ -705,7 +713,7 @@ public partial class CharacterSelectScreen : Node2D
 	}
 
 	/// <summary>A small crayon button, outlined in the colour of any cursor over it.</summary>
-	void DrawButton(Rect2 box, string text, int seed)
+	void DrawButton(Rect2 box, string text, int seed, int fontSize = 28)
 	{
 		Color ink = MenuTheme.Rule;
 		foreach (Slot slot in slots)
@@ -715,8 +723,8 @@ public partial class CharacterSelectScreen : Node2D
 
 		DrawRect(box, new Color(1.0f, 1.0f, 1.0f, 0.85f));
 		CrayonBrush.InkRect(this, box, ink, ink == MenuTheme.Rule ? 3.0f : 6.0f, seed, 2.2f);
-		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + 10.0f), text,
-			HorizontalAlignment.Center, box.Size.X, 28, MenuTheme.Text);
+		DrawString(ThemeDB.FallbackFont, new Vector2(box.Position.X, box.GetCenter().Y + fontSize * 0.36f), text,
+			HorizontalAlignment.Center, box.Size.X, fontSize, MenuTheme.Text);
 	}
 
 	/// <summary>A team button: filled with the team's colour, its name on it, outlined by any cursor over it.</summary>
@@ -1022,8 +1030,9 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (seat.IsCpu)
 			{
-				DrawButton(CpuButton(i, 1), "CHANGE", 91 + i);
-				DrawButton(CpuButton(i, 0), "REMOVE", 93 + i);
+				DrawButton(CpuButton(i, 2), GameRoot.DescribeDifficulty(GameRoot.Instance.CpuDifficulty[i]), 89 + i, 22);
+				DrawButton(CpuButton(i, 1), "CHANGE", 91 + i, 22);
+				DrawButton(CpuButton(i, 0), "REMOVE", 93 + i, 22);
 			}
 			else
 			{

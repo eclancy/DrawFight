@@ -2853,6 +2853,13 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	public bool IsLaunched => State == FighterState.Hitstun || State == FighterState.Tumbling;
 
+	/// <summary>The move under way has hit someone already - a CPU pressing on into the rest of a jab combo.</summary>
+	public bool LandedThisMove => State == FighterState.Attacking && alreadyHitThisMove.Count > 0;
+
+	/// <summary>Holding someone in a grab, about to throw them.</summary>
+	public bool IsHolding => grabbed != null;
+	public Fighter Holding => grabbed;
+
 	/// <summary>
 	/// Anyone in control of themselves stops at the side and top blast zones, as if at a wall
 	/// or a ceiling, so a high jump or a long recovery never KOs and a walk-off floor cannot be
