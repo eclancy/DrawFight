@@ -124,6 +124,7 @@ public partial class CharacterSelectScreen : Node2D
 
 	Node2D cursorLayer;
 	Node2D namingLayer;
+	readonly QuitPrompt quitPrompt = new QuitPrompt();
 
 	public override void _Ready()
 	{
@@ -294,6 +295,9 @@ public partial class CharacterSelectScreen : Node2D
 		namingLayer = MenuCursor.MakeOverlay(this, DrawPickers);
 		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
 		{
+			var pointing = new List<Vector2>();
+			foreach (Slot slot in slots) if (slot.Human && slot.Cursor != null) pointing.Add(slot.Cursor.Position);
+			quitPrompt.Draw(canvas, pointing);
 			foreach (Slot slot in slots)
 			{
 				if (slot.Human && slot.Cursor != null) slot.Cursor.Draw(canvas);
@@ -797,6 +801,12 @@ public partial class CharacterSelectScreen : Node2D
 				continue;
 			}
 			cursor.Move(viewport);
+			if (quitPrompt.Open)
+			{
+				if (cursor.Cancel) quitPrompt.Cancel();
+				else if (cursor.Confirm) quitPrompt.Press(this, cursor.Position);
+				continue;
+			}
 
 			// With everyone picked, Start fights. Checked first, because Start also counts as A
 			// and would otherwise re-pick whatever card the cursor happens to be resting on.
@@ -831,8 +841,9 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (QuitBox.HasPoint(cursor.Position))
 			{
-				GetTree().Quit();
-				return;
+				quitPrompt.Open = true;
+				SfxPlayer.Ui("ui_select");
+				continue;
 			}
 
 			if (!ForStory && ItemsBox.HasPoint(cursor.Position))

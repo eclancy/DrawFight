@@ -28,6 +28,7 @@ public partial class MainMenuScreen : Node2D
 
 	/// <summary>A cursor for each controller, shown once it is touched (TouchCursors).</summary>
 	TouchCursors touch;
+	readonly QuitPrompt quitPrompt = new QuitPrompt();
 	List<MenuCursor> cursors => touch.Shown;
 	readonly List<FighterRig> rigs = new List<FighterRig>();
 	Node2D cursorLayer;
@@ -48,6 +49,7 @@ public partial class MainMenuScreen : Node2D
 
 		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
 		{
+			quitPrompt.Draw(canvas, cursors.ConvertAll(c => c.Position));
 			foreach (MenuCursor cursor in cursors) cursor.Draw(canvas);
 		});
 	}
@@ -102,7 +104,13 @@ public partial class MainMenuScreen : Node2D
 				hovered = over;
 			}
 			// B steps back through the menus to here, and stops: this is home (Eric, 2026-10-18).
-			// Leaving the game is QUIT.
+			// Leaving the game is QUIT - which asks first.
+			if (quitPrompt.Open)
+			{
+				if (cursor.Cancel) quitPrompt.Cancel();
+				else if (cursor.Confirm) quitPrompt.Press(this, cursor.Position);
+				continue;
+			}
 			if (cursor.Confirm)
 			{
 				// A pad picked it: drawing a fighter starts with the pad as the pointer.
@@ -119,7 +127,8 @@ public partial class MainMenuScreen : Node2D
 		if (leaving) return;
 		if (QuitBox.HasPoint(point))
 		{
-			GetTree().Quit();
+			quitPrompt.Open = true;
+			SfxPlayer.Ui("ui_select");
 			return;
 		}
 		if (IdeasBox.HasPoint(point))

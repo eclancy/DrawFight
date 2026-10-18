@@ -239,9 +239,9 @@ public partial class MatchManager : Node2D
 				named = true;
 			}
 		}
-		// Anyone with a name wears it over their head, whatever the fight.
-		ShowPlayerTags = Story == null && (TeamBattle || named || FighterIndices.Length >= 3
-			|| new System.Collections.Generic.HashSet<int>(FighterIndices).Count < FighterIndices.Length);
+		// Every versus fighter wears their tag over their head, wherever they go (Eric, 2026-10-18) -
+		// named or "P1", "CPU". A story's scenes have their own names in their speech bubbles.
+		ShowPlayerTags = Story == null;
 
 		fx = new HitFx();
 		AddChild(fx);

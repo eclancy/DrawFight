@@ -33,6 +33,17 @@ public partial class GameCamera : Camera2D
 	/// </summary>
 	public float Floor = 100000.0f;
 
+	/// <summary>
+	/// The strip along the bottom of the screen the HUD covers - names, percents and lives
+	/// (MatchHud, from y 808 down). The screen may reach this far, in screen pixels, below the
+	/// Floor, so the art's bottom edge sits behind the HUD rather than the ground does: pinned to
+	/// the art's very bottom, every stage sank down into the percentages (Eric, 2026-10-18).
+	/// </summary>
+	public const float HudBand = 272.0f;
+
+	/// <summary>The lowest the bottom of the screen goes at this zoom: under the HUD, at the art's end.</summary>
+	float FloorFor(float zoom) => Mathf.Min(Floor + HudBand / zoom, Limits.End.Y);
+
 	float shake;
 	Vector2 shakeOffset;
 	readonly RandomNumberGenerator rng = new RandomNumberGenerator();
@@ -119,8 +130,12 @@ public partial class GameCamera : Camera2D
 	float FittingZoom()
 	{
 		Vector2 viewport = GetViewportRect().Size;
-		float tall = Mathf.Min(Floor, Limits.End.Y) - Limits.Position.Y;
-		return Mathf.Max(viewport.X / Mathf.Max(1.0f, Limits.Size.X), viewport.Y / Mathf.Max(1.0f, tall));
+		// The view, less the HUD band, has to fit from the top of the backdrop down to the Floor; and
+		// all of it inside the backdrop.
+		float toFloor = Floor - Limits.Position.Y;
+		float toEnd = Limits.End.Y - Limits.Position.Y;
+		return Mathf.Max(viewport.X / Mathf.Max(1.0f, Limits.Size.X),
+			Mathf.Max((viewport.Y - HudBand) / Mathf.Max(1.0f, toFloor), viewport.Y / Mathf.Max(1.0f, toEnd)));
 	}
 
 	/// <summary>A centre moved in until the whole screen round it is inside Limits.</summary>
@@ -130,7 +145,7 @@ public partial class GameCamera : Camera2D
 		float Axis(float c, float low, float high, float h) =>
 			high - low <= h * 2.0f ? (low + high) * 0.5f : Mathf.Clamp(c, low + h, high - h);
 		float y = Axis(centre.Y, Limits.Position.Y, Limits.End.Y, half.Y);
-		return new Vector2(Axis(centre.X, Limits.Position.X, Limits.End.X, half.X), Mathf.Min(y, Floor - half.Y));
+		return new Vector2(Axis(centre.X, Limits.Position.X, Limits.End.X, half.X), Mathf.Min(y, FloorFor(zoom) - half.Y));
 	}
 
 	/// <summary>A cut: there at once, no easing.</summary>
