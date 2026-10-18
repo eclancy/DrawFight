@@ -146,6 +146,7 @@ public static class StageCatalog
 		var data = new StageData
 		{
 			DisplayName = "Open Plains",
+			Music = "battle_plains",
 			Style = StageStyle.OutsideTheLines,
 
 			SkyTop = new Color(0.62f, 0.80f, 0.92f),
@@ -226,6 +227,7 @@ public static class StageCatalog
 		var data = new StageData
 		{
 			DisplayName = "City Rooftops",
+			Music = "battle_rooftops",
 			Style = StageStyle.ExerciseBook,
 
 			SkyTop = new Color(0.42f, 0.64f, 0.94f),
@@ -316,6 +318,8 @@ public static class StageCatalog
 		var data = new StageData
 		{
 			DisplayName = "Big Show",
+			Music = "battle_bigshow",
+			Speakers = true,
 			Style = StageStyle.PinnedPages,
 
 			// The fridge door round the page, as on Fridge Door.
@@ -398,6 +402,7 @@ public static class StageCatalog
 		var data = new StageData
 		{
 			DisplayName = "Playground",
+			Music = "battle_playground",
 			Style = StageStyle.OutsideTheLines,
 
 			SkyTop = new Color(0.64f, 0.82f, 0.95f),
@@ -472,6 +477,7 @@ public static class StageCatalog
 		var data = new StageData
 		{
 			DisplayName = "Building Site",
+			Music = "battle_site",
 			Style = StageStyle.ExerciseBook,
 
 			SkyTop = new Color(0.68f, 0.82f, 0.96f),
@@ -560,6 +566,7 @@ public static class StageCatalog
 		var data = new StageData
 		{
 			DisplayName = "Kitchen Counter",
+			Music = "battle_kitchen",
 			Style = StageStyle.PinnedPages,
 
 			// The fridge door round the page, as on Fridge Door.

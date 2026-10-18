@@ -18,6 +18,9 @@ public partial class Stage : Node2D
 	/// <summary>The cars, on a stage with traffic. MatchManager hands it the match so it can hit people.</summary>
 	public StreetTraffic Traffic { get; private set; }
 
+	/// <summary>The Big Show's speakers, thumping and now and then blasting, or null.</summary>
+	public SpeakerBlast Speakers { get; private set; }
+
 	/// <summary>Drawn well past the blast zone so a zoomed-out camera never sees the backdrop end.</summary>
 	const float BackdropPad = 900.0f;
 
@@ -93,6 +96,13 @@ public partial class Stage : Node2D
 			{
 				if (data.BlastZone.HasPoint(corner)) Ledges.Add(corner);
 			}
+		}
+
+		if (data.Speakers)
+		{
+			Speakers = new SpeakerBlast();
+			AddChild(Speakers);
+			Speakers.Setup(data);
 		}
 
 		QueueRedraw();

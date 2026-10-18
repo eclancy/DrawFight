@@ -124,30 +124,45 @@ music drops a further 12 dB.
 
 ## Music
 
-`tools/audio/music.py` writes four loops and a sting, mono, at 22050 Hz: the menu about 33 seconds
-(1.4 MB), the battle 41 (1.7 MB), the story theme 38 (1.6 MB), DoomBot's theme 41 (1.7 MB) and
-the victory sting 3 (0.1 MB), in a repo with no LFS.
+`tools/audio/music.py` writes the menu loop, a battle loop for every stage, the story and DoomBot
+loops and a victory sting, mono, at 22050 Hz - each loop 26 to 44 seconds and 1.1 to 1.9 MB, in a
+repo with no LFS.
 
-All of it is cartoon music. That was Eric's call on 2026-10-04 ("something more fun"), and it replaced
-a relaxed marimba loop and a driving rock one. The harmony leans on secondary dominants (C♯7, F♯7,
-B7, E7): a chord that wants to fall to the next one is most of what makes music sound like a
-cartoon.
+Most of it is cartoon music. That was Eric's call on 2026-10-04 ("something more fun"). On
+2026-10-18 the battle music went action ("more like actiony battle"), the menu went chill ("less
+like annoying whistling music"), and every stage got its own battle loop, fitting the place
+(`StageData.Music`; a story's boss still fights to DoomBot's theme). The harmony of the cartoon
+pieces leans on secondary dominants (C♯7, F♯7, B7, E7): a chord that wants to fall to the next one
+is most of what makes music sound like a cartoon.
 
-- **menu** — 116 BPM, swung. A strummed ukulele, a walking bass, finger snaps and a shaker, a
-  whistled tune, and a toy piano answering in the whistler's gaps. Sixteen bars: first
-  A–C♯7–D–Dm–A–F♯7–Bm7 E7–A, then a bridge that ends on E7, which pulls straight into the A at the
-  top. It plays unbroken from the title through fighter and stage select, because `MusicPlayer`
-  lives on `GameRoot` and not on any one screen. Since it can run for minutes, it stays light: no
-  kick drum, and nothing near the front but the tune.
-- **battle** — 164 BPM, a bouncy ska romp rather than rock. Offbeat chops, a bass that bounces
-  between octaves and sags at the end of each phrase, claps on two and four, a woodblock clave, a
-  handheld-console lead and a cartoon brass section. The hook is a call and answer: the lead calls
-  for a bar, the horns answer for a bar. Then the cartoon circle A–F♯7–B7–E7 with a chase over it,
-  the hook again with each voice doubling the other, a two-bar stop-time breakdown on E, and G–D
-  lifting home to A, with a slide whistle into the top of the loop. It starts on the frame FIGHT!
-  appears, on the same A chord, and fades out when the match ends, under the win fanfare. The hit
-  sounds are louder than it and own the top end, so its lead sits mid-range with the edge filtered
-  off, and the loop has no more energy above 4 kHz than the rock one it replaced.
+- **menu** — 88 BPM, lightly swung lo-fi. An electric piano laying down rootless seventh chords,
+  a vibraphone with the tune and room around it, an upright bass on one and the and of two, and a
+  soft felt kick, a snap and a shaker. Amaj7–F♯m7–Bm7–E9 twice (the second time through Dmaj7), then
+  the bridge Dmaj7–C♯m7–Bm7–E9, whose E9 pulls into the top. It plays unbroken from the title
+  through fighter and stage select, because `MusicPlayer` lives on `GameRoot` and not on any one
+  screen, so nothing in it is bright or busy - and nothing whistles.
+- **battle** (Fridge Door, and any stage without its own) — 152 BPM action rock in A: a four-bar
+  riff of power chords chugging eighths (accents 3-3-2), the hero's theme on a driven two-saw lead
+  over A–F–G–A, the theme soaring over D–F–G–A with the drums four on the floor and brass stabbing
+  under it, and a half-time build on E climbing F–G under a snare roll into the top. Power chords
+  have no third, so FIGHT!'s A major chord lands on them and the tune can lean minor.
+- **battle_plains** (Open Plains) — 138 BPM, A major, an adventure: a steel-string strum
+  galloping (an eighth and two sixteenths a beat), a march on the drums, the tune on brass.
+- **battle_rooftops** (City Rooftops) — 120 BPM, A minor, night-time synthwave: a synth arpeggio
+  running sixteenths round Am–F–C–G like lights going by, a pulsing octave bass, a long lead.
+- **battle_bigshow** (Big Show) — 184 BPM, A major, punk rock: open power chords thrashed in
+  eighths, the bass doubling them, kick and snare flat out, a shout-along tune. Its speakers thump
+  on the beat (`SpeakerBlast`, 20 frames a beat, near enough 184 BPM).
+- **battle_playground** (Playground) — the bouncy ska romp that was the only battle music before:
+  164 BPM, offbeat chops, an octave-bouncing bass, a handheld-console lead called and answered by
+  cartoon brass, and a slide whistle back to the top. A game, for where the fighting is one.
+- **battle_site** (Building Site) — 126 BPM, A minor, industrial: the machines are the band - a
+  kick on every beat, a hammer on an anvil for the backbeat, pistons ticking sixteenths, a muted
+  power chord grinding, a robot's bleeps, steam venting at the end of every phrase, and a low
+  conveyor-belt riff.
+- **battle_kitchen** (Kitchen Counter) — 108 BPM funk on A7 and D7: a clav-like chop on the
+  sixteenths, a popping bass, the horns with the tune, and pots and pans in the drums - a saucepan
+  for the cowbell, a spoon on a woodblock for the clave.
 - **story** — 100 BPM, lightly swung, sixteen bars, under the talking in story scenes. A storybook
   tiptoe: a plucked oom-pah (pizzicato bass on one and three, violins on two and four), the tune
   on a glockenspiel, a bassoon telling the jokes, a triangle at the top of each half. It opens on
@@ -173,7 +188,7 @@ cartoon.
 Nobody on the project can hear them, so the parts are written to rules that can be checked on
 paper: chord tones on the strong beats, passing notes only on the weak ones, and no semitone rub
 between a tune and the chord under it. Each track's balance is one table in `music.py`
-(`MENU_MIX`, `BATTLE_MIX`, `STORY_MIX`, `DOOM_MIX`, `VICTORY_MIX`), like the registry is for
+(`MENU_MIX`, `BATTLE_MIX`, one per stage like `BIG_MIX` and `SITE_MIX`, `STORY_MIX`, `DOOM_MIX`, `VICTORY_MIX`), like the registry is for
 effects. It was set by measuring each part, A-weighted, against the whole while that part plays.
 
 The loops loop with no gap or click. Notes and reverb that ring past the end are wrapped round

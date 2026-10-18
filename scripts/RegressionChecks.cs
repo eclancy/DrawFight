@@ -135,9 +135,16 @@ public static class RegressionChecks
 			}
 		}
 
-		foreach (string path in new[] { SfxCatalog.PathFor("smash_charge"), $"res://assets/music/{MusicPlayer.Menu}.wav",
+		var loops = new System.Collections.Generic.List<string> { SfxCatalog.PathFor("smash_charge"), $"res://assets/music/{MusicPlayer.Menu}.wav",
 			$"res://assets/music/{MusicPlayer.Battle}.wav", $"res://assets/music/{MusicPlayer.Story}.wav",
-			$"res://assets/music/{MusicPlayer.Boss}.wav" })
+			$"res://assets/music/{MusicPlayer.Boss}.wav" };
+		// Every stage's own battle music.
+		for (int i = 0; i < StageCatalog.Count; i++)
+		{
+			string music = $"res://assets/music/{StageCatalog.Get(i).Music}.wav";
+			if (!loops.Contains(music)) loops.Add(music);
+		}
+		foreach (string path in loops)
 		{
 			if (!ResourceLoader.Exists(path))
 			{

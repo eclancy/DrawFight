@@ -635,6 +635,13 @@ public partial class FighterRig : Node2D
 	public bool Sitting;
 
 	/// <summary>
+	/// Degrees the back arm is swung forward from the pose, standing idle: an arm drawn hanging
+	/// behind a wide body is hidden by it (DoomBot's, Eric 2026-10-18), and forward of it shows.
+	/// Whoever drives the rig sets it each frame.
+	/// </summary>
+	public float BackArmForward;
+
+	/// <summary>
 	/// No fighter has an ankle - a foot is drawn on the end of its shin - so a foot is flat at
 	/// exactly one angle of its shin, and that angle is read off the drawing (<see cref="SoleOf"/>).
 	/// So, standing: each shin is turned until its sole is level, and the thigh is turned until
@@ -1870,11 +1877,12 @@ public partial class FighterRig : Node2D
 
 	void ApplyPose(Pose pose, float blend)
 	{
-		if (CarryOnShoulder || HandOnHip)
+		if (CarryOnShoulder || HandOnHip || BackArmForward != 0.0f)
 		{
 			carried.CopyFrom(pose);
 			if (HandOnHip) FighterAnimations.HandOnHip(carried);
 			if (CarryOnShoulder) FighterAnimations.CarryOnShoulder(carried);
+			if (BackArmForward != 0.0f) carried.Set(RigBone.ArmBackUpper, carried[RigBone.ArmBackUpper] - BackArmForward);
 			pose = carried;
 		}
 

@@ -15,9 +15,12 @@ battle loop opens on that same A chord. Menu, battle, story and victory are in A
 DoomBot's theme is in A minor - the villain's key - and opens on bare fifths, A and E with no
 third, so FIGHT!'s A major chord still sits on it.
 
-All of it is cartoon music on purpose: Eric's call on 2026-10-04 was "something more fun". The
-menu is a swung ukulele tune, whistled, with a toy piano answering; the battle is a bouncy ska
-romp with a handheld-console lead and a brass section answering it; the story theme is a
+Most of it is cartoon music on purpose: Eric's call on 2026-10-04 was "something more fun". On
+2026-10-18 the battle music went action and the menu went chill ("less like annoying whistling
+music"), and every stage got its own battle loop: the Fridge Door an action-rock theme, Open
+Plains a galloping adventure, City Rooftops night-time synthwave, the Big Show punk rock, the
+Playground the old bouncy ska romp, the Building Site industrial, the Kitchen Counter funk with
+pots and pans. The menu is lo-fi: electric piano, a vibraphone tune, soft drums. The story theme is a
 storybook tiptoe of pizzicato, glockenspiel and bassoon; DoomBot's is a villain's march on tuba,
 growling trombones and an organ, over a factory; the victory sting is a brass fanfare. The
 harmony leans on secondary dominants (C#7, F#7, B7, E7). A chord that wants to fall to the next
@@ -128,11 +131,6 @@ def _pluck(freq, dur, bright, t60, seed):
 
 # --- the menu band ---------------------------------------------------------
 
-def uke(freq, dur):
-    """A ukulele string. Nylon, so the burst is soft and the ring is short."""
-    return _pluck(freq, dur, 2400.0, 1.0, int(freq * 10))
-
-
 def upright(freq, dur):
     """The walking bass: round, with a thump at the front - a string pulled hard starts sharp.
     More overtone than fundamental, because a TV speaker cannot play 55 Hz and the ear finds
@@ -145,22 +143,45 @@ def upright(freq, dur):
     return S.env_mul(v, S.adsr(dur, 0.01, 0.18, 0.45, min(0.08, dur * 0.3)))
 
 
-def whistle(freq, dur):
-    """The menu tune, whistled: a near-pure tone with breath in it, scooping up into each note
-    the way lips do."""
-    n = S.n_samples(dur)
-    f = _vibrato(_glide(freq, n, 0.955, 0.06), 5.2, 0.007, 0.18)
-    tone = S.mix(S.osc("sine", f, dur), S.gain(S.osc("sine", [x * 2.0 for x in f], dur), 0.05))
-    breath = S.gain(S.bandpass(S.osc("noise", 0, dur, seed=241), freq, 5.0), 1.2)
-    return S.env_mul(S.mix(tone, breath), S.adsr(dur, 0.025, 0.08, 0.85, min(0.07, dur * 0.3)))
+def epiano(freq, dur):
+    """The menu's electric piano: a sine for the tine's note, a little of its octave and twelfth,
+    and a bell partial far up that dies in a moment - the soft 'tink' on the front of a Rhodes -
+    with a slow tremolo. Warm, rounded, nothing whistling. Rings out over a fixed time, so a
+    held chord and a short one decay alike, and lets go when the hand comes up."""
+    ring = 2.4
+    v = S.partials(freq, [1.0, 2.0, 3.0, 14.0], ring, amps=[1.0, 0.22, 0.05, 0.04],
+                   decays=[2.6, 5.0, 8.0, 60.0])
+    v = S.lowpass(S.tremolo(v, 4.2, 0.16), 2800, 0.7)
+    n = len(v)
+    k = min(n, S.n_samples(dur))
+    r = min(n - k, S.n_samples(0.18))
+    env = S.ramp(min(k, S.n_samples(0.004)), 0.0, 1.0)
+    env += [1.0] * (k - len(env)) + S.ramp(r, 1.0, 0.0) + [0.0] * (n - k - r)
+    return S.env_mul(v, env)
 
 
-def toypiano(freq, dur):
-    """A toy piano: struck metal rods, so the overtone is nowhere near harmonic and dies first.
-    That plink is the whole instrument. Rings the same length whatever the note's value."""
-    v = S.partials(freq, [1.0, 2.0, 6.27], 1.0, amps=[1.0, 0.1, 0.3], decays=[5.5, 8.0, 35.0])
-    tick = S.highpass(S.osc("noise", 0, 0.004, seed=242), 3000)
-    return S.mix(v, S.gain(S.env_mul(tick, S.expdecay(len(tick), 3.0)), 0.15))
+def vibe(freq, dur):
+    """The menu tune, on a vibraphone: struck aluminium bars - the note, and the bar's overtone two
+    octaves up, which fades first - with the motor's slow wobble and a soft yarn mallet. Mellow
+    where the old whistle was piercing."""
+    ring = 2.0
+    v = S.partials(freq, [1.0, 4.0, 10.0], ring, amps=[1.0, 0.18, 0.03], decays=[3.0, 9.0, 30.0])
+    v = S.tremolo(v, 5.0, 0.28)
+    mallet = S.lowpass(S.osc("noise", 0, 0.006, seed=245), 1800, 0.8)
+    v = S.mix(v, S.gain(S.env_mul(mallet, S.expdecay(len(mallet), 3.0)), 0.12))
+    n = len(v)
+    k = min(n, S.n_samples(dur + 0.25))
+    r = min(n - k, S.n_samples(0.3))
+    return S.env_mul(v, [1.0] * k + S.ramp(r, 1.0, 0.0) + [0.0] * (n - k - r))
+
+
+def softkick(freq, dur):
+    """A soft, round kick - a felt beater on a small drum. Felt more than heard, so the menu can
+    sit on a beat for minutes without it ever thumping."""
+    d = 0.32
+    n = S.n_samples(d)
+    body = S.env_mul(S.osc("sine", S.sweep(d, 120, 48, 0.35), d), S.expdecay(n, 9.0))
+    return S.lowpass(body, 500, 0.7)
 
 
 def snap(freq, dur):
@@ -315,6 +336,75 @@ def hat(freq, dur):
 def crash(freq, dur):
     n = S.n_samples(dur)
     return S.env_mul(S.highpass(S.osc("noise", 0, dur, seed=214), 4500), S.expdecay(n, 4.5))
+
+
+def lead(freq, dur):
+    """The battle lead: two saws a hair apart and a square an octave under them, driven - the
+    synth that plays the hero's theme - scooping into each note and singing with a late
+    vibrato on the long ones. The filter keeps it under the hit sounds, which own the top end."""
+    n = S.n_samples(dur)
+    f = _vibrato(_glide(freq, n, 0.985, 0.03), 5.5, 0.008, 0.25)
+    ph = _phase(freq)
+    v = S.mix(S.osc("saw", f, dur, phase=ph),
+              S.gain(S.osc("saw", [x * 1.006 for x in f], dur, phase=(ph + 0.5) % 1.0), 0.9),
+              S.gain(S.osc("square", [x * 0.5 for x in f], dur, phase=ph), 0.3))
+    v = S.lowpass(v, 2600, 1.0)
+    return S.env_mul(S.drive(v, 1.8), S.adsr(dur, 0.008, 0.1, 0.8, min(0.06, dur * 0.3)))
+
+
+def drivebass(freq, dur):
+    """The battle bass: saw, square and sine, driven, the filter closing on every note - eighths
+    of it under the guitar are the engine of the whole track. Its overtones carry it on a TV."""
+    ph = _phase(freq)
+    v = S.mix(S.gain(S.osc("saw", freq, dur, phase=ph), 0.6),
+              S.gain(S.osc("square", freq, dur, phase=ph), 0.35),
+              S.gain(S.osc("sine", freq, dur, phase=ph), 0.5))
+    v = S.lowpass(v, S.sweep(dur, 1500, 450, 0.5), 1.1)
+    return S.drive(S.env_mul(v, S.adsr(dur, 0.006, 0.08, 0.7, min(0.03, dur * 0.3))), 2.0)
+
+
+# --- the stage bands -------------------------------------------------------
+# Every stage has its own battle music (Eric, 2026-10-18), so a few more instruments: the punk
+# guitar of the Big Show, the steel strings of Open Plains, the synth arpeggio of City Rooftops
+# at night and the pots and pans of the Kitchen Counter.
+
+def punkguitar(freq, dur):
+    """The Big Show's guitar: an open power chord - root, fifth and octave - thrashed down-stroke
+    after down-stroke, the filter left open and the drive turned all the way up. Where the
+    factory's chug is muted, this one rings."""
+    ph = _phase(freq)
+    v = S.mix(S.gain(S.osc("saw", freq, dur, phase=ph), 0.5),
+              S.gain(S.osc("saw", freq * 1.4983, dur, phase=(ph + 0.3) % 1.0), 0.4),
+              S.gain(S.osc("square", freq * 2.0, dur, phase=(ph + 0.6) % 1.0), 0.25),
+              S.gain(S.osc("saw", freq * 1.003, dur, phase=(ph + 0.8) % 1.0), 0.35))
+    v = S.lowpass(v, S.sweep(dur, 3200, 1800, 0.5), 0.9)
+    return S.drive(S.env_mul(v, S.adsr(dur, 0.003, 0.06, 0.75, min(0.03, dur * 0.3))), 3.4)
+
+
+def steel(freq, dur):
+    """Open Plains' guitar: a steel string, brighter and longer than the old ukulele's nylon."""
+    return _pluck(freq, dur, 4200.0, 1.4, int(freq * 10) + 7)
+
+
+def arp(freq, dur):
+    """City Rooftops at night: a synth pluck, a saw and a square, the filter snapping shut at
+    once - sixteenths of it running round the chord are the city's lights going by."""
+    d = 0.16
+    ph = _phase(freq)
+    v = S.mix(S.osc("saw", freq, d, phase=ph), S.gain(S.osc("square", freq * 1.003, d, phase=ph), 0.5))
+    v = S.lowpass(v, S.sweep(d, 3400, 500, 0.35), 1.6)
+    return S.env_mul(v, S.ad(d, 0.002, 2.6))
+
+
+def pan(freq, dur):
+    """A saucepan struck with a wooden spoon: a clang of metal partials that are nowhere near
+    harmonic, over the knock of the spoon. The Kitchen Counter's cowbell."""
+    d = 0.35
+    n = S.n_samples(d)
+    ring = S.partials(freq, [1.0, 1.59, 2.14, 2.92], d, amps=[1.0, 0.7, 0.5, 0.3],
+                      decays=[9.0, 12.0, 16.0, 22.0])
+    knock = S.env_mul(S.bandpass(S.osc("noise", 0, d, seed=261), 900, 1.2), S.expdecay(n, 40.0))
+    return S.drive(S.mix(S.gain(ring, 0.6), S.gain(knock, 0.6)), 1.4)
 
 
 # --- the story band --------------------------------------------------------
@@ -541,92 +631,67 @@ def chord_at(chart, beat):
 
 
 # ---------------------------------------------------------------------------
-# menu: a swung ukulele tune, 116 BPM, sixteen bars - A, then B.
+# menu: chill, 88 BPM, lightly swung, sixteen bars - A, then B (Eric, 2026-10-18: "the menus
+# can still be chill, but less like annoying whistling music").
 #
-# The A section's second chord is C#7, which leads somewhere it then does not go (D), and its
-# fourth is D minor - the borrowed minor iv that sounds like a wink. B is a bridge that ends on
-# E7, the V7 of the A the loop opens on, so the end of the loop pulls straight into its start.
-# It plays for minutes on the select screens, so it stays light: nothing in it is louder than
-# the tune, and there is no kick drum.
+# Lo-fi: an electric piano laying down seventh chords, a vibraphone tune with room around it, an
+# upright bass, and a soft kick, a snap and a shaker. A goes Amaj7 - F#m7 - Bm7 - E9 twice (the
+# second time through Dmaj7); B is the bridge, Dmaj7 - C#m7 - Bm7 - E9, whose E9 pulls into the
+# Amaj7 at the top. It plays for minutes on the menus, so nothing in it is bright or busy.
 # ---------------------------------------------------------------------------
 
-MENU_BPM = 116.0
-MENU_SWING = 0.63       # where an off-beat eighth lands: 0.5 is straight, 0.667 a full shuffle
+MENU_BPM = 88.0
+MENU_SWING = 0.6        # where an off-beat eighth lands: 0.5 is straight, 0.667 a full shuffle
 
-MENU_CHART = ["A", "C#7", "D", "Dm", "A", "F#7", ("Bm7", "E7"), "A",
-              "D", "D", "A", "A", "B7", "B7", "E7", "E7"]
-MENU_BEATS = 4 * len(MENU_CHART)     # 64 beats, 33.1 s
+MENU_CHART = ["Amaj7", "F#m7", "Bm7", "E9", "Amaj7", "F#m7", "Dmaj7", "E9",
+              "Dmaj7", "C#m7", "Bm7", "E9", "Dmaj7", "C#m7", "Bm7", "E9"]
+MENU_BEATS = 4 * len(MENU_CHART)     # 64 beats, 43.6 s
 
-# A real ukulele's voicings sit inside about one octave above middle C. Each moves to the next
-# by the smallest step it can, so the strum never jumps.
-UKE = {
-    "A": ["C#4", "E4", "A4"],
-    "C#7": ["C#4", "E#4", "G#4", "B4"],
-    "D": ["D4", "F#4", "A4"],
-    "Dm": ["D4", "F4", "A4"],
-    "F#7": ["C#4", "E4", "F#4", "A#4"],
+# Rootless voicings round middle C, the way a pianist plays them over a bass: each moves to the
+# next by the smallest step it can.
+KEYS = {
+    "Amaj7": ["C#4", "E4", "G#4", "B4"],
+    "F#m7": ["C#4", "E4", "F#4", "A4"],
     "Bm7": ["D4", "F#4", "A4", "B4"],
-    "E7": ["D4", "E4", "G#4", "B4"],
-    "B7": ["D#4", "F#4", "A4", "B4"],
+    "E9": ["D4", "F#4", "G#4", "B4"],
+    "Dmaj7": ["C#4", "E4", "F#4", "A4"],
+    "C#m7": ["B3", "C#4", "E4", "G#4"],
 }
 
-# The island strum: down, down-up, up-down-up. Up strokes catch only the top three strings.
-STRUM = [(0.0, "down", 0.9), (1.0, "down", 0.8), (1.5, "up", 0.55),
-         (2.5, "up", 0.7), (3.0, "down", 0.8), (3.5, "up", 0.55)]
-STRUM_SPREAD = 0.022    # beats between strings - about 11 ms, a relaxed hand
+# The bass: the root on one, the fifth on the and of two - laid back, not walking.
+MENU_BASS = {
+    "Amaj7": ("A1", "E2"), "F#m7": ("F#1", "C#2"), "Bm7": ("B1", "F#2"), "E9": ("E2", "B1"),
+    "Dmaj7": ("D2", "A1"), "C#m7": ("C#2", "G#1"),
+}
 
-# A walking bass, a bar to a line: the root on one, chord tones on three, and the fourth beat
-# stepping into the next bar's root.
-MENU_WALK = [
-    ["A1", "C#2", "E2", "D2"], ["C#2", "G#1", "B1", "C#2"], ["D2", "E2", "F#2", "E2"],
-    ["D2", "F2", "D2", "B1"], ["A1", "C#2", "E2", "F2"], ["F#2", "E2", "C#2", "A#1"],
-    ["B1", "D2", "E2", "G#1"], ["A1", "C#2", "E2", "C#2"],
-    ["D2", "F#2", "A2", "F#2"], ["D2", "F#2", "A1", "B1"], ["A1", "B1", "C#2", "E2"],
-    ["A2", "G#2", "E2", "C#2"], ["B1", "D#2", "F#2", "A2"], ["B1", "F#1", "A1", "D#2"],
-    ["E2", "F#2", "G#2", "E2"], ["E2", "D2", "B1", "G#1"],
-]
-
-# The whistled tune, in straight beats; the swing is applied as it is played. Bars 1 and 2 are
-# one figure moved onto the C#7 (E C# E A, then G# E# G# B), and bars 5 and 6 move it again
-# onto the F#7: a tune that follows its chords around is the cartoon trick.
+# The vibraphone tune, in straight beats; the swing is applied as it is played. Chord tones on
+# the strong beats, and it leaves space: a phrase, then a breath.
 MENU_TUNE = [
-    (0, "E5", 1.0), (1, "C#5", .5), (1.5, "E5", .5), (2, "A5", 2.0),
-    (4, "G#5", 1.0), (5, "E#5", .5), (5.5, "G#5", .5), (6, "B5", 2.0),
-    (8, "A5", 1.0), (9, "F#5", .5), (9.5, "A5", .5), (10, "D6", 2.0),
-    (12, "A5", 1.5), (13.5, "F5", .5), (14, "D5", 2.0),
-    (16, "E5", 1.0), (17, "C#5", .5), (17.5, "E5", .5), (18, "A5", 1.5), (19.5, "B5", .5),
-    (20, "A#5", 1.0), (21, "F#5", .5), (21.5, "A#5", .5), (22, "C#6", 2.0),
-    (24, "B5", 1.0), (25, "A5", .5), (25.5, "F#5", .5), (26, "G#5", 1.0), (27, "B5", .5),
-    (27.5, "D6", .5),
-    (28, "C#6", 2.0),
-    (32, "F#5", 1.5), (33.5, "E5", .5), (34, "D5", 1.0), (35, "F#5", .5), (35.5, "A5", .5),
-    (36, "A5", 1.0), (37, "B5", .5), (37.5, "A5", .5), (38, "F#5", 2.0),
-    (40, "E5", 1.5), (41.5, "C#5", .5), (42, "E5", 1.0), (43, "A5", .5), (43.5, "C#6", .5),
-    (44, "C#6", 1.5), (45.5, "B5", .5), (46, "A5", 2.0),
-    (48, "F#5", 1.0), (49, "D#5", .5), (49.5, "F#5", .5), (50, "A5", 1.0), (51, "B5", .5),
-    (51.5, "A5", .5),
-    (52, "F#5", 2.0),
-    (56, "E5", 1.0), (57, "G#5", .5), (57.5, "B5", .5), (58, "D6", 1.5), (59.5, "C#6", .5),
-    (60, "B5", 1.5), (61.5, "G#5", 1.0),
-]
-
-# The toy piano answers in the gaps the whistler leaves, always from the chord underneath.
-MENU_ANSWERS = [
-    (30, "A5", .5), (30.5, "C#6", .5), (31, "E6", .5), (31.5, "F#6", .5),
-    (38.5, "A5", .5), (39, "D6", .5), (39.5, "F#6", .5),
-    (46.5, "E6", .5), (47, "C#6", .5), (47.5, "B5", .5),
-    (54, "D#6", .5), (54.5, "B5", .5), (55, "A5", .5), (55.5, "F#5", .5),
-    (62, "E6", .5), (62.5, "D6", .5), (63, "B5", .5), (63.5, "G#5", .5),
+    (0.5, "E5", .5), (1, "C#5", 1), (2, "E5", .5), (2.5, "G#5", 1.5),
+    (4, "A5", 1.5), (5.5, "F#5", .5), (6, "E5", 2),
+    (8.5, "D5", .5), (9, "F#5", 1), (10, "A5", 1.5), (11.5, "B5", .5),
+    (12, "G#5", 2), (14, "D5", 1), (15, "B4", 1),
+    (16.5, "E5", .5), (17, "C#5", 1), (18, "E5", .5), (18.5, "G#5", 1.5),
+    (20, "C#6", 1.5), (21.5, "A5", .5), (22, "F#5", 2),
+    (24, "F#5", 1), (25, "A5", 1), (26, "C#6", 2),
+    (28, "B5", 1.5), (29.5, "G#5", .5), (30, "E5", 2),
+    (32, "A5", 3), (35, "F#5", .5), (35.5, "A5", .5),
+    (36, "G#5", 2), (38, "E5", 1), (39, "C#5", 1),
+    (40, "D5", 1), (41, "F#5", 1), (42, "A5", 1.5), (43.5, "B5", .5),
+    (44, "G#5", 3),
+    (48.5, "F#5", .5), (49, "A5", .5), (49.5, "C#6", 1.5), (51, "A5", 1),
+    (52, "B5", 1), (53, "G#5", 1), (54, "E5", 2),
+    (56, "F#5", 1.5), (57.5, "D5", .5), (58, "B4", 2),
+    (60, "D5", 1), (61, "E5", 1), (62, "G#5", 1), (63, "B5", 1),
 ]
 
 
-# The mix, as in sfx.py's REGISTRY: one level per part, and the events carry only accents. Set
-# by measuring each part alone, A-weighted, against the whole while it plays: the whistle is
-# within a dB of the whole - it is the tune - the toy piano 6 dB under, the uke 9, the snaps 13,
-# the shaker 21 and the bass 19 (the A curve discounts bass; its overtones carry it). The uke
-# is no louder because its strums are the track's peaks.
-MENU_MIX = {"uke": 0.23, "upright": 0.72, "snap": 1.1, "shaker": 0.18, "whistle": 0.42,
-            "toypiano": 0.3}
+# The mix, as in sfx.py's REGISTRY: one level per part, and the events carry only accents. Set by
+# measuring each part alone, above 300 Hz, against the whole while it plays: the vibraphone - the tune
+# - within 2 dB of the whole, the piano 4.5 under, the rest 15 and more. The
+# vibraphone is the tune, so it sits on top; the piano under it; the drums felt, not heard.
+MENU_MIX = {"epiano": 0.3, "vibe": 0.5, "upright": 0.72, "softkick": 0.55, "snap": 0.7,
+            "shaker": 0.14}
 
 
 def _mixed(events, levels):
@@ -641,38 +706,179 @@ def swing(beat, amount=MENU_SWING):
 
 def menu_events():
     ev = []
-    for bar in xrange(len(MENU_CHART)):
+    for bar, chord in enumerate(MENU_CHART):
         b = bar * 4
-        strum = STRUM
-        if isinstance(MENU_CHART[bar], tuple):
-            # The island strum has no stroke on three, so a chord that changes there would be
-            # late by half a beat, ringing the old chord over the new bass. Strum the change.
-            strum = sorted(STRUM + [(2.0, "down", 0.75)])
-        for k, (off, stroke, vel) in enumerate(strum):
-            at = swing(b + off)
-            # A string rings until the hand comes back for the next stroke.
-            ring = (swing(b + strum[k + 1][0]) if k + 1 < len(strum) else b + 4) - at
-            tones = UKE[chord_at(MENU_CHART, b + off)]
-            strings = tones if stroke == "down" else list(reversed(tones))[:3]
-            for s, t in enumerate(strings):
-                ev.append((at + s * STRUM_SPREAD, uke, t, ring, vel))
-        for k, p in enumerate(MENU_WALK[bar]):
-            ev.append((b + k, upright, p, 0.8, 1.0 if k == 0 else 0.87))
-        ev.append((b + 1.0, snap, "A4", 0.3, 1.0))
-        ev.append((b + 3.0, snap, "A4", 0.3, 1.0))
+        # The piano: the chord on one, held, and again softly on the and of two.
+        for at, hold, vel in ((b, 2.3, 0.9), (swing(b + 2.5), 1.3, 0.6)):
+            for s, t in enumerate(KEYS[chord]):
+                ev.append((at + s * 0.012, epiano, t, hold, vel))
+        root, fifth = MENU_BASS[chord]
+        ev.append((b, upright, root, 1.4, 1.0))
+        ev.append((swing(b + 2.5), upright, fifth, 1.0, 0.85))
+        ev.append((b, softkick, None, 0.3, 1.0))
+        ev.append((swing(b + 2.5), softkick, None, 0.3, 0.7))
+        ev.append((b + 1.0, snap, None, 0.3, 1.0))
+        ev.append((b + 3.0, snap, None, 0.3, 1.0))
         for e in xrange(8):
-            # The shaker leans on the late eighth - that is where the swing is felt.
-            ev.append((swing(b + e * 0.5), shaker, "A6", 0.08, 1.0 if e % 2 else 0.65))
+            ev.append((swing(b + e * 0.5), shaker, None, 0.08, 1.0 if e % 2 else 0.6))
     for beat, pitch, dur in MENU_TUNE:
         start = swing(beat)
-        ev.append((start, whistle, pitch, (swing(beat + dur) - start) * 0.95, 1.0))
-    for beat, pitch, dur in MENU_ANSWERS:
-        ev.append((swing(beat), toypiano, pitch, dur, 1.0))
+        ev.append((start, vibe, pitch, swing(beat + dur) - start, 1.0))
     return _mixed(ev, MENU_MIX)
 
 
 # ---------------------------------------------------------------------------
-# battle: a bouncy ska romp, 164 BPM, twenty-eight bars.
+# battle: action, 152 BPM, twenty-four bars, in A (Eric, 2026-10-18: "more like actiony battle").
+#
+#   intro (4)  the riff: power chords chugging eighths over a rock beat, A - A - F - G
+#   A     (8)  the hero's theme on the lead, A - F - G - A twice, the second time home by E
+#   B     (8)  the theme soars, D - F - G - A, the drums drive four on the floor and the brass
+#              stabs a rhythm under it; ends on E
+#   build (4)  half time on E, then F and G climbing under a snare roll, back into the A
+#
+# The guitar plays power chords - root and fifth, no third - so FIGHT!'s A major chord lands on
+# it cleanly, and the tune can lean minor (C, F, G - the action-movie sound) without a clash.
+# The hit sounds are louder than all of it and own the top end, so the lead's edge is filtered.
+# ---------------------------------------------------------------------------
+
+BATTLE_BPM = 152.0
+BATTLE_CHART = (["A5", "A5", "F5", "G5"]
+                + ["A5", "F5", "G5", "A5", "A5", "F5", "G5", "E5"]
+                + ["D5", "F5", "G5", "A5", "D5", "F5", "G5", "E5"]
+                + ["E5", "E5", "F5", "G5"])
+BATTLE_BEATS = 4 * len(BATTLE_CHART)      # 96 beats, 37.9 s
+
+# chord: (the guitar's root, the bass's root, the brass stab's voicing)
+BATTLE_CHORDS = {
+    "A5": ("A2", "A1", ["A4", "C5", "E5"]),
+    "D5": ("D3", "D2", ["D4", "F4", "A4"]),
+    "E5": ("E2", "E1", ["E4", "G#4", "B4"]),
+    "F5": ("F2", "F1", ["F4", "A4", "C5"]),
+    "G5": ("G2", "G1", ["G4", "B4", "D5"]),
+}
+
+# The hero's theme (section A), from the section's first beat.
+THEME = [
+    (0, "A4", .5), (.5, "C5", .5), (1, "E5", 1), (2, "A5", 1.5), (3.5, "G5", .5),
+    (4, "F5", 1.5), (5.5, "E5", .5), (6, "C5", 1), (7, "A4", 1),
+    (8, "G5", 1), (9, "D5", .5), (9.5, "E5", .5), (10, "G5", 1), (11, "B4", 1),
+    (12, "A4", 3), (15, "E5", .5), (15.5, "G5", .5),
+    (16, "A4", .5), (16.5, "C5", .5), (17, "E5", 1), (18, "A5", 1), (19, "C6", 1),
+    (20, "A5", 1), (21, "F5", 1), (22, "C5", .5), (22.5, "F5", .5), (23, "A5", 1),
+    (24, "B5", 1), (25, "G5", 1), (26, "D5", .5), (26.5, "G5", .5), (27, "B5", 1),
+    (28, "B5", 2), (30, "E5", 2),
+]
+
+# The theme soaring (section B): long notes, each landing on the chord's top.
+SOAR = [
+    (0, "A5", 2), (2, "F5", 1), (3, "D5", 1),
+    (4, "C6", 2), (6, "A5", 1), (7, "F5", 1),
+    (8, "D6", 2), (10, "B5", 1), (11, "G5", 1),
+    (12, "C6", 1.5), (13.5, "B5", .5), (14, "A5", 2),
+    (16, "A5", 1), (17, "D6", 1), (18, "C6", 1), (19, "A5", 1),
+    (20, "C6", 2), (22, "F6", 1), (23, "C6", 1),
+    (24, "D6", 1.5), (25.5, "C6", .5), (26, "B5", 1), (27, "G5", 1),
+    (28, "B5", 2), (30, "E5", 2),
+]
+
+# The brass stabs in B: a short chord on one, the and of two and the and of four.
+STABS = [0.0, 1.5, 3.5]
+
+BATTLE_MIX = {"lead": 0.3, "horn": 0.14, "chug": 0.48, "drivebass": 0.42, "kick": 0.62,
+              "snare": 1.0, "hat": 0.2, "crash": 0.13, "tom": 0.7}
+
+
+def _battle_part(bar):
+    if bar < 4:
+        return "intro"
+    if bar < 12:
+        return "A"
+    if bar < 20:
+        return "B"
+    return "build"
+
+
+def battle_events():
+    ev = []
+    for bar, chord in enumerate(BATTLE_CHART):
+        b = bar * 4
+        part = _battle_part(bar)
+        guitar, root, stab = BATTLE_CHORDS[chord]
+        half_time = part == "build" and bar < 22
+
+        # The guitar: eighths, the accents falling 3-3-2 (one, the and of two, four), which is
+        # what makes a chug drive. The first two bars of the intro ring a chord before they start.
+        for e in xrange(8):
+            at = b + e * 0.5
+            if bar < 2 and e < 4:
+                if e == 0:
+                    ev.append((at, chug, guitar, 1.9, 1.0))
+                continue
+            accent = e in (0, 3, 6)
+            ev.append((at, chug, guitar, 0.45, 1.0 if accent else 0.62))
+
+        # The bass doubles the guitar's eighths an octave down, up an octave on the last one.
+        for e in xrange(8):
+            pitch = _oct(root, 1) if e == 7 else root
+            ev.append((b + e * 0.5, drivebass, pitch, 0.45, 1.0 if e % 2 == 0 else 0.8))
+
+        # The drums.
+        if half_time:
+            ev.append((b, kick, None, 0.3, 1.0))
+            ev.append((b + 2, snare, None, 0.3, 1.0))
+            for q in xrange(4):
+                ev.append((b + q, hat, None, 0.1, 0.8))
+        elif part == "B":
+            for q in xrange(4):
+                ev.append((b + q, kick, None, 0.3, 1.0))
+            ev.append((b + 1, snare, None, 0.3, 1.0))
+            ev.append((b + 3, snare, None, 0.3, 1.0))
+            for e in xrange(8):
+                ev.append((b + e * 0.5, hat, None, 0.1, 1.0 if e % 2 else 0.75))
+        else:
+            for at in (0.0, 2.0, 2.5):
+                ev.append((b + at, kick, None, 0.3, 1.0 if at != 2.5 else 0.8))
+            ev.append((b + 1, snare, None, 0.3, 1.0))
+            ev.append((b + 3, snare, None, 0.3, 1.0))
+            for e in xrange(8):
+                ev.append((b + e * 0.5, hat, None, 0.1, 0.9 if e % 2 else 0.6))
+
+        # A crash at the top of every section, and of the B section's second half.
+        if bar in (0, 4, 12, 16, 20):
+            ev.append((b, crash, None, 1.5, 1.0))
+
+        # The brass stabs under the soaring theme.
+        if part == "B":
+            for at in STABS:
+                for t in stab:
+                    ev.append((b + at, horn, t, 0.35, 1.0))
+
+    # The tunes.
+    for beat, pitch, dur in THEME:
+        ev.append((16 + beat, lead, pitch, dur * 0.92, 1.0))
+    for beat, pitch, dur in SOAR:
+        ev.append((48 + beat, lead, pitch, dur * 0.92, 1.0))
+
+    # The build: the brass swell up on F and G, a snare roll getting thicker, toms falling into
+    # the top of the loop.
+    for t in BATTLE_CHORDS["F5"][2]:
+        ev.append((88, horn, t, 3.8, 0.8))
+    for t in BATTLE_CHORDS["G5"][2]:
+        ev.append((92, horn, t, 3.4, 1.0))
+    for k in xrange(8):
+        ev.append((88 + k * 0.5, snare, None, 0.2, 0.45 + 0.04 * k))
+    for k in xrange(12):
+        ev.append((92 + k * 0.25, snare, None, 0.15, 0.6 + 0.03 * k))
+    for k, (at, pitch) in enumerate(((95.0, "G2"), (95.25, "E2"), (95.5, "D2"), (95.75, "A1"))):
+        ev.append((at, tom, pitch, 0.3, 0.9))
+    for k in xrange(4):
+        ev.append((84 + 3 + k * 0.25, tom, ("B2", "A2", "G2", "E2")[k], 0.3, 0.8))
+    return _mixed(ev, BATTLE_MIX)
+
+
+# ---------------------------------------------------------------------------
+# The Playground: a bouncy ska romp, 164 BPM, twenty-eight bars. It was the battle music for
+# every stage until 2026-10-18; it suits the playground, where the fighting is a game.
 #
 #   A   (8)  the hook: the lead calls for a bar, the horns answer for a bar
 #   B   (8)  the cartoon circle, A - F#7 - B7 - E7, twice, with a chase over it
@@ -686,16 +892,16 @@ def menu_events():
 # in the middle of the range and nothing in it is bright for long.
 # ---------------------------------------------------------------------------
 
-BATTLE_BPM = 164.0
-BATTLE_CHART = (["A", "A", "D", "E", "A", "A", "D", "E7"]
+SKA_BPM = 164.0
+SKA_CHART = (["A", "A", "D", "E", "A", "A", "D", "E7"]
                 + ["A", "F#7", "B7", "E7"] * 2
                 + ["A", "A", "D", "E", "A", "A", "B7", "B7"]
                 + ["E", "E", "G", "D"])
-BATTLE_BEATS = 4 * len(BATTLE_CHART)      # 112 beats, 41.0 s
+SKA_BEATS = 4 * len(SKA_CHART)      # 112 beats, 41.0 s
 
 # chord: (bass root, the offbeat chop's voicing). Round the circle the chop moves by half steps
 # (A4 to A#4 and back, D#4 to D4 to C#4), which is where its cartoon slither comes from.
-BATTLE_CHORDS = {
+SKA_CHORDS = {
     "A": ("A1", ["C#4", "E4", "A4"]),
     "D": ("D2", ["D4", "F#4", "A4"]),
     "E": ("E2", ["B3", "E4", "G#4"]),
@@ -771,7 +977,7 @@ LIFT = [
 
 # The bass walks round the circle in quarters instead of bouncing - that is what makes the B
 # section a chase. Its one chromatic step (F into F#) is on a weak beat.
-BATTLE_WALK = [
+SKA_WALK = [
     ["A1", "C#2", "E2", "F2"], ["F#2", "E2", "C#2", "A#1"],
     ["B1", "D#2", "F#2", "A2"], ["E2", "D2", "B1", "G#1"],
 ]
@@ -795,12 +1001,12 @@ NO_CHOP = (62.5, 63.5, 110.5, 111.5)
 # reads about 18 down only because the A curve discounts its weight; it is kept light on
 # purpose, since kick and bass landing together set the loop's peak, and so how loud the whole
 # loop can be.
-BATTLE_MIX = {"chip": 0.4, "chipslide": 0.4, "horn": 0.23, "skank": 0.23, "bass": 0.52,
+SKA_MIX = {"chip": 0.4, "chipslide": 0.4, "horn": 0.23, "skank": 0.23, "bass": 0.52,
               "bassdrop": 0.52, "bassfall": 0.52, "kick": 0.43, "clap": 1.0, "hat": 0.19,
               "block": 0.16, "crash": 0.13, "tom": 0.75, "snare": 1.0, "slidewhistle": 0.22}
 
 
-def _part(bar):
+def _ska_part(bar):
     if bar < 8:
         return "A"
     if bar < 16:
@@ -819,12 +1025,12 @@ def _phrase(ev, phrase, at, vel, octave=0, instrument=None):
         ev.append((at + beat, inst, _oct(pitch, octave), dur * 0.9, vel))
 
 
-def battle_events():
+def playground_events():
     ev = []
-    for bar, chord in enumerate(BATTLE_CHART):
+    for bar, chord in enumerate(SKA_CHART):
         b = bar * 4
-        part = _part(bar)
-        root, chop = BATTLE_CHORDS[chord]
+        part = _ska_part(bar)
+        root, chop = SKA_CHORDS[chord]
 
         if part != "break":
             for off in (0.5, 1.5, 2.5, 3.5):
@@ -833,7 +1039,7 @@ def battle_events():
                         ev.append((b + off, skank, t, 0.35, 1.0))
 
         if part == "B":
-            for k, p in enumerate(BATTLE_WALK[bar % 4]):
+            for k, p in enumerate(SKA_WALK[bar % 4]):
                 ev.append((b + k, bass, p, 0.8, 1.0))
             for t in GUIDE[chord]:
                 ev.append((b, horn, t, 0.5, 0.67))
@@ -893,7 +1099,7 @@ def battle_events():
         full = length > 0.5
         for t in ("E4", "G#4", "B4"):
             ev.append((at, horn, t, length, 0.73 if full else 0.53))
-        for t in BATTLE_CHORDS["E"][1]:
+        for t in SKA_CHORDS["E"][1]:
             ev.append((at, skank, t, 0.35, 1.0))
         if at == BREAK_HITS[0][0]:
             ev.append((at, bassfall, "E2", 2.0, 1.05))
@@ -908,7 +1114,348 @@ def battle_events():
     # Lands on the A at the seam; the wrap carries its last moment onto the loop's first beat.
     ev.append((110.5, slidewhistle, "A5", 1.7, 1.0))
     ev.extend(FILLS)
-    return _mixed(ev, BATTLE_MIX)
+    return _mixed(ev, SKA_MIX)
+
+
+# ---------------------------------------------------------------------------
+# The other stages' battle music (Eric, 2026-10-18: "the battle theme should be different for
+# every stage, use a tune that is fitting for each stage"). The Fridge Door plays the battle
+# above; the Playground plays the bouncy ska romp below it; each of the rest has its own.
+# ---------------------------------------------------------------------------
+
+_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
+
+def _shift(name, semis):
+    """A note moved by semitones, spelt with sharps."""
+    i = len(name)
+    while i > 0 and name[i - 1].isdigit():
+        i -= 1
+    k = _NAMES.index(name[:i]) if name[:i] in _NAMES else (_PITCH_CLASS[name[:i]] + 9) % 12
+    total = int(name[i:]) * 12 + k + semis
+    return _NAMES[total % 12] + str(total // 12)
+
+
+def _tune(ev, notes, at, instrument, vel=1.0, held=0.92):
+    for beat, pitch, dur in notes:
+        ev.append((at + beat, instrument, pitch, dur * held, vel))
+
+
+def _rock_drums(ev, b, kicks=(0.0, 2.0, 2.5), snares=(1.0, 3.0), hats=8, hat_vel=(0.6, 0.9)):
+    for k in kicks:
+        ev.append((b + k, kick, None, 0.3, 1.0 if k == int(k) else 0.8))
+    for s in snares:
+        ev.append((b + s, snare, None, 0.3, 1.0))
+    step = 4.0 / hats
+    for h in xrange(hats):
+        ev.append((b + h * step, hat, None, 0.08, hat_vel[1] if h % 2 else hat_vel[0]))
+
+
+# ---------------------------------------------------------------------------
+# Open Plains: an adventure, 138 BPM, A major. A galloping steel-string strum, a march on the
+# drums, and the tune on brass - a hero riding out across the grass.
+# ---------------------------------------------------------------------------
+
+PLAINS_BPM = 138.0
+PLAINS_CHART = (["A", "A", "D", "E"]
+                + ["A", "D", "A", "E", "F#m", "D", "E", "A"]
+                + ["D", "E", "C#m", "F#m", "D", "Bm", "E", "E"])
+PLAINS_BEATS = 4 * len(PLAINS_CHART)     # 80 beats, 34.8 s
+
+# chord: (bass root, the guitar's strum)
+PLAINS_CHORDS = {
+    "A": ("A1", ["A3", "C#4", "E4"]), "D": ("D2", ["A3", "D4", "F#4"]),
+    "E": ("E2", ["B3", "E4", "G#4"]), "F#m": ("F#1", ["A3", "C#4", "F#4"]),
+    "C#m": ("C#2", ["G#3", "C#4", "E4"]), "Bm": ("B1", ["B3", "D4", "F#4"]),
+}
+
+PLAINS_TUNE = [
+    (0, "E4", 1), (1, "A4", 1), (2, "C#5", 1.5), (3.5, "B4", .5),
+    (4, "A4", 1.5), (5.5, "F#4", .5), (6, "D5", 2),
+    (8, "C#5", 1), (9, "E5", 1), (10, "A5", 2),
+    (12, "E5", 2), (14, "B4", 1), (15, "G#4", 1),
+    (16, "A4", 1), (17, "C#5", 1), (18, "F#5", 2),
+    (20, "F#5", 1.5), (21.5, "E5", .5), (22, "D5", 2),
+    (24, "E5", 1), (25, "G#5", 1), (26, "B5", 2),
+    (28, "A5", 3), (31, "E5", 1),
+    (32, "F#5", 2), (34, "A5", 2),
+    (36, "G#5", 2), (38, "B5", 2),
+    (40, "C#6", 2), (42, "G#5", 2),
+    (44, "A5", 3), (47, "C#6", 1),
+    (48, "D6", 2), (50, "A5", 1), (51, "F#5", 1),
+    (52, "F#5", 2), (54, "D5", 1), (55, "B4", 1),
+    (56, "B4", 1), (57, "E5", 1), (58, "G#5", 1), (59, "B5", 1),
+    (60, "B5", 2), (62, "G#5", 1), (63, "E5", 1),
+]
+
+PLAINS_MIX = {"steel": 0.2, "horn": 0.3, "drivebass": 0.34, "kick": 0.5, "snare": 0.8,
+              "hat": 0.12, "crash": 0.12, "tom": 0.6}
+
+
+def plains_events():
+    ev = []
+    for bar, chord in enumerate(PLAINS_CHART):
+        b = bar * 4
+        root, strum = PLAINS_CHORDS[chord]
+        # The gallop: an eighth and two sixteenths on every beat - da, da-da.
+        for q in xrange(4):
+            for off, vel in ((0.0, 1.0), (0.5, 0.6), (0.75, 0.7)):
+                for s, t in enumerate(strum):
+                    ev.append((b + q + off + s * 0.01, steel, t, 0.24, vel))
+        for q in xrange(4):
+            pitch = root if q % 2 == 0 else _shift(root, 7)
+            ev.append((b + q, drivebass, pitch, 0.8, 1.0 if q % 2 == 0 else 0.8))
+        # A march: kick on one and three, snare on two and four, ghost notes riding the gallop.
+        _rock_drums(ev, b, kicks=(0.0, 2.0), hats=4)
+        for g in (1.75, 3.5, 3.75):
+            ev.append((b + g, snare, None, 0.2, 0.3))
+        if bar in (0, 4, 12):
+            ev.append((b, crash, None, 1.5, 1.0))
+    _tune(ev, PLAINS_TUNE, 16, horn)
+    # Toms falling home at the end of the loop.
+    for k, pitch in enumerate(("E3", "C#3", "B2", "A2")):
+        ev.append((79 + k * 0.25, tom, pitch, 0.3, 0.9))
+    return _mixed(ev, PLAINS_MIX)
+
+
+# ---------------------------------------------------------------------------
+# City Rooftops: night, 120 BPM, A minor. Synthwave - a synth arpeggio running sixteenths round
+# the chord like lights going by, a pulsing octave bass, a big backbeat, and a long singing lead.
+# ---------------------------------------------------------------------------
+
+ROOF_BPM = 120.0
+ROOF_CHART = ["Am", "F", "C", "G", "Am", "F", "C", "E",
+              "F", "G", "Am", "Am", "F", "G", "E", "E"]
+ROOF_BEATS = 4 * len(ROOF_CHART)        # 64 beats, 32.0 s
+
+ROOF_CHORDS = {
+    "Am": ("A1", ["A3", "C4", "E4", "A4"]), "F": ("F1", ["F3", "A3", "C4", "F4"]),
+    "C": ("C2", ["G3", "C4", "E4", "G4"]), "G": ("G1", ["G3", "B3", "D4", "G4"]),
+    "E": ("E2", ["G#3", "B3", "E4", "G#4"]),
+}
+
+ROOF_TUNE = [
+    (0, "E5", 2), (2, "C5", 1), (3, "A4", 1),
+    (4, "A4", 2), (6, "C5", 1), (7, "F5", 1),
+    (8, "E5", 2), (10, "G5", 1), (11, "E5", 1),
+    (12, "D5", 3), (15, "B4", 1),
+    (16, "C5", 1), (17, "E5", 1), (18, "A5", 2),
+    (20, "A5", 1), (21, "G5", .5), (21.5, "F5", .5), (22, "C5", 2),
+    (24, "E5", 1), (25, "G5", 1), (26, "C6", 2),
+    (28, "B5", 2), (30, "G#5", 2),
+    (32, "C6", 2), (34, "A5", 2),
+    (36, "D6", 2), (38, "B5", 2),
+    (40, "C6", 1), (41, "B5", 1), (42, "A5", 2),
+    (44, "E5", 4),
+    (48, "F5", 2), (50, "A5", 2),
+    (52, "G5", 2), (54, "B5", 2),
+    (56, "G#5", 2), (58, "B5", 2),
+    (60, "E5", 4),
+]
+
+ROOF_MIX = {"arp": 0.4, "lead": 0.28, "drivebass": 0.4, "kick": 0.62, "snare": 1.1, "hat": 0.14,
+            "crash": 0.12}
+
+
+def rooftops_events():
+    ev = []
+    order = [0, 1, 2, 3, 2, 1, 2, 3]
+    for bar, chord in enumerate(ROOF_CHART):
+        b = bar * 4
+        root, tones = ROOF_CHORDS[chord]
+        for s in xrange(16):
+            t = tones[order[s % 8]]
+            ev.append((b + s * 0.25, arp, _oct(t, 1) if s >= 8 and bar % 2 else t, 0.2,
+                       1.0 if s % 4 == 0 else 0.7))
+        for e in xrange(8):
+            ev.append((b + e * 0.5, drivebass, _oct(root, 1) if e % 2 else root, 0.4,
+                       1.0 if e % 2 == 0 else 0.75))
+        _rock_drums(ev, b, kicks=(0.0, 1.5, 2.0), hats=8, hat_vel=(0.5, 0.9))
+        if bar in (0, 8):
+            ev.append((b, crash, None, 2.0, 1.0))
+    _tune(ev, ROOF_TUNE, 0, lead, held=0.97)
+    return _mixed(ev, ROOF_MIX)
+
+
+# ---------------------------------------------------------------------------
+# The Big Show: punk rock, 184 BPM, A major. Open power chords thrashed in eighths, the bass
+# doubling them, kick and snare as fast as they go, and a shout-along tune: a verse, a chorus
+# twice, and a tag back to the top.
+# ---------------------------------------------------------------------------
+
+BIG_BPM = 184.0
+BIG_CHART = (["A", "A", "D", "E"] * 2
+             + ["F#m", "D", "A", "E"] * 2
+             + ["D", "E", "A", "A"])
+BIG_BEATS = 4 * len(BIG_CHART)          # 80 beats, 26.1 s
+
+BIG_ROOTS = {"A": ("A2", "A1"), "D": ("D3", "D2"), "E": ("E2", "E1"), "F#m": ("F#2", "F#1")}
+
+BIG_TUNE = [
+    (0, "E5", 1), (1, "E5", 1), (2, "C#5", 1), (3, "E5", 1),
+    (4, "A5", 2), (6, "E5", 2),
+    (8, "F#5", 1), (9, "F#5", 1), (10, "A5", 2),
+    (12, "G#5", 2), (14, "B5", 2),
+    (16, "E5", 1), (17, "E5", 1), (18, "C#5", 1), (19, "E5", 1),
+    (20, "A5", 2), (22, "E5", 2),
+    (24, "F#5", 1), (25, "F#5", 1), (26, "A5", 2),
+    (28, "E5", 4),
+    (32, "A5", 2), (34, "C#6", 2),
+    (36, "A5", 1), (37, "F#5", 1), (38, "D5", 2),
+    (40, "C#5", 1), (41, "E5", 1), (42, "A5", 2),
+    (44, "B5", 2), (46, "G#5", 2),
+    (48, "A5", 2), (50, "C#6", 2),
+    (52, "A5", 1), (53, "F#5", 1), (54, "D5", 2),
+    (56, "C#5", 1), (57, "E5", 1), (58, "A5", 2),
+    (60, "B5", 2), (62, "E5", 2),
+    (64, "F#5", 2), (66, "A5", 2),
+    (68, "G#5", 2), (70, "B5", 2),
+    (72, "A5", 4),
+    (76, "E5", 1), (77, "E5", 1), (78, "E5", 1), (79, "B5", 1),
+]
+
+BIG_MIX = {"punkguitar": 0.42, "lead": 0.3, "drivebass": 0.4, "kick": 0.6, "snare": 1.15,
+           "hat": 0.22, "crash": 0.16, "tom": 0.5}
+
+
+def bigshow_events():
+    ev = []
+    for bar, chord in enumerate(BIG_CHART):
+        b = bar * 4
+        guitar, root = BIG_ROOTS[chord]
+        for e in xrange(8):
+            ev.append((b + e * 0.5, punkguitar, guitar, 0.48, 1.0 if e % 2 == 0 else 0.85))
+            ev.append((b + e * 0.5, drivebass, root, 0.45, 1.0 if e % 2 == 0 else 0.85))
+        # Fast and straight: kick on one and the and of two, snare on two and four, the ride
+        # (an open hat) on every eighth.
+        _rock_drums(ev, b, kicks=(0.0, 1.5, 2.0), hats=8, hat_vel=(0.9, 0.7))
+        if bar % 4 == 0:
+            ev.append((b, crash, None, 1.5, 1.0))
+        if bar % 8 == 7:
+            for k, pitch in enumerate(("A3", "F#3", "D3", "A2")):
+                ev.append((b + 3 + k * 0.25, tom, pitch, 0.3, 0.9))
+    _tune(ev, BIG_TUNE, 0, lead, held=0.85)
+    return _mixed(ev, BIG_MIX)
+
+
+# ---------------------------------------------------------------------------
+# The Building Site: industrial, 126 BPM, A minor. The site's machines are the band: a kick on
+# every beat, a hammer on an anvil for the backbeat, pistons ticking sixteenths, a muted power
+# chord grinding, a robot's bleeps, steam venting at the end of every phrase, and a low riff
+# going round like a conveyor belt.
+# ---------------------------------------------------------------------------
+
+SITE_BPM = 126.0
+SITE_CHART = (["A5", "A5", "A5", "A5"]
+              + ["C5", "C5", "G5", "G5"]
+              + ["A5", "A5", "F5", "E5"]
+              + ["F5", "G5", "A5", "A5"])
+SITE_BEATS = 4 * len(SITE_CHART)        # 64 beats, 30.5 s
+
+SITE_ROOTS = {"A5": ("A2", "A1"), "C5": ("C3", "C2"), "G5": ("G2", "G1"), "F5": ("F2", "F1"),
+              "E5": ("E2", "E1")}
+
+# The conveyor riff, two bars long, on A; moved onto each chord's root.
+SITE_RIFF = [(0, "A3", .5), (.75, "A3", .25), (1, "C4", .5), (1.5, "A3", .5), (2, "G3", .5),
+             (2.5, "A3", 1.5), (4, "A3", .5), (4.75, "A3", .25), (5, "E4", .5), (5.5, "D4", .5),
+             (6, "C4", 1), (7, "G3", 1)]
+
+SITE_MIX = {"chug": 0.34, "drivebass": 0.4, "kick": 0.7, "anvil": 0.34, "piston": 0.3,
+            "bleep": 0.12, "vent": 0.18, "lead": 0.2, "crash": 0.12}
+
+
+def site_events():
+    ev = []
+    for bar, chord in enumerate(SITE_CHART):
+        b = bar * 4
+        guitar, root = SITE_ROOTS[chord]
+        for e in xrange(16):
+            # The grind: sixteenths, every fourth one hit hard.
+            if e % 2 == 0 or e in (3, 11):
+                ev.append((b + e * 0.25, chug, guitar, 0.22, 1.0 if e % 4 == 0 else 0.55))
+        for e in xrange(8):
+            ev.append((b + e * 0.5, drivebass, root, 0.4, 1.0 if e % 2 == 0 else 0.7))
+        for q in xrange(4):
+            ev.append((b + q, kick, None, 0.3, 1.0))
+        ev.append((b + 1, anvil, "E4", 0.3, 1.0))
+        ev.append((b + 3, anvil, "E4", 0.3, 1.0))
+        for s in xrange(16):
+            ev.append((b + s * 0.25, piston, "A6", 0.05, 1.0 if s % 4 == 2 else 0.55))
+        if bar >= 8:
+            for s, t in enumerate((root, _shift(root, 12), _shift(root, 19), _shift(root, 24))):
+                ev.append((b + 2 + s * 0.25, bleep, _oct(t, 2), 0.1, 1.0))
+        if bar % 4 == 3:
+            ev.append((b + 3, vent, None, 1.0, 1.0))
+        if bar in (0, 8):
+            ev.append((b, crash, None, 1.5, 1.0))
+    # The riff goes round from the second phrase on, moved onto each pair of bars' chord.
+    for pair in xrange(2, 8):
+        root = SITE_ROOTS[SITE_CHART[pair * 2]][0]
+        semis = (_NAMES.index(root[:-1]) - _NAMES.index("A")) % 12
+        if semis > 6:
+            semis -= 12
+        riff = [(beat, _shift(p, semis), d) for beat, p, d in SITE_RIFF]
+        _tune(ev, riff, pair * 8, lead, held=0.85)
+    return _mixed(ev, SITE_MIX)
+
+
+# ---------------------------------------------------------------------------
+# The Kitchen Counter: funk, 108 BPM, A7 and D7. A choppy clav-like chop on the sixteenths, a
+# popping bass, a horn section with the tune, and the drums partly pots and pans - a saucepan
+# for the cowbell, a woodblock spoon for the clave - as if the cooks were the band.
+# ---------------------------------------------------------------------------
+
+KITCHEN_BPM = 108.0
+KITCHEN_CHART = ["A7", "A7", "D7", "D7", "A7", "A7", "E7", "D7"] * 2
+KITCHEN_BEATS = 4 * len(KITCHEN_CHART)  # 64 beats, 35.6 s
+
+# chord: (semitones from A for the bass riff, the chop's voicing)
+KITCHEN_CHORDS = {"A7": (0, ["G3", "C#4", "E4"]), "D7": (5, ["F#3", "C4", "D4"]),
+                  "E7": (7, ["G#3", "D4", "E4"])}
+
+# The popping bass, one bar, on A: the root, an octave pop, the seventh and the fifth.
+KITCHEN_BASS = [(0, "A1", .4), (.75, "A1", .2), (1.5, "A2", .3), (2, "E2", .4), (2.75, "G2", .2),
+                (3, "A2", .3), (3.5, "G2", .3)]
+KITCHEN_CHOP = [0.5, 0.75, 1.5, 2.5, 3.25, 3.5]
+
+KITCHEN_TUNE = [
+    (0, "E5", .5), (.5, "G5", .5), (1, "A5", .5), (1.5, "G5", .5), (2, "E5", 1),
+    (6.5, "E5", .5), (7, "G5", 1),
+    (8, "F#5", .5), (8.5, "A5", .5), (9, "C6", .5), (9.5, "A5", .5), (10, "F#5", 1),
+    (14.5, "A5", .5), (15, "C6", 1),
+    (16, "E5", .5), (16.5, "G5", .5), (17, "A5", .5), (17.5, "G5", .5), (18, "E5", 1),
+    (22, "E5", .5), (22.5, "G5", .5), (23, "A5", 1),
+    (24, "G#5", .5), (24.5, "B5", .5), (25, "D6", .5), (25.5, "B5", .5), (26, "G#5", 1),
+    (28, "A5", .5), (28.5, "F#5", .5), (29, "D5", 1), (30, "C5", 1),
+]
+
+KITCHEN_MIX = {"skank": 0.22, "horn": 0.28, "lead": 0.22, "drivebass": 0.45, "kick": 0.55,
+               "snare": 0.9, "hat": 0.12, "pan": 0.16, "block": 0.14, "crash": 0.1}
+
+
+def kitchen_events():
+    ev = []
+    for bar, chord in enumerate(KITCHEN_CHART):
+        b = bar * 4
+        semis, chop = KITCHEN_CHORDS[chord]
+        for off in KITCHEN_CHOP:
+            for t in chop:
+                ev.append((b + off, skank, t, 0.2, 1.0 if off in (0.5, 2.5) else 0.7))
+        for beat, p, d in KITCHEN_BASS:
+            ev.append((b + beat, drivebass, _shift(p, semis), d, 1.0 if beat in (0, 2) else 0.8))
+        _rock_drums(ev, b, kicks=(0.0, 1.75, 2.5), hats=16, hat_vel=(0.5, 0.8))
+        # The saucepan on the off-beats, the spoon on a son clave across the pair of bars.
+        for off in (0.5, 1.5, 2.5, 3.5):
+            ev.append((b + off, pan, "E5", 0.3, 1.0))
+        for k in ((0, 1.5, 3) if bar % 2 == 0 else (1, 2)):
+            ev.append((b + k, block, "E6", 0.1, 1.0))
+        if bar in (0, 8):
+            ev.append((b, crash, None, 1.5, 1.0))
+    _tune(ev, KITCHEN_TUNE, 0, horn, held=0.9)
+    # Second time round the lead joins the horns an octave down.
+    _tune(ev, [(beat, _oct(p, -1), d) for beat, p, d in KITCHEN_TUNE], 32, lead, vel=0.8, held=0.9)
+    _tune(ev, KITCHEN_TUNE, 32, horn, held=0.9)
+    return _mixed(ev, KITCHEN_MIX)
 
 
 # ---------------------------------------------------------------------------
@@ -1266,6 +1813,13 @@ TRACKS = [
     # MusicPlayer.VolumeDb stays the one number that balances music against effects.
     ("menu", menu_events, MENU_BPM, MENU_BEATS, 0.2, -3.0, True),
     ("battle", battle_events, BATTLE_BPM, BATTLE_BEATS, 0.12, -3.0, True),
+    # Each stage's own battle music (Stage data names it); the Fridge Door plays "battle".
+    ("battle_plains", plains_events, PLAINS_BPM, PLAINS_BEATS, 0.15, -3.0, True),
+    ("battle_rooftops", rooftops_events, ROOF_BPM, ROOF_BEATS, 0.2, -3.0, True),
+    ("battle_bigshow", bigshow_events, BIG_BPM, BIG_BEATS, 0.1, -3.0, True),
+    ("battle_playground", playground_events, SKA_BPM, SKA_BEATS, 0.12, -3.0, True),
+    ("battle_site", site_events, SITE_BPM, SITE_BEATS, 0.1, -3.0, True),
+    ("battle_kitchen", kitchen_events, KITCHEN_BPM, KITCHEN_BEATS, 0.1, -3.0, True),
     ("story", story_events, STORY_BPM, STORY_BEATS, 0.22, -3.0, True),
     ("doombot", doombot_events, DOOM_BPM, DOOM_BEATS, 0.14, -3.0, True),
     ("victory", victory_events, VICTORY_BPM, VICTORY_BEATS, 0.2, -3.0, False),

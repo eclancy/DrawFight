@@ -824,6 +824,7 @@ public partial class Fighter : CharacterBody2D
 			|| State == FighterState.Attacking && currentMove != null && currentMove.CarryOnShoulder);
 		// A hand on his hip only while he is just standing; turned on below.
 		rig.HandOnHip = false;
+		rig.BackArmForward = 0.0f;
 		rig.Sitting = IsSitting;
 		rig.ArmBackLimit = StrikingPose ? FighterRig.ArmBackMost : Data.ArmReachBack;
 
@@ -916,6 +917,7 @@ public partial class Fighter : CharacterBody2D
 				rig.HandOnHip = Data.HandOnHip;
 				// A story posing him, or him talking, poses him outright (ApplyStoryLayer, below).
 				if (StoryLayerOwnsPose()) break;
+				rig.BackArmForward = Data.IdleBackArmForward;
 				rig.Play(FighterAnimations.Idle);
 				// A heavier body breathes slower, and no two fighters breathe in step.
 				rig.Advance(1.0f / Data.Inertia);

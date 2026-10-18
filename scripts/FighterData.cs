@@ -193,6 +193,9 @@ public partial class FighterData : Resource
 	/// </summary>
 	[Export] public bool HandOnHip { get; set; } = false;
 
+	/// <summary>Standing idle, his back arm swung this many degrees forward, so a body that hides it does not (FighterRig.BackArmForward).</summary>
+	[Export] public float IdleBackArmForward { get; set; } = 0.0f;
+
 	// --- Moveset -------------------------------------------------------------
 	// M1 ships one placeholder attack. M4 replaces this with the full 16-move set built from
 	// the shared default moveset plus four specials.
@@ -480,6 +483,8 @@ public partial class FighterData : Resource
 			global::Taunts.Pose("laugh"),
 		};
 		data.TauntLines = new[] { "BEEP. BOOP. DOOM.", "TARGET ACQUIRED.", "HA. HA. HA." };
+		// His back arm hangs behind his box of a body, standing: forward, so it shows (Eric, 2026-10-18).
+		data.IdleBackArmForward = 48.0f;
 		// In a team: his red hands, boots and lamp, and a wash of the colour over his grey plating.
 		data.TeamHue = 350.0f;
 		data.TeamHueWidth = 26.0f;

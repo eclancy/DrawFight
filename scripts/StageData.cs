@@ -278,6 +278,19 @@ public partial class StageData : Resource
 	/// </summary>
 	public bool Traffic;
 
+	/// <summary>
+	/// The Big Show's speakers play loud: the cones thump on the beat and now and then one stack
+	/// swells and blasts whoever is near it back (SpeakerBlast).
+	/// </summary>
+	public bool Speakers;
+
+	/// <summary>
+	/// The battle music this stage fights to (assets/music, made by tools/audio/music.py): every
+	/// stage has its own (Eric, 2026-10-18) - punk at the Big Show, industrial on the Building
+	/// Site. A story's boss fights to his own theme instead.
+	/// </summary>
+	public string Music = "battle";
+
 	/// <summary>How far a <see cref="PlatformLook.HangingBeam"/> hangs below the crane jib it hangs from.</summary>
 	public const float CraneDrop = 220.0f;
 

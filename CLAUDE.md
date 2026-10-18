@@ -143,8 +143,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   `FighterData.ArtistAge`, shown after the artist's name. The form and server live in the EricClancyEngineeringAndCrafts
   repo (`public/draw/`, `intake/`, `docs/DEPLOYMENT.md`).
 - **`python tools/audio/build.py`** — regenerate every sound effect into `assets/sfx/` (about
-  5 seconds). Add **`--music`** for the music in `assets/music/` - the menu, battle, story and
-  DoomBot loops and the victory sting (about 85 seconds) - or name sounds to build only those.
+  5 seconds). Add **`--music`** for the music in `assets/music/` - the menu, every stage's own
+  battle loop (`StageData.Music`), the story and DoomBot loops and the victory sting (a few
+  minutes) - or name tracks to build only those (`python tools/audio/music.py battle_site`).
   Then `"$GODOT_BIN" --headless --path . --import`.
   Nobody on this project can hear the result, so `RegressionChecks` prints which sound each
   fighter's moves were given - check it after adding a fighter.

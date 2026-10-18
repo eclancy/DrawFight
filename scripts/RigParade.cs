@@ -730,6 +730,7 @@ public partial class RigParade : Node2D
 				rig.CarryOnShoulder = data.ShouldersProp && carrying;
 				// And a hand on his hip, standing about.
 				rig.HandOnHip = data.HandOnHip && !Attacks && columnLabel == "idle";
+				rig.BackArmForward = !Attacks && columnLabel == "idle" ? data.IdleBackArmForward : 0.0f;
 				// Looking behind him for a back air, as in a match.
 				rig.SetLookingBack(shown != null && shown.LooksBack);
 				if (shown != null)

@@ -221,6 +221,7 @@ public partial class MatchManager : Node2D
 		AddChild(stage);
 		stage.Build(StageCatalog.Get(StageIndex));
 		if (stage.Traffic != null) stage.Traffic.Match = this;
+		if (stage.Speakers != null) stage.Speakers.Match = this;
 
 		for (int i = 0; i < FighterIndices.Length; i++)
 		{
@@ -681,8 +682,8 @@ public partial class MatchManager : Node2D
 		else if (intoNumbers == 0)
 		{
 			SfxPlayer.Ui("count_go");
-			// A story's boss fights to his own theme.
-			MusicPlayer.Play(BossPlayer >= 0 ? MusicPlayer.Boss : MusicPlayer.Battle);
+			// A story's boss fights to his own theme; everyone else to the stage's.
+			MusicPlayer.Play(BossPlayer >= 0 ? MusicPlayer.Boss : stage.Data.Music);
 		}
 	}
 

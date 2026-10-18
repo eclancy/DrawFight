@@ -75,7 +75,10 @@ Switching a stage between the two should be a one-line change, and it is: `Stage
 ## The big stages
 
 Three stages made for three and four players (Eric, 2026-10-16), each about half as wide again as
-Big Show, built from platform looks like every other stage - no stage has drawing code of its own:
+Big Show, built from platform looks like every other stage - no stage has drawing code of its own
+(its speakers are the one moving part: `StageData.Speakers`, `SpeakerBlast` - the cones thump on
+the beat, and every nine to fifteen seconds one stack swells for a second and blasts a ring of sound
+that shoves whoever is near it back, 5% and a long push):
 
 - **Playground** (`OutsideTheLines`): recess on a playing field that ends at both sides - a slide
   (`SlideTower`: the deck is the platform; the slide is coloured in with no ink, because you
@@ -84,6 +87,9 @@ Big Show, built from platform looks like every other stage - no stage has drawin
 - **Building Site** (`ExerciseBook`, day): Lugnut's world - two pads of dug earth (`Dirt`) with a
   pit between them you can fall into, a scaffold plank across it, tower cranes with beams hanging
   over it, a site office (`SiteCabin`, hazard stripes in yellow and pale grey, never black), cones.
+  Each beam hangs on two cables from a hook under a trolley that runs in and out along its jib
+  (`StagePlatform.Travel`, a moving platform that carries whoever stands on it); the counterweight
+  is on the back end, away from the load.
 - **Kitchen Counter** (`PinnedPages`): the kitchen the story happens in, drawn on one big sheet on
   the fridge - kitchen units (`Countertop`: the worktop is what you stand on), a sink set between
   them to drop into and climb out of (`Sink`), a toaster and a pile of cookbooks on the worktop,
