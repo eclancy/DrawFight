@@ -20,6 +20,8 @@ AppId={{6F3D3A5E-EA98-416E-A24F-370FE3301268}
 AppName=DrawFight
 AppVersion={#AppVersion}
 AppVerName=DrawFight {#AppVersion}
+; Apps & features shows the name alone; the version has its own column there.
+UninstallDisplayName=DrawFight
 AppPublisher=ECEC
 AppPublisherURL=https://ecec.dev/games/drawfight
 ; Paths below are relative to the repo root, two folders up from this script.
@@ -30,7 +32,8 @@ DisableProgramGroupPage=yes
 DisableDirPage=auto
 UsePreviousAppDir=yes
 WizardStyle=modern
-; No SetupIconFile: the game has no .ico (its icon is icon.png), so Inno's default is used.
+; icon.ico is icon.png at the sizes Windows asks for (16-256 px), made with PIL.
+SetupIconFile=icon.ico
 UninstallDisplayIcon={app}\DrawFight.exe
 OutputDir=build\release
 OutputBaseFilename=DrawFight-Setup
