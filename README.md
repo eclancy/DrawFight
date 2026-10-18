@@ -153,7 +153,7 @@ press **CPU** in another seat.
 **Teams**. Each seat gets a team button - red, blue or green; press yours to change it (anyone can
 change a CPU's). Teammates can't hurt each other, and a team wins when the other teams are out.
 
-In a match, **Start** pauses, with a choice to resume or go back and pick fighters.
+In a match, **Start** pauses: resume, pick fighters, or go to the main menu (in a story, its map or the main menu). In any menu, **B** steps back a screen at a time, as far as the main menu.
 Keyboard extras: `F1` hitboxes, `F2` slow motion, `F3` swap pad layout, `F4` cycle stage, `R` restart.
 
 ---

@@ -101,13 +101,8 @@ public partial class MainMenuScreen : Node2D
 				if (over >= 0 && over != hovered) SfxPlayer.Ui("ui_move");
 				hovered = over;
 			}
-			if (cursor.Cancel)
-			{
-				leaving = true;
-				SfxPlayer.Ui("ui_back");
-				GameRoot.Instance.GoTitle();
-				return;
-			}
+			// B steps back through the menus to here, and stops: this is home (Eric, 2026-10-18).
+			// Leaving the game is QUIT.
 			if (cursor.Confirm)
 			{
 				// A pad picked it: drawing a fighter starts with the pad as the pointer.

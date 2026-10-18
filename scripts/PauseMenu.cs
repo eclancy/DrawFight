@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using Godot;
 
 /// <summary>
-/// Start in the middle of a match: everything stops, and a small page offers Resume or going
-/// back to pick fighters. Any player can steer it - it listens to every human's controller, the
+/// Start in the middle of a match: everything stops, and a small page offers Resume, Pick
+/// fighters or Main menu (Eric, 2026-10-18) - in a story, the story's map instead of picking
+/// fighters. Any player can steer it - it listens to every human's controller, the
 /// same ones they fight with, so there is nothing to map.
 ///
 /// It reads those controllers directly rather than through Godot's input events, which also
@@ -17,19 +18,21 @@ public partial class PauseMenu : CanvasLayer
 {
 	readonly List<MenuNav> navs = new List<MenuNav>();
 	System.Action onResume;
-	System.Action onQuit;
 
-	static readonly string[] Options = { "Resume", "Pick fighters" };
+	/// <summary>What it offers: Resume first, then wherever the match can be left for.</summary>
+	(string label, System.Action act)[] options;
 	int selected;
 
 	Label[] optionLabels;
 	Node2D page;
 
-	public void Open(IEnumerable<IInputSource> humans, System.Action resume, System.Action quit)
+	public void Open(IEnumerable<IInputSource> humans, System.Action resume, params (string label, System.Action act)[] leave)
 	{
 		foreach (IInputSource source in humans) navs.Add(new MenuNav(source));
 		onResume = resume;
-		onQuit = quit;
+		options = new (string, System.Action)[leave.Length + 1];
+		options[0] = ("Resume", resume);
+		for (int i = 0; i < leave.Length; i++) options[i + 1] = leave[i];
 	}
 
 	public override void _Ready()
@@ -48,15 +51,15 @@ public partial class PauseMenu : CanvasLayer
 		};
 		AddChild(root);
 
-		var title = MenuTheme.MakeLabel("Paused", new Vector2(0.0f, 330.0f), 96, MenuTheme.Text);
+		var title = MenuTheme.MakeLabel("Paused", new Vector2(0.0f, 280.0f), 96, MenuTheme.Text);
 		title.Size = new Vector2(1920.0f, 120.0f);
 		title.HorizontalAlignment = HorizontalAlignment.Center;
 		root.AddChild(title);
 
-		optionLabels = new Label[Options.Length];
-		for (int i = 0; i < Options.Length; i++)
+		optionLabels = new Label[options.Length];
+		for (int i = 0; i < options.Length; i++)
 		{
-			Label label = MenuTheme.MakeLabel(Options[i], new Vector2(0.0f, 500.0f + i * 110.0f), 64, MenuTheme.Text);
+			Label label = MenuTheme.MakeLabel(options[i].label, new Vector2(0.0f, 440.0f + i * 100.0f), 60, MenuTheme.Text);
 			label.Size = new Vector2(1920.0f, 90.0f);
 			label.HorizontalAlignment = HorizontalAlignment.Center;
 			root.AddChild(label);
@@ -73,7 +76,7 @@ public partial class PauseMenu : CanvasLayer
 
 			if (nav.StepY != 0)
 			{
-				selected = (selected + nav.StepY + Options.Length) % Options.Length;
+				selected = (selected + nav.StepY + options.Length) % options.Length;
 				SfxPlayer.Ui("ui_move");
 				Refresh();
 			}
@@ -89,8 +92,7 @@ public partial class PauseMenu : CanvasLayer
 			if (nav.Confirm)
 			{
 				SfxPlayer.Ui("ui_select");
-				if (selected == 0) onResume?.Invoke();
-				else onQuit?.Invoke();
+				options[selected].act?.Invoke();
 				return;
 			}
 		}
@@ -101,7 +103,7 @@ public partial class PauseMenu : CanvasLayer
 		for (int i = 0; i < optionLabels.Length; i++)
 		{
 			optionLabels[i].AddThemeColorOverride("font_color", i == selected ? MenuTheme.Accent : MenuTheme.Soft);
-			optionLabels[i].Text = i == selected ? $"> {Options[i]} <" : Options[i];
+			optionLabels[i].Text = i == selected ? $"> {options[i].label} <" : options[i].label;
 		}
 	}
 
@@ -110,7 +112,7 @@ public partial class PauseMenu : CanvasLayer
 	{
 		page.DrawRect(new Rect2(0.0f, 0.0f, 1920.0f, 1080.0f), new Color(0.93f, 0.92f, 0.89f, 0.55f));
 
-		var sheet = new Rect2(660.0f, 290.0f, 600.0f, 480.0f);
+		var sheet = new Rect2(640.0f, 250.0f, 640.0f, 120.0f + options.Length * 100.0f + 100.0f);
 		page.DrawRect(sheet, MenuTheme.Paper);
 		for (float y = sheet.Position.Y + 60.0f; y < sheet.End.Y - 10.0f; y += 54.0f)
 		{

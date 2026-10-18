@@ -309,7 +309,7 @@ match both work, not as the intended way to play.
 | **RB**             | grab; holding an item, throw it            |
 | **LB**             | taunt (on the ground) - three each: stick `↑` `→` `↓` picks one, still is any |
 | hold `↓` + **A**    | drop through a soft platform               |
-| Start              | pause: resume, or back to fighter select   |
+| Start              | pause: resume, pick fighters, or main menu (story: its map or main menu) |
 
 **This layout was specified, and it wins.** Earlier drafts argued first for platformer
 convention and then for Smash Ultimate’s layout; both are now overruled. `GamepadLayout.Smash()`

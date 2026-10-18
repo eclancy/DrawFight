@@ -806,13 +806,25 @@ public partial class MatchManager : Node2D
 		}
 
 		pauseMenu = new PauseMenu();
-		pauseMenu.Open(humans, Resume, () =>
+		void Leave(System.Action go)
 		{
 			GetTree().Paused = false;
 			MusicPlayer.SetPaused(false);
-			if (director != null) GameRoot.Instance.GoMainMenu();
-			else GameRoot.Instance.GoCharacterSelect();
-		});
+			go();
+		}
+		// A story has no fighters to pick: its map is where it goes back to instead.
+		if (director != null)
+		{
+			pauseMenu.Open(humans, Resume,
+				("Story map", () => Leave(GameRoot.Instance.GoStoryMap)),
+				("Main menu", () => Leave(GameRoot.Instance.GoMainMenu)));
+		}
+		else
+		{
+			pauseMenu.Open(humans, Resume,
+				("Pick fighters", () => Leave(GameRoot.Instance.GoCharacterSelect)),
+				("Main menu", () => Leave(GameRoot.Instance.GoMainMenu)));
+		}
 		AddChild(pauseMenu);
 		GetTree().Paused = true;
 		SfxPlayer.Ui("pause");
