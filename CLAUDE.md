@@ -146,9 +146,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   Then `"$GODOT_BIN" --headless --path . --import`.
   Nobody on this project can hear the result, so `RegressionChecks` prints which sound each
   fighter's moves were given - check it after adding a fighter.
-- **`bash tools/release/release.sh X.Y.Z`** — publish a version: exports the Windows build and
-  makes a GitHub Release. Every downloaded copy updates itself to it on next start. Needs a clean
-  tree and the export templates - see `.ai/releasing.md`. Never publish without being asked.
+- **`bash tools/release/release.sh X.Y.Z`** — publish a version: exports the Windows build, builds
+  the installer and makes a GitHub Release. Every downloaded copy updates itself to it on next
+  start. Needs a clean tree, the export templates and Inno Setup - see `.ai/releasing.md`. Never publish without being asked.
 - **`python tools/art/items.py`** — redraw the thirty items into `assets/items/` with
   `items.json` (where each is gripped, and its business end). Coloured pencil, like the
   stand-ins, so it needs `$GODOT_BIN`. About 15 seconds; then `--import`.

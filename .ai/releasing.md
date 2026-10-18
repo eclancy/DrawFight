@@ -22,10 +22,15 @@ release**.
 
 ## What a release contains
 
-`tools/release/package.py` makes three files from the export in `build/windows/`:
+- **`DrawFight-Setup.exe`**: the installer, and the file a new player downloads. Inno Setup
+  builds it from `tools/release/installer.iss`, out of the same `build/windows/` export. See
+  "The installer" below.
+
+`tools/release/package.py` makes the other three files from the export in `build/windows/`:
 
 - **`DrawFight-windows.zip`** (about 70 MB): everything, in a `DrawFight/` folder, with a
-  `How to play.txt`. This is the file a new player downloads.
+  `How to play.txt`. This is the **portable version**, the fallback for anyone who would rather
+  not run an installer.
 - **`DrawFight-patch.zip`** (about 5 MB): `DrawFight.pck` (every image, sound, setting and scene,
   and the story scripts - `fighters/*/story.txt` is not a Godot resource, so the export preset's
   include filter names it; a new kind of plain file the game reads needs the same)
@@ -33,7 +38,26 @@ release**.
   when the game changes and Godot does not. The rest of the full zip is the Godot engine and the
   .NET runtime.
 - **`version.json`**: the version, the Godot version it was built with, and the URLs of both
-  zips.
+  zips and of the installer (`installer`, which the updater ignores).
+
+## The installer
+
+Added 2026-10-18; the same design is shared by all three of Eric's games. One file: download,
+run, and play from the Start menu or the desktop shortcut (a ticked-by-default option). The
+download page offers the installer, with the zip as the portable fallback.
+
+- **It installs per user, into `%LOCALAPPDATA%\Programs\DrawFight`, with no admin prompt**
+  (`PrivilegesRequired=lowest`). That matters for more than politeness: the game updates itself
+  by `robocopy`ing new files over its own folder (below), so the folder must stay writable by the
+  player. Installed under Program Files, it would silently never update.
+- **Its `AppId` GUID is fixed and must never change.** It is how Windows knows a new installer
+  is an upgrade of the copy already there, which it installs over in place
+  (`UsePreviousAppDir`) rather than adding a second DrawFight.
+- After a self-update, the installed files are newer than the installer that put them there.
+  That is fine: the uninstaller removes the whole install folder (`[UninstallDelete]`), so
+  files the updater added go too. **It never touches the player's saves**, which live in
+  `%APPDATA%\Godot`.
+- Running a newer installer over an older copy just updates it, the same as the self-updater.
 
 ## How a copy updates
 
@@ -65,8 +89,9 @@ bash tools/release/release.sh 0.2.0 "New fighter: DoomBot. Ledge grabs are easie
 
 The quoted text is optional: it is what players see under "What's new" on
 `ecec.dev/games/drawfight`, so write it for them. Leave it out and the release just says how to
-download. This needs a clean working tree. The script sets the version, builds, exports, packages, commits
-"Release v0.2.0", tags it, pushes, and runs `gh release create`. It takes about a minute.
+download. This needs a clean working tree. The script sets the version, builds, exports, packages,
+compiles the installer, commits "Release v0.2.0", tags it, pushes, and runs `gh release create`.
+It takes a few minutes; the installer's maximum compression is most of it.
 
 Version numbers: bump the last number for fixes and balance changes, and the middle one for a new
 fighter or stage.
@@ -75,7 +100,15 @@ fighter or stage.
 version. They come from the `godotengine/godot-builds` GitHub release, file
 `Godot_v<version>-stable_mono_export_templates.tpz`, about 1.2 GB. Only the `windows_*` files are
 needed, unpacked into `%APPDATA%\Godot\export_templates\<version>.stable.mono\`. The export
-fails with "No export template found" until they are there.
+fails with "No export template found" until they are there. Also install **Inno Setup 6**
+(`winget install JRSoftware.InnoSetup`), which compiles the installer. The script looks for
+`ISCC.exe` in `%LOCALAPPDATA%\Programs\Inno Setup 6\` (where its per-user install goes) and
+stops before tagging anything if it is not there; set `ISCC` to its path if it is elsewhere.
+
+**Testing the installer without publishing:** export and run `package.py` as the script does,
+then `ISCC /DAppVersion=X.Y.Z tools/release/installer.iss`. Install it silently somewhere
+disposable with `DrawFight-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /DIR="<folder>" /TASKS=""`
+(no desktop shortcut), and remove it again with `unins000.exe /VERYSILENT` from that folder.
 
 **Testing an update without publishing:** export an older version number to `build/test/`, serve
 `build/release/` with any local web server, and run the old copy with `DRAWFIGHT_UPDATE_URL`
@@ -89,6 +122,7 @@ pointing at your `version.json`. Run a build with `--no-update` to skip the chec
 - **Upgrading Godot** changes the engine version, so every copy downloads the full zip once.
   Install the new export templates before releasing.
 - **The game must be somewhere it can write to.** Unzipped into Program Files, it cannot update
-  itself and silently stays on its version. `How to play.txt` says to keep it in Documents or on
-  the Desktop.
+  itself and silently stays on its version. The installer always puts it somewhere writable; for
+  the portable zip, `How to play.txt` says to keep it in Documents or on the Desktop.
+- **SmartScreen applies to the installer too**, for the same reason: it is not signed either.
 - **Only Windows is exported.** A Mac build needs Apple notarization to open without a fight.

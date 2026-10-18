@@ -5,7 +5,9 @@
 
 Writes build/release/:
 
-  DrawFight-windows.zip   everything, in a DrawFight/ folder - what a new player downloads
+  DrawFight-windows.zip   everything, in a DrawFight/ folder - the portable version, for anyone
+                          who does not want DrawFight-Setup.exe (which release.sh builds next,
+                          with Inno Setup, from tools/release/installer.iss)
   DrawFight-patch.zip     just the game: the .pck and the game's own assembly. About 5 MB,
                           against about 70 MB for the full zip, because the engine and the .NET
                           runtime only change when Godot is upgraded.
@@ -98,6 +100,9 @@ def main(argv):
         "engine": engine_version(),
         "patch": base + "DrawFight-patch.zip",
         "full": base + "DrawFight-windows.zip",
+        # The updater ignores this; it is here so anything reading version.json can offer the
+        # installer. release.sh builds it right after this script.
+        "installer": base + "DrawFight-Setup.exe",
     }
     with io.open(os.path.join(OUT, "version.json"), "w", encoding="utf-8") as f:
         f.write(unicode(json.dumps(info, indent=2, sort_keys=True)) + u"\n")

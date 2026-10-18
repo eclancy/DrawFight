@@ -7,14 +7,15 @@
 # under "What's new". The download instructions are always appended below it.
 #
 # Commits the version bump, tags it, exports the Windows build, and makes a GitHub Release with
-# the full zip, the small patch zip and version.json. ecec.dev/drawfight/version.json redirects
+# the installer (DrawFight-Setup.exe, built by Inno Setup from tools/release/installer.iss), the
+# full zip (the portable version), the small patch zip and version.json. ecec.dev/drawfight/version.json redirects
 # to the newest release's version.json, so nothing on ecec.dev needs deploying. See
 # .ai/releasing.md.
 set -euo pipefail
 
 VERSION="${1:-}"
 CHANGES="${2:-}"
-HOW_TO="Download **DrawFight-windows.zip**, unzip it, and run DrawFight.exe. It keeps itself up to date from then on. Download page: https://ecec.dev/drawfight/download"
+HOW_TO="Download **DrawFight-Setup.exe** and run it, then play from the Start menu or the desktop. It keeps itself up to date from then on. No installer wanted? **DrawFight-windows.zip** is the portable version: unzip it somewhere you can write to, like Documents, and run DrawFight.exe. Download page: https://ecec.dev/drawfight/download"
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 	echo "usage: bash tools/release/release.sh X.Y.Z [\"what changed\"]" >&2
 	exit 1
@@ -22,6 +23,12 @@ fi
 
 cd "$(dirname "$0")/../.."
 : "${GODOT_BIN:?GODOT_BIN is not set - see .claude/settings.json}"
+# Inno Setup compiles the installer. Its per-user install puts ISCC here; set ISCC otherwise.
+ISCC="${ISCC:-$LOCALAPPDATA/Programs/Inno Setup 6/ISCC.exe}"
+if [ ! -f "$ISCC" ]; then
+	echo "Inno Setup not found at $ISCC - install it (winget install JRSoftware.InnoSetup) or set ISCC" >&2
+	exit 1
+fi
 
 if [ -n "$(git status --porcelain)" ]; then
 	echo "commit or stash your changes first - a release is built from what is committed" >&2
@@ -48,13 +55,18 @@ timeout 900 "$GODOT_BIN" --headless --path . --export-release "Windows Desktop" 
 [ -f build/windows/DrawFight.pck ] || { echo "export produced no .pck - see build/export.log" >&2; git checkout project.godot; exit 1; }
 
 python tools/release/package.py "$VERSION"
+# Git Bash turns an argument starting with / into a path; ISCC's /Q and /D switches must not be.
+MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' "$ISCC" /Q "/DAppVersion=$VERSION" tools/release/installer.iss \
+	|| { echo "installer build failed" >&2; git checkout project.godot; exit 1; }
+[ -f build/release/DrawFight-Setup.exe ] || { echo "no installer in build/release" >&2; git checkout project.godot; exit 1; }
 
 git diff --quiet project.godot || git commit -q -m "Release v$VERSION" project.godot
 git tag "v$VERSION"
 git push -q origin HEAD "v$VERSION"
 
 gh release create "v$VERSION" \
-	build/release/DrawFight-windows.zip build/release/DrawFight-patch.zip build/release/version.json \
+	build/release/DrawFight-Setup.exe build/release/DrawFight-windows.zip \
+	build/release/DrawFight-patch.zip build/release/version.json \
 	--title "DrawFight $VERSION" \
 	--notes "${CHANGES:+$CHANGES
 
