@@ -336,7 +336,20 @@ public partial class GameRoot : Node2D
 			CpuLevels = levels.ToArray(),
 			BossPlayer = boss,
 			Story = Story,
+			Items = StoryItems(),
 		});
+	}
+
+	/// <summary>
+	/// A story fight drops items now and then - always Low, whatever versus is set to, so they
+	/// season a chapter without deciding it (Eric, 2026-10-19) - from the items switched on in
+	/// the item settings.
+	/// </summary>
+	ItemSettings StoryItems()
+	{
+		var items = new ItemSettings { Frequency = ItemFrequency.Low };
+		for (int i = 0; i < items.Enabled.Length; i++) items.Enabled[i] = Items.Enabled[i];
+		return items;
 	}
 
 	/// <summary>

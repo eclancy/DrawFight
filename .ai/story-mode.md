@@ -386,7 +386,9 @@ In order, each step usable before the next:
    runs hot, sends a MiniBot after you every few seconds, and the music speeds up. DoomBot Mk. II
    (`FighterData.DoomBotMk2`, story id `mk2`) is DoomBot wearing the outfit `mk2` - scrap armour
    drawn by `tools/art/mk2_armour.py` and hung on DoomBot's own rig - fielded only by a story
-   (`FighterCatalog.StoryOnlyFrom`).
+   (`FighterCatalog.StoryOnlyFrom`). **Items** drop in every story fight, always on Low,
+   whatever versus is set to, from the items switched on in the item settings
+   (`GameRoot.StoryItems`; Eric, 2026-10-19) - enough to season a chapter, never to decide it.
 6. **The story screens** - **built, 2026-10-15.** Main menu Story → "Whose story?" (a gold star
    on every story finished) → the story's map (`StoryMapScreen`: the fridge door, a magnet per
    chapter, a star on each played, the next one glowing) → play. After every chapter the story
