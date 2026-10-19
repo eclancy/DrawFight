@@ -8,7 +8,8 @@ Run:
 IT IS A CROP OF A REAL FRAME OF THE GAME, not a drawing made for the icon. An icon drawn
 separately is a second answer to "what does this game look like", and it drifts the moment the
 game changes. This one is Circy - Elim's drawing, the first fighter a kid drew - standing idle,
-exactly as the game renders him, on the game's lined notepad page with its red margin (Eric's
+exactly as the game renders him - his face, the whole ball and the tops of his legs - on the
+game's lined notepad page with its red margin (Eric's
 call, 2026-10-19; before that he stood on plain paper in his parade cell, and before 2026-10-10
 the icon was Lug's face). The frame is IconFrame (--icon): its top-left 512x512 square, which
 it lays out for this. The page's lines there are drawn bolder than the menus', so they still
