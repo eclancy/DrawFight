@@ -163,6 +163,7 @@ public partial class GameRoot : Node2D
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--options") startAt = "options";
 			if (arg == "--changelog") startAt = "changelog";
+			if (arg == "--icon") startAt = "icon";
 			if (arg == "--suggest") startAt = "suggest";
 			if (arg == "--newstage") startAt = "newstage";
 			if (arg == "--drawings") startAt = "drawings";
@@ -217,6 +218,8 @@ public partial class GameRoot : Node2D
 			case "items": GoItemSettings(); break;
 			case "options": GoOptions(null); break;
 			case "changelog": GoChangelog(null); break;
+			// The frame the application icon is cropped from (tools/art/app_icon.py).
+			case "icon": Show(new IconFrame()); break;
 			case "suggest": GoSuggest(); break;
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;

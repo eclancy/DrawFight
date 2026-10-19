@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
-"""The application icon: what the Godot project manager and the taskbar show.
+"""The application icon: what the Godot project manager, the taskbar and the installer show.
 
 Run:
-    "$GODOT_BIN" --path . -- --parade --only=2 --shot=70   -> .shots/latest.png, Circy's parade
-    python tools/art/app_icon.py                           -> icon.png at the repo root
+    "$GODOT_BIN" --path . -- --icon --shot=40   -> .shots/latest.png, the icon frame
+    python tools/art/app_icon.py                -> icon.png and icon.ico at the repo root
 
 IT IS A CROP OF A REAL FRAME OF THE GAME, not a drawing made for the icon. An icon drawn
 separately is a second answer to "what does this game look like", and it drifts the moment the
 game changes. This one is Circy - Elim's drawing, the first fighter a kid drew - standing idle,
-exactly as the game renders him: his smiling ball over his own stick legs (Eric's call,
-2026-10-10). It was Lug's face from the title screen, a fighter we drew ourselves.
+exactly as the game renders him, on the game's lined notepad page with its red margin (Eric's
+call, 2026-10-19; before that he stood on plain paper in his parade cell, and before 2026-10-10
+the icon was Lug's face). The frame is IconFrame (--icon): its top-left 512x512 square, which
+it lays out for this. The page's lines there are drawn bolder than the menus', so they still
+read at 32 pixels.
 
-His parade cell is the frame because it shows him biggest. Look at the result before
-committing it - if a pose or a re-cut moves him, adjust FACE below.
+icon.ico is the same picture at the sizes Windows asks for; the installer uses it
+(tools/release/installer.iss). Look at the result before committing it.
 
 Only Python 2.7 with PIL is installed on this machine, which is all this needs.
 """
@@ -26,13 +29,13 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 
 SHOT = os.path.join(ROOT, ".shots", "latest.png")
 OUT_PNG = os.path.join(ROOT, "icon.png")
+OUT_ICO = os.path.join(ROOT, "icon.ico")
 
-# Circy standing idle in the first cell of his parade, on the 1920x1080 screenshot: centre x,
-# centre y, square side. His whole ball and the tops of his legs, with a margin of paper, tight
-# enough that the face still reads when the project manager shows it at 64px.
-FACE = (296, 395, 200)
+# IconFrame.Square, on the 1920x1080 screenshot.
+SQUARE = (0, 0, 512, 512)
 
 SIZE = 256
+ICO_SIZES = [(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
 
 
 def main():
@@ -42,15 +45,13 @@ def main():
 
     shot = Image.open(SHOT).convert("RGB")
     if shot.size != (1920, 1080):
-        raise SystemExit("expected a 1920x1080 parade screenshot, got %dx%d" % shot.size)
-
-    cx, cy, side = FACE
-    half = side // 2
-    face = shot.crop((cx - half, cy - half, cx - half + side, cy - half + side))
+        raise SystemExit("expected a 1920x1080 screenshot of --icon, got %dx%d" % shot.size)
 
     # A photographic resample, not nearest: the frame is anti-aliased marker, not pixel art.
-    face.resize((SIZE, SIZE), Image.LANCZOS).save(OUT_PNG)
-    print("wrote %s  %dx%d" % (os.path.relpath(OUT_PNG, ROOT), SIZE, SIZE))
+    icon = shot.crop(SQUARE).resize((SIZE, SIZE), Image.LANCZOS)
+    icon.save(OUT_PNG)
+    icon.save(OUT_ICO, sizes=ICO_SIZES)
+    print("wrote %s and %s" % (os.path.relpath(OUT_PNG, ROOT), os.path.relpath(OUT_ICO, ROOT)))
 
 
 if __name__ == "__main__":
