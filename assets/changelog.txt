@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.8.1 | 2026-10-18
+What's new now shows this version's changes properly.
+
 == 0.8.0 | 2026-10-18
 Every stage has its own battle music - punk rock at the Big Show, industrial on the Building Site, funk in the kitchen - and the menu music is calm.
 The Big Show's speakers thump to the beat and now and then blast you back.
