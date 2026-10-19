@@ -1,6 +1,8 @@
 # What changed in each version, newest first - shown in the game under Options > What's new
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
-# notes it is given. A version starts with "== 0.8.0 | 2026-10-18
+# notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
+
+== 0.8.0 | 2026-10-18
 Every stage has its own battle music - punk rock at the Big Show, industrial on the Building Site, funk in the kitchen - and the menu music is calm.
 The Big Show's speakers thump to the beat and now and then blast you back.
 The Building Site's cranes swing their beams in and out, and you ride along.
@@ -12,8 +14,6 @@ Computer players in Easy, Medium and Hard.
 Team fights colour each fighter in their team's colour.
 Crouching drops to one knee, and DoomBot's back arm shows.
 The pause menu: Resume, Pick fighters or Main menu. B goes back a screen at a time. Quit asks first.
-
-== VERSION | DATE"; each line under it is one change.
 
 == 0.7.2 | 2026-10-18
 Now installs with a single setup file: download it, run it, and play from the Start menu or the desktop.

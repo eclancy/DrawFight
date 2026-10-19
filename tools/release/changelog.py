@@ -30,8 +30,10 @@ def main():
     with io.open(PATH, encoding='utf-8') as f:
         text = f.read()
     entry = u'== %s | %s\n%s\n\n' % (version, datetime.date.today().isoformat(), u'\n'.join(lines))
-    at = text.find(u'== ')
-    text = text[:at] + entry + text[at:] if at >= 0 else text + u'\n' + entry
+    # The first version heading at the start of a line - not the example in the comment above
+    # them, which put v0.8.0's notes inside the comment.
+    at = text.find(u'\n== ')
+    text = text[:at + 1] + entry + text[at + 1:] if at >= 0 else text + u'\n' + entry
     with io.open(PATH, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
     print('changelog: added %s' % version)
