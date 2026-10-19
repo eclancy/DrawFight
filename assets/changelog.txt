@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.8.3 | 2026-10-19
+The icon is Circy's face again, on notepad paper.
+
 == 0.8.2 | 2026-10-19
 A new icon: Circy on a page of notepad paper.
 
