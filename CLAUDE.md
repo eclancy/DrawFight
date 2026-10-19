@@ -158,9 +158,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`--items=off|low|medium|high`** sets how often items drop for one run (not saved);
   **`--item=ID`** drops only that one (`--item=glitter_bomb`), every couple of seconds, to look
   at it; **`--itemsettings`** boots to the item settings screen.
-- **`python tools/art/app_icon.py`** — rebuild `icon.png` as a crop of a real frame of the
-  game: Circy, Elim's drawing, standing idle in his parade cell (shoot it first with
-  `--parade --only=2 --shot=70`). The icon is never drawn separately; if Circy is re-cut, re-shoot
+- **`python tools/art/app_icon.py`** — rebuild `icon.png` and `icon.ico` (the installer's) as a
+  crop of a real frame of the game: Circy, Elim's drawing, standing idle on the lined notepad page
+  (`IconFrame`; shoot it first with `--icon --shot=40`). The icon is never drawn separately; if Circy is re-cut, re-shoot
   and re-crop per the script's docstring.
 - **`"$GODOT_BIN" --path . -- --match --stage=N --shot=120`** — boot straight into a match on
   one stage and screenshot it (`--stage` alone only picks it). `F4` cycles stages while playing.
