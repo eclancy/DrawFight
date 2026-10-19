@@ -81,7 +81,7 @@ triguy run to 300
 triguy show taunt_pose
 camera two player triguy
 player pose hips
-player: You're fast. I'm faster.
+player: You may be fast, but my swords are faster.
 player pose none
 triguy: that's, really kewl.
 player look smug

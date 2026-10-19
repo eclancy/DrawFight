@@ -183,8 +183,8 @@ THE PICTURE to get there.
   picture." He draws a pair of Safety Scissors with a flourish. Looks at them. "...Round tips."
   Throws them over his shoulder. "I'll use my swords."
 - **Fights:** Triguy, Circy, Lugnut, Flambé, then Flambé and Lugnut together, then DoomBot.
-- **Triguy.** Triguy zooms in and strikes a pose. "You're fast. I'm faster." - "that's, really
-  kewl." - "It IS really cool. Stop saying it like that." After, from the floor: "that's...
+- **Triguy.** Triguy zooms in and strikes a pose. "You may be fast, but my swords
+  are faster." - "that's, really kewl." - "It IS really cool. Stop saying it like that." After, from the floor: "that's...
   really kewl." - "Try to keep up."
 - **Circy.** "A circle. You don't even have edges." Circy holds up a picture of a bomb. "...Was
   that a threat?" Circy holds up a bomb with a heart on it. "I genuinely cannot tell."
