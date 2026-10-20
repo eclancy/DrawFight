@@ -45,6 +45,7 @@ he has a catchphrase that is "that's, really kewl", also his 3 taunts are him do
 
 - **Picture 4 is how he stands**, side-on facing right - Eric's call, from the drawings. Picture
   5, the jagged outline, goes round him while he is invincible. Picture 2 is the trampoline.
+  (Reversed 2026-10-19: picture 4 is his stab, and he stands point up - see below.)
 - **"Terrible at standing still"** became slippery feet: he skids a long way every time he stops,
   and his block lets nearly twice as much through, since blocking is standing still.
 - **The taunt that makes him invincible** is his neutral special, Show Off: one of his three
@@ -66,3 +67,24 @@ he has a catchphrase that is "that's, really kewl", also his 3 taunts are him do
   a Nose Charge - point out, a burst forward, then the long skid - his forward tilt flicks a
   tear, his up smash spins the top hat for three hits, his down smash sends two of the puddle's
   spikes up out of the floor, and his neutral air bursts into tears all round him.
+
+## Calls made from Elim's feedback (2026-10-19)
+
+- **He stands tall, point up** (Eric's call, 2026-10-19, from Elim's feedback: "triguys idle is
+  STILL his stab", "Triguys stab pose is still swapped with the idle and he's supposed to be
+  tall"). This reverses "picture 4 is how he stands" above: picture 4 lies the triangle on its
+  side with its point out in front, and that is his **stab** - "he sticks the top of his triangle
+  out". Every drawing of him standing (crying, POG, surprised) has the triangle on end, point up,
+  the top hat on the point and long stick legs under it, so that is how he stands, runs, jumps and
+  blocks: picture 4's own triangle turned upright, the hat turned level on the point, the legs out
+  of the bottom, the arms out of the sides, and his eyes and mouth each kept level as drawn - a
+  little smaller standing, where the narrow triangle has less room across it, and full size again
+  in the stab. Nothing is redrawn; the pieces are only turned and moved.
+- **The stab is picture 4.** His forward smash (Big Point), his dash attack (Nose Charge), his
+  last jab and his Point Poke throw tip the triangle forward until it is exactly picture 4 again:
+  point forward, the hat back on the corner where Elim drew it, the legs out of the side that is
+  underneath, the face level.
+- **He is tall**: taller than Circy, the tallest after DoomBot - his box went from 92 wide by 120
+  tall to 64 by 172, about the same size, stood on end. His moves' numbers are unchanged, except
+  that Hat Tip's hit went up onto the hat, where it now is.
+- **Hat Toss** still takes the hat off the top of his head and puts it back on - the point, now.

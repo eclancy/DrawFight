@@ -374,8 +374,16 @@ the eye squashed flat, a shout the mouth stretched open down from its top. Eric'
 - **What is left behind** is filled in, which is allowed (rule 1: fill in what is missing): the
   face's own flat colour, or, on a pencilled or hatched face, the texture grown in from round it.
   It only shows while a feature is squashed or stretched off its spot.
-- **A mark joined to the outline stays.** Triguy's long back eye line runs into his outline,
-  so only his front eye moves. Never cut a line apart to free a feature.
+- **A mark joined to the outline stays.** Never cut a line apart to free a feature. (Triguy's
+  front eye only touches his outline once the line is widened, so his face is lifted before it
+  is - by `tools/art/cut_triguy.py` itself, as below.)
+- **A face on a body that is turned** (Triguy's, Eric's call 2026-10-19): his body is drawn lying
+  on its side and stood on end to make the rig (Tipped over, below), so his eyes and mouth are
+  lifted off the drawing first, mark by mark, and hung back level - at rest the face reads as
+  drawn, not on its side. The stood-up triangle has less room across it than the drawing had
+  along it, so standing the marks are drawn a little closer together and shown smaller
+  (an extra's `"scale"`, 75% for him); tipped back over into the drawing they are full size and
+  exactly where he drew them.
 - **A mouth opens only as far as the drawing has room** under it (`stretch`): Triguy's and
   DoomBot's barely, Circy's more.
 - **Flambé and Lugnut are ours**, drawn in SVG, so their faces are drawn as separate parts in
@@ -494,10 +502,22 @@ small path rather than bending the rig.
   flat shin side-on (Eric, 2026-10-09). A tall boot shaft belongs on the shin, not the foot, so
   it leans with it - Flambe's.
 - **Legs out of the body** (`"legsOnBody": true`): legs that come out of the body's edge well
-  away from the hip - Triguy's, at the corners of his triangle - have their roots carried round
+  away from the hip - Triguy's, out of the bottom of his triangle - have their roots carried round
   as the body tips, or the body swings away from them. Their swings are untouched; only where
   they start moves. A body turned round to look back (a back air) takes every limb's root round
   with it.
+- **Tipped over, the drawing** (`"tipped"`; Triguy's, Eric's call 2026-10-19, from Elim:
+  "triguys idle is STILL his stab", "he's supposed to be tall"): a fighter drawn in his attack
+  rather than standing. Elim drew Triguy with the triangle on its side, point forward - his
+  stab - and every drawing of him standing has it on end, point up, hat on the point. So
+  `cut_triguy.py` stands the body on end (only turned), hangs the hat on the point (turned
+  level), the legs from the bottom and the arms from the sides, and writes in `"tipped"` where
+  each of them, the body and the face are on the drawing as drawn. As the body tips forward past
+  `"from"` degrees, `FighterRig` slides each piece from where it hangs standing to its place on
+  the drawing, and at `"angle"` (about 98 degrees, the turn that stood him up) he is exactly the
+  drawing again - point out in front, hat on the back corner, legs out of the underside, face
+  level. His point attacks (`AttackAnim.PointThrust`) tip him that far; ordinary leans stay
+  below `"from"` and keep him standing. Nothing is redrawn - pieces are only turned and moved.
 - **A shin with no flat sole**: a leg whose bottom is not a foot laid flat - a diagonal with a
   tick on the end, as Circy's front leg was before it was redrawn - says so with `"soleSlope": 0`
   on its part, and stands as drawn. Without it the diagonal is read as a sole and laid flat on

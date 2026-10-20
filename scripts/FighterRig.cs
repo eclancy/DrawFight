@@ -350,6 +350,7 @@ public partial class FighterRig : Node2D
 		}
 
 		LoadExtras(root, parts, baseDir);
+		LoadTipped(root);
 		LoadPoints(root);
 		if (evenLegs) EvenUpLegs();
 
@@ -412,7 +413,12 @@ public partial class FighterRig : Node2D
 					Rest = sprite.Position,
 					Reach = Mathf.Max(texture.GetSize().X, texture.GetSize().Y),
 					Stretch = entry.ContainsKey("stretch") ? (float)entry["stretch"] : 1.1f,
+					// Shown smaller than drawn while he stands, where a body stood on end has less
+					// room across it than the drawing did (Triguy's); full size once tipped back over.
+					Size = entry.ContainsKey("scale") ? (float)entry["scale"] : 1.0f,
 				};
+				feature.TippedSize = feature.Size;
+				sprite.Scale = Vector2.One * feature.Size;
 				if (faceKind == "mouthOpen") mouthOpen = feature;
 				else face.Add(feature);
 			}
@@ -449,6 +455,14 @@ public partial class FighterRig : Node2D
 		public float Reach;
 		/// <summary>How far a mouth may open, as a fraction of its own height (rig.json "stretch").</summary>
 		public float Stretch;
+		/// <summary>How big it is shown at rest (rig.json "scale"), and tipped over (<see cref="LoadTipped"/>).</summary>
+		public float Size = 1.0f, TippedSize = 1.0f;
+		/// <summary>Where it goes, and how it is turned, with the body tipped over - null if it stays put.</summary>
+		public Vector2? TippedRest;
+		public float TippedTurn;
+		/// <summary>The expression on it now (SetFace), placed over wherever the body has it.</summary>
+		public Vector2 Look, Shape = Vector2.One;
+		public float Turn;
 	}
 
 	readonly List<FaceFeature> face = new List<FaceFeature>();
@@ -467,7 +481,6 @@ public partial class FighterRig : Node2D
 		bool openDrawn = mouthOpen != null && f.Open > 0.45f;
 		foreach (FaceFeature feature in face)
 		{
-			Sprite2D s = feature.Sprite;
 			float reach = feature.Reach;
 			switch (feature.Kind)
 			{
@@ -475,30 +488,48 @@ public partial class FighterRig : Node2D
 				{
 					float y = (1.0f - 0.86f * f.Blink) * (1.0f - 0.5f * f.Squint) * (1.0f + 0.3f * f.Wide);
 					float x = (1.0f + 0.12f * f.Wide) * (1.0f + 0.06f * f.Squint);
-					s.Scale = new Vector2(x, Mathf.Max(0.08f, y));
-					s.Rotation = feature.Tilt * (0.16f * f.Angry - 0.14f * f.Sad);
-					s.Position = feature.Rest + new Vector2(f.LookX * 0.1f * reach, (f.LookY * 0.08f + f.Angry * 0.03f - f.Surprise * 0.04f) * reach);
+					feature.Shape = new Vector2(x, Mathf.Max(0.08f, y));
+					feature.Turn = feature.Tilt * (0.16f * f.Angry - 0.14f * f.Sad);
+					feature.Look = new Vector2(f.LookX * 0.1f * reach, (f.LookY * 0.08f + f.Angry * 0.03f - f.Surprise * 0.04f) * reach);
 					break;
 				}
 				case "brow":
-					s.Scale = Vector2.One;
-					s.Rotation = feature.Tilt * (0.32f * f.Angry - 0.28f * f.Sad);
-					s.Position = feature.Rest + new Vector2(0.0f, (0.12f * f.Angry - 0.3f * f.Surprise - 0.12f * f.Wide) * reach);
+					feature.Shape = Vector2.One;
+					feature.Turn = feature.Tilt * (0.32f * f.Angry - 0.28f * f.Sad);
+					feature.Look = new Vector2(0.0f, (0.12f * f.Angry - 0.3f * f.Surprise - 0.12f * f.Wide) * reach);
 					break;
 				case "mouth":
-					s.Visible = !openDrawn;
-					s.Scale = new Vector2(1.0f - 0.1f * f.Open + 0.06f * f.Grit, Mathf.Max(0.3f, (1.0f + feature.Stretch * f.Open) * (1.0f - 0.35f * f.Grit)));
-					s.Rotation = 0.0f;
-					s.Position = feature.Rest;
+					feature.Sprite.Visible = !openDrawn;
+					feature.Shape = new Vector2(1.0f - 0.1f * f.Open + 0.06f * f.Grit, Mathf.Max(0.3f, (1.0f + feature.Stretch * f.Open) * (1.0f - 0.35f * f.Grit)));
+					feature.Turn = 0.0f;
+					feature.Look = Vector2.Zero;
 					break;
 			}
+			PlaceFeature(feature);
 		}
 		if (mouthOpen != null)
 		{
 			mouthOpen.Sprite.Visible = openDrawn;
 			float open = Mathf.Clamp((f.Open - 0.45f) / 0.55f, 0.0f, 1.0f);
-			mouthOpen.Sprite.Scale = new Vector2(1.0f, 0.7f + 0.45f * open);
+			mouthOpen.Sprite.Scale = new Vector2(1.0f, 0.7f + 0.45f * open) * mouthOpen.Size;
 		}
+	}
+
+	/// <summary>
+	/// Puts one feature where the body has it now - where it was drawn, or, on a body tipped over
+	/// toward the drawing it was stood up from, that far along to its place there
+	/// (<see cref="tipBlend"/>) - with its expression on top.
+	/// </summary>
+	void PlaceFeature(FaceFeature feature)
+	{
+		float t = feature.TippedRest == null ? 0.0f : tipBlend;
+		Vector2 rest = feature.TippedRest is Vector2 to ? feature.Rest.Lerp(to, t) : feature.Rest;
+		float turn = feature.TippedTurn * t;
+		float size = Mathf.Lerp(feature.Size, feature.TippedSize, t);
+		Sprite2D s = feature.Sprite;
+		s.Position = rest + feature.Look.Rotated(turn) * size;
+		s.Rotation = turn + feature.Turn;
+		s.Scale = feature.Shape * size;
 	}
 
 	/// <summary>Extras that are part of the body's drawing (rig.json "onPart"): they count as body.</summary>
@@ -1192,8 +1223,8 @@ public partial class FighterRig : Node2D
 		Sprite2D body = sprites[(int)RigBone.Torso];
 		if (body == null) return;
 		body.Scale = new Vector2(x, body.Scale.Y);
-		// Limbs that come out of the body's edges turn round with it (Triguy's, off his corners);
-		// on a body drawn about even either side of its middle, they are already on it. Moving
+		// Limbs that come out of the body's edges turn round with it (Triguy's, out of the bottom
+		// and sides of his triangle); on a body drawn about even either side of its middle, they are already on it. Moving
 		// EdgeLord's arm to the other side of his V carried his back-air sword half a body further
 		// back than its hit (2026-10-10).
 		bodyTurned = back && legsOnBody;
@@ -1217,7 +1248,7 @@ public partial class FighterRig : Node2D
 	/// <summary>
 	/// The limbs come out of the body's edges rather than from the hip and shoulders
 	/// (rig.json "legsOnBody"), so they move with the body when it tips or turns round: Triguy's,
-	/// out at the corners of his triangle. Hung from the hip, a tipped triangle swung clean off
+	/// out of the bottom of his triangle. Hung from the hip, a tipped triangle swung clean off
 	/// his legs.
 	/// </summary>
 	bool legsOnBody;
@@ -1229,11 +1260,13 @@ public partial class FighterRig : Node2D
 	/// </summary>
 	void PlaceLimbRoots()
 	{
+		bool tips = tippedAngle > 0.0f;
 		// Once moved, they are put back where they belong when the body turns back again.
-		if (!bodyTurned && !legsOnBody && !limbsMoved) return;
+		if (!bodyTurned && !legsOnBody && !limbsMoved && !tips) return;
 		limbsMoved = bodyTurned || legsOnBody;
 		float mirror = bodyTurned ? -1.0f : 1.0f;
 		float tip = present[(int)RigBone.Torso] ? bones[(int)RigBone.Torso].Rotation : 0.0f;
+		tipBlend = tips ? Mathf.SmoothStep(tippedFrom, tippedAngle, Mathf.RadToDeg(tip)) : 0.0f;
 		foreach (RigBone bone in new[] { RigBone.ArmBackUpper, RigBone.ArmFrontUpper, RigBone.LegBackUpper, RigBone.LegFrontUpper })
 		{
 			int i = (int)bone;
@@ -1242,7 +1275,90 @@ public partial class FighterRig : Node2D
 			bool leg = bone == RigBone.LegBackUpper || bone == RigBone.LegFrontUpper;
 			// An arm hangs from the body bone already, so it tips with it; a leg hangs from the hip.
 			if (leg && legsOnBody) at = at.Rotated(tip);
+			if (tippedOffsets[i] is Vector2 to) at = at.Lerp(new Vector2(to.X * mirror, to.Y), tipBlend);
 			bones[i].Position = at;
+		}
+		if (!tips) return;
+		int torso = (int)RigBone.Torso;
+		if (present[torso] && tippedOffsets[torso] is Vector2 body)
+		{
+			bones[torso].Position = restOffsets[torso].Lerp(new Vector2(body.X * mirror, body.Y), tipBlend);
+		}
+		foreach (TippedExtra extra in tippedExtras)
+		{
+			extra.Sprite.Position = extra.Rest.Lerp(extra.Offset, tipBlend);
+			extra.Sprite.Rotation = extra.Turn * tipBlend;
+		}
+		foreach (FaceFeature feature in face) PlaceFeature(feature);
+	}
+
+	// --- Tipped over into the drawing -----------------------------------------------------------
+
+	/// <summary>
+	/// A rig stood up from a drawing of the fighter tipped over (rig.json "tipped"): Triguy's
+	/// triangle is drawn lying on its side, point forward - his point attack - and stands on end,
+	/// point up. As the body tips forward past <see cref="tippedFrom"/> degrees, each limb, the body
+	/// and every extra named slides from where it hangs standing toward where it is on the
+	/// drawing, and is there at <see cref="tippedAngle"/>: a body tipped right over is the drawing
+	/// again - his legs out of the side that is now underneath, his hat on the corner now on top,
+	/// his face level and full size, as drawn. Nothing is redrawn; each piece is only moved and
+	/// turned. Eric's call, 2026-10-19, from Elim: "triguys idle is STILL his stab".
+	/// </summary>
+	float tippedAngle, tippedFrom;
+
+	/// <summary>Where each limb's root (and the body, from the hip) is on the drawing, tipped over.</summary>
+	readonly Vector2?[] tippedOffsets = new Vector2?[(int)RigBone.Count];
+
+	sealed class TippedExtra
+	{
+		public Sprite2D Sprite;
+		public Vector2 Rest, Offset;
+		public float Turn;
+	}
+
+	readonly List<TippedExtra> tippedExtras = new List<TippedExtra>();
+
+	/// <summary>How far over into the drawing the body is tipped now, 0 to 1.</summary>
+	float tipBlend;
+
+	void LoadTipped(Godot.Collections.Dictionary root)
+	{
+		tippedAngle = 0.0f;
+		tipBlend = 0.0f;
+		System.Array.Clear(tippedOffsets, 0, tippedOffsets.Length);
+		tippedExtras.Clear();
+		if (!root.ContainsKey("tipped")) return;
+		var tipped = (Godot.Collections.Dictionary)root["tipped"];
+		tippedAngle = (float)tipped["angle"];
+		tippedFrom = tipped.ContainsKey("from") ? (float)tipped["from"] : tippedAngle * 0.5f;
+		if (tipped.ContainsKey("bones"))
+		{
+			var named = (Godot.Collections.Dictionary)tipped["bones"];
+			foreach (Variant key in named.Keys)
+			{
+				if (!RigBones.TryParse((string)key, out RigBone bone) || !present[(int)bone]) continue;
+				var at = (Godot.Collections.Array)named[key];
+				tippedOffsets[(int)bone] = new Vector2((float)at[0], (float)at[1]);
+			}
+		}
+		if (!tipped.ContainsKey("extras")) return;
+		var placed = (Godot.Collections.Dictionary)tipped["extras"];
+		foreach (Variant key in placed.Keys)
+		{
+			if (!extras.TryGetValue((string)key, out Sprite2D sprite)) continue;
+			var entry = (Godot.Collections.Dictionary)placed[key];
+			var at = (Godot.Collections.Array)entry["offset"];
+			var offset = new Vector2((float)at[0], (float)at[1]);
+			float turn = entry.ContainsKey("rotation") ? Mathf.DegToRad((float)entry["rotation"]) : 0.0f;
+			FaceFeature feature = face.Find(f => f.Sprite == sprite) ?? (mouthOpen?.Sprite == sprite ? mouthOpen : null);
+			if (feature != null)
+			{
+				feature.TippedRest = offset;
+				feature.TippedTurn = turn;
+				feature.TippedSize = entry.ContainsKey("scale") ? (float)entry["scale"] : feature.Size;
+				continue;
+			}
+			tippedExtras.Add(new TippedExtra { Sprite = sprite, Rest = sprite.Position, Offset = offset, Turn = turn });
 		}
 	}
 

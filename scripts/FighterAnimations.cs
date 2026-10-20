@@ -83,9 +83,9 @@ public enum AttackAnim
 	SetDown,
 
 	/// <summary>
-	/// The body itself driven forward point first, kept level: reared back with the front tipped
-	/// up, then the hips thrust forward with the arms swept back. Every other thrust leans the
-	/// torso forward, which points a long wedge of a body at the floor. Triguy's point attacks.
+	/// The body itself tipped over forward, point first: reared back, then tipped a quarter turn
+	/// and more, so what stood up points out in front. Triguy's point attacks - his triangle stands
+	/// on end, point up, and this lays it over the way Elim drew it, point forward.
 	/// </summary>
 	PointThrust,
 
@@ -1456,17 +1456,20 @@ public static class FighterAnimations
 		(AFU, -44), (AFL, -8), (ABU, -36), (ABL, -8),
 		(LFU, -20), (LFL, 24), (LBU, 16), (LBL, 20));
 
-	// Reared back, front tipped up; then the hips drive forward and the body levels out behind
-	// its point, arms swept back out of the way.
-	static readonly Pose PointThrustWindup = new Pose(new Vector2(-8, 6),
-		(Torso, 20), (Head, -8),
-		(AFU, 30), (AFL, 20), (ABU, -20), (ABL, -10),
-		(LFU, -20), (LFL, 30), (LBU, 20), (LBL, 20));
+	// Reared back, point tipped up and away; then the whole body tips forward a quarter turn
+	// and more, until the point that stood up is out in front - Triguy's triangle, stood on end,
+	// laid back over the way Elim drew it (the rig's "tipped", which slides his legs, arms, hat and
+	// face to their places on that drawing as he goes over). The arms are set against the body,
+	// so tipped over they hang down from it, as drawn; the legs stay under him.
+	static readonly Pose PointThrustWindup = new Pose(new Vector2(-8, 8),
+		(Torso, 14), (Head, -6),
+		(AFU, 24), (AFL, -16), (ABU, 18), (ABL, -10),
+		(LFU, -16), (LFL, 24), (LBU, 14), (LBL, 18));
 
 	static readonly Pose PointThrustStrike = new Pose(new Vector2(18, 2),
-		(Torso, 4), (Head, -2),
-		(AFU, 40), (AFL, 10), (ABU, 40), (ABL, 10),
-		(LFU, -46), (LFL, 20), (LBU, 46), (LBL, 30));
+		(Torso, -90), (Head, -2),
+		(AFU, -64), (AFL, -6), (ABU, -60), (ABL, -4),
+		(LFU, -10), (LFL, 6), (LBU, 6), (LBL, 4));
 
 	// --- Swords -----------------------------------------------------------------
 	// A held weapon continues the forearm, so what a sword pose has to get right is the sum of

@@ -579,8 +579,11 @@ public partial class FighterData : Resource
 			JumpForce = 1557.0f,
 			AirJumpForce = 1633.0f,
 			Gravity = 4100.0f,
-			// The triangle is wide - its point sticks out a long way in front - so the box is too.
-			BodySize = new Vector2(92.0f, 120.0f),
+			// He stands tall - his triangle on end, point up, with the hat on the point and long
+			// stick legs under it, as Elim draws him standing ("he's supposed to be tall") - so the
+			// box is tall and narrow. Lying on its side, the point stuck out in front, it was wide and
+			// short, 92 by 120, until Eric's call of 2026-10-19.
+			BodySize = new Vector2(64.0f, 172.0f),
 			RigPath = "res://fighters/triguy/rig.json",
 			VisualScale = 1.0f,
 			AnimationDrama = 1.2f,
