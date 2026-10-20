@@ -106,7 +106,7 @@ attack, right click or `K` special, `Shift` or `L` block, `E` or middle click gr
 on the keyboard; everyone else needs a pad. Options > Controls lists all of it.
 
 After **Start**, the main menu: **Versus**, **Story** or **Draw your own** (a fighter or a
-stage), with **Ideas** up top for sending in a suggestion. The
+stage), with **Report a bug** up top for telling us what went wrong. The
 mouse is only for the drawing screens; everywhere else it does nothing and its pointer is hidden,
 and even there it only shows once you move the mouse.
 In menus, each player presses **A** to join, then drags a cursor with the left stick and presses

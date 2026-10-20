@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using Godot;
 
 /// <summary>
-/// An idea for the game, typed and sent in (Eric, 2026-10-18), from "Ideas" on the main menu. It
-/// goes to the same server as a fighter (EricClancyEngineeringAndCrafts: intake/server.js, POST
+/// A bug report, typed and sent in, from "Report a bug" on the main menu - only bugs (Eric,
+/// 2026-10-20; it began as "Ideas", 2026-10-18): new fighters and stages come in as drawings,
+/// through Draw your own. It goes to the same server as a fighter (EricClancyEngineeringAndCrafts: intake/server.js, POST
 /// /api/draw/suggest), which saves it and emails it to Eric. A name is optional - the last name
 /// given on fighter select is filled in. It is a typing screen, so like the drawing screens the
 /// mouse works here, or one pad's cursor for the buttons (OnePointer).
@@ -52,7 +53,7 @@ public partial class SuggestScreen : Node2D
 		{
 			Position = new Vector2(190.0f, 440.0f), Size = new Vector2(1540.0f, 400.0f), Theme = theme,
 			WrapMode = TextEdit.LineWrappingMode.Boundary,
-			PlaceholderText = "A new fighter, a stage, a move, something that would be fun, something that is broken...",
+			PlaceholderText = "What were you doing, and what went wrong? Which fighter, which stage, what did you press?",
 		};
 		idea.AddThemeFontSizeOverride("font_size", 30);
 		formLayer.AddChild(idea);
@@ -131,7 +132,7 @@ public partial class SuggestScreen : Node2D
 		string text = idea.Text.Trim();
 		if (text.Length == 0)
 		{
-			Say("Write your idea first.", true);
+			Say("Tell us what happened first.", true);
 			idea.GrabFocus();
 			SfxPlayer.Ui("ui_back");
 			return;
@@ -147,6 +148,7 @@ public partial class SuggestScreen : Node2D
 		{
 			new("name", name.Text.Trim()),
 			new("suggestion", text),
+			new("kind", "bug"),
 			new("version", UpdateScreen.CurrentVersion),
 		};
 		SfxPlayer.Ui("ui_select");
@@ -184,22 +186,22 @@ public partial class SuggestScreen : Node2D
 		if (phase == Phase.Done)
 		{
 			MenuTheme.DrawCentredText(this, new Rect2(0.0f, 300.0f, 1920.0f, 120.0f), "Thank you!", 110, MenuTheme.Text);
-			MenuTheme.DrawCentredText(this, new Rect2(0.0f, 450.0f, 1920.0f, 60.0f), "Your idea is on its way to the people who make DrawFight.", 40, MenuTheme.Text);
+			MenuTheme.DrawCentredText(this, new Rect2(0.0f, 450.0f, 1920.0f, 60.0f), "Your bug report is on its way to the people who make DrawFight.", 40, MenuTheme.Text);
 			MenuTheme.DrawButton(this, DoneMenuBox, "Main menu", 961, Hot(DoneMenuBox), fontSize: 34);
 			return;
 		}
 
 		MenuTheme.DrawButton(this, BackBox, "Back", 951, Hot(BackBox), fontSize: 30);
-		DrawString(font, new Vector2(190.0f, 190.0f), "Got an idea?", HorizontalAlignment.Left, -1, 72, MenuTheme.Text);
-		DrawString(font, new Vector2(190.0f, 250.0f), "Tell us what would make DrawFight better. Every idea gets read.", HorizontalAlignment.Left, -1, 30, MenuTheme.Soft);
-		DrawString(font, new Vector2(190.0f, 420.0f), "Your idea", HorizontalAlignment.Left, -1, 30, MenuTheme.Text);
+		DrawString(font, new Vector2(190.0f, 190.0f), "Found a bug?", HorizontalAlignment.Left, -1, 72, MenuTheme.Text);
+		DrawString(font, new Vector2(190.0f, 250.0f), "Tell us what you were doing and what went wrong. Want a new fighter or stage? Draw it in Draw your own!", HorizontalAlignment.Left, -1, 30, MenuTheme.Soft);
+		DrawString(font, new Vector2(190.0f, 420.0f), "What happened", HorizontalAlignment.Left, -1, 30, MenuTheme.Text);
 
 		(string words, Color light) = FighterIntake.Describe();
 		DrawCircle(new Vector2(870.0f, 332.0f), 11.0f, light);
 		DrawString(font, new Vector2(892.0f, 343.0f), words, HorizontalAlignment.Left, 700.0f, 26, MenuTheme.Text);
 
 		bool ready = phase == Phase.Editing && FighterIntake.State == FighterIntake.Link.Online;
-		MenuTheme.DrawButton(this, SendBox, phase == Phase.Editing ? "Send my idea" : "Sending...", 952,
+		MenuTheme.DrawButton(this, SendBox, phase == Phase.Editing ? "Send bug report" : "Sending...", 952,
 			Hot(SendBox) && phase == Phase.Editing, ready, phase == Phase.Editing, 40);
 		if (message != "")
 		{

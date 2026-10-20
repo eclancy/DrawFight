@@ -23,8 +23,11 @@ public partial class MainMenuScreen : Node2D
 	/// <summary>The options: a small gear beside QUIT (Eric, 2026-10-17).</summary>
 	static readonly Rect2 GearBox = new Rect2(1540.0f, 64.0f, 76.0f, 76.0f);
 
-	/// <summary>Send in an idea for the game (SuggestScreen; Eric, 2026-10-18).</summary>
-	static readonly Rect2 IdeasBox = new Rect2(1336.0f, 64.0f, 180.0f, 76.0f);
+	/// <summary>
+	/// Report a bug (SuggestScreen). It was "Ideas" (Eric, 2026-10-18) until Eric made it only bug
+	/// reports (2026-10-20): new fighters and stages come in as drawings, through Draw your own.
+	/// </summary>
+	static readonly Rect2 BugBox = new Rect2(1246.0f, 64.0f, 270.0f, 76.0f);
 
 	/// <summary>A cursor for each controller, shown once it is touched (TouchCursors).</summary>
 	TouchCursors touch;
@@ -131,7 +134,7 @@ public partial class MainMenuScreen : Node2D
 			SfxPlayer.Ui("ui_select");
 			return;
 		}
-		if (IdeasBox.HasPoint(point))
+		if (BugBox.HasPoint(point))
 		{
 			leaving = true;
 			SfxPlayer.Ui("ui_select");
@@ -182,9 +185,9 @@ public partial class MainMenuScreen : Node2D
 		foreach (MenuCursor cursor in cursors) quitHot |= QuitBox.HasPoint(cursor.Position);
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, quitHot, fontSize: 38);
 
-		bool ideasHot = false;
-		foreach (MenuCursor cursor in cursors) ideasHot |= IdeasBox.HasPoint(cursor.Position);
-		MenuTheme.DrawButton(this, IdeasBox, "Ideas", 79, ideasHot, fontSize: 34);
+		bool bugHot = false;
+		foreach (MenuCursor cursor in cursors) bugHot |= BugBox.HasPoint(cursor.Position);
+		MenuTheme.DrawButton(this, BugBox, "Report a bug", 79, bugHot, fontSize: 32);
 
 		bool gearHot = false;
 		foreach (MenuCursor cursor in cursors) gearHot |= GearBox.HasPoint(cursor.Position);
