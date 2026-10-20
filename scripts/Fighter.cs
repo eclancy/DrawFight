@@ -4758,9 +4758,11 @@ public partial class Fighter : CharacterBody2D
 		float r = BallRadius() * (1.35f + 0.45f * charge);
 		Vector2 centre = new Vector2(0.0f, bodySize.Y * 0.5f - BallRadius());
 		bool rolling = moveFrame > currentMove.StartupFrames;
-		// Rolling, the flames stream out behind; charging on the spot, they rise off the top.
-		Vector2 back = rolling ? new Vector2(-Facing, -0.25f) : Vector2.Up;
-		FlameFx.Ball(this, centre, r, back, fxFrames, 0.95f);
+		// Rolling, the flames stream straight back the way he is going - off the ball, not turned
+		// round with him as he rolls; charging on the spot, they rise off the top.
+		Vector2 back = !rolling ? Vector2.Up
+			: Velocity.LengthSquared() > 60.0f * 60.0f ? -Velocity : new Vector2(-Facing, 0.0f);
+		FlameFx.Comet(this, centre, r, back, fxFrames);
 	}
 
 	/// <summary>Shrunk down with a lit fuse. The spark blinks faster as the fuse runs out.</summary>

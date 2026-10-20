@@ -127,10 +127,21 @@ Smears and fire are drawn by the game, not by the kids, so this contract covers 
   The harder the hit, the bigger and bolder it is; a jab's is a flick.
 - **Fire is tongues, and fire rises.** Every flame is curved teardrop tongues - round at the
   root, bending as they rise, flickering to a point; red outside, orange, a yellow heart - so
-  they run together into one fire (`FlameFx`). However a flame is thrown - off a spinning wheel,
-  trailing a dive or a fireball - it leans no more than 50 degrees off straight up. Never a
+  they run together into one fire (`FlameFx`). However a flame is thrown - off a spinning wheel
+  or trailing a dive - it leans no more than 50 degrees off straight up. Never a
   ring of spikes, never a star, never pointing down (Eric, 2026-10-10: it looked like an orb with
   spikes, then pointed every way).
+- **A fire on the move trails behind its motion, and rises as it trails.** A fireball, a
+  burning drop or Flambe's fireball roll is a comet (`FlameFx.Comet`): a white-hot heart in a
+  yellow and orange ball with a red edge, and curved, licking tongues streaming straight back
+  from the way it is going - longest dead behind, shorter round the sides - each one rippling
+  and curling up as it trails, with embers shed off the tail. The tongues follow the motion,
+  never the spin: a rolling ball's flames stay behind it, not wheeling round with it. Going
+  up, they stream out sideways no more than 30 degrees below level rather than pour down like
+  exhaust; standing still, the same ball burns straight up. Ball and tongues are laid down a
+  colour at a time - every red, every orange, every yellow - so they are one fire, not a ball
+  with flames stuck on (Eric, 2026-10-20: the fireballs' flames should angle directly back,
+  with more curves). Any other fast-moving fire uses `FlameFx.Lick`.
 - **Jets are the one fire that points down**, because they are thrust, not a burning thing:
   DoomBot's boot jets come straight out of his soles along his legs, and a burst of them (his
   Jet Blast) blooms into a ball of heat at its end.
