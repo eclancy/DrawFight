@@ -115,7 +115,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   shows one fighter's face in every expression, **`--film=turn`** the paper turn and the roll
   a story twirls a drawing with, **`--film=story`** every pose a story can strike (face on, for
   DoomBot) and **`--film=talk`** how he talks with his hands in each mood, each held until it settles,
-  as a scene holds it.
+  as a scene holds it. **`--film=item:eraser`** (any swung item's `Id`) films that item's swing
+  with the item in his fist, drawn as a match draws it - the startup in steps and the swing itself
+  every frame - so you can see it turn with the arm. It does not draw the floor, so a swing that
+  a match tips up off the floor (`Fighter.PlaceHeldItem`) shows here going into it.
 - **`python tools/art/flambe.py`** and **`python tools/art/lugnut.py`** — redraw and re-rig
   the two stand-ins we drew ourselves, Flambé and Lugnut, with their tools and props. Their parts
   are SVG coloured in pencil (`tools/art/drawn.py`), so they need `$GODOT_BIN` to rasterise them

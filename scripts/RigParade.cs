@@ -64,6 +64,7 @@ public partial class RigParade : Node2D
 
 	static MoveData FilmMove(FighterData d, string name)
 	{
+		if (FilmItem(name) is ItemData item) return item.Swing;
 		switch (name)
 		{
 			case "jab": return d.Move(MoveSlot.Jab);
@@ -87,7 +88,51 @@ public partial class RigParade : Node2D
 		}
 	}
 
-	static bool IsStandardFilm(string name) => name is "jab" or "ftilt" or "utilt" or "dtilt";
+	/// <summary>
+	/// The item an item film is of (--film=item:eraser): its swing, played as a match plays it -
+	/// a standard attack, feet planted - with the item drawn in his fist the way a match draws it,
+	/// held out in front before and after. Null for any other film.
+	/// </summary>
+	static ItemData FilmItem(string name)
+	{
+		if (name == null || !name.StartsWith("item:")) return null;
+		int index = ItemCatalog.IndexOf(name.Substring(5));
+		return index >= 0 && ItemCatalog.Get(index).Swing != null ? ItemCatalog.Get(index) : null;
+	}
+
+	/// <summary>
+	/// The item in the rig's front fist, drawn into the layer inside his forearm exactly as
+	/// Item.DrawHeldInto draws it in a match: its grip on the fist, pointing on along the forearm.
+	/// </summary>
+	static void HoldFilmItem(FighterRig rig, FighterData data, ItemData item)
+	{
+		ItemArt art = ItemCatalog.Art(item.Id);
+		Node2D layer = rig.HeldLayer();
+		if (art == null || layer == null) return;
+		float k = 300.0f / (data.BodySize.Y * 1.18f * data.VisualScale);
+		float s = item.Size * k / Mathf.Max(art.Size.X, art.Size.Y);
+		layer.Draw += () =>
+		{
+			if (rig.FrontHandGlobal() is not (Vector2 fist, Vector2 along)) return;
+			Vector2 up = along.LengthSquared() > 0.01f ? along.Normalized() : Vector2.Up;
+			Transform2D toLayer = layer.GlobalTransform.AffineInverse() * new Transform2D(0.0f, fist);
+			Item.DrawInFist(layer, toLayer, art.Texture, art.Grip, up.Angle() + Mathf.Pi * 0.5f, new Vector2(s, s), Vector2.Zero);
+		};
+		layer.QueueRedraw();
+	}
+
+	/// <summary>The move frames an item film shows: the startup in steps, every frame of the swing down, and the way back.</summary>
+	static int[] ItemFilmFrames(MoveData move)
+	{
+		int s = move.StartupFrames, end = s + move.ActiveFrames;
+		var frames = new List<int> { -2 };
+		for (int i = 1; i <= 6; i++) frames.Add(Mathf.RoundToInt((s - 7) * i / 6.0f));
+		for (int f = s - 6; f <= end; f++) frames.Add(f);
+		foreach (int after in new[] { 4, 10, 18, move.EndlagFrames, move.EndlagFrames + 10 }) frames.Add(end + after);
+		return frames.ToArray();
+	}
+
+	static bool IsStandardFilm(string name) => name is "jab" or "ftilt" or "utilt" or "dtilt" || FilmItem(name) != null;
 
 	static bool IsStandardColumn(string label) => label.StartsWith("jab") || label.EndsWith("tilt");
 
@@ -121,6 +166,9 @@ public partial class RigParade : Node2D
 			rig.SetPartVisible(RigBone.PropFront, move.PropArt != "-");
 			FighterAnimations.ShowAttack(rig, move, moveFrame, data.AnimationDrama, scratch,
 				standard ? FighterAnimations.GroundAdjust(move, MoveSlot.Jab) : null);
+			// Shaking under a heavy item, and squashed and stretched with the swing, as Fighter.UpdateRig does.
+			rig.SetRoll(FighterAnimations.HeaveRoll(move, moveFrame, 0));
+			if (FilmItem(film) != null) rig.SetSquash(1.0f + (FighterAnimations.AttackSquash(move, moveFrame) - 1.0f) * data.AnimationDrama);
 			if (standard && !rig.Robotic && rig.GetParent() is Node2D holder)
 			{
 				FighterAnimations.ThrowPunch(rig, move, moveFrame, holder.ToGlobal(HitboxInView(data, move)),
@@ -138,6 +186,13 @@ public partial class RigParade : Node2D
 			rig.HandOnHip = data.HandOnHip && !aerial;
 			rig.Play(aerial ? FighterAnimations.Fall : FighterAnimations.Idle);
 			rig.Advance();
+			if (FilmItem(film) != null)
+			{
+				rig.CarryOnShoulder = false;
+				rig.HandOnHip = false;
+				rig.SetPartVisible(RigBone.PropFront, false);
+				Fighter.HoldItemOut(rig, 1, false);
+			}
 			return;
 		}
 
@@ -412,10 +467,14 @@ public partial class RigParade : Node2D
 		}
 		FighterData data = FighterCatalog.Get(Mathf.Max(0, Only));
 		MoveData move = FilmMove(data, Film);
-		const int Cells = 18;
+		// An item's swing: its startup a few frames apart, and the swing itself every frame.
+		int[] itemFrames = FilmItem(Film) != null && move != null ? ItemFilmFrames(move) : null;
+		int Cells = itemFrames?.Length ?? 18;
+		int Rows = (Cells + 5) / 6;
 		const int PerRow = 6;
 		const float Column = 300.0f;
-		const float Row = 430.0f;
+		// An item held overhead stands taller than the fighter: rows further apart, so it clears the frame numbers.
+		float Row = itemFrames != null ? 540.0f : 430.0f;
 
 		// The frames to show: through the whole move and a little after, or a stretch of a clip.
 		int first = move != null || Film == "roll" || Film == "airdodge" ? FilmLeadIn - 2 : 0;
@@ -425,7 +484,7 @@ public partial class RigParade : Node2D
 
 		for (int cell = 0; cell < Cells; cell++)
 		{
-			int frame = first + Mathf.RoundToInt(span * cell / (float)(Cells - 1));
+			int frame = itemFrames != null ? FilmLeadIn + itemFrames[cell] : first + Mathf.RoundToInt(span * cell / (float)(Cells - 1));
 			var holder = new Node2D { Position = new Vector2(cell % PerRow * Column, cell / PerRow * Row) };
 			AddChild(holder);
 			var rig = new FighterRig();
@@ -436,6 +495,7 @@ public partial class RigParade : Node2D
 			rig.Robotic = data.Robotic;
 			rig.Inertia = data.Inertia;
 			rig.ArmBackLimit = data.ArmReachBack;
+			if (FilmItem(Film) is ItemData filmed) HoldFilmItem(rig, data, filmed);
 			var trail = new SmearTrail();
 			for (int f = 0; f <= frame; f++)
 			{
@@ -460,7 +520,8 @@ public partial class RigParade : Node2D
 			var label = new Label
 			{
 				Text = move != null ? $"{moveFrame}" : $"{frame}",
-				Position = new Vector2(-30.0f, -200.0f),
+				// Under the feet for an item, which is swung up over the head where the number goes.
+				Position = new Vector2(-30.0f, itemFrames != null ? 165.0f : -200.0f),
 			};
 			label.AddThemeFontSizeOverride("font_size", 34);
 			label.AddThemeColorOverride("font_color", live ? new Color(0.85f, 0.15f, 0.15f) : new Color(0.16f, 0.16f, 0.20f));
@@ -478,8 +539,8 @@ public partial class RigParade : Node2D
 
 		var camera = new Camera2D
 		{
-			Position = new Vector2(Column * (PerRow - 1) * 0.5f, Row * (Cells / PerRow - 1) * 0.5f - 40.0f),
-			Zoom = Vector2.One * Mathf.Min(1000.0f / (Row * (Cells / PerRow) + 200.0f), 1880.0f / (Column * PerRow + 60.0f)),
+			Position = new Vector2(Column * (PerRow - 1) * 0.5f, Row * (Rows - 1) * 0.5f - 40.0f),
+			Zoom = Vector2.One * Mathf.Min(1000.0f / (Row * Rows + 200.0f), 1880.0f / (Column * PerRow + 60.0f)),
 		};
 		AddChild(camera);
 		camera.MakeCurrent();

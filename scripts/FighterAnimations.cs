@@ -188,6 +188,16 @@ public enum AttackAnim
 	/// which suits a shovel and puts a sword over his own head. EdgeLord's back air.
 	/// </summary>
 	BackCut,
+
+	/// <summary>
+	/// The Big Pink Eraser's swing: a heave, not a flick. He crouches to get under it, heaves it up
+	/// over his head and back, leaning back under the weight, and strains there - trembling more
+	/// and more (<see cref="FighterAnimations.HeaveTremble"/>) - then brings it over and down in
+	/// front onto the floor, folding forward behind it. Its own timeline over the whole move
+	/// (<see cref="FighterAnimations.HeaveAt"/>), because the long wind-up is the whole warning
+	/// and has to tell a story the whole time (Eric, 2026-10-20).
+	/// </summary>
+	EraserHeave,
 }
 
 /// <summary>
@@ -1614,6 +1624,141 @@ public static class FighterAnimations
 		(AFU, 56), (AFL, -7), (ABU, 40), (ABL, 10),
 		(LFU, -40), (LFL, 60), (LBU, 30), (LBL, 60));
 
+	// --- The eraser heave --------------------------------------------------------
+	// Four poses on the move's own frames (HeaveAt). The arm goes overhead up the front - well
+	// past straight up, which is fine forward - and the elbow folds the eraser on back behind his
+	// head: a weight held up and back, not a stick pointed at the sky. The torso's lean is taken
+	// off the arms on screen (they hang from it), so leaning back tips the eraser further back
+	// and folding forward into the slam brings it round in front.
+
+	// Getting under it: knees bent, folded over it, the eraser low in front in both hands.
+	static readonly Pose HeaveGather = new Pose(new Vector2(-4, 22),
+		(Torso, -26), (Head, 14),
+		(AFU, -34), (AFL, -46), (ABU, -26), (ABL, -50),
+		(LFU, -30), (LFL, 50), (LBU, 24), (LBL, 50));
+
+	// Heaved up: standing tall, leaning back under it, both arms up and the eraser over and
+	// behind his head, looking up at it.
+	static readonly Pose HeaveTop = new Pose(new Vector2(-6, -4),
+		(Torso, 14), (Head, 10),
+		(AFU, -158), (AFL, -30), (ABU, -150), (ABL, -30),
+		(LFU, -16), (LFL, 16), (LBU, 26), (LBL, 16));
+
+	// Straining at the top: a little further back, and trembling (HeaveTremble).
+	static readonly Pose HeaveStrain = new Pose(new Vector2(-10, -2),
+		(Torso, 22), (Head, 14),
+		(AFU, -166), (AFL, -36), (ABU, -156), (ABL, -34),
+		(LFU, -14), (LFL, 18), (LBU, 30), (LBL, 18));
+
+	// Slammed down: folded far forward over a deep bend, hips thrown forward and down, the arm
+	// out ahead and the eraser driven onto the floor in front of him.
+	static readonly Pose HeaveSlam = new Pose(new Vector2(12, 14),
+		(Torso, -38), (Head, 20),
+		(AFU, -104), (AFL, -4), (ABU, -94), (ABL, -8),
+		(LFU, -50), (LFL, 56), (LBU, 44), (LBL, 50));
+
+	/// <summary>Where the heave's beats fall in its startup: crouched under it, heaved overhead, and the swing begun.</summary>
+	static (float gathered, float top, float swing) HeaveBeats(MoveData move)
+	{
+		float startup = Mathf.Max(1, move.StartupFrames);
+		return (startup * 0.2f, startup * 0.55f, startup - 6.0f);
+	}
+
+	static float Smooth(float t)
+	{
+		t = Mathf.Clamp(t, 0.0f, 1.0f);
+		return t * t * (3.0f - 2.0f * t);
+	}
+
+	/// <summary>
+	/// How hard he is trembling under the eraser, 0 to 1: nothing until it is overhead, then
+	/// building to the moment it comes down, and gone once it is swinging.
+	/// </summary>
+	public static float HeaveTremble(MoveData move, float moveFrame)
+	{
+		if (move == null || move.Anim != AttackAnim.EraserHeave) return 0.0f;
+		(float _, float top, float swing) = HeaveBeats(move);
+		if (moveFrame <= top || moveFrame > swing + 1.0f) return 0.0f;
+		float t = Mathf.Clamp((moveFrame - top) / Mathf.Max(1.0f, swing - top), 0.0f, 1.0f);
+		return 0.25f + 0.75f * t * t;
+	}
+
+	/// <summary>
+	/// The whole body shaking under the eraser as he strains, in radians of roll (FighterRig.SetRoll):
+	/// played straight, past the springs, which would smooth a shake away.
+	/// </summary>
+	public static float HeaveRoll(MoveData move, int moveFrame, int seed) =>
+		HeaveTremble(move, moveFrame) * CrayonBrush.Noise(moveFrame, seed * 7 + 3) * 0.06f;
+
+	/// <summary>
+	/// The eraser's swing frame by frame (<see cref="AttackAnim.EraserHeave"/>): down to gather it,
+	/// up and back overhead, straining and shaking there - most of the startup is this, so everyone
+	/// sees it coming - then over and down, slowly at first and then all at once, so the eraser is
+	/// seen turning with the arm the whole way round and is coming down in front through the
+	/// active frames, slammed onto the floor on the last. Held there a beat, then back up.
+	/// </summary>
+	public static void HeaveAt(MoveData move, float moveFrame, Pose into)
+	{
+		(float gathered, float top, float swing) = HeaveBeats(move);
+		float activeEnd = move.StartupFrames + move.ActiveFrames;
+
+		if (moveFrame <= gathered)
+		{
+			Pose.Blend(AttackRecover, HeaveGather, Smooth(moveFrame / gathered), into);
+		}
+		else if (moveFrame <= top)
+		{
+			Pose.Blend(HeaveGather, HeaveTop, Smooth((moveFrame - gathered) / (top - gathered)), into);
+		}
+		else if (moveFrame <= swing)
+		{
+			Pose.Blend(HeaveTop, HeaveStrain, Smooth((moveFrame - top) / (swing - top)), into);
+		}
+		else if (moveFrame <= activeEnd)
+		{
+			// Over and down, gathering speed: barely moving as it tips over, then slammed.
+			float t = (moveFrame - swing) / Mathf.Max(1.0f, activeEnd - swing);
+			Pose.Blend(HeaveStrain, HeaveSlam, Mathf.Pow(t, 1.7f), into);
+		}
+		else
+		{
+			// Pressed into the floor a beat, then straightened up out of it.
+			float e = Mathf.Clamp((moveFrame - activeEnd) / Mathf.Max(1, move.EndlagFrames), 0.0f, 1.0f);
+			Pose.Blend(HeaveSlam, AttackRecover, Smooth((e - 0.3f) / 0.7f), into);
+		}
+
+		// The strain: arms, back and head shaking under the weight, harder and harder.
+		float shake = HeaveTremble(move, moveFrame);
+		if (shake <= 0.0f) return;
+		// A new shake every other frame: one every frame is smoothed away by the springs.
+		int f = Mathf.FloorToInt(moveFrame) / 2;
+		into.Set(AFU, into[AFU] + 10.0f * shake * CrayonBrush.Noise(f, 11));
+		into.Set(AFL, into[AFL] - 5.0f * shake * Mathf.Abs(CrayonBrush.Noise(f, 12)));
+		into.Set(ABU, into[ABU] + 10.0f * shake * CrayonBrush.Noise(f, 13));
+		into.Set(Torso, into[Torso] + 4.0f * shake * CrayonBrush.Noise(f, 14));
+		into.Set(Head, into[Head] + 5.0f * shake * CrayonBrush.Noise(f, 15));
+		into.HipOffset += new Vector2(CrayonBrush.Noise(f, 16), CrayonBrush.Noise(f, 17)) * 3.0f * shake;
+	}
+
+	/// <summary>
+	/// A robot's heave (DoomBot): he holds each beat exactly as written, without the give of the
+	/// springs the others swing on, so as written the eraser was cocked straight back behind his
+	/// head and slammed only level. Held up overhead instead, and driven down at the floor.
+	/// </summary>
+	static void RobotHeave(Pose pose, int key)
+	{
+		if (key == 11 || key == 12)
+		{
+			pose.Set(AFL, pose[AFL] * 0.4f);
+			pose.Set(Torso, pose[Torso] * 0.5f);
+		}
+		else if (key == 13)
+		{
+			pose.Set(AFU, pose[AFU] + 26.0f);
+			pose.Set(ABU, pose[ABU] + 26.0f);
+		}
+	}
+
 	/// <summary>The windup and strike for an animation. The recover pose is shared by all.</summary>
 	public static (Pose windup, Pose strike) PosesFor(AttackAnim anim)
 	{
@@ -1671,6 +1816,7 @@ public static class FighterAnimations
 			case AttackAnim.CrossBackhand: return (CrossBackhandWindup, CrossBackhandStrike);
 			case AttackAnim.ToolThrust: return (ToolThrustWindup, ToolThrustStrike);
 			case AttackAnim.Aim: return (AimWindup, AimStrike);
+			case AttackAnim.EraserHeave: return (HeaveStrain, HeaveSlam);
 			default: return (AttackWindup, AttackStrike);
 		}
 	}
@@ -1710,6 +1856,12 @@ public static class FighterAnimations
 
 		float startup = Mathf.Max(1, move.StartupFrames);
 		float activeEnd = move.StartupFrames + move.ActiveFrames;
+
+		if (move.Anim == AttackAnim.EraserHeave && !lunging)
+		{
+			HeaveAt(move, moveFrame, into);
+			return;
+		}
 
 		if (moveFrame <= startup)
 		{
@@ -1964,6 +2116,7 @@ public static class FighterAnimations
 		{
 			(float keyFrame, int key) = RobotAttackKey(move, (int)frame);
 			SampleAttack(move, keyFrame, scratch, drama: drama);
+			if (move.Anim == AttackAnim.EraserHeave) RobotHeave(scratch, key);
 			rig.RobotApply(scratch, move, key, RobotAttackSnap);
 			return;
 		}
@@ -1982,6 +2135,17 @@ public static class FighterAnimations
 	{
 		int startup = move.StartupFrames;
 		int activeEnd = startup + move.ActiveFrames;
+		// The eraser heave clicks through its beats - down under it, up overhead, the strain - and
+		// slams down onto the floor on the last active frame.
+		if (move.Anim == AttackAnim.EraserHeave)
+		{
+			(float gathered, float top, float swing) = HeaveBeats(move);
+			if (frame <= gathered - RobotAttackSnap) return (gathered, 10);
+			if (frame <= top - RobotAttackSnap) return (top, 11);
+			if (frame < startup) return (swing, 12);
+			if (frame <= activeEnd + Mathf.CeilToInt(move.EndlagFrames * FollowThroughHold)) return (activeEnd, 13);
+			return (move.TotalFrames, 1000);
+		}
 		// The coil: snapped to at once and held.
 		if (frame <= startup - RobotAttackSnap) return (startup, 0);
 		// A move that turns through its active frames (a windmill) clicks round in steps.
@@ -2009,6 +2173,19 @@ public static class FighterAnimations
 	{
 		float startup = Mathf.Max(1, move.StartupFrames);
 		float activeEnd = move.StartupFrames + move.ActiveFrames;
+
+		// The eraser: squashed getting under it, stretched tall heaving it up - as high as he can
+		// reach - and crushed short as it slams down, springing back as he straightens.
+		if (move.Anim == AttackAnim.EraserHeave)
+		{
+			(float gathered, float top, float swing) = HeaveBeats(move);
+			if (moveFrame <= gathered) return 1.0f - 0.05f * Smooth(moveFrame / gathered);
+			if (moveFrame <= top) return Mathf.Lerp(0.95f, 1.06f, Smooth((moveFrame - gathered) / (top - gathered)));
+			if (moveFrame <= swing) return 1.06f;
+			if (moveFrame <= activeEnd) return Mathf.Lerp(1.06f, 0.92f, Smooth((moveFrame - swing) / (activeEnd - swing)));
+			float back = Mathf.Clamp((moveFrame - activeEnd) / Mathf.Max(1, move.EndlagFrames), 0.0f, 1.0f);
+			return Mathf.Lerp(0.92f, 1.0f, Smooth(back / 0.6f));
+		}
 
 		if (moveFrame <= startup)
 		{

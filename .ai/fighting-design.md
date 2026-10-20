@@ -524,11 +524,17 @@ needs a new kind of use or impact.
   it to his chest and presses it straight down onto the floor in front of him, hanging face down,
   printing its star.
 - **The big pink eraser** is rare (a fifth as likely to drop as anything else,
-  `ItemData.SpawnWeight`) and has one use: an enormous wind-up, most of a second with a pink glow
-  swelling round it, then one swing - and whoever it touches is rubbed out where they stand. No
-  knockback and no percent: they freeze, the eraser scrubs back and forth across them from the
-  head down, their drawing really is erased as it goes (a shader on the rig), and the stock is
-  gone. It cannot be blocked, but the wind-up is the whole warning (Eric, 2026-10-15).
+  `ItemData.SpawnWeight`): an enormous wind-up, most of a second, then a swing - and whoever it
+  touches is rubbed out where they stand. No knockback and no percent: they freeze, the eraser
+  scrubs back and forth across them from the head down, their drawing really is erased as it
+  goes (a shader on the rig), and the stock is gone. It cannot be blocked, but the wind-up is the
+  whole warning (Eric, 2026-10-15). There is no glow: the body tells it (`AttackAnim.EraserHeave`,
+  Eric 2026-10-20) - he crouches under the eraser, heaves it up over his head and back, stretched
+  tall and leaning back under it, and strains there, shaking harder and harder; then it comes
+  over the top and down in front, slowly and then all at once, folding him forward behind it
+  onto the floor with a thud the camera feels. It turns with his arm the whole way round. It has
+  three swings and a miss keeps it; the swing that rubs someone out spends it -
+  it leaves his hand to do the scrubbing, and the rest of that swing hits no one else.
 - **The metre stick** measures you up. Picked up, it stands on the floor beside him and shoots
   up out of it past his head while he grows to match - giant for ten seconds, as the magnifying
   glass makes him - then it is in his hand, longer than it lay, for its slow home-run swing.

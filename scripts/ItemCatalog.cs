@@ -82,10 +82,13 @@ public static class ItemCatalog
 		PropArt = "-",
 	};
 
-	/// <summary>The eraser's one swing: wound up for most of a second, then it rubs out whoever it meets.</summary>
+	/// <summary>
+	/// The eraser's swing: heaved up overhead for most of a second (AttackAnim.EraserHeave), then
+	/// slammed down in front, and it rubs out whoever it meets. The long startup is the counterplay.
+	/// </summary>
 	static MoveData EraserSwing()
 	{
-		MoveData m = Swing("Rub Out", AttackAnim.OverheadSlam, 52, 5, 30, 0.0f, 0.0f, 0.0f, 40.0f, 62.0f);
+		MoveData m = Swing("Rub Out", AttackAnim.EraserHeave, 52, 5, 30, 0.0f, 0.0f, 0.0f, 40.0f, 62.0f);
 		m.Erases = true;
 		m.Unblockable = true;
 		return m;
@@ -109,10 +112,12 @@ public static class ItemCatalog
 		},
 		new ItemData
 		{
-			// Rare, and one use: a huge, slow, obvious wind-up, and whoever it touches is rubbed
-			// out - the stock is gone (Eric, 2026-10-15).
-			Id = "eraser", DisplayName = "Big Pink Eraser", Use = ItemUse.Swing, Size = 110.0f, Swings = 1, SpawnWeight = 0.2f,
-			Blurb = "Rare. One enormous wind-up and one swing - and whoever it touches is rubbed right off the page.",
+			// Rare: a huge, slow, obvious wind-up, and whoever it touches is rubbed out - the stock
+			// is gone (Eric, 2026-10-15). Three swings, the fewest of the swung items, because each
+			// one that lands takes a stock; it is spent on the first that does, and a miss keeps it
+			// (Eric, 2026-10-20: it was gone after one swing, hit or miss).
+			Id = "eraser", DisplayName = "Big Pink Eraser", Use = ItemUse.Swing, Size = 110.0f, Swings = 3, Cooldown = 30, SpawnWeight = 0.2f,
+			Blurb = "Rare. Heave it up and slam it down: whoever it touches is rubbed off the page. Three tries - used up on the one that hits.",
 			Swing = EraserSwing(),
 			Hit = Hit("Thrown Eraser", 6.0f, 30.0f, 0.4f, 40.0f),
 		},

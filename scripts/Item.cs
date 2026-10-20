@@ -1170,7 +1170,6 @@ public partial class Item : CharacterBody2D
 			width = Mathf.Lerp(1.0f, 0.26f, sideOn);
 			shift = new Vector2(heldFacing * Art.Size.X * s * width * 0.5f * sideOn, 0.0f);
 		}
-		canvas.DrawSetTransformMatrix(toCanvas * new Transform2D(angle, new Vector2(heldFacing * s * width, s), 0.0f, shift));
 		Texture2D texture = Art.Texture;
 		// Held up as a shield, a book is gripped at its middle, in front of his chest - not by
 		// the edge it is swung with, which held it up over his face.
@@ -1185,6 +1184,17 @@ public partial class Item : CharacterBody2D
 			texture = open.Texture;
 			grip = open.Grip;
 		}
+		DrawInFist(canvas, toCanvas, texture, grip, angle, new Vector2(heldFacing * s * width, s), shift);
+	}
+
+	/// <summary>
+	/// A drawing held in a fist: its grip on the fist (the origin of <paramref name="toCanvas"/>),
+	/// turned to <paramref name="angle"/> - the way the forearm points, for a tool. The parade's
+	/// item film draws with this too, so what it shows is what a match shows.
+	/// </summary>
+	public static void DrawInFist(CanvasItem canvas, Transform2D toCanvas, Texture2D texture, Vector2 grip, float angle, Vector2 scale, Vector2 shift)
+	{
+		canvas.DrawSetTransformMatrix(toCanvas * new Transform2D(angle, scale, 0.0f, shift));
 		canvas.DrawTexture(texture, -grip);
 		canvas.DrawSetTransformMatrix(Transform2D.Identity);
 	}
