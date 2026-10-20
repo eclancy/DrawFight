@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.10.1 | 2026-10-20
+Escape on the main menu asks if you want to quit.
+
 == 0.10.0 | 2026-10-20
 Every fighter's name is drawn in their own letters - on fighter select, in the fight and in story mode.
 Flambé's fireballs blaze like comets, flames streaming back behind them - his rolling fireball too.
