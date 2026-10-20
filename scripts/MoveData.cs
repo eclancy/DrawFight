@@ -563,6 +563,13 @@ public partial class MoveData : Resource
 	[Export] public bool CancelIntoAttacks { get; set; } = false;
 
 	/// <summary>
+	/// An up special that leaves him spent but still swinging: until he lands he has no up
+	/// special, other special, jump or dodge, but his normal attacks still work (Fighter.IsHelpless).
+	/// Triguy's trampoline - Eric's call, 2026-10-20.
+	/// </summary>
+	[Export] public bool SpentKeepsAttacks { get; set; } = false;
+
+	/// <summary>
 	/// The legs run while the rest of the body holds the move's pose - pushing something along at
 	/// a run. The run cycle plays on the legs at his speed. Lug's wheelbarrow.
 	/// </summary>
@@ -813,6 +820,7 @@ public partial class MoveData : Resource
 			Corkscrew = Corkscrew,
 			DashAfterStartup = DashAfterStartup,
 			CancelIntoAttacks = CancelIntoAttacks,
+			SpentKeepsAttacks = SpentKeepsAttacks,
 			RunningLegs = RunningLegs,
 			CarryOnShoulder = CarryOnShoulder,
 			LooksBack = LooksBack,

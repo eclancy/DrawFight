@@ -88,7 +88,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | X | attack — tap repeatedly for a jab combo; hold a direction for tilts and aerials; **flick** the stick with it for a smash (hold X to charge); while running, a dash attack |
 | d-pad + X | a smash attack in that direction, every time — hold X to charge it |
 | right stick | a smash attack that way (hold it out to charge); an aerial that way in the air |
-| B | special (+ a direction for all four). After an up special you can only drift until you land |
+| B | special (+ a direction for all four). After an up special you can only drift until you land (Triguy can still attack after his trampoline) |
 | LT or RT | block, behind a shield — reduces damage and knockback, never negates it |
 | RB, or LT/RT + X | grab — catches someone even while they block; then the stick picks a throw |
 | LT/RT + stick | roll, spot dodge, air dodge |

@@ -80,6 +80,9 @@ public partial class Fighter : CharacterBody2D
 	bool helpless;
 	public bool IsHelpless => helpless;
 
+	/// <summary>Spent by an up special that still lets him attack (MoveData.SpentKeepsAttacks).</summary>
+	bool spentKeepsAttacks;
+
 	/// <summary>A platform-building down special, like the up special, is once per trip into the air.</summary>
 	bool buildUsed;
 
@@ -1216,10 +1219,13 @@ public partial class Fighter : CharacterBody2D
 		// because missing one costs a stock.
 		if (TryGrabLedge()) return;
 
-		// Spent an up special: nothing now but drifting down, left or right.
+		// Spent an up special: nothing now but drifting down, left or right - and, after a
+		// recovery that allows it, his normal attacks.
 		if (helpless)
 		{
-			attackBufferFrames = specialBufferFrames = jumpBufferFrames = 0;
+			specialBufferFrames = jumpBufferFrames = 0;
+			if (spentKeepsAttacks && TryStartAttack(input)) return;
+			attackBufferFrames = 0;
 			if (Mathf.Abs(input.Move.X) > MoveDeadzone)
 			{
 				float drift = input.Move.X * Data.AirSpeed * SizeLevels.Speed(sizeLevel);
@@ -1689,6 +1695,7 @@ public partial class Fighter : CharacterBody2D
 		{
 			upSpecialUsed = true;
 			helpless = !chosen.CancelIntoAttacks;
+			spentKeepsAttacks = chosen.SpentKeepsAttacks;
 		}
 		if (chosen.OncePerAirtime) usedThisAirtime.Add(chosen);
 

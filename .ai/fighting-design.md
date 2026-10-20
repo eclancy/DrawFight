@@ -246,7 +246,9 @@ that takes half a second to reach it never gets there in a fight.
   and he is drawn a little grey. The recovery is the last thing he gets on the way home. Eric's
   call, 2026-10-04. The exception is a recovery marked `CancelIntoAttacks` (Flambe's wings):
   attack or special straight out of it, or press down to drop out of it; he is never spent by it,
-  only his up special is gone until he lands.
+  only his up special is gone until he lands. And a recovery marked `SpentKeepsAttacks` (Triguy's
+  trampoline, Eric's call, 2026-10-20) leaves him spent but still able to use his normal
+  attacks on the way down - no specials, jump or dodge, and no second bounce.
 - **Fast-fall**: holding down while falling pulls him down harder - another 60% of his gravity -
   up to his fast-fall speed. It used to snap straight to that speed, which flung him at the floor
   (Eric, 2026-10-04).

@@ -745,6 +745,8 @@ public static class Specials
 		HitboxOffset = new Vector2(0.0f, 64.0f), HitboxRadius = 50.0f,
 		Special = SpecialKind.Recovery,
 		Bounce = true, SpecialRise = 1850.0f,
+		// Bounced up, he can still swing on the way down - just not bounce again (Eric, 2026-10-20).
+		SpentKeepsAttacks = true,
 		FxColor = new Color(0.10f, 0.40f, 1.0f), FxRadius = 0.0f,
 	};
 
