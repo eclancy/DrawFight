@@ -54,6 +54,12 @@ public partial class SpeakerBlast : Node2D
 	int blasting = -1;
 	readonly HashSet<Fighter> hit = new HashSet<Fighter>();
 
+	/// <summary>Frames since the speakers started: the beat everything on the stage thumps to (the crowd too).</summary>
+	public int Frames => frames;
+
+	/// <summary>A ring of sound is going out right now.</summary>
+	public bool Blasting => blastAge >= 0;
+
 	public void Setup(StageData data)
 	{
 		ground = data.GroundLine;

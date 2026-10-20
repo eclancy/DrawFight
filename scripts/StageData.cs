@@ -182,8 +182,14 @@ public sealed class StagePlatform
 	}
 }
 
-/// <summary>Scenery. Never collidable - if a fighter can stand on it, it is a platform.</summary>
-public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline, Window, Cone, TowerCrane }
+/// <summary>
+/// Scenery. Never collidable - if a fighter can stand on it, it is a platform. A
+/// <see cref="Crowd"/> is an audience standing in its rectangle, rows of heads and shoulders
+/// down to its foot (or the bottom of the page), cheering - drawn and moved by its own node
+/// over the stage and under the fighters. A <see cref="TowerCrane"/> is a crane nobody stands
+/// on, drawn as the CraneJib platform is but with no outline.
+/// </summary>
+public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline, Window, Cone, TowerCrane, Crowd }
 
 public sealed class StageProp
 {

@@ -366,6 +366,13 @@ public static class StageCatalog
 			new StageProp(PropKind.FridgeHandle, new Rect2(1560.0f, -1300.0f, 56.0f, 2000.0f), 87),
 		};
 
+		// The audience, in front of the stage and below its deck, cut off by the bottom of the page
+		// (Eric, 2026-10-20): they bounce to the speakers' beat and roar at a KO or a blast.
+		data.OnPage = new[]
+		{
+			new StageProp(PropKind.Crowd, new Rect2(-1250.0f, 60.0f, 2500.0f, 205.0f), 88),
+		};
+
 		data.SpawnPoints = new[]
 		{
 			new Vector2(-500.0f, -160.0f), new Vector2(500.0f, -160.0f),

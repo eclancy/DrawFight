@@ -546,6 +546,7 @@ public partial class MatchManager : Node2D
 		// A KO is the biggest moment in a match; it gets the biggest rumble.
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 
+		stage.Cheer(1.0f);
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
 	}
@@ -559,6 +560,7 @@ public partial class MatchManager : Node2D
 		camera.AddShake(90.0f);
 		SfxPlayer.At("ko_blast", fighter.GlobalPosition, 0.0f);
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
+		stage.Cheer(1.0f);
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
 	}
