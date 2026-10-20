@@ -163,6 +163,7 @@ public partial class GameRoot : Node2D
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--options") startAt = "options";
 			if (arg == "--changelog") startAt = "changelog";
+			if (arg == "--controls") startAt = "controls";
 			if (arg == "--icon") startAt = "icon";
 			if (arg == "--suggest") startAt = "suggest";
 			if (arg == "--newstage") startAt = "newstage";
@@ -218,6 +219,7 @@ public partial class GameRoot : Node2D
 			case "items": GoItemSettings(); break;
 			case "options": GoOptions(null); break;
 			case "changelog": GoChangelog(null); break;
+			case "controls": GoControls(null); break;
 			// The frame the application icon is cropped from (tools/art/app_icon.py).
 			case "icon": Show(new IconFrame()); break;
 			case "suggest": GoSuggest(); break;
@@ -283,6 +285,9 @@ public partial class GameRoot : Node2D
 
 	/// <summary>Every version's changes (from Options).</summary>
 	public void GoChangelog(string key) => Show(new ChangelogScreen { OpenedBy = key });
+
+	/// <summary>Every key, click and button, from the options.</summary>
+	public void GoControls(string key) => Show(new ControlsScreen { OpenedBy = key });
 
 	// --- Story -----------------------------------------------------------------------
 

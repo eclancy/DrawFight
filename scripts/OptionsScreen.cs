@@ -6,7 +6,8 @@ using Godot;
 /// and sound volume, the pad's button layout, screen shake and how many lives a versus fight
 /// starts with - each a button that steps through its choices - and the names people have given
 /// themselves on this computer, any of which can be deleted. Saved as they change (GameOptions,
-/// PlayerNames). B, or Back, returns to the main menu.
+/// PlayerNames). Controls lists every key and button (ControlsScreen). B, or Back, returns to the
+/// main menu.
 /// </summary>
 public partial class OptionsScreen : Node2D
 {
@@ -21,6 +22,9 @@ public partial class OptionsScreen : Node2D
 
 	/// <summary>What changed in each version (ChangelogScreen).</summary>
 	static readonly Rect2 NewsBox = new Rect2(560.0f, 852.0f, 380.0f, 72.0f);
+
+	/// <summary>What every key and button does (ControlsScreen).</summary>
+	static readonly Rect2 ControlsBox = new Rect2(560.0f, 950.0f, 380.0f, 76.0f);
 	const float RowTop = 250.0f;
 	const float RowStep = 96.0f;
 	const float NamesLeft = 1060.0f;
@@ -72,6 +76,13 @@ public partial class OptionsScreen : Node2D
 		if (BackBox.HasPoint(point))
 		{
 			Leave(cursor);
+			return;
+		}
+		if (ControlsBox.HasPoint(point))
+		{
+			leaving = true;
+			SfxPlayer.Ui("ui_select");
+			GameRoot.Instance.GoControls(touch.KeyOf(cursor));
 			return;
 		}
 		if (NewsBox.HasPoint(point))
@@ -196,5 +207,6 @@ public partial class OptionsScreen : Node2D
 		MenuTheme.DrawButton(this, BackBox, "Back", 390, Hot(BackBox), fontSize: 38);
 		DrawString(font, new Vector2(190.0f, NewsBox.GetCenter().Y + 14.0f), $"Version {UpdateScreen.CurrentVersion}", HorizontalAlignment.Left, -1, 40, MenuTheme.Text);
 		MenuTheme.DrawButton(this, NewsBox, "What's new", 392, Hot(NewsBox), fontSize: 36);
+		MenuTheme.DrawButton(this, ControlsBox, "Controls", 394, Hot(ControlsBox), fontSize: 36);
 	}
 }

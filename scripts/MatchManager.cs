@@ -215,6 +215,7 @@ public partial class MatchManager : Node2D
 
 	public override void _Ready()
 	{
+		KeyboardInputSource.MouseInMatch = true;
 		BuildMatch();
 	}
 
@@ -495,6 +496,7 @@ public partial class MatchManager : Node2D
 	{
 		// Leaving mid slow-motion must not leave the menus running slow.
 		Engine.TimeScale = 1.0f;
+		KeyboardInputSource.MouseInMatch = false;
 	}
 
 	public override void _PhysicsProcess(double delta)

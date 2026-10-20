@@ -165,7 +165,7 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`"$GODOT_BIN" --path . -- --match --stage=N --shot=120`** — boot straight into a match on
   one stage and screenshot it (`--stage` alone only picks it). `F4` cycles stages while playing.
   Stages 4-6 are the big ones for three and four players.
-- **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--options`, `--changelog`, `--suggest`, `--drawings`** each boot straight to
+- **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--options`, `--controls`, `--changelog`, `--suggest`, `--drawings`** each boot straight to
   that screen, so a screen can be checked without clicking through the flow to reach it;
   **`--draw`** and **`--send`** open the newest saved drawing (or a new one) in the drawing or
   sending screen, and **`--newstage`** a new stage drawing. **`--fighters=2,0`**

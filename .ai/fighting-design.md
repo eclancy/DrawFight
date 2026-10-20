@@ -292,8 +292,8 @@ Input forgiveness, all of it non-negotiable:
 
 ## Controls (age 10-12 target)
 
-Xbox pads are the primary input. Keyboard exists so that development and a missing-controller
-match both work, not as the intended way to play.
+Xbox pads are the primary input. Keyboard and mouse is the way to play without one (Elim,
+2026-10-19: "for people who don't have a controller"), laid out as a PC game is.
 
 | Xbox pad           | result                                     |
 |--------------------|--------------------------------------------|
@@ -336,8 +336,11 @@ cheapest large win available on a pad. The victim's pad gets intensity scaled by
 hit confirms on both sides without the two buzzes competing. A KO gets the strongest rumble in
 the game.
 
-Keyboard fallback: P1 is the arrow keys + `A` jump, `Q` attack, `W` special, `S` block, `D` grab,
-`E` taunt. P2 is all number pad: `8` `4` `5` `6` to move, `1` jump, `2` attack, `3` special, `0`
+Keyboard and mouse: P1 is `W` `A` `S` `D` or the arrows to move, `Space` jump, left click or `J`
+attack, right click or `K` special, `Shift` or `L` block, `E` or middle click grab, `Q` taunt,
+`Enter` start. The mouse buttons count only in a match (`KeyboardInputSource.MouseInMatch`): on
+the drawing screens the mouse draws, and a right click there must not mean "back". Options >
+Controls lists every binding (`ControlsScreen`). P2 is all number pad: `8` `4` `5` `6` to move, `1` jump, `2` attack, `3` special, `0`
 block, `9` grab, `7` taunt. The Smash layout (F3) puts grab on LB and taunt on Back.
 
 ## Dropping through platforms
@@ -434,7 +437,7 @@ One attack button, told apart by the stick, as in Smash:
 
 - **Tilt**: a direction already held, then attack.
 - **Smash**: the stick **flicked** - from the centre to the edge in 4 frames or fewer - with
-  attack pressed within 7 frames of it reaching the edge. On a keyboard, pressing the arrow and
+  attack pressed within 7 frames of it reaching the edge. On a keyboard, pressing the direction and
   attack together is a flick. Both windows were tighter (a flick in a single frame, attack within
   4), and up smashes kept coming out as up tilts (Eric, 2026-10-04).
 - **The right stick is a smash stick**: push it any way for that smash (hold it out to charge),

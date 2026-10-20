@@ -6,7 +6,7 @@ using Godot;
 ///
 /// Pads go first in connection order, then keyboard schemes fill whoever is left - and the
 /// keyboard schemes are handed out in order too, so the one person on a keyboard in a
-/// pad-plus-keyboard game gets the player 1 keys (arrows + A/Q/W/S) rather than the number pad.
+/// pad-plus-keyboard game gets the player 1 keys (keyboard and mouse) rather than the number pad.
 ///
 /// Menus and the fight share this on purpose. A pad that works in a match has to work on the
 /// character select screen without a second mapping to keep in step.
@@ -18,8 +18,8 @@ public static class ControllerAssignment
 
 	/// <summary>
 	/// Every controller that can play, each by a name that stays the same from screen to screen:
-	/// each pad plugged in ("pad:0"), then the keyboard's two sets of keys - "keys:1", the arrows
-	/// and letters, and "keys:2", the number pad. A seat remembers the name of whoever sat in it.
+	/// each pad plugged in ("pad:0"), then the keyboard's two sets of keys - "keys:1", the keyboard
+	/// and mouse, and "keys:2", the number pad. A seat remembers the name of whoever sat in it.
 	/// </summary>
 	public static List<string> Devices()
 	{
