@@ -108,7 +108,7 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   `--shot=N` works on the match too; `F12` grabs a frame while playing.
 - **`"$GODOT_BIN" --path . -- --parade --film=fsmash --only=1 --shot=5`** — a film strip: one
   fighter doing one thing, frame by frame, played through the rig exactly as a match plays it
-  (`idle`, `run`, `jump`, `land`, `crouch`, `block`, `hurt`, `roll`, or a move: `jab`, `ftilt`,
+  (`idle`, `run`, `jump`, `land`, `crouch`, `block`, `hurt`, `roll`, `airdodge`, or a move: `jab`, `ftilt`,
   `fsmash`, `nair`...), smears included. **`--film=ground`**, **`smash`** or **`air`** shows every
   move of that kind at its key moments. A pose can look right and move wrong - **this is how
   motion gets checked**. See "Moving like a body" in `.ai/art-pipeline.md`. **`--film=face`**

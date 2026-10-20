@@ -173,11 +173,17 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>This dodge is a roll along the floor, curled up into a ball.</summary>
 	bool groundRoll;
 
+	/// <summary>The dodge going on is in the air: a flinch away, not a roll (FighterAnimations.AirDodge).</summary>
+	bool airDodge;
+
+	/// <summary>Where the dodge started, for an air dodge's wake.</summary>
+	Vector2 dodgeFrom;
+
 	public const int RollFrames = 20;
 	/// <summary>A roll's top speed against his running speed: faster than he runs, then slowing.</summary>
 	const float RollSpeed = 1.3f;
 	const int SpotDodgeFrames = 22;
-	const int AirDodgeFrames = 28;
+	public const int AirDodgeFrames = 28;
 
 	/// <summary>Frames of invulnerability inside a dodge, starting a few frames in.</summary>
 	const int DodgeInvulnStart = 4;
@@ -810,7 +816,7 @@ public partial class Fighter : CharacterBody2D
 		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll() + TrembleRoll(),
 			State == FighterState.Dodging && groundRoll);
 		TickFrontOn();
-		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth() * FrontTurnWidth());
+		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth() * FrontTurnWidth() * AirDodgeWidth());
 		UpdateFace();
 		UpdateWrist();
 		rig.SetFrontLegReach(LegReachNow());
@@ -835,9 +841,9 @@ public partial class Fighter : CharacterBody2D
 		switch (State)
 		{
 			case FighterState.Dodging:
-				// Curled up tight for every dodge; rolls and directional air dodges also turn a
-				// full somersault the way they travel.
-				rig.ApplyDirect(FighterAnimations.Tuck, 0.7f);
+				// Curled up tight for a roll or a spot dodge, the roll turning a full somersault
+				// the way it goes; an air dodge flinches away instead (FighterAnimations.AirDodge).
+				rig.ApplyDirect(airDodge ? FighterAnimations.AirDodge : FighterAnimations.Tuck, 0.7f);
 				break;
 
 			case FighterState.Attacking when currentMove != null && currentMove.Special == SpecialKind.Choice:
@@ -2162,6 +2168,8 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (State != FighterState.Dodging || dodgeStartFrames <= 0 || Mathf.Abs(dodgeVelocity.X) < 1.0f) return 0.0f;
 		float t = 1.0f - dodgeFrames / (float)dodgeStartFrames;
+		// In the air: no somersault, a lean the way it goes.
+		if (airDodge) return FighterAnimations.AirDodgeLean(t, Mathf.Sign(dodgeVelocity.X));
 		// Along the floor the ball turns in step with the ground it covers.
 		float eased = groundRoll ? FighterAnimations.RollTurned(t) : t * t * (3.0f - 2.0f * t);
 		return Mathf.Sign(dodgeVelocity.X) * Mathf.Tau * eased;
@@ -2176,6 +2184,8 @@ public partial class Fighter : CharacterBody2D
 		// A fighter who cannot roll just keeps blocking - and in the air does not dodge at all.
 		if (!Data.CanRoll && (airborne || directional)) return false;
 		groundRoll = !airborne && directional;
+		airDodge = airborne;
+		dodgeFrom = GlobalPosition;
 
 		if (airborne)
 		{
@@ -5491,6 +5501,31 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>Leaning into a dash the way it goes.</summary>
+	/// <summary>Narrowing edge-on through an air dodge (FighterAnimations.AirDodgeWidth); 1 otherwise.</summary>
+	float AirDodgeWidth() => State == FighterState.Dodging && airDodge && dodgeStartFrames > 0
+		? FighterAnimations.AirDodgeWidth(1.0f - dodgeFrames / (float)dodgeStartFrames) : 1.0f;
+
+	/// <summary>
+	/// A directional air dodge's wake: two faint copies of him back along the way he slipped, so
+	/// the eye sees a dodge, not a teleport. A still one leaves none.
+	/// </summary>
+	void DrawAirDodgeTrail()
+	{
+		if (State != FighterState.Dodging || !airDodge || dodgeVelocity == Vector2.Zero) return;
+		Texture2D body = rig.PartTexture(RigBone.Torso);
+		if (body == null) return;
+		float t = 1.0f - dodgeFrames / (float)Mathf.Max(1, dodgeStartFrames);
+		float fade = Mathf.Sin(Mathf.Pi * Mathf.Clamp(t, 0.0f, 1.0f));
+		Vector2 from = dodgeFrom - GlobalPosition;
+		var scale = new Vector2(rig.PuppetScale * Facing, rig.PuppetScale);
+		for (int i = 0; i < 2; i++)
+		{
+			float k = (i + 1) / 3.0f;
+			DrawArtOn(this, body, rig.PartPivot(RigBone.Torso), from * (1.0f - k) + rig.Position, 0.0f, scale,
+				new Color(1.0f, 1.0f, 1.0f, (0.12f + 0.1f * i) * fade));
+		}
+	}
+
 	float AirDashLean() =>
 		airDashFrames > 0 ? Mathf.Clamp(airDashVelocity.X / Mathf.Max(1.0f, Data.AirDashSpeed), -1.0f, 1.0f) * 0.3f : 0.0f;
 
@@ -5662,6 +5697,7 @@ public partial class Fighter : CharacterBody2D
 			DrawDiveGlow();
 			DrawBlinkTrail();
 			DrawAirDashTrail();
+			DrawAirDodgeTrail();
 			DrawSpinBlades(this, false);
 			DrawSmear();
 			DrawGrabArms();

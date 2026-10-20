@@ -154,9 +154,12 @@ polish, they are the feature:
   that read as the explosion chasing the action rather than happening somewhere. The KO'd fighter then
   stays gone for 80 frames (`Tuning.RespawnDelayFrames`) before reappearing, so the blast has
   the screen to itself and everyone takes in what happened.
-- **Dodges roll.** A roll curls the fighter into a ball that rolls along the floor - over his
-  back and feet, never up into the air - and a directional air dodge curls up and turns a full
-  somersault the way it travels; a spot dodge curls up in place. A fighter who cannot roll
+- **Dodges roll - on the ground.** A roll curls the fighter into a ball that rolls along the
+  floor - over his back and feet, never up into the air - and a spot dodge curls up in place. An
+  air dodge does not roll (Eric, 2026-10-20: it looked like rolling in the air): he flinches away,
+  forearms up, knee drawn up, leaning the way he goes and turning edge-on through the middle -
+  a paper cutout slipping sideways - with two faint copies left along the way he went
+  (`FighterAnimations.AirDodge`, `--film=airdodge`). A fighter who cannot roll
   (`FighterData.CanRoll`, DoomBot) cannot dodge in the air either.
 - **An attack never holds you after it is done** (Eric, 2026-10-10: it felt like hitlag
   stopped him moving after an attack). Measured, nothing did - every fighter is at half speed

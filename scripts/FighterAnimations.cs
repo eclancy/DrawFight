@@ -1444,6 +1444,23 @@ public static class FighterAnimations
 		(AFU, 6), (AFL, -66), (ABU, 0), (ABL, -62),
 		(LFU, -88), (LFL, 120), (LBU, -80), (LBL, 120));
 
+	/// <summary>
+	/// An air dodge: a flinch away in mid air, not a somersault (Eric, 2026-10-20: it looked like
+	/// rolling in the air). The body pulls back, chin down, both forearms up in front of the face,
+	/// the front knee drawn up and the back leg kicked back - and the whole figure turns edge-on
+	/// and leans the way it goes (AirDodgeLean, AirDodgeWidth), a paper cutout slipping sideways.
+	/// </summary>
+	public static readonly Pose AirDodge = new Pose(new Vector2(0, 8),
+		(Torso, 14), (Head, -12),
+		(AFU, -70), (AFL, -80), (ABU, -50), (ABL, -80),
+		(LFU, -55), (LFL, 85), (LBU, 15), (LBL, 75));
+
+	/// <summary>How far an air dodge leans into the way it goes, in radians, <paramref name="t"/> from 0 to 1 through it.</summary>
+	public static float AirDodgeLean(float t, int way) => way * 0.38f * Mathf.Sin(Mathf.Pi * Mathf.Clamp(t, 0.0f, 1.0f));
+
+	/// <summary>How wide an air dodge draws him: turning edge-on through the middle of it, when it cannot be hit.</summary>
+	public static float AirDodgeWidth(float t) => 1.0f - 0.7f * Mathf.Sin(Mathf.Pi * Mathf.Clamp(t, 0.0f, 1.0f));
+
 	// Holding it up to his chest, then a bow from the waist to put it down on the floor in
 	// front - the legs barely bend, so both feet stay planted.
 	static readonly Pose SetDownWindup = new Pose(new Vector2(0, 4),

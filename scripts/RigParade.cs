@@ -188,6 +188,18 @@ public partial class RigParade : Node2D
 				rig.SetRoll(Mathf.Tau * FighterAnimations.RollTurned((frame - FilmLeadIn + 1) / (float)Fighter.RollFrames), true);
 				rig.ApplyDirect(FighterAnimations.Tuck, 0.7f);
 				break;
+			case "airdodge" when frame >= FilmLeadIn && frame < FilmLeadIn + Fighter.AirDodgeFrames:
+			{
+				// An air dodge forward, as Fighter.UpdateRig plays it: flinching away, leaning the
+				// way it goes and turning edge-on through the middle.
+				float t = (frame - FilmLeadIn + 1) / (float)Fighter.AirDodgeFrames;
+				rig.SetPlanted(false);
+				rig.SetStanding(false);
+				rig.SetRoll(FighterAnimations.AirDodgeLean(t, 1), false);
+				rig.SetSpinWidth(FighterAnimations.AirDodgeWidth(t));
+				rig.ApplyDirect(FighterAnimations.AirDodge, 0.7f);
+				break;
+			}
 			default:
 				rig.SetPlanted(true);
 				rig.SetStanding(true);
@@ -406,9 +418,9 @@ public partial class RigParade : Node2D
 		const float Row = 430.0f;
 
 		// The frames to show: through the whole move and a little after, or a stretch of a clip.
-		int first = move != null || Film == "roll" ? FilmLeadIn - 2 : 0;
+		int first = move != null || Film == "roll" || Film == "airdodge" ? FilmLeadIn - 2 : 0;
 		int span = move != null ? move.TotalFrames + 14
-			: Film == "roll" ? Fighter.RollFrames + 8 : (Film == "jump" ? 60 : Film == "run" ? 34 : 54);
+			: Film == "roll" ? Fighter.RollFrames + 8 : Film == "airdodge" ? Fighter.AirDodgeFrames + 8 : (Film == "jump" ? 60 : Film == "run" ? 34 : 54);
 		var pose = new Pose();
 
 		for (int cell = 0; cell < Cells; cell++)
