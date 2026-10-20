@@ -102,7 +102,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 
 Keyboard and mouse (P1): `W` `A` `S` `D` or the arrows to move, `Space` jump, left click or `J`
 attack, right click or `K` special, `Shift` or `L` block, `E` or middle click grab, `Q` taunt,
-`Enter` pause, `Escape` back (in a match, pause). The mouse only fights in a match. One player
+`Enter` pause, `Escape` back (in a match, pause; on the main menu it asks to quit). The mouse only fights in a match. One player
 on the keyboard; everyone else needs a pad. Options > Controls lists all of it.
 
 After **Start**, the main menu: **Versus**, **Story** or **Draw your own** (a fighter or a

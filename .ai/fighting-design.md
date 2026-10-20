@@ -346,7 +346,9 @@ attack, right click or `K` special, `Shift` or `L` block, `E` or middle click gr
 `Enter` start. The mouse buttons count only in a match (`KeyboardInputSource.MouseInMatch`): on
 the drawing screens the mouse draws, and a right click there must not mean "back". Options >
 Controls lists every binding (`ControlsScreen`). Escape is "back": B in a menu, the pause in a
-match - it no longer quits the game (Eric, 2026-10-20). There is one keyboard player, never two
+match - it no longer quits the game outright (Eric, 2026-10-20). On the main menu, where back
+has nowhere to go, Escape opens the "Are you sure you want to quit?" box, and again closes it
+(Eric, 2026-10-21, after Elim kept reaching for it); B on a pad still does nothing there. There is one keyboard player, never two
 - the number-pad second player is gone (Eric, 2026-10-20); everyone else plays on a pad. The
 Smash layout (F3) puts grab on LB and taunt on Back.
 

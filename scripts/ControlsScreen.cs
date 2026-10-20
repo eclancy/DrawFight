@@ -111,7 +111,7 @@ public partial class ControlsScreen : Node2D
 		DrawColumn(190.0f, "Keyboard and mouse", KeyboardControls);
 		DrawColumn(1000.0f, "Controller", PadControls());
 
-		DrawString(font, new Vector2(560.0f, 970.0f), "In menus: Space or A picks, Escape or B goes back.",
+		DrawString(font, new Vector2(560.0f, 970.0f), "In menus: Space or A picks, Escape or B goes back. Escape on the main menu asks to quit.",
 			HorizontalAlignment.Left, -1, 30, MenuTheme.Soft);
 		DrawString(font, new Vector2(560.0f, 1012.0f), "One player on the keyboard; everyone else on a controller.",
 			HorizontalAlignment.Left, -1, 30, MenuTheme.Soft);

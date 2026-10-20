@@ -39,6 +39,12 @@ public partial class MainMenuScreen : Node2D
 	int frame;
 	bool leaving;
 
+	/// <summary>
+	/// Escape's state last frame. Starts down, so the press that came back here from another
+	/// screen (Escape is "back" there too) does not open the quit box the moment it arrives.
+	/// </summary>
+	bool escapeWasDown = true;
+
 	public override void _Ready()
 	{
 		// Back from the options, the controller that went there is still pointing.
@@ -94,6 +100,7 @@ public partial class MainMenuScreen : Node2D
 
 		Vector2 viewport = GetViewportRect().Size;
 		touch.Tick();
+		bool promptWasOpen = quitPrompt.Open;
 
 		foreach (MenuCursor cursor in cursors)
 		{
@@ -121,6 +128,17 @@ public partial class MainMenuScreen : Node2D
 				Press(cursor.Position, touch.KeyOf(cursor));
 			}
 		}
+		// Escape here asks to quit (Eric, 2026-10-21: Elim kept reaching for it to close the game).
+		// Read off the key itself, not a cursor: the first press only wakes the keyboard's cursor,
+		// and Escape has to work first time. B on a pad still does nothing at home; Escape on the
+		// open prompt is "back", which closes it (QuitPrompt.Cancel, above).
+		bool escape = Input.IsPhysicalKeyPressed(Key.Escape);
+		if (escape && !escapeWasDown && !promptWasOpen && !leaving)
+		{
+			quitPrompt.Open = true;
+			SfxPlayer.Ui("ui_select");
+		}
+		escapeWasDown = escape;
 		QueueRedraw();
 		cursorLayer.QueueRedraw();
 	}
