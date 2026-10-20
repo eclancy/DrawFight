@@ -21,7 +21,14 @@ PATH = os.path.join(HERE, '..', '..', 'assets', 'changelog.txt')
 def main():
     version, notes = sys.argv[1], sys.argv[2]
     lines = []
-    for line in notes.decode('utf-8').splitlines() if isinstance(notes, bytes) else notes.splitlines():
+    if isinstance(notes, bytes):
+        # Windows hands Python 2 its arguments in the console's code page, not UTF-8 - an
+        # accented letter (Flambe's e) broke the v0.10.0 release until this fell back to it.
+        try:
+            notes = notes.decode('utf-8')
+        except UnicodeDecodeError:
+            notes = notes.decode('cp1252')
+    for line in notes.splitlines():
         line = re.sub(r'^\s*[-*]\s+', '', line).replace('**', '').strip()
         if line:
             lines.append(line)
