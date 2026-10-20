@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="DrawFight"
-config/version="0.8.3"
+config/version="0.9.0"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.png"

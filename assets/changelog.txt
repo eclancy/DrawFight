@@ -2,6 +2,17 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.9.0 | 2026-10-19
+Triguy stands tall, point up, the way Elim draws him - he only tips over like his side drawing when he stabs.
+Circy talks! Loud, in memes, with his own catchphrases: duuuuuuuuuude, GET READY FOR EVIL STUNTS, okaly dokaly.
+Story mode has Easy, Medium and Hard - pick on the story's map.
+Two-on-one story fights are fairer: each of the two has fewer lives.
+Story fights drop items now and then.
+Play with keyboard and mouse: WASD to move, Space to jump, click to attack and special.
+Options > Controls shows every key and button.
+The Big Show's speakers look like real speakers, buzzing and thumping to the music.
+EdgeLord to Triguy: You may be fast, but my swords are faster.
+
 == 0.8.3 | 2026-10-19
 The icon is Circy's face again, on notepad paper.
 
