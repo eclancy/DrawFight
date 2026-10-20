@@ -165,6 +165,7 @@ public partial class GameRoot : Node2D
 			if (arg == "--changelog") startAt = "changelog";
 			if (arg == "--controls") startAt = "controls";
 			if (arg == "--icon") startAt = "icon";
+			if (arg == "--names") startAt = "names";
 			if (arg == "--suggest") startAt = "suggest";
 			if (arg == "--newstage") startAt = "newstage";
 			if (arg == "--drawings") startAt = "drawings";
@@ -222,6 +223,8 @@ public partial class GameRoot : Node2D
 			case "controls": GoControls(null); break;
 			// The frame the application icon is cropped from (tools/art/app_icon.py).
 			case "icon": Show(new IconFrame()); break;
+			// Every fighter's name in their own letters, at every size the game shows it.
+			case "names": Show(new NameSheet()); break;
 			case "suggest": GoSuggest(); break;
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;

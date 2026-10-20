@@ -96,13 +96,18 @@ public partial class StoryMapScreen : Node2D
 		Font font = ThemeDB.FallbackFont;
 		if (Run == null) return;
 		int player = StoryScript.IndexOf(Run.PlayerId);
-		string name = player >= 0 ? FighterCatalog.Get(player).DisplayName : Run.PlayerId;
-		string heading = string.IsNullOrEmpty(Run.Title) ? $"{name}'s story" : $"{name}: {Run.Title}";
-		DrawString(font, new Vector2(150.0f, 150.0f), heading, HorizontalAlignment.Left, -1, 72, MenuTheme.Text);
+		// Whose story it is, his name in his own letters, and the rest of the heading in ink.
+		FighterData data = player >= 0 ? FighterCatalog.Get(player) : null;
+		string name = data != null ? data.DisplayName : Run.PlayerId;
+		NameStyle look = data != null ? data.NameLook : NameStyle.Plain(MenuTheme.Text);
+		string rest = string.IsNullOrEmpty(Run.Title) ? "'s story" : $": {Run.Title}";
+		NameLettering.Draw(this, new Vector2(150.0f, 150.0f), name, look, 72);
+		float restAt = 150.0f + NameLettering.Measure(name, look, 72).X;
+		DrawString(font, new Vector2(restAt, 150.0f), rest, HorizontalAlignment.Left, -1, 72, MenuTheme.Text);
 		bool finished = StoryProgress.Finished(Run.PlayerId);
 		if (finished)
 		{
-			Item.DrawStarOn(this, new Vector2(150.0f + font.GetStringSize(heading, HorizontalAlignment.Left, -1, 72).X + 60.0f, 126.0f), 36.0f, new Color(1.0f, 0.82f, 0.25f));
+			Item.DrawStarOn(this, new Vector2(restAt + font.GetStringSize(rest, HorizontalAlignment.Left, -1, 72).X + 60.0f, 126.0f), 36.0f, new Color(1.0f, 0.82f, 0.25f));
 		}
 
 		// The dotted trail from magnet to magnet.
@@ -131,8 +136,7 @@ public partial class StoryMapScreen : Node2D
 
 			string number = (i + 1).ToString();
 			DrawString(font, at + new Vector2(-r, 16.0f), number, HorizontalAlignment.Center, r * 2.0f, 48, MenuTheme.Text);
-			DrawString(font, at + new Vector2(-140.0f, r + 46.0f), chapter.Title, HorizontalAlignment.Center, 280.0f, 30,
-				played || next ? MenuTheme.Text : MenuTheme.Soft);
+			DrawTitle(chapter.Title, at + new Vector2(0.0f, r + 46.0f), played || next);
 			if (played) Item.DrawStarOn(this, at + new Vector2(r * 0.7f, -r * 0.7f), 26.0f, new Color(1.0f, 0.82f, 0.25f));
 		}
 
@@ -157,5 +161,42 @@ public partial class StoryMapScreen : Node2D
 		}
 		DrawString(font, new Vector2(1060.0f, baseline), "<", HorizontalAlignment.Center, 40.0f, 32, difficulty > 0 ? MenuTheme.Text : MenuTheme.Soft);
 		DrawString(font, new Vector2(1600.0f, baseline), ">", HorizontalAlignment.Center, 40.0f, 32, difficulty < 2 ? MenuTheme.Text : MenuTheme.Soft);
+	}
+
+	/// <summary>
+	/// A chapter's title, centred under its magnet: whoever it is against in their own letters
+	/// ("EdgeLord", "Lugnut + Flambé"), anything else in ink. Faded until it is reached.
+	/// </summary>
+	void DrawTitle(string title, Vector2 centre, bool reached)
+	{
+		const int Size = 30;
+		const string Plus = " + ";
+		Font font = ThemeDB.FallbackFont;
+		Color ink = reached ? MenuTheme.Text : MenuTheme.Soft;
+		string[] parts = title.Split(Plus);
+		var who = new FighterData[parts.Length];
+		for (int i = 0; i < parts.Length; i++)
+		{
+			who[i] = FighterCatalog.Named(parts[i]);
+			if (who[i] == null)
+			{
+				DrawString(font, centre - new Vector2(140.0f, 0.0f), title, HorizontalAlignment.Center, 280.0f, Size, ink);
+				return;
+			}
+		}
+		float plusWidth = font.GetStringSize(Plus, HorizontalAlignment.Left, -1, Size).X;
+		float width = plusWidth * (parts.Length - 1);
+		foreach (FighterData data in who) width += NameLettering.Measure(data.DisplayName, data.NameLook, Size).X;
+		float x = centre.X - width * 0.5f;
+		for (int i = 0; i < parts.Length; i++)
+		{
+			if (i > 0)
+			{
+				DrawString(font, new Vector2(x, centre.Y), Plus, HorizontalAlignment.Left, -1, Size, ink);
+				x += plusWidth;
+			}
+			NameLettering.Draw(this, new Vector2(x, centre.Y), who[i].DisplayName, who[i].NameLook, Size, reached ? 1.0f : 0.55f);
+			x += NameLettering.Measure(who[i].DisplayName, who[i].NameLook, Size).X;
+		}
 	}
 }

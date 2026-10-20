@@ -41,7 +41,8 @@ public partial class CharacterSelectScreen : Node2D
 		public MenuCursor Cursor;
 		public bool Joined;
 		public int Index = -1;
-		public Label Name;
+		/// <summary>The fighter's name, in their own letters (NameLettering).</summary>
+		public NameTag Name;
 		public Label Credit;
 		/// <summary>"Player 2", or "Player 2 - CPU" while the computer sits there.</summary>
 		public Label Heading;
@@ -186,9 +187,16 @@ public partial class CharacterSelectScreen : Node2D
 				FitPortrait(holder, rig, window.Size);
 			}
 
-			var name = MenuTheme.MakeLabel(data.DisplayName, new Vector2(box.Position.X, box.End.Y - 62.0f), 40, MenuTheme.Text);
-			name.Size = new Vector2(CardWidth, 50.0f);
-			name.HorizontalAlignment = HorizontalAlignment.Center;
+			// The name in his own letters - as he will see it over his percent in the fight.
+			var name = new NameTag
+			{
+				FontSize = 40,
+				Align = HorizontalAlignment.Center,
+				FitWidth = true,
+				Position = new Vector2(box.Position.X + 4.0f, box.End.Y - 62.0f),
+				Size = new Vector2(CardWidth - 8.0f, 54.0f),
+			};
+			name.SetFighter(data);
 			root.AddChild(name);
 
 			cards[i] = new Card { Box = box, Rig = rig };
@@ -222,7 +230,7 @@ public partial class CharacterSelectScreen : Node2D
 			column.AddThemeConstantOverride("separation", ForStory ? 6 : 2);
 			root.AddChild(column);
 
-			slot.Name = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 52 : 44, MenuTheme.Text);
+			slot.Name = new NameTag { FontSize = ForStory ? 52 : 44, FitWidth = !ForStory };
 			slot.Credit = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 28 : 24, MenuTheme.Soft);
 			slot.Blurb = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 25 : 20, MenuTheme.Soft);
 			slot.State = MenuTheme.MakeLabel("", Vector2.Zero, 30, tint);
@@ -965,7 +973,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (!slot.Joined)
 			{
-				slot.Name.Text = "";
+				slot.Name.SetFighter(null);
 				slot.Credit.Text = "";
 				slot.Blurb.Text = "";
 				slot.State.Text = "Press A to join";
@@ -974,7 +982,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (slot.IsCpu)
 			{
-				slot.Name.Text = FighterCatalog.NameOf(slot.Index);
+				slot.Name.SetFighter(FighterCatalog.Get(slot.Index));
 				slot.Credit.Text = FighterCatalog.CreditOf(slot.Index);
 				slot.Blurb.Text = FighterCatalog.BlurbOf(slot.Index);
 				// Said in the heading: down here it would sit on the CPU buttons.
@@ -985,7 +993,7 @@ public partial class CharacterSelectScreen : Node2D
 			// Show what the cursor is over until something is picked, so a player can read a
 			// fighter's description before committing to it.
 			int shown = slot.Locked ? slot.Index : slot.Cursor != null ? CardUnder(slot.Cursor.Position) : -1;
-			slot.Name.Text = shown >= 0 ? FighterCatalog.NameOf(shown) : "";
+			slot.Name.SetFighter(shown >= 0 ? FighterCatalog.Get(shown) : null);
 			slot.Credit.Text = shown >= 0 ? FighterCatalog.CreditOf(shown) : "";
 			slot.Blurb.Text = shown >= 0 ? FighterCatalog.BlurbOf(shown) : "";
 			slot.State.Text = slot.Locked ? "READY" : "";

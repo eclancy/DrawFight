@@ -651,7 +651,9 @@ public partial class MatchManager : Node2D
 			else
 			{
 				hud.SetBannerHigh(true);
-				hud.SetBanner(winner, "Press Start to pick fighters");
+				// One winner's name in his own letters; a team or a draw in the banner's.
+				if (!TeamBattle && victor != null) hud.SetWinner(victor.Data, "Press Start to pick fighters");
+				else hud.SetBanner(winner, "Press Start to pick fighters");
 			}
 			return;
 		}

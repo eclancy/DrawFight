@@ -34,6 +34,17 @@ public partial class FighterData : Resource
 	/// <summary>M1 placeholder tint. Replaced by the rigged drawing at M2.</summary>
 	[Export] public Color PlaceholderColor { get; set; } = new Color(0.9f, 0.9f, 0.9f);
 
+	/// <summary>
+	/// How his name is lettered wherever it shows - select screen, match HUD, speech bubbles
+	/// (NameLettering; .ai/art-direction.md). Null for plain letters in PlaceholderColor.
+	/// </summary>
+	[Export] public NameStyle Lettering { get; set; }
+
+	NameStyle plainLettering;
+
+	/// <summary>His lettering, or plain letters in his colour if he has none of his own.</summary>
+	public NameStyle NameLook => Lettering ?? (plainLettering ??= NameStyle.Plain(PlaceholderColor));
+
 	// --- Survivability -------------------------------------------------------
 
 	// --- Ground movement -----------------------------------------------------
@@ -286,6 +297,7 @@ public partial class FighterData : Resource
 			TrailColor = new Color(1.0f, 0.44f, 0.16f),
 			// Standing about, a hand on his hip.
 			HandOnHip = true,
+			Lettering = NameStyle.Flambe(),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Fire(),
 			CharacterNormals.Swift, CharacterNormals.SwiftJab());
@@ -335,6 +347,7 @@ public partial class FighterData : Resource
 			// Arms that big do not go round behind a back that broad: every swing stays in front
 			// of him (Eric, 2026-10-10).
 			ArmReachBack = 70.0f,
+			Lettering = NameStyle.Lugnut(),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Construction(),
 			CharacterNormals.Lug, CharacterNormals.LugJab());
@@ -386,6 +399,7 @@ public partial class FighterData : Resource
 			AnimationDrama = 1.35f,
 			AirDashSpeed = 1500.0f,
 			SlicesOnHit = true,
+			Lettering = NameStyle.EdgeLord(),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.EdgeLord(),
 			CharacterNormals.EdgeLord, CharacterNormals.EdgeLordJab());
@@ -423,6 +437,8 @@ public partial class FighterData : Resource
 		data.PlaceholderColor = new Color(0.36f, 0.62f, 0.92f);
 		// A touch cooler: newer steel. The armour is what tells him apart.
 		data.RigTint = new Color(0.9f, 0.96f, 1.05f);
+		// His letters are DoomBot's in blue steel, each a different bit of scrap.
+		data.Lettering = NameStyle.DoomBotMk2();
 		return data;
 	}
 
@@ -471,6 +487,7 @@ public partial class FighterData : Resource
 			CanRoll = false,
 			// Eric drew him face on, arms out: that is how he stands to talk and to celebrate.
 			FrontOn = true,
+			Lettering = NameStyle.DoomBot(),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.DoomBot(),
 			CharacterNormals.DoomBot, CharacterNormals.DoomBotJab());
@@ -531,6 +548,7 @@ public partial class FighterData : Resource
 			RigPath = "res://fighters/circy/rig.json",
 			VisualScale = 1.0f,
 			TumblesWhenHit = true,
+			Lettering = NameStyle.Circy(),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy(),
 			CharacterNormals.Circy, CharacterNormals.CircyJab());
@@ -589,6 +607,7 @@ public partial class FighterData : Resource
 			AnimationDrama = 1.2f,
 			TrailColor = new Color(0.10f, 0.40f, 1.0f),
 			BlockLeak = 1.8f,
+			Lettering = NameStyle.Triguy(),
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Triguy(),
 			CharacterNormals.Triguy, CharacterNormals.TriguyJab());

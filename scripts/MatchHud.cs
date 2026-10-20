@@ -21,6 +21,11 @@ public partial class MatchHud : CanvasLayer
 
 	Label bannerLabel;
 	Label subBannerLabel;
+
+	/// <summary>"EdgeLord wins!" - the winner's name in his own letters - in place of the banner's text.</summary>
+	Control winnerLine;
+	FighterData winnerData;
+	const int BannerSize = 190;
 	Label countdownLabel;
 	Label debugLabel;
 
@@ -61,10 +66,19 @@ public partial class MatchHud : CanvasLayer
 			float centreX = Width * (i + 1) / (fighters.Count + 1);
 			float left = centreX - Column * 0.5f;
 
-			Label name = MakeLabel(root, 34, fighters[i].Data.PlaceholderColor, 10);
-			name.Text = fighters[i].Data.DisplayName;
-			name.Position = new Vector2(left, 842.0f);
-			name.Size = new Vector2(Column, 44.0f);
+			// His name in his own letters (NameLettering) - DoomBot's glowing as hot as he is.
+			Fighter fighter = fighters[i];
+			var name = new NameTag
+			{
+				FontSize = 34,
+				Align = HorizontalAlignment.Center,
+				FitWidth = true,
+				Position = new Vector2(left, 842.0f),
+				Size = new Vector2(Column, 44.0f),
+				Heat = fighter.Data.HasHeat ? () => fighter.IsOverheated ? 1.0f : fighter.HeatFraction : null,
+			};
+			name.SetFighter(fighter.Data);
+			root.AddChild(name);
 
 			if (seats)
 			{
@@ -105,6 +119,16 @@ public partial class MatchHud : CanvasLayer
 		countdownLabel.Size = new Vector2(Width, 420.0f);
 		countdownLabel.PivotOffset = new Vector2(Width * 0.5f, 210.0f);
 
+		winnerLine = new Control
+		{
+			Position = bannerLabel.Position,
+			Size = bannerLabel.Size,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+			Visible = false,
+		};
+		root.AddChild(winnerLine);
+		winnerLine.Draw += DrawWinner;
+
 		subBannerLabel = MakeLabel(root, 40, Ink, 12);
 		subBannerLabel.Position = new Vector2(0.0f, 540.0f);
 		subBannerLabel.Size = new Vector2(Width, 60.0f);
@@ -124,6 +148,7 @@ public partial class MatchHud : CanvasLayer
 	{
 		if (bannerLabel == null) return;
 		bannerLabel.Position = new Vector2(0.0f, high ? 20.0f : 300.0f);
+		winnerLine.Position = bannerLabel.Position;
 		subBannerLabel.Position = new Vector2(0.0f, high ? 250.0f : 540.0f);
 	}
 
@@ -133,6 +158,42 @@ public partial class MatchHud : CanvasLayer
 		bannerLabel.Text = text;
 		bannerLabel.Scale = Vector2.One * (1.0f + 0.35f * punch * punch);
 		subBannerLabel.Text = subText;
+		winnerData = null;
+		winnerLine.Visible = false;
+	}
+
+	/// <summary>The banner as "NAME wins!", the name lettered as the winner's own.</summary>
+	public void SetWinner(FighterData winner, string subText)
+	{
+		if (bannerLabel == null) return;
+		SetBanner("", subText);
+		winnerData = winner;
+		winnerLine.Visible = winner != null;
+		winnerLine.QueueRedraw();
+	}
+
+	void DrawWinner()
+	{
+		if (winnerData == null) return;
+		const string Wins = " wins!";
+		Font font = ThemeDB.FallbackFont;
+		NameStyle look = winnerData.NameLook;
+		float nameWidth = NameLettering.Measure(winnerData.DisplayName, look, BannerSize).X;
+		float winsWidth = font.GetStringSize(Wins, HorizontalAlignment.Left, -1, BannerSize).X;
+		Vector2 size = winnerLine.Size;
+		// Shrunk to fit across the screen, as one line.
+		float fit = Mathf.Min(1.0f, (size.X - 80.0f) / (nameWidth + winsWidth));
+		int px = Mathf.RoundToInt(BannerSize * fit);
+		nameWidth *= fit;
+		winsWidth = font.GetStringSize(Wins, HorizontalAlignment.Left, -1, px).X;
+		float left = (size.X - nameWidth - winsWidth) * 0.5f;
+		// A little higher than the banner's own text, so what is laid under a name (a hazard bar, a
+		// sword) clears the line under it.
+		float baseline = size.Y * 0.5f + (font.GetAscent(px) - font.GetDescent(px)) * 0.5f - (NameLettering.LaysUnder(look) ? 0.14f * px : 0.0f);
+		NameLettering.Draw(winnerLine, new Vector2(left, baseline), winnerData.DisplayName, look, px);
+		var at = new Vector2(left + nameWidth, baseline);
+		winnerLine.DrawStringOutline(font, at, Wins, HorizontalAlignment.Left, -1, px, Mathf.RoundToInt(26 * fit), Paper);
+		winnerLine.DrawString(font, at, Wins, HorizontalAlignment.Left, -1, px, Ink);
 	}
 
 	/// <summary>
@@ -199,6 +260,7 @@ public partial class MatchHud : CanvasLayer
 
 			heatGauges[i]?.QueueRedraw();
 		}
+		if (winnerData != null && winnerData.NameLook.Moves) winnerLine.QueueRedraw();
 
 		if (debugLabel != null) debugLabel.Text = debug;
 	}
