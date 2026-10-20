@@ -106,16 +106,21 @@ public partial class CharacterSelectScreen : Node2D
 
 	int[] Teams => GameRoot.Instance.SeatTeams;
 
+	// The page from the margin rule to the right edge, top to bottom: the cards as wide and tall
+	// as fits, the seats under them, and a strip along the bottom for "Press Start to fight!"
+	// (Eric, 2026-10-20: the bottom of the page sat empty).
+	const float RowLeft = 190.0f;
+	const float RowRight = 1880.0f;
 	const float CardTop = 196.0f;
+	const float CardGap = 26.0f;
 	/// <summary>Cards shrink as the roster grows, so the row always fits between the margins.</summary>
-	static readonly float CardWidth = Mathf.Min(300.0f, (1540.0f - (FighterCatalog.Count - 1) * 44.0f) / FighterCatalog.Count);
-	const float CardHeight = 350.0f;
-	const float CardGap = 44.0f;
+	static readonly float CardWidth = Mathf.Min(320.0f, (RowRight - RowLeft - (FighterCatalog.Count - 1) * CardGap) / FighterCatalog.Count);
+	const float CardHeight = 410.0f;
 
-	const float PanelTop = 572.0f;
+	const float PanelTop = 626.0f;
 	/// <summary>A story's one panel is wide; four seats share the row.</summary>
 	float PanelWidth => ForStory ? 640.0f : 410.0f;
-	const float PanelHeight = 358.0f;
+	const float PanelHeight = 350.0f;
 	const float PanelGap = 16.0f;
 
 	/// <summary>"Press Start to fight", shown once everyone has picked.</summary>
@@ -139,7 +144,7 @@ public partial class CharacterSelectScreen : Node2D
 		root.AddChild(MenuTheme.MakeLabel(ForStory ? "Whose story?" : "Pick your fighter", new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
 
 		float rowWidth = cards.Length * CardWidth + (cards.Length - 1) * CardGap;
-		float rowLeft = (viewport.X - rowWidth) * 0.5f;
+		float rowLeft = RowLeft + (RowRight - RowLeft - rowWidth) * 0.5f;
 
 		// Each portrait faces whichever way it likes, picked afresh every time the screen opens -
 		// a row all facing the same way looked like a lineup (Eric, 2026-10-04). Never all one way.
@@ -189,7 +194,7 @@ public partial class CharacterSelectScreen : Node2D
 			cards[i] = new Card { Box = box, Rig = rig };
 		}
 
-		startPrompt = MenuTheme.MakeLabel(ForStory ? "Press Start to begin!" : "Press Start to fight!", new Vector2(0.0f, 948.0f), 64, MenuTheme.Accent);
+		startPrompt = MenuTheme.MakeLabel(ForStory ? "Press Start to begin!" : "Press Start to fight!", new Vector2(0.0f, 982.0f), 64, MenuTheme.Accent);
 		startPrompt.Size = new Vector2(viewport.X, 90.0f);
 		startPrompt.HorizontalAlignment = HorizontalAlignment.Center;
 		startPrompt.AddThemeColorOverride("font_outline_color", MenuTheme.Text);
