@@ -599,7 +599,7 @@ public partial class MoveData : Resource
 
 	/// <summary>
 	/// Rubs out whoever it touches: no knockback, no percent - they are erased off the page where
-	/// they stand and lose the stock. The Big Pink Eraser's one swing (Eric, 2026-10-15).
+	/// they stand and lose the stock. The Big Pink Eraser's swing (Eric, 2026-10-15).
 	/// </summary>
 	[Export] public bool Erases { get; set; } = false;
 

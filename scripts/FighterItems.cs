@@ -404,6 +404,13 @@ public partial class Fighter
 		if (firstActive && data.Id == "paintbrush") FlickPaint();
 		if (data.Id == "eraser" && moveFrame > activeStart && moveFrame <= activeEnd) EraseAround(heldItem.HeadGlobal(), 70.0f);
 		if (data.Id == "eraser" && moveFrame == 1) SfxPlayer.At("special_glint", GlobalPosition, 0.0f);
+		// Slammed down onto the floor and missed: a thud the whole stage feels, and a puff of dust.
+		if (data.Id == "eraser" && moveFrame == activeEnd)
+		{
+			SfxPlayer.At("stomp", GlobalPosition, 0.05f);
+			Match?.Shake(16.0f);
+			if (IsOnFloor()) Match?.Dust(new Vector2(heldItem.HeadGlobal().X, Feet.Y), 1.0f, 0.0f);
+		}
 		if (data.Id == "scissors" && firstActive) SfxPlayer.At("item_snip", GlobalPosition, 0.05f);
 		return false;
 	}
@@ -613,6 +620,16 @@ public partial class Fighter
 		if (data.Id == "scissors") other.CutOut();
 		if (data.Use == ItemUse.Spray) other.Paint(data.Tint, 120);
 		if (data.Id == "stamp") other.StampMark();
+		// The eraser is spent on whoever it rubs out: it leaves his hand to scrub them off the
+		// page (DrawEraserScrub), and the rest of the swing hits no one else. A swing that misses
+		// keeps it (Eric, 2026-10-20).
+		if (data.Swing.Erases && other.IsBeingErased)
+		{
+			heldItem.UsedUp();
+			heldItem = null;
+			moveFrame = Mathf.Max(moveFrame, currentMove.StartupFrames + currentMove.ActiveFrames);
+			return;
+		}
 		// A swing that lands wears it down - once a swing, however many it hits.
 		if (data.Uses > 0 && data.Use == ItemUse.Swing && heldItem.UsesLeft > 0 && firstHit) heldItem.UsesLeft--;
 	}
@@ -1061,12 +1078,21 @@ void fragment() {
 	{
 		if (heldItem == null || rig == null || !rig.Loaded) return;
 		if (State == FighterState.Attacking || State == FighterState.LedgeHang || State == FighterState.Dodging) return;
+		HoldItemOut(rig, Facing, shieldRaised);
+	}
+
+	/// <summary>The front fist held out in front with something in it (HoldItemPose) - the parade's item film holds it the same way.</summary>
+	public static void HoldItemOut(FighterRig rig, int facing, bool shield)
+	{
 		Vector2? shoulder = rig.JointGlobal(RigBone.ArmFrontUpper);
 		float length = rig.ArmLength(RigBone.ArmFrontUpper, RigBone.ArmFrontLower);
 		if (shoulder == null || length <= 0.0f) return;
-		Vector2 hold = shieldRaised ? new Vector2(Facing * length * 0.8f, length * 0.15f) : new Vector2(Facing * length * 0.62f, length * 0.42f);
-		rig.ReachArm(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, shoulder.Value + hold, shieldRaised ? 1.0f : 0.85f);
+		Vector2 hold = shield ? new Vector2(facing * length * 0.8f, length * 0.15f) : new Vector2(facing * length * 0.62f, length * 0.42f);
+		rig.ReachArm(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, shoulder.Value + hold, shield ? 1.0f : 0.85f);
 	}
+
+	/// <summary>Shaking under the eraser, straining to hold it up (FighterAnimations.HeaveRoll).</summary>
+	float HeaveRoll() => State == FighterState.Attacking ? FighterAnimations.HeaveRoll(currentMove, moveFrame, PlayerIndex) : 0.0f;
 
 	/// <summary>Cut out: a paper doll turning over and over as it flutters, edge-on and then flat.</summary>
 	float CutoutWidth() => cutoutFrames > 0 ? 0.1f + 0.9f * Mathf.Abs(Mathf.Cos(cutoutFrames * 0.16f)) : 1.0f;
@@ -1110,17 +1136,8 @@ void fragment() {
 	{
 		DrawItemUses(canvas);
 		if (erasedFrames > 0) DrawEraserScrub(canvas);
-
-		// The eraser wound up: a pink glow swelling round it, trembling, so everyone sees what
-		// is coming and has the whole wind-up to get out of the way.
-		if (heldItem != null && State == FighterState.Attacking && currentMove == heldItem.Data.Swing
-			&& currentMove.Erases && moveFrame <= currentMove.StartupFrames && canvas is Node2D windup)
-		{
-			float t = moveFrame / (float)currentMove.StartupFrames;
-			Vector2 at = windup.ToLocal(heldItem.HeadGlobal()) + new Vector2(CrayonBrush.Noise(fxFrames, 7), CrayonBrush.Noise(fxFrames, 8)) * 5.0f * t;
-			canvas.DrawCircle(at, 20.0f + 70.0f * t, new Color(0.96f, 0.55f, 0.7f, 0.18f + 0.25f * t));
-			canvas.DrawArc(at, 20.0f + 70.0f * t, 0.0f, Mathf.Tau, 32, new Color(0.9f, 0.4f, 0.6f, 0.6f * t), 5.0f, true);
-		}
+		// The eraser's wind-up has no glow round it (Eric, 2026-10-20): his body heaving it up and
+		// shaking under it is the warning (AttackAnim.EraserHeave).
 		Vector2 top = new Vector2(0.0f, -bodySize.Y * 0.5f);
 		Vector2 feet = new Vector2(0.0f, bodySize.Y * 0.5f);
 

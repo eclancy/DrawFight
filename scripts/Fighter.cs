@@ -804,7 +804,7 @@ public partial class Fighter : CharacterBody2D
 		rig.SetPartVisible(RigBone.PropFront, !spinning && !armOut && prop != "-" && State != FighterState.LedgeHang && heldItem == null);
 		ShowTurnFrame(spinning);
 
-		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll() + TrembleRoll(),
+		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll() + TrembleRoll() + HeaveRoll(),
 			State == FighterState.Dodging && groundRoll);
 		TickFrontOn();
 		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth() * FrontTurnWidth());

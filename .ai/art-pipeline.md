@@ -93,7 +93,7 @@ clip, attack animation or effect drawn round a fighter; the rig enforces the one
 12. **Look at it move.** A pose can look right and move wrong. `--parade --film=NAME --only=N`
     plays one thing frame by frame through the rig exactly as a match does, smears and all;
     `--film=ground`, `smash` or `air` shows each move's key moments; `--film=roll` films a dodge
-    roll on a floor line. See CLAUDE.md.
+    roll on a floor line; `--film=item:ID` a swung item in his fist. See CLAUDE.md.
 
 ### How the rig keeps them
 
