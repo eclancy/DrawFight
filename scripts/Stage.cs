@@ -837,40 +837,17 @@ public partial class Stage : Node2D
 	}
 
 	/// <summary>
-	/// An amp on top of speaker cabinets. The rectangle is the amp's top, the part you stand on;
-	/// the cabinets stack under it to the ground, each with a pair of speakers. Grey, not black -
-	/// the fighters own black.
+	/// An amp on top of a speaker cabinet. The rectangle is the amp's top, the part you stand on;
+	/// the cabinet stands under it to the ground (SpeakerBlast.DrawCabinet). On a stage whose
+	/// speakers play (StageData.Speakers) the cones are SpeakerBlast's to draw, moving; anywhere
+	/// else they are drawn here, still.
 	/// </summary>
 	void DrawAmpStack(StagePlatform platform, int seed)
 	{
 		Rect2 r = platform.Rect;
-		float ground = Data.GroundLine;
-		var cabinet = new Color(0.56f, 0.57f, 0.63f);
-		var grille = new Color(0.70f, 0.71f, 0.76f);
-		float height = (ground - r.End.Y) * 0.5f;
-		for (int i = 0; i < 2; i++)
-		{
-			var box = new Rect2(r.Position.X + 8.0f, r.End.Y + i * height, r.Size.X - 16.0f, height);
-			DrawRect(box, cabinet);
-			DrawRect(box.Grow(-10.0f), grille);
-			foreach (float fx in new[] { 0.3f, 0.7f })
-			{
-				var at = new Vector2(box.Position.X + box.Size.X * fx, box.GetCenter().Y);
-				float radius = Mathf.Min(box.Size.X * 0.17f, box.Size.Y * 0.36f);
-				DrawCircle(at, radius, new Color(0.62f, 0.63f, 0.69f));
-				DrawArc(at, radius, 0.0f, Mathf.Tau, 24, Data.Ink, 2.5f, true);
-				DrawCircle(at, radius * 0.32f, new Color(0.80f, 0.80f, 0.84f));
-			}
-			CrayonBrush.InkRect(this, box, Data.Ink, 2.5f, seed + 5 + i, 1.2f);
-		}
-
-		// The amp: knobs along its front, and a warm light that says it is on.
-		DrawRect(r, new Color(0.66f, 0.62f, 0.58f));
-		for (float x = r.Position.X + 26.0f; x < r.End.X - 40.0f; x += 24.0f)
-		{
-			DrawCircle(new Vector2(x, r.GetCenter().Y), 4.0f, new Color(0.96f, 0.93f, 0.86f));
-		}
-		DrawCircle(new Vector2(r.End.X - 22.0f, r.GetCenter().Y), 5.0f, Data.Accent);
+		SpeakerBlast.DrawCabinet(this, r, Data.GroundLine, Data.Ink, seed);
+		if (!Data.Speakers) SpeakerBlast.DrawCones(this, r, Data.GroundLine, Data.Ink, 0.0f, 0.0f, 0, 0.0f);
+		SpeakerBlast.DrawAmpHead(this, r, Data.Ink, Data.Accent);
 		OutlinePlatform(r, platform.OneWay, seed);
 	}
 
