@@ -2,6 +2,18 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.10.0 | 2026-10-20
+Every fighter's name is drawn in their own letters - on fighter select, in the fight and in story mode.
+Flambé's fireballs blaze like comets, flames streaming back behind them - his rolling fireball too.
+The Big Show plays guitar rock, and a cheering crowd fills the front of the stage.
+The Big Pink Eraser: a huge wind-up and slam, it turns with your arm, and you get three tries - it is used up on the one that hits.
+Air dodges look like dodges now, not rolls.
+Triguy can still attack after his trampoline, just not bounce again until he lands.
+On the Building Site, only the beams hanging from the cranes can be stood on.
+Fighter select fills the whole page, with bigger fighters.
+One player on the keyboard and mouse; Escape goes back instead of quitting.
+Report a bug from the main menu. New fighters and stages come in as drawings, from Draw your own.
+
 == 0.9.0 | 2026-10-19
 Triguy stands tall, point up, the way Elim draws him - he only tips over like his side drawing when he stabs.
 Circy talks! Loud, in memes, with his own catchphrases: duuuuuuuuuude, GET READY FOR EVIL STUNTS, okaly dokaly.
