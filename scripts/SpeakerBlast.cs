@@ -3,7 +3,7 @@ using Godot;
 
 /// <summary>
 /// The Big Show's speakers playing loud (Eric, 2026-10-18): every speaker cone thumps along with
-/// the punk rock, and every so often one stack swells - its cones pushing out further and further
+/// the guitar rock, and every so often one stack swells - its cones pushing out further and further
 /// for a second, a warning anyone can see - and then blasts a ring of sound that knocks back
 /// whoever is near it. It hurts a little; it is mostly a shove. Built by Stage for a stage whose
 /// data has <see cref="StageData.Speakers"/>, drawn over the amp stacks it belongs to.
@@ -17,7 +17,12 @@ public partial class SpeakerBlast : Node2D
 	Color ink;
 	readonly RandomNumberGenerator rng = new RandomNumberGenerator();
 
-	/// <summary>The cones thump on the beat - the Big Show's music is 184 BPM, near enough twenty frames a beat.</summary>
+	/// <summary>
+	/// The cones thump on the beat - the Big Show's music is 180 BPM, exactly twenty frames a beat,
+	/// so the thump keeps the music's tempo exactly instead of sliding slowly off it, as it did at
+	/// the old 184. Change one, change both
+	/// (BIG_BPM in tools/audio/music.py).
+	/// </summary>
 	const int BeatFrames = 20;
 
 	/// <summary>Frames between blasts, at random within this range: nine to fifteen seconds.</summary>

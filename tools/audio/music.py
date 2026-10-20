@@ -18,9 +18,9 @@ third, so FIGHT!'s A major chord still sits on it.
 Most of it is cartoon music on purpose: Eric's call on 2026-10-04 was "something more fun". On
 2026-10-18 the battle music went action and the menu went chill ("less like annoying whistling
 music"), and every stage got its own battle loop: the Fridge Door an action-rock theme, Open
-Plains a galloping adventure, City Rooftops night-time synthwave, the Big Show punk rock, the
-Playground the old bouncy ska romp, the Building Site industrial, the Kitchen Counter funk with
-pots and pans. The menu is lo-fi: electric piano, a vibraphone tune, soft drums. The story theme is a
+Plains a galloping adventure, City Rooftops night-time synthwave, the Big Show guitar rock (on
+2026-10-20: plucked-string electric guitars through a clipping amp), the Playground the old
+bouncy ska romp, the Building Site industrial, the Kitchen Counter funk with pots and pans. The menu is lo-fi: electric piano, a vibraphone tune, soft drums. The story theme is a
 storybook tiptoe of pizzicato, glockenspiel and bassoon; DoomBot's is a villain's march on tuba,
 growling trombones and an organ, over a factory; the victory sting is a brass fanfare. The
 harmony leans on secondary dominants (C#7, F#7, B7, E7). A chord that wants to fall to the next
@@ -364,21 +364,170 @@ def drivebass(freq, dur):
 
 
 # --- the stage bands -------------------------------------------------------
-# Every stage has its own battle music (Eric, 2026-10-18), so a few more instruments: the punk
-# guitar of the Big Show, the steel strings of Open Plains, the synth arpeggio of City Rooftops
-# at night and the pots and pans of the Kitchen Counter.
+# Every stage has its own battle music (Eric, 2026-10-18), so a few more instruments: the
+# electric guitars of the Big Show, the steel strings of Open Plains, the synth arpeggio of City
+# Rooftops at night and the pots and pans of the Kitchen Counter.
 
-def punkguitar(freq, dur):
-    """The Big Show's guitar: an open power chord - root, fifth and octave - thrashed down-stroke
-    after down-stroke, the filter left open and the drive turned all the way up. Where the
-    factory's chug is muted, this one rings."""
-    ph = _phase(freq)
-    v = S.mix(S.gain(S.osc("saw", freq, dur, phase=ph), 0.5),
-              S.gain(S.osc("saw", freq * 1.4983, dur, phase=(ph + 0.3) % 1.0), 0.4),
-              S.gain(S.osc("square", freq * 2.0, dur, phase=(ph + 0.6) % 1.0), 0.25),
-              S.gain(S.osc("saw", freq * 1.003, dur, phase=(ph + 0.8) % 1.0), 0.35))
-    v = S.lowpass(v, S.sweep(dur, 3200, 1800, 0.5), 0.9)
-    return S.drive(S.env_mul(v, S.adsr(dur, 0.003, 0.06, 0.75, min(0.03, dur * 0.3))), 3.4)
+# The Big Show's guitars (Eric, 2026-10-20: "more rock focused ... something with guitar").
+# An electric guitar is three things, and each is built the way the real one works: a plucked
+# string (Karplus-Strong, as in _pluck, but with a delay that can change length, so a note can
+# bend and sing), an amp turned up until it clips, and a speaker cabinet that cannot play much
+# above 5 kHz. The cabinet is what turns the clipping from fizz into a guitar.
+
+def _string(freqs, n, bright, t60, seed, pick=0.13):
+    """One plucked string, n samples long. freqs is the pitch, per sample, so a note can bend.
+    pick is where along the string it is picked: near the bridge, which hollows out a few
+    harmonics the way a real pick does."""
+    f0 = freqs[0]
+    whole = int(S.SR / f0)
+    rng = random.Random(seed)
+    burst = [rng.uniform(-1.0, 1.0) for _ in xrange(whole + 2)]
+    d = max(1, int(whole * pick))
+    burst = S.lowpass([burst[i] - (burst[i - d] if i >= d else 0.0) for i in xrange(len(burst))],
+                      bright, 0.7)
+    mean = sum(burst) / len(burst)
+    burst = [v - mean for v in burst]
+    nb = len(burst)
+    g = 0.5 * 0.001 ** (1.0 / (t60 * f0))
+    sr = float(S.SR)
+    y = [0.0] * n
+    for i in xrange(n):
+        v = burst[i] if i < nb else 0.0
+        # Read the string one period back, between samples; the two-point average is the
+        # string losing its top end each time round, and adds the half sample taken off here.
+        p = i - (sr / freqs[i] - 0.5)
+        j = int(p)
+        if j >= 1:
+            fr = p - j
+            a = y[j] + fr * (y[j + 1] - y[j])
+            b = y[j - 1] + fr * (y[j] - y[j - 1])
+            v += g * (a + b)
+        y[i] = v
+    return y
+
+
+def _amp(v, gain, cab, low=90.0):
+    """The amp and its cabinet. The pickup rolls the top off before the clipping, so it clips
+    on the notes rather than on hiss; a bias makes it clip harder one way than the other, the
+    way a valve does, which adds the even harmonics that make distortion sound warm; then two
+    filters for the speaker cone, and a high-pass that takes the bias's thump back out."""
+    v = S.normalize(S.lowpass(S.highpass(v, 110.0), 3400.0, 0.8), 1.0)
+    bias = 0.3
+    t0 = math.tanh(bias)
+    v = [math.tanh(gain * x + bias) - t0 for x in v]
+    v = S.lowpass(S.lowpass(v, cab, 1.1), cab * 1.4, 0.7)
+    return S.highpass(v, low)
+
+
+def _cents(c):
+    return 2.0 ** (c / 1200.0)
+
+
+def _powerchord(freq, dur, mute, take):
+    """A power chord - root, fifth and octave, no third - on three strings struck down-stroke,
+    low string first, then put through the amp. Open, it rings for as long as it is held; palm
+    muted, the heel of the hand damps it to a short dark chug. take picks the strings slightly
+    differently, so two takes laid together sound like two guitars, not one twice as loud."""
+    hold = dur + 0.03
+    n = S.n_samples(hold)
+    seed = int(freq * 7) + 3 * take + (50 if mute else 0)
+    detune = ((0.0, 3.0, -2.0), (2.5, -3.5, 4.0))[take]
+    spread = (0.006, 0.0085)[take]
+    v = [0.0] * n
+    for k, (ratio, level) in enumerate(((1.0, 1.0), (1.4983, 0.85), (2.0, 0.6))):
+        off = S.n_samples(k * spread)
+        f = freq * ratio * _cents(detune[k])
+        s = _string([f] * (n - off), n - off, 2400.0 if mute else 5200.0,
+                    0.16 if mute else 3.0, seed + k)
+        for i in xrange(n - off):
+            v[off + i] += s[i] * level
+    if mute:
+        v = _amp(v, 7.0, 1700.0)
+        env = S.ramp(S.n_samples(0.002), 0.0, 1.0)
+        return S.env_mul(v, env + S.decay(n - len(env), 1.6))
+    v = _amp(v, 16.0, 2700.0)
+    ka = S.n_samples(0.002)
+    kr = min(n - ka, S.n_samples(0.03))
+    # The end is a hand coming down on the strings, not a fade: quick, but not a cut.
+    return S.env_mul(v, S.ramp(ka, 0.0, 1.0) + [1.0] * (n - ka - kr) + S.ramp(kr, 1.0, 0.0))
+
+
+def _doubled(freq, dur, mute):
+    """Rhythm guitar is played twice and the takes laid together - the oldest trick in rock. The
+    second is a few milliseconds behind the first and a few cents away, so they thicken each
+    other instead of adding up to the same guitar louder."""
+    a = _powerchord(freq, dur, mute, 0)
+    b = _powerchord(freq, dur, mute, 1)
+    lag = S.n_samples(0.007)
+    out = a + [0.0] * lag
+    for i in xrange(len(b)):
+        out[lag + i] += b[i] * 0.8
+    return out
+
+
+def gtropen(freq, dur):
+    """The Big Show's rhythm guitars, open: a power chord struck and left to ring."""
+    return _doubled(freq, dur, False)
+
+
+def gtrmute(freq, dur):
+    """The Big Show's rhythm guitars, palm-muted: the chug the riff is built on."""
+    return _doubled(freq, dur, True)
+
+
+def _leadgtr(freq, dur, bend):
+    """The lead guitar: one string, the amp turned further up so a note sustains, a pick scraping
+    into each note, and a wide, slow vibrato once a note is held - a guitarist's, from the
+    wrist. bend is how many semitones the note is pushed up into from below."""
+    hold = dur + 0.04
+    n = S.n_samples(hold)
+    start = freq * 2.0 ** (-bend / 12.0) if bend else freq * 0.99
+    k = min(n, S.n_samples(0.11 if bend else 0.015))
+    f = S.ramp(k, start, freq, 0.6) + [freq] * (n - k)
+    f = _vibrato(f, 5.2, 0.011, 0.18 if not bend else 0.22)
+    v = _string(f, n, 6000.0, 4.0, int(freq * 3) + 17, pick=0.2)
+    v = _amp(v, 22.0, 3200.0, low=180.0)
+    ka = S.n_samples(0.003)
+    kr = min(n - ka, S.n_samples(0.04))
+    return S.env_mul(v, S.ramp(ka, 0.0, 1.0) + [1.0] * (n - ka - kr) + S.ramp(kr, 1.0, 0.0))
+
+
+def gtrlead(freq, dur):
+    return _leadgtr(freq, dur, 0)
+
+
+def gtrbend(freq, dur):
+    """A note bent up a whole step into pitch - the sound of a guitar solo more than any other."""
+    return _leadgtr(freq, dur, 2)
+
+
+def bassgtr(freq, dur):
+    """The bass guitar, played with a pick: a plucked string, its overtones carrying it on a TV
+    speaker as every bass here does, a little drive, and the hand damping it on time so the
+    eighths stay locked to the kick instead of blurring into a drone."""
+    n = S.n_samples(dur + 0.02)
+    v = _string([freq] * n, n, 2600.0, 1.6, int(freq * 5) + 29, pick=0.2)
+    v = S.drive(S.normalize(S.lowpass(v, S.sweep(dur + 0.02, 2200, 900, 0.5), 0.9), 1.0), 1.8)
+    ka = S.n_samples(0.002)
+    kr = min(n - ka, S.n_samples(0.025))
+    return S.env_mul(v, S.ramp(ka, 0.0, 1.0) + [1.0] * (n - ka - kr) + S.ramp(kr, 1.0, 0.0))
+
+
+def rocksnare(freq, dur):
+    """The Big Show's snare: the kit's snare, hit harder, through the drive. A bare snare is
+    one tall spike of noise, and in a track this dense that spike set the peak the whole loop is
+    scaled to; driven, the backbeat is fat instead of spiky, and the rest can come up."""
+    return S.drive(S.normalize(snare(freq, dur), 1.0), 3.0)
+
+
+def ride(freq, dur):
+    """A ride cymbal for the choruses: a bell 'ping' of metal partials over a long, soft wash."""
+    d = 0.7
+    n = S.n_samples(d)
+    ping = S.partials(3150.0, [1.0, 1.43, 1.97, 2.61], d, amps=[0.6, 0.5, 0.35, 0.25],
+                      decays=[8.0, 10.0, 12.0, 14.0])
+    wash = S.env_mul(S.highpass(S.osc("noise", 0, d, seed=271), 6500), S.expdecay(n, 5.0))
+    return S.mix(S.gain(ping, 0.3), S.gain(wash, 0.6))
 
 
 def steel(freq, dur):
@@ -1278,63 +1427,187 @@ def rooftops_events():
 
 
 # ---------------------------------------------------------------------------
-# The Big Show: punk rock, 184 BPM, A major. Open power chords thrashed in eighths, the bass
-# doubling them, kick and snare as fast as they go, and a shout-along tune: a verse, a chorus
-# twice, and a tag back to the top.
+# The Big Show: guitar rock, 180 BPM, in A (Eric, 2026-10-20: "big show should be more rock
+# focused for its music. can you find something with guitar?"). Two rhythm guitars on power
+# chords, a lead guitar, a bass guitar and a rock kit, twenty-four bars:
+#
+#   the riff (8 bars)    palm-muted A chugging under stabs of C, D and G - the riff alone, then
+#                        again with the lead guitar's hook over it
+#   the chorus (8)       open chords left to ring, D - A - E - F# and D - A - E - E, struck 3-3-2,
+#                        the lead singing the tune on top and the ride cymbal going
+#   the solo (4)         the chug galloping on A, the lead running and bending over it
+#   the turnaround (4)   F - G - A hit and held twice, stop-time - the cartoon cadence the
+#                        victory sting lands with - then a bar and a half of muted E swelling
+#                        under a snare roll, and an E rung out into the riff at the top
+#
+# 180 BPM is exactly twenty frames a beat, which is what the stage's speakers thump on
+# (SpeakerBlast.BeatFrames), so the cones keep time with it for the whole match. Power chords
+# have no third, so FIGHT!'s A major chord lands on the riff, and the riff can borrow C and G
+# from A minor the way rock does while the chorus sings in A major.
 # ---------------------------------------------------------------------------
 
-BIG_BPM = 184.0
-BIG_CHART = (["A", "A", "D", "E"] * 2
-             + ["F#m", "D", "A", "E"] * 2
-             + ["D", "E", "A", "A"])
-BIG_BEATS = 4 * len(BIG_CHART)          # 80 beats, 26.1 s
+BIG_BPM = 180.0
+BIG_BEATS = 96                          # 24 bars, 32.0 s
 
-BIG_ROOTS = {"A": ("A2", "A1"), "D": ("D3", "D2"), "E": ("E2", "E1"), "F#m": ("F#2", "F#1")}
+# A power chord's name: (the guitars' lowest string, the bass's note an octave under it).
+BIG_ROOTS = {"A": ("A2", "A1"), "C": ("C3", "C2"), "D": ("D3", "D2"), "E": ("E2", "E1"),
+             "F": ("F2", "F1"), "F#": ("F#2", "F#1"), "G": ("G2", "G1")}
 
+MUTE, OPEN = True, False
+
+# The riff, a bar at a time: (beat in the bar, chord, length in beats, palm-muted?). Each bar
+# chugs on A and breaks out of it on the off-beat; the fourth bar climbs to E, which pulls
+# back to A.
+RIFF_1 = [(0, "A", .5, MUTE), (.5, "A", .5, MUTE), (1, "A", .5, MUTE), (1.5, "C", .5, OPEN),
+          (2, "A", .5, MUTE), (2.5, "A", .5, MUTE), (3, "D", 1, OPEN)]
+RIFF_2 = [(0, "A", .5, MUTE), (.5, "A", .5, MUTE), (1, "A", .5, MUTE), (1.5, "C", .5, OPEN),
+          (2, "D", .5, OPEN), (2.5, "C", .5, OPEN), (3, "G", 1, OPEN)]
+RIFF_4 = [(0, "A", .5, MUTE), (.5, "A", .5, MUTE), (1, "A", .5, MUTE), (1.5, "C", .5, OPEN),
+          (2, "D", .5, OPEN), (2.5, "E", 1.5, OPEN)]
+
+
+def _chorus_bar(chord):
+    """Struck 3-3-2 and left to ring, with a muted push into the next bar."""
+    return [(0, chord, 1.5, OPEN), (1.5, chord, 1.5, OPEN), (3, chord, .5, OPEN),
+            (3.5, chord, .5, MUTE)]
+
+
+def _gallop(chord, upto=4.0):
+    return [(e * 0.5, chord, .5, MUTE) for e in xrange(int(upto * 2))]
+
+
+BIG_GUITAR = (
+    [RIFF_1, RIFF_2, RIFF_1, RIFF_4] * 2
+    + [_chorus_bar(c) for c in ("D", "A", "E", "F#", "D", "A", "E", "E")]
+    + [_gallop("A"), _gallop("A", 3) + [(3, "G", 1, OPEN)],
+       _gallop("A"), _gallop("A", 2) + [(2, "C", .5, OPEN), (2.5, "D", 1.5, OPEN)]]
+    + [[(0, "F", 1.5, OPEN), (1.5, "G", 1.5, OPEN), (3, "A", 1, OPEN)],
+       [(0, "F", 1.5, OPEN), (1.5, "G", 1.5, OPEN), (3, "C", .5, OPEN), (3.5, "D", .5, OPEN)],
+       _gallop("E"), _gallop("E", 2) + [(2, "E", 2, OPEN)]]
+)
+
+BEND = True
+
+# The lead guitar: (beat, note, length[, bent up into]). Chord tones on the strong beats, and no
+# note a semitone off the chord under it. The riff's hook and the solo are A minor pentatonic -
+# A C D E G - which sits on every chord the riff uses; the chorus tune is in A major.
+BIG_HOOK = [
+    (16, "A4", .5), (16.5, "C5", .5), (17, "D5", 1, BEND), (18, "E5", .5), (18.5, "D5", .5),
+    (19, "C5", .5), (19.5, "A4", .5),
+    (20, "E5", .5), (20.5, "G5", .5), (21, "A5", 1, BEND), (22, "G5", .5), (22.5, "E5", .5),
+    (23, "D5", 1),
+    (24, "A4", .5), (24.5, "C5", .5), (25, "D5", 1, BEND), (26, "E5", .5), (26.5, "D5", .5),
+    (27, "C5", .5), (27.5, "A4", .5),
+    (28, "E5", .5), (28.5, "G5", .5), (29, "A5", .5), (29.5, "C6", .5), (30, "D6", .5),
+    (30.5, "E6", 1.5, BEND),
+]
 BIG_TUNE = [
-    (0, "E5", 1), (1, "E5", 1), (2, "C#5", 1), (3, "E5", 1),
-    (4, "A5", 2), (6, "E5", 2),
-    (8, "F#5", 1), (9, "F#5", 1), (10, "A5", 2),
-    (12, "G#5", 2), (14, "B5", 2),
-    (16, "E5", 1), (17, "E5", 1), (18, "C#5", 1), (19, "E5", 1),
-    (20, "A5", 2), (22, "E5", 2),
-    (24, "F#5", 1), (25, "F#5", 1), (26, "A5", 2),
-    (28, "E5", 4),
-    (32, "A5", 2), (34, "C#6", 2),
-    (36, "A5", 1), (37, "F#5", 1), (38, "D5", 2),
-    (40, "C#5", 1), (41, "E5", 1), (42, "A5", 2),
-    (44, "B5", 2), (46, "G#5", 2),
-    (48, "A5", 2), (50, "C#6", 2),
-    (52, "A5", 1), (53, "F#5", 1), (54, "D5", 2),
-    (56, "C#5", 1), (57, "E5", 1), (58, "A5", 2),
-    (60, "B5", 2), (62, "E5", 2),
-    (64, "F#5", 2), (66, "A5", 2),
-    (68, "G#5", 2), (70, "B5", 2),
-    (72, "A5", 4),
-    (76, "E5", 1), (77, "E5", 1), (78, "E5", 1), (79, "B5", 1),
+    (32, "A5", 1.5), (33.5, "F#5", .5), (34, "A5", 1), (35, "B5", 1),
+    (36, "C#6", 2, BEND), (38, "B5", 1), (39, "A5", 1),
+    (40, "B5", 1.5), (41.5, "G#5", .5), (42, "E5", 2),
+    (44, "F#5", 1), (45, "A5", 1), (46, "C#6", 2),
+    (48, "D6", 1.5), (49.5, "B5", .5), (50, "A5", 2),
+    (52, "C#6", 1.5), (53.5, "B5", .5), (54, "A5", 2),
+    (56, "B5", 1), (57, "G#5", 1), (58, "E5", 1), (59, "F#5", 1),
+    (60, "G#5", 1), (61, "B5", 1), (62, "E6", 2, BEND),
+]
+BIG_SOLO = [
+    (64, "A5", .5, BEND), (64.5, "G5", .25), (64.75, "E5", .25), (65, "G5", .5), (65.5, "A5", .5),
+    (66, "C6", 1, BEND), (67, "A5", .5), (67.5, "G5", .5),
+    (68, "E5", .25), (68.25, "G5", .25), (68.5, "A5", .25), (68.75, "C6", .25), (69, "D6", 1, BEND),
+    (70, "C6", .5), (70.5, "A5", .5), (71, "G5", 1),
+    (72, "E6", .5), (72.5, "D6", .25), (72.75, "C6", .25), (73, "D6", .25), (73.25, "C6", .25),
+    (73.5, "A5", .5), (74, "C6", .25), (74.25, "A5", .25), (74.5, "G5", .25), (74.75, "E5", .25),
+    (75, "G5", .5), (75.5, "A5", .5),
+    (76, "A5", 1.5, BEND), (77.5, "G5", .5), (78, "G5", .5), (78.5, "A5", 1.5),
+    # Over the turnaround it doubles the hits, rising to the major third - A, B, C# over F, G, A.
+    (80, "A5", 1.5), (81.5, "B5", 1.5), (83, "C#6", 1, BEND),
+    (84, "A5", 1.5), (85.5, "B5", 1.5), (87, "C6", .5), (87.5, "D6", .5),
 ]
 
-BIG_MIX = {"punkguitar": 0.42, "lead": 0.3, "drivebass": 0.4, "kick": 0.6, "snare": 1.15,
-           "hat": 0.22, "crash": 0.16, "tom": 0.5}
+# The mix, one level per part. Set by measuring each part, in quarter-second windows, against
+# the whole while it plays: the lead 4 dB under the whole, the rhythm guitars 5, the bass 6.5,
+# the kick 8, the snare 12 (a quarter second is mostly the gap after a hit, so a drum reads low
+# here), the cymbals 20, because the hit sounds own the top end. A-weighted, the loop comes out
+# as loud as Open Plains and City Rooftops.
+BIG_MIX = {"gtrmute": 0.5, "gtropen": 0.42, "gtrlead": 0.5, "gtrbend": 0.5, "bassgtr": 0.8,
+           "kick": 1.8, "rocksnare": 1.0, "hat": 0.25, "ride": 0.4, "crash": 0.3, "tom": 0.9}
+
+
+def _big_kit(ev, b, kicks, cymbal, cymbal_vel):
+    """A bar of rock beat: the kick where it is told, the snare on two and four, and a cymbal -
+    the hats, or the ride in the chorus - on every eighth."""
+    for k in kicks:
+        ev.append((b + k, kick, None, 0.3, 1.0 if k == int(k) else 0.8))
+    for s in (1.0, 3.0):
+        ev.append((b + s, rocksnare, None, 0.3, 1.0))
+    for e in xrange(8):
+        ev.append((b + e * 0.5, cymbal, None, 0.08, cymbal_vel[e % 2]))
 
 
 def bigshow_events():
     ev = []
-    for bar, chord in enumerate(BIG_CHART):
+    for bar, hits in enumerate(BIG_GUITAR):
         b = bar * 4
-        guitar, root = BIG_ROOTS[chord]
-        for e in xrange(8):
-            ev.append((b + e * 0.5, punkguitar, guitar, 0.48, 1.0 if e % 2 == 0 else 0.85))
-            ev.append((b + e * 0.5, drivebass, root, 0.45, 1.0 if e % 2 == 0 else 0.85))
-        # Fast and straight: kick on one and the and of two, snare on two and four, the ride
-        # (an open hat) on every eighth.
-        _rock_drums(ev, b, kicks=(0.0, 1.5, 2.0), hats=8, hat_vel=(0.9, 0.7))
-        if bar % 4 == 0:
-            ev.append((b, crash, None, 1.5, 1.0))
-        if bar % 8 == 7:
-            for k, pitch in enumerate(("A3", "F#3", "D3", "A2")):
-                ev.append((b + 3 + k * 0.25, tom, pitch, 0.3, 0.9))
-    _tune(ev, BIG_TUNE, 0, lead, held=0.85)
+        part = ("riff" if bar < 8 else "chorus" if bar < 16 else "solo" if bar < 20
+                else "stops" if bar < 22 else "build")
+        for at, chord, length, muted in hits:
+            if part == "build":
+                # The swell: each chug harder than the last, into the E rung out at the top.
+                vel = 1.0 if not muted else 0.55 + 0.04 * (at * 2 + (bar - 22) * 8)
+            elif part == "solo" and muted:
+                vel = 1.0 if int(at * 2) % 8 in (0, 3, 6) else 0.72
+            else:
+                vel = 0.85 if muted else 1.0
+            guitar, low = BIG_ROOTS[chord]
+            ev.append((b + at, gtrmute if muted else gtropen, guitar, length, vel))
+            if part == "stops":
+                ev.append((b + at, bassgtr, low, length * 0.95, 1.0))
+        if part != "stops":
+            # The bass picks every eighth, on whatever chord the guitars last struck, locked
+            # to them and to the kick.
+            for e in xrange(8):
+                chord = [h for h in hits if h[0] <= e * 0.5][-1][1]
+                ev.append((b + e * 0.5, bassgtr, BIG_ROOTS[chord][1], 0.48,
+                           1.0 if e % 2 == 0 else 0.8))
+
+        if part == "riff":
+            _big_kit(ev, b, (0.0, 1.5, 2.0), hat, (0.9, 0.6))
+            if bar % 4 == 0:
+                ev.append((b, crash, None, 2.0, 1.0))
+        elif part == "chorus":
+            # The kick goes with the guitars on one and the and of two, but not on four, where
+            # it, the snare and a fresh strum together were the loudest moment in the loop. The
+            # ride takes over from the hats.
+            _big_kit(ev, b, (0.0, 1.5, 2.0), ride, (1.0, 0.6))
+            if bar % 4 == 0:
+                ev.append((b, crash, None, 2.0, 1.0))
+        elif part == "solo":
+            _big_kit(ev, b, (0.0, 0.5, 2.0, 2.5), hat, (1.0, 0.7))
+            if bar == 16:
+                ev.append((b, crash, None, 2.0, 1.0))
+        elif part == "stops":
+            # Stop-time: the whole band on each hit and nothing between - the snare taking the
+            # kick's place on the last one.
+            for at, chord, length, muted in hits:
+                ev.append((b + at, rocksnare if at == 3 else kick, None, 0.3, 1.0))
+                ev.append((b + at, crash, None, length, 0.8 if at else 1.0))
+        else:
+            for k in xrange(4):
+                ev.append((b + k, kick, None, 0.3, 1.0))
+            if bar == 22:
+                for e in xrange(8):
+                    ev.append((b + e * 0.5, rocksnare, None, 0.25, 0.35 + 0.05 * e))
+            else:
+                for s in xrange(8):
+                    ev.append((b + s * 0.25, rocksnare, None, 0.25, 0.6 + 0.04 * s))
+                for k, pitch in enumerate(("E3", "B2", "A2", "E2")):
+                    ev.append((b + 2 + k * 0.5, tom, pitch, 0.5, 0.9))
+
+    for item in BIG_HOOK + BIG_TUNE + BIG_SOLO:
+        beat, pitch, length = item[:3]
+        bent = len(item) > 3 and item[3]
+        ev.append((beat, gtrbend if bent else gtrlead, pitch, length * 0.95, 1.0))
     return _mixed(ev, BIG_MIX)
 
 

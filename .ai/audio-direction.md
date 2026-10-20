@@ -150,9 +150,18 @@ is most of what makes music sound like a cartoon.
   galloping (an eighth and two sixteenths a beat), a march on the drums, the tune on brass.
 - **battle_rooftops** (City Rooftops) — 120 BPM, A minor, night-time synthwave: a synth arpeggio
   running sixteenths round Am–F–C–G like lights going by, a pulsing octave bass, a long lead.
-- **battle_bigshow** (Big Show) — 184 BPM, A major, punk rock: open power chords thrashed in
-  eighths, the bass doubling them, kick and snare flat out, a shout-along tune. Its speakers thump
-  on the beat (`SpeakerBlast`, 20 frames a beat, near enough 184 BPM).
+- **battle_bigshow** (Big Show) — 180 BPM, in A, guitar rock (Eric, 2026-10-20: "more rock
+  focused ... something with guitar"). Every guitar is built like the real thing: a plucked string
+  (Karplus-Strong, with a delay that can change length so a note can bend), an amp clipped hard
+  with a valve's lopsided bias, and a speaker cabinet that rolls off above about 3 kHz. Two rhythm
+  takes, a few cents and milliseconds apart, play power chords (root, fifth, octave, struck low
+  string first). The riff chugs palm-muted on A under open stabs of C, D and G. The chorus rings
+  open chords D–A–E–F♯ struck 3-3-2. A lead guitar plays a hook, the chorus tune and a short solo,
+  bending into notes and with a wrist vibrato. Under it, a picked bass guitar on every eighth with
+  the kick, and a rock kit (driven snare, hats, a ride in the chorus, crashes). It ends on a
+  stop-time F–G–A, the victory sting's cadence, then a muted E swelling under a snare roll back to
+  the top. 24 bars, 32 s. 180 BPM is exactly twenty frames a beat, the speakers' thump
+  (`SpeakerBlast.BeatFrames`), so the two keep the same tempo. Change one, change both.
 - **battle_playground** (Playground) — the bouncy ska romp that was the only battle music before:
   164 BPM, offbeat chops, an octave-bouncing bass, a handheld-console lead called and answered by
   cartoon brass, and a slide whistle back to the top. A game, for where the fighting is one.

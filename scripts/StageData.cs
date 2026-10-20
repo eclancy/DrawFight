@@ -286,7 +286,7 @@ public partial class StageData : Resource
 
 	/// <summary>
 	/// The battle music this stage fights to (assets/music, made by tools/audio/music.py): every
-	/// stage has its own (Eric, 2026-10-18) - punk at the Big Show, industrial on the Building
+	/// stage has its own (Eric, 2026-10-18) - guitar rock at the Big Show, industrial on the Building
 	/// Site. A story's boss fights to his own theme instead.
 	/// </summary>
 	public string Music = "battle";
