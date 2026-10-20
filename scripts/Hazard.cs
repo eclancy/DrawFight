@@ -882,14 +882,14 @@ public partial class Hazard : Node2D
 	}
 
 	/// <summary>
-	/// A fireball: a tail of shrinking, reddening puffs streaming back the way it came, then the
-	/// ball - orange round a yellow-white core - flickering as it flies.
+	/// A fireball, or a burning drop: a comet of fire, its flames streaming straight back the way
+	/// it came at whatever angle it flies (FlameFx.Comet).
 	/// </summary>
 	void DrawFlame(float radius)
 	{
-		// Curved flames trailing off it the way it is not going (FlameFx).
 		Vector2 back = velocity.LengthSquared() > 1.0f ? -velocity.Normalized() : Vector2.Up;
-		FlameFx.Ball(this, Vector2.Zero, radius, back, ageFrames);
+		// Each one its own flicker, so a shower of them does not burn in step.
+		FlameFx.Comet(this, Vector2.Zero, radius, back, ageFrames, 1.0f, (int)(GetInstanceId() % 61));
 	}
 
 	/// <summary>
