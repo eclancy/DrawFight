@@ -140,6 +140,28 @@ Smears and fire are drawn by the game, not by the kids, so this contract covers 
   lighter). A flame drawn on the prop turns upside down with the hand.
 - Every flicker and wobble is hashed from a frame count, never random.
 
+## Every name in its own letters
+
+A fighter's name is lettered the way they would write it (Eric, 2026-10-20): on the select
+screen's cards and seats, over the percent in a match, on the winner's banner, in the corner of a
+speech bubble and on a story's map. One drawer (`NameLettering`, and `NameTag` where a Label went)
+and a style per fighter as data (`FighterData.Lettering`, a `NameStyle`) - colour, edge, shading,
+lean, stretch, boldness, spacing, case, motion and one decoration - never drawing code per fighter.
+
+- **Legible first.** Every name keeps the paper halo every HUD label has, so it reads on any
+  stage; a style's edge is a deep colour, not black - letters are UI, and the 30% line holds. Each
+  was checked at 30px on a bubble and at 34px on grass, brick and a night sky (`--names`).
+- **Motion is a whisper**: a bob, a flicker, a glint every few seconds - counted in frames and
+  hashed, never random. Player names (P1, CPU, a chosen name) stay plain, in the player's colour.
+
+- **Flambé**: hot orange running to yellow, leaning into it, a tongue of flame rising off every letter, flickering.
+- **Lugnut**: chunky wide capitals in hi-vis yellow with a hard shadow, on a yellow-and-pale-grey hazard bar bolted at both ends.
+- **Circy**: fat round yellow letters in a scrawled marker edge, each bobbing and rocking on its own beat.
+- **EdgeLord**: narrow red italics leaning hard over a sword laid hilt to point, a glint running down it now and then.
+- **DoomBot**: bevelled steel capitals in fixed cells, rust round the edges, on a riveted strip; a letter judders now and then, and they glow red-hot with his heat wherever it is known.
+- **DoomBot Mk. II**: DoomBot's letters in newer blue steel, each one a different bit of scrap bolted on crooked.
+- **Triguy**: white letters edged in Elim's blue, leaning right forward, speed lines streaming behind and his top hat on the first letter.
+
 ## Items
 
 Items are drawn by us, not by the kids, so they follow the stand-ins: **coloured pencil with

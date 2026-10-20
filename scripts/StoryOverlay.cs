@@ -367,12 +367,12 @@ public partial class StoryOverlay : CanvasLayer
 		// Cover the outline where the tail leaves the bubble.
 		canvas.DrawLine(tail[0] + new Vector2(4.0f, 0.0f), tail[1] - new Vector2(4.0f, 0.0f), fill, 7.0f);
 
-		// The speaker's name, small, on the corner - in their colour.
-		var nameAt = new Vector2(-half.X + 18.0f, -half.Y - 8.0f);
-		canvas.DrawStringOutline(ThemeDB.FallbackFont, nameAt, line.Speaker.Data.DisplayName, HorizontalAlignment.Left, -1, 26,
-			10, new Color(Paper, fade));
-		canvas.DrawString(ThemeDB.FallbackFont, nameAt, line.Speaker.Data.DisplayName, HorizontalAlignment.Left, -1, 26,
-			new Color(line.Speaker.Data.PlaceholderColor.Darkened(0.15f), fade));
+		// The speaker's name, small, on the corner - in their own letters (NameLettering), a size up
+		// from the 26 it was in plain letters, so the thin parts of each style still read.
+		NameStyle look = line.Speaker.Data.NameLook;
+		var nameAt = new Vector2(-half.X + 18.0f, -half.Y - (NameLettering.LaysUnder(look) ? 14.0f : 8.0f));
+		NameLettering.Draw(canvas, nameAt, line.Speaker.Data.DisplayName, look, 30, fade,
+			line.Speaker.IsOverheated ? 1.0f : line.Speaker.HeatFraction, under: CurrentTransform);
 
 		DrawText(line, -line.Size * 0.5f, fade, line.Speaker);
 		CurrentTransform = Transform2D.Identity;

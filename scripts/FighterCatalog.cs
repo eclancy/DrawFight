@@ -49,6 +49,20 @@ public static class FighterCatalog
 
 	public static string NameOf(int index) => Get(index).DisplayName;
 
+	/// <summary>The fighter - on the roster or only in a story - with this name, or null.</summary>
+	public static FighterData Named(string name)
+	{
+		for (int i = 0; i < Count; i++)
+		{
+			if (Get(i).DisplayName == name) return Get(i);
+		}
+		for (int i = 0; i < storyOnly.Length; i++)
+		{
+			if (Get(StoryOnlyFrom + i).DisplayName == name) return Get(StoryOnlyFrom + i);
+		}
+		return null;
+	}
+
 	/// <summary>
 	/// Who drew this fighter, shown beside its name on the select screen: the drawing is the point
 	/// of the whole game, and the kid who drew it should see their name on it (Eric's call,

@@ -439,6 +439,9 @@ fighter is not finished until their story is in it.** When a fighter is added, w
 - **How they celebrate a win** - a victory pose (`FighterData.VictoryPose`, any story pose) and
   face, or one of their own drawings held up (`VictoryShow`, as Triguy does). Take it from the
   drawing where there is one: Flambé's fist in the air and Lugnut's flex are how they are drawn.
+- **Their name in their own letters** - a `NameStyle` (`FighterData.Lettering`) that looks like
+  who they are, from their colours and their drawing, and still reads at bubble size. See "Every
+  name in its own letters" in `.ai/art-direction.md`; check it with `--names`.
 
 In their `story.txt` that is: `== chapters` (their story, a chapter a line), `== opening`,
 `== ending`, `== challenger` and `== defeated` (how they meet a challenger and how they take
