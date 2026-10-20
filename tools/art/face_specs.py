@@ -16,12 +16,10 @@ FACES = {
         dict(name='EyeRight', kind='eye', box=(660, 185, 726, 480), rule='ink', fill='flat', tilt=1),
         dict(name='Mouth', kind='mouth', box=(248, 446, 718, 689), rule='ink', fill='flat', pivot='top', stretch=0.45),
     ]),
-    # Triguy (Elim's): a brow line with an eye hooked down off it - one stroke, taken as one eye -
-    # and the big mouth below. The long line further back joins his outline, so it stays.
-    'triguy': ('Torso', 'Torso', [
-        dict(name='Eye', kind='eye', box=(238, 164, 516, 402), rule='ink', fill='flat', tilt=1),
-        dict(name='Mouth', kind='mouth', box=(193, 379, 671, 702), rule='ink', fill='flat', pivot='top', stretch=0.12),
-    ]),
+    # Triguy (Elim's) is not here: his face is lifted in tools/art/cut_triguy.py itself, before his
+    # body is stood on end, because its marks have to stay level while the body under them turns -
+    # and there, before the line is widened, both eyes stand clear of his outline (Eric's call,
+    # 2026-10-19).
     # EdgeLord: two glowing almond eyes and a toothy grin, on hatched red. Eric's drawing,
     # our colouring. The hatching is borrowed from beside each one to fill behind it.
     'edgelord': ('Torso', 'Torso', [

@@ -776,7 +776,7 @@ public static class CharacterNormals
 		// The hat, tipped up and over at whoever is above.
 		m = M(moves, MoveSlot.UpTilt);
 		m.MoveName = "Hat Tip"; m.Anim = AttackAnim.Uppercut;
-		m.HitboxOffset = new Vector2(-10.0f, -96.0f); m.HitboxRadius = 50.0f;
+		m.HitboxOffset = new Vector2(24.0f, -106.0f); m.HitboxRadius = 50.0f;
 
 		// A low kick that keeps sliding - his feet will not stop.
 		m = M(moves, MoveSlot.DownTilt);

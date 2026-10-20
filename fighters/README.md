@@ -236,7 +236,7 @@ themselves, renamed from `photo-1.png`... to what each one is:
 
 | file | what it is | used as |
 |---|---|---|
-| `triguy.png` | him, side-on, facing right | the rig: `parts/` and `rig.json` |
+| `triguy.png` | him, side-on, facing right, the triangle on its side - his stab | the rig: `parts/` and `rig.json` |
 | `taunt_pose.png`, `taunt_surprised.png`, `taunt_pog.png` | his three taunts | held poses, picked at random - his taunt and his neutral special |
 | `crying.png` | crying into a puddle | held pose for the down special |
 | `spike.png` | a spike | what comes up out of the puddle |
@@ -244,17 +244,26 @@ themselves, renamed from `photo-1.png`... to what each one is:
 | `outline.png` | a jagged outline | drawn behind him while he is invincible |
 
 `python tools/art/cut_triguy.py` cuts them. He is a white triangle with a black top hat on stick
-limbs: the body is the white fill grown out to take in its outline and face, plus the two sharp
-corners of the triangle that poke past the fill; the four remaining strokes are the limbs, the
-two that reach lowest being the legs. The hat (the big stroke above it, and the bottom of its
-brim, which the grown fill took in) is masked off as its own piece, `parts/Hat.png`, hung back on
-the triangle where he drew it - an extra on the body's own drawing (`"onPart"`), so it turns
-round with him - and copied to `poses/hat.png` to be thrown: his side special flings it (Eric,
-2026-10-10). The same pixels, only kept apart. Each limb hangs
-from its top end, where it meets the triangle. Nothing is redrawn. His legs come out of the
-triangle's bottom edge well out from its middle, so they turn with the triangle when it tips
-(`"legsOnBody"` in `rig.json`) - hung from the hip, a tipped triangle swung clean off them in
-most of his attacks (Eric, 2026-10-09).
+limbs: the body is the white fill grown out to take in its outline, plus the two sharp corners of
+the triangle that poke past the fill; the four remaining strokes are the limbs, the two that
+reach lowest being the legs. His face - two eyes and a mouth, the marks inside the triangle clear
+of its outline - is lifted off it mark by mark, and the paper under them filled in white. The
+hat (the big stroke above it, and the bottom of its brim, which the grown fill took in) is
+masked off as its own piece, `parts/Hat.png` - an extra on the body's own drawing (`"onPart"`),
+so it turns round with him - and copied to `poses/hat.png` to be thrown: his side special flings
+it (Eric, 2026-10-10). The same pixels, only kept apart. Each limb hangs from its top end, where
+it meets the triangle. Nothing is redrawn.
+
+`triguy.png` lies the triangle on its side, point forward, and that is his **stab**; standing,
+he is the other way up, as every drawing of him standing has it (Eric's call, 2026-10-19, from
+Elim: "triguys idle is STILL his stab", "he's supposed to be tall"). So the cut stands the body
+on end, point up; turns the hat level and sits it on the point; hangs the legs from the bottom
+and the arms from the sides; and sets the face on the body, each mark level, a little smaller
+where the narrow triangle has less room. `"tipped"` in `rig.json` says where every one of those
+is on `triguy.png`: tipped forward that far - his point attacks - the rig slides each piece back
+to it, so the stab is exactly the drawing (`FighterRig.LoadTipped`). His legs still turn with the
+triangle as it leans (`"legsOnBody"`) - hung from the hip, a tipped triangle swung clean off them
+in most of his attacks (Eric, 2026-10-09).
 
 The taunt and crying drawings are front or three-quarter views of the whole figure, so they are
 sized by height rather than by a body part: `figureHeight` in `rig.json`, on the rig and on each
