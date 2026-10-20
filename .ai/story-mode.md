@@ -383,7 +383,12 @@ In order, each step usable before the next:
    everyone on it is. The HUD and camera already take any number. A piece of M6, done early.
 5. **CPU difficulty** - **built, 2026-10-15.** `CpuInputSource.Level`, 1 to 9: reaction time,
    how often it hesitates, blocks, swings and closes in. Level 4 is the versus CPU, unchanged. A
-   story's fights climb from 2 to 5 down the chapter list, and the boss plays at 6. **Boss rules**
+   story's fights climb from 2 to 5 down the chapter list, and the boss plays at 6 - on
+   Medium. **Easy, Medium or Hard** is picked on the story's map (left and right;
+   `GameOptions.StoryDifficulty`, saved, the same for every story; Eric, 2026-10-19): Easy plays
+   three levels down and gives the player a fourth life, Hard two levels up. A two-on-one is a
+   level down and each of the two has 2 lives (1 on Easy, 3 on Hard) - with 3 each it was six
+   lives against three, and Elim found it too hard. A boss keeps his scene's `stocks`. **Boss rules**
    (`MatchManager.BossPlayer`, `StoryDirector.TickBoss`): more stocks and full heat from the
    scene; his own theme on FIGHT!; on his last stock "CORE TEMPERATURE CRITICAL", he flashes red,
    runs hot, sends a MiniBot after you every few seconds, and the music speeds up. DoomBot Mk. II

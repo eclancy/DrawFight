@@ -28,6 +28,9 @@ public static class GameOptions
 	public static int Stocks = Tuning.DefaultStocks;
 
 	public const int MinStocks = 1;
+
+	/// <summary>How hard a story's fights are: 0 easy, 1 medium, 2 hard (GameRoot.GoStoryChapter).</summary>
+	public static int StoryDifficulty = 1;
 	public const int MaxStocks = 5;
 
 	/// <summary>How much of a hit's screen shake is shown.</summary>
@@ -46,6 +49,7 @@ public static class GameOptions
 		SmashLayout = (bool)config.GetValue(Section, "smash_layout", SmashLayout);
 		Shake = Mathf.Clamp((int)config.GetValue(Section, "shake", Shake), 0, 2);
 		Stocks = Mathf.Clamp((int)config.GetValue(Section, "stocks", Stocks), MinStocks, MaxStocks);
+		StoryDifficulty = Mathf.Clamp((int)config.GetValue(Section, "story_difficulty", StoryDifficulty), 0, 2);
 	}
 
 	public static void Save()
@@ -58,6 +62,7 @@ public static class GameOptions
 		config.SetValue(Section, "smash_layout", SmashLayout);
 		config.SetValue(Section, "shake", Shake);
 		config.SetValue(Section, "stocks", Stocks);
+		config.SetValue(Section, "story_difficulty", StoryDifficulty);
 		config.Save(Path);
 	}
 

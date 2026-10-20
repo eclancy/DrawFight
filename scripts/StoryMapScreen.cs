@@ -5,6 +5,8 @@ using Godot;
 /// a gold star, the next one glows, the rest wait. A plays the next chapter, B goes back to
 /// "Whose story?" - and after every chapter the story comes back here, so you can see how far you
 /// have got. A finished story gets its gold star on "Whose story?" and starts again from here.
+/// Left and right set how hard its fights are - Easy, Medium or Hard (GameOptions.StoryDifficulty),
+/// remembered for every story.
 /// </summary>
 public partial class StoryMapScreen : Node2D
 {
@@ -42,6 +44,16 @@ public partial class StoryMapScreen : Node2D
 			{
 				Play();
 				return;
+			}
+			if (nav.StepX != 0)
+			{
+				int was = GameOptions.StoryDifficulty;
+				GameOptions.StoryDifficulty = Mathf.Clamp(was + nav.StepX, 0, 2);
+				if (GameOptions.StoryDifficulty != was)
+				{
+					SfxPlayer.Ui("ui_move");
+					GameOptions.Save();
+				}
 			}
 		}
 		QueueRedraw();
@@ -126,5 +138,24 @@ public partial class StoryMapScreen : Node2D
 
 		string hint = Run.Done ? "B: back" : $"A: play chapter {Run.At + 1}      B: back";
 		DrawString(font, new Vector2(150.0f, size.Y - 70.0f), hint, HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
+
+		// How hard, along the bottom: the three words, the one picked underlined, arrows to change it.
+		int difficulty = GameOptions.StoryDifficulty;
+		float baseline = size.Y - 70.0f;
+		DrawString(font, new Vector2(860.0f, baseline), "How hard:", HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
+		for (int d = 0; d < 3; d++)
+		{
+			float centre = 1180.0f + d * 170.0f;
+			string word = d switch { 0 => "Easy", 2 => "Hard", _ => "Medium" };
+			bool on = d == difficulty;
+			if (on)
+			{
+				DrawRect(new Rect2(centre - 80.0f, baseline - 40.0f, 160.0f, 56.0f), new Color(1.0f, 0.9f, 0.5f, 0.6f));
+				CrayonBrush.InkLine(this, new Vector2(centre - 70.0f, baseline + 12.0f), new Vector2(centre + 70.0f, baseline + 12.0f), MenuTheme.Ink, 4.0f, 70 + d, 1.4f);
+			}
+			DrawString(font, new Vector2(centre - 85.0f, baseline), word, HorizontalAlignment.Center, 170.0f, 32, on ? MenuTheme.Text : MenuTheme.Soft);
+		}
+		DrawString(font, new Vector2(1060.0f, baseline), "<", HorizontalAlignment.Center, 40.0f, 32, difficulty > 0 ? MenuTheme.Text : MenuTheme.Soft);
+		DrawString(font, new Vector2(1600.0f, baseline), ">", HorizontalAlignment.Center, 40.0f, 32, difficulty < 2 ? MenuTheme.Text : MenuTheme.Soft);
 	}
 }

@@ -106,6 +106,9 @@ public partial class MatchManager : Node2D
 	/// <summary>The item settings in force. Null - no items - when there is no GameRoot (the parade).</summary>
 	public ItemSettings Items;
 
+	/// <summary>Each fighter's lives in a story fight, by seat; a versus fight uses GameOptions.Stocks.</summary>
+	public int[] StartStocks;
+
 	/// <summary>Only this item drops (--item=ID), for looking at one item at a time.</summary>
 	public string OnlyItem = "";
 
@@ -231,7 +234,12 @@ public partial class MatchManager : Node2D
 		bool named = false;
 		for (int i = 0; i < Fighters.Count; i++)
 		{
-			if (Story != null) continue;
+			if (Story != null)
+			{
+				// A story's lives come from its difficulty (GameRoot.GoStoryChapter).
+				if (StartStocks != null && i < StartStocks.Length && StartStocks[i] > 0) Fighters[i].Stocks = StartStocks[i];
+				continue;
+			}
 			// A versus fight starts with the lives the options say.
 			Fighters[i].Stocks = GameOptions.Stocks;
 			if (Names != null && i < Names.Length && !string.IsNullOrEmpty(Names[i]))

@@ -314,10 +314,20 @@ public partial class GameRoot : Node2D
 			return;
 		}
 
+		// The story's difficulty (on its map): Easy is for someone small, the computer barely
+		// fighting back and you with a life to spare; Hard plays two levels up. A two-on-one is
+		// two lives short of three each, a level down, so it is a fight and not a wall (Elim,
+		// 2026-10-19: Flambe and Lugnut together were too hard). The boss's own lives are his
+		// scene's ("stocks").
+		int difficulty = GameOptions.StoryDifficulty;
+		bool twoOnOne = chapter.Opponents.Length > 1;
+		int level = chapter.Level - (twoOnOne ? 1 : 0) + difficulty switch { 0 => -3, 2 => 2, _ => 0 };
+		int theirLives = twoOnOne ? difficulty switch { 0 => 1, 2 => 3, _ => 2 } : Tuning.DefaultStocks;
 		var fighters = new List<int> { player };
 		var cpu = new List<bool> { false };
 		var teams = new List<int> { 0 };
 		var levels = new List<int> { 0 };
+		var lives = new List<int> { difficulty == 0 ? Tuning.DefaultStocks + 1 : Tuning.DefaultStocks };
 		int boss = -1;
 		foreach (string id in chapter.Opponents)
 		{
@@ -325,7 +335,8 @@ public partial class GameRoot : Node2D
 			fighters.Add(StoryScript.IndexOf(id));
 			cpu.Add(true);
 			teams.Add(1);
-			levels.Add(Mathf.Max(1, chapter.Level));
+			levels.Add(Mathf.Clamp(level, 1, 9));
+			lives.Add(theirLives);
 		}
 		Show(new MatchManager
 		{
@@ -336,6 +347,7 @@ public partial class GameRoot : Node2D
 			CpuLevels = levels.ToArray(),
 			BossPlayer = boss,
 			Story = Story,
+			StartStocks = lives.ToArray(),
 			Items = StoryItems(),
 		});
 	}
