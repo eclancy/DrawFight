@@ -524,7 +524,6 @@ public partial class GameRoot : Node2D
 					GameOptions.Save();
 					GameOptions.Apply(true);
 					break;
-				case Key.Escape: GetTree().Quit(); break;
 			}
 		}
 	}

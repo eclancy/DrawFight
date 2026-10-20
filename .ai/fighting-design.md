@@ -345,8 +345,10 @@ Keyboard and mouse: P1 is `W` `A` `S` `D` or the arrows to move, `Space` jump, l
 attack, right click or `K` special, `Shift` or `L` block, `E` or middle click grab, `Q` taunt,
 `Enter` start. The mouse buttons count only in a match (`KeyboardInputSource.MouseInMatch`): on
 the drawing screens the mouse draws, and a right click there must not mean "back". Options >
-Controls lists every binding (`ControlsScreen`). P2 is all number pad: `8` `4` `5` `6` to move, `1` jump, `2` attack, `3` special, `0`
-block, `9` grab, `7` taunt. The Smash layout (F3) puts grab on LB and taunt on Back.
+Controls lists every binding (`ControlsScreen`). Escape is "back": B in a menu, the pause in a
+match - it no longer quits the game (Eric, 2026-10-20). There is one keyboard player, never two
+- the number-pad second player is gone (Eric, 2026-10-20); everyone else plays on a pad. The
+Smash layout (F3) puts grab on LB and taunt on Back.
 
 ## Dropping through platforms
 

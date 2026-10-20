@@ -2,8 +2,7 @@ using Godot;
 
 /// <summary>
 /// Controls, from Options (Eric, 2026-10-19): what every key, click and button does - the
-/// keyboard and mouse, the second keyboard player on the number pad, and a pad in whichever
-/// layout Options has it in. Read off the same bindings the input sources use, written out by
+/// keyboard and mouse (one player), and a pad in whichever layout Options has it in. Read off the same bindings the input sources use, written out by
 /// hand, so a change to InputSource.cs or GamepadLayout changes this list too. B goes back.
 /// </summary>
 public partial class ControlsScreen : Node2D
@@ -28,20 +27,8 @@ public partial class ControlsScreen : Node2D
 		("Taunt", "Q"),
 		("Smash", "tap a way + attack"),
 		("Drop down", "S + Space"),
-		("Pause", "Enter"),
-	};
-
-	/// <summary>Player 2 on the number pad (KeyboardInputSource.Player2).</summary>
-	static readonly (string action, string keys)[] NumberPadControls =
-	{
-		("Move", "8 4 5 6"),
-		("Jump", "1"),
-		("Attack", "2"),
-		("Special", "3"),
-		("Block", "0"),
-		("Grab", "9"),
-		("Taunt", "7"),
-		("Pause", "Enter"),
+		("Pause", "Enter or Escape"),
+		("Back", "Escape"),
 	};
 
 	/// <summary>A pad, in the layout Options has it in (GamepadLayout.Standard or .Smash).</summary>
@@ -122,12 +109,11 @@ public partial class ControlsScreen : Node2D
 		DrawString(font, new Vector2(190.0f, 170.0f), "Controls", HorizontalAlignment.Left, -1, 96, MenuTheme.Text);
 
 		DrawColumn(190.0f, "Keyboard and mouse", KeyboardControls);
-		DrawColumn(770.0f, "Controller", PadControls());
-		DrawColumn(1350.0f, "2nd keyboard player", NumberPadControls);
+		DrawColumn(1000.0f, "Controller", PadControls());
 
-		DrawString(font, new Vector2(770.0f, 970.0f), "In menus: Space or A picks, K or B goes back.",
+		DrawString(font, new Vector2(560.0f, 970.0f), "In menus: Space or A picks, Escape or B goes back.",
 			HorizontalAlignment.Left, -1, 30, MenuTheme.Soft);
-		DrawString(font, new Vector2(770.0f, 1012.0f), "Hold block and push a way to roll or dodge.",
+		DrawString(font, new Vector2(560.0f, 1012.0f), "One player on the keyboard; everyone else on a controller.",
 			HorizontalAlignment.Left, -1, 30, MenuTheme.Soft);
 
 		bool hot = false;
