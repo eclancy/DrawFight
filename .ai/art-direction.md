@@ -64,7 +64,16 @@ real fridge door does, and the stage is drawn across them - every platform sits 
 the door showing in the gaps. Used by Fridge Door, and by Big Show, where one big sheet has a
 concert stage drawn on it: a wooden deck with a pleated skirt, amp stacks, and a red steel
 girder across the top hung with spotlights (`PlatformLook.StageDeck`, `AmpStack`, `Girder`).
-Its spotlights are pale and see-through, so they light a fighter rather than hide one.
+Its spotlights are pale and see-through, so they light a fighter rather than hide one. Below the
+deck, in front of its skirt, stands the audience (`PropKind.Crowd`, `Crowd`; Eric, 2026-10-20):
+two rows of people seen from behind - the back of a head, ears, shoulders - cut off by the bottom
+of the page the way a kid draws a crowd. They are scenery, so **no ink**: pale coloured pencil
+with a soft edge in a darker shade of their own colour, the back row faded further into the paper
+than the front, so they sit under the HUD and never compete with a fighter. Their hair (a bun,
+pigtails, a punk crest, a bobble hat, a cap on backwards), their colours, their height and what
+their arms do (pump a fist, wave, clap overhead, swing a glow stick, hold up a sign with a heart
+or a star) are hashed from the prop's seed. They are drawn by their own node over the stage and
+under the fighters, so a raised hand never hides anyone on the deck.
 
 **`OutsideTheLines`** is for nature stages. Plain paper, no rules, indigo outlines, and crayon
 fill that deliberately **overshoots the line**. Used by Open Plains, and by Playground. The overshoot is the single
@@ -76,7 +85,10 @@ Switching a stage between the two should be a one-line change, and it is: `Stage
 
 Three stages made for three and four players (Eric, 2026-10-16), each about half as wide again as
 Big Show, built from platform looks like every other stage - no stage has drawing code of its own
-(its speakers are the one moving part: `StageData.Speakers`, `SpeakerBlast` - each stack one tall
+(its speakers and its crowd are the moving parts. The crowd bounces on the speakers' beat - a
+bob for most, a pogo for some, each a frame or two off it so it ripples - and roars, everyone
+jumping with both hands up, at a KO (`Stage.Cheer`) and at a speaker blast. The speakers are
+`StageData.Speakers`, `SpeakerBlast` - each stack one tall
 cabinet in dark grille cloth, a big woofer under a small tweeter in bright metal rims, metal
 corners, a gold-panelled amp head, because grey boxes of round windows read as ovens (Elim,
 2026-10-19); the cones always buzz a little, thump on the beat with arcs of sound either side, and every nine to fifteen seconds one stack swells for a second and blasts a ring of sound

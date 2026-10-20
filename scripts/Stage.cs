@@ -21,6 +21,14 @@ public partial class Stage : Node2D
 	/// <summary>The Big Show's speakers, thumping and now and then blasting, or null.</summary>
 	public SpeakerBlast Speakers { get; private set; }
 
+	readonly List<Crowd> crowds = new List<Crowd>();
+
+	/// <summary>Something big just happened (a KO): any crowd watching jumps up and cheers.</summary>
+	public void Cheer(float how)
+	{
+		foreach (Crowd crowd in crowds) crowd.Cheer(how);
+	}
+
 	/// <summary>Drawn well past the blast zone so a zoomed-out camera never sees the backdrop end.</summary>
 	const float BackdropPad = 900.0f;
 
@@ -103,6 +111,20 @@ public partial class Stage : Node2D
 			Speakers = new SpeakerBlast();
 			AddChild(Speakers);
 			Speakers.Setup(data);
+		}
+
+		// An audience moves, so each crowd is its own node, over the stage's drawing - in front of
+		// a deck's skirt - and under the fighters, so no raised hand hides anyone on the stage.
+		foreach (StageProp[] props in new[] { data.Props, data.OnPage })
+		{
+			foreach (StageProp prop in props)
+			{
+				if (prop.Kind != PropKind.Crowd) continue;
+				var crowd = new Crowd { Speakers = Speakers };
+				AddChild(crowd);
+				crowd.Setup(data, prop.Rect, prop.Seed);
+				crowds.Add(crowd);
+			}
 		}
 
 		QueueRedraw();
@@ -1433,6 +1455,10 @@ public partial class Stage : Node2D
 					new Vector2(r.End.X - r.Size.X * 0.08f, r.End.Y + 20.0f), new Vector2(r.End.X + 40.0f, r.End.Y + 20.0f) }, curtain);
 				break;
 			}
+
+			case PropKind.Crowd:
+				// Drawn by its own node (Crowd), because it moves.
+				break;
 
 			case PropKind.Cone:
 			{
