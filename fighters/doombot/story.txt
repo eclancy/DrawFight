@@ -6,8 +6,8 @@
 #   == opening                      a scene, by name, down to the next == heading
 #   doombot: HELLO.                 someone says something, in a speech bubble
 #   doombot (shout): MINE.          ...said a certain way: shout, whisper, scared, happy, hot, slam
-#   circy: [fridge] [=] [doombot]   a picture in the bubble (heart, fridge, doombot, =, ?, !, star,
-#                                   magnet, bomb, flame, nofire, square)
+#   doombot: [fridge] [=] [doombot] a picture in the bubble (heart, fridge, doombot, =, ?, !, star,
+#                                   magnet, bomb, flame, nofire, square) - nobody uses one now
 #   narrator: One by one...         the narrator, on a strip of paper along the bottom
 #   narrator (shout): IF THAT...    the grown-up in the kitchen
 #   doombot writes: 1. FRIDGE.      burned onto the fridge door with his eye laser (see "board")
@@ -68,9 +68,11 @@
 # the scene after is the player's "== beat WHO", or their "== won", or that fighter's
 # "== defeated" ("== team defeated").
 #
-# Circy only ever talks in pictures and Triguy only in his catchphrases - and whoever answers
-# them understands exactly what they meant and answers it the way you would, so what they said
-# is obvious from the answer. Nobody translates them (Eric, 2026-10-15).
+# Triguy only ever talks in his catchphrases - and whoever answers him understands exactly what
+# he meant and answers it the way you would, so what he said is obvious from the answer. Nobody
+# translates him (Eric, 2026-10-15). Circy talks like a normal kid, in memes, VERY energetic,
+# with Elim's catchphrases: "duuuuuuuuuude", "GET READY FOR EVIL STUNTS", "okaly dokaly" (Elim;
+# Eric's call, 2026-10-19).
 
 == chapters
 title PROTOCOL: CLEAN FRIDGE
@@ -154,17 +156,17 @@ camera two player circy
 player pose point
 player: ROUND DRAWING. OLDEST PAGE ON THE FRIDGE. FIRST TO GO.
 player pose none
-circy: [fridge] [heart]
+circy: Duuude. Rude. I LOVE this fridge.
 player pose hips
 player: I ALSO LOVE THE FRIDGE. ONLY ONE OF US IS A MACHINE.
 player pose none
 circy pose stomp
-circy: [bomb]
+circy (shout): GET READY FOR EVIL STUNTS!
 circy pose none
 player look shocked
 player mark !
 player pose tremble
-player: ...THAT IS A BOMB. NOTED.
+player: ...EVIL. STUNTS. NOTED.
 player pose none
 player mark none
 camera wide

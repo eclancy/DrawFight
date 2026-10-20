@@ -419,7 +419,7 @@ floor), and check with the attack parade and a match, not the KO table, which ig
 buff, no heat. Everyone has three (Eric, 2026-10-16), each with its own line in their own voice -
 `FighterData.Taunts` and `TauntLines` - struck with an attack animation, a story pose
 (`Taunts.Pose`) or the kid's own drawing (`Taunts.Posed`). A kid's three come from the kid
-first: Triguy's are Elim's three, and Circy, who talks in pictures, says his in pictures. When a fun idea needs a home, it goes in a move slot - DoomBot's MiniBot is his
+first: Triguy's are Elim's three, and Circy's are Elim's three catchphrases for him. When a fun idea needs a home, it goes in a move slot - DoomBot's MiniBot is his
 down tilt and Lug's traffic cone is his, not their taunts.
 
 ## Every fighter brings a story

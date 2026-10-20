@@ -121,12 +121,12 @@ camera two player circy
 player pose point
 player: A circle. You don't even have edges.
 player pose none
-circy: [bomb]
+circy (shout): Edges? Skill issue. GET READY FOR EVIL STUNTS!
 player look shocked
 player pose tremble
 player: Was that a threat?
 player pose none
-circy: [bomb] [heart]
+circy (happy): Nah, bro. It's a friendly explosion. Love you, dude!
 player look squint
 player pose think
 player: A nice explosion. Because you like me.
@@ -141,7 +141,7 @@ fight
 cast player at -200 facing right
 cast circy at 200 facing left
 music story
-circy: [heart] [?]
+circy: Bro... are we still friends?
 player look normal
 player pose crossarms
 player: ...Fine. Yes. I still like you. Don't tell anyone.

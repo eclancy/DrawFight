@@ -90,14 +90,17 @@ in the same place. Nothing is drawn new for a story; it is staged with what the 
 
 ### The two kids' fighters
 
-Circy and Triguy are Elim's. Elim never said how they talk; Eric's call (2026-10-15) is that:
+Circy and Triguy are Elim's.
 
-- **Circy always speaks in pictures.** His bubbles hold little drawings - a fridge, a heart, a
-  magnet, a star, a question mark, a bomb (his own) - and nothing else, ever.
+- **Circy talks like a normal kid** - in memes ("skill issue", "no cap", "huge W"), VERY VERY
+  energetic, and his real hobby is walking. His catchphrases are Elim's: **"duuuuuuuuuude"**,
+  **"GET READY FOR EVIL STUNTS"** (his bomb) and **"okaly dokaly"** (Elim, 2026-10-17; Eric's
+  call, 2026-10-19). He used to talk only in pictures, before Elim said how he talks - the
+  picture bubbles (`StoryPictures`) are still in the script language, unused.
 - **Triguy always speaks in his catchphrases** - "that's, really kewl", in every mood, and its
   variations ("not kewl", "THAT'S, REALLY KEWL.") - plus his three show-off poses and his crying,
   which are his own drawings (`show taunt_surprised`).
-- **Whoever answers them understands exactly what they meant, and answers it** - the way you
+- **Whoever answers Triguy understands exactly what he meant, and answers it** - the way you
   answer a friend, so what was said is obvious from the reply. Nobody translates: no "You're
   saying...", no narrator "(He meant...)" (Eric, 2026-10-15). Triguy's "that's, really kewl."
   at EdgeLord's sword gets "Hands off the sword."; Circy's "[bomb]" gets "Whoa. Okay. Nobody's
@@ -162,8 +165,8 @@ to listen, so he has to stop them first.
   get us all recycled." - "Mon ami. You do not rush a dessert." Lugnut rolls his shoulders.
   "Then I'm on overtime." After, they sit together and Flambé hands it over. Lugnut tries it.
   "...Okay. That's actually really good." - "I KNOW."
-- **The two-on-one.** Circy and Triguy, side by side. "A circle and a triangle." Circy holds up a
-  picture of a square in a hard hat. "...Is that me? I'm not a square. I'm a rectangle at most."
+- **The two-on-one.** Circy and Triguy, side by side. "A circle and a triangle." Circy: "And you're
+  a square, bro! Shape squad!" "Ha. That's me, all right. ...Pal, I'm a rectangle at most."
   Triguy: "that's, really kewl." Lugnut: "Thank you."
 - **Ending.** Every drawing back on the fridge, moved round and stuck on straight, a magnet on
   each - room for everybody, even a little spot for a MiniBot. Lugnut, wiping his hands: "Built
@@ -186,8 +189,8 @@ THE PICTURE to get there.
 - **Triguy.** Triguy zooms in and strikes a pose. "You may be fast, but my swords
   are faster." - "that's, really kewl." - "It IS really cool. Stop saying it like that." After, from the floor: "that's...
   really kewl." - "Try to keep up."
-- **Circy.** "A circle. You don't even have edges." Circy holds up a picture of a bomb. "...Was
-  that a threat?" Circy holds up a bomb with a heart on it. "I genuinely cannot tell."
+- **Circy.** "A circle. You don't even have edges." "Edges? Skill issue. GET READY FOR EVIL
+  STUNTS!" "...Was that a threat?" "Nah, bro. It's a friendly explosion." "I genuinely cannot tell."
 - **Lugnut.** "A hard hat? Against swords?" He taps it. "Safety first." Beat. "...Respect."
 - **Flambé.** "Nice mohawk. Is it... on fire?" - "Always." - "Cool. I mean - hot. Whatever." -
   "Too hot for you?" - "Nothing is too hot for - OW." (the mohawk)
@@ -201,23 +204,23 @@ THE PICTURE to get there.
 
 ### Circy - First on the Fridge
 
-Elim's. Speaks in pictures. Grows tall, shrinks small, falls slowly, can't jump, falls over
+Elim's. Talks in memes, very loudly. Grows tall, shrinks small, falls slowly, can't jump, falls over
 easily, fires a laser and drops a bomb.
 
 **Wants** (ours until Elim says): to stay. He was the first drawing ever put on this fridge -
 his page is the oldest, its corners curled - and a new page has just been pinned half over him.
 
 - **Opening.** The camera finds the oldest page. Narrator: "Circy was the first drawing ever
-  put on this fridge." A page slides over his. A picture bubble: the fridge, and a heart. He
-  stretches tall (his Stretch). Narrator: "He wasn't going anywhere."
+  put on this fridge." A page slides over his. "DUUUUUUUUUUDE. That's MY spot!" He stretches
+  tall (his Stretch). Narrator: "He wasn't going anywhere."
 - **Fights:** Triguy, EdgeLord, Flambé, Lugnut, then Flambé and Lugnut together, then DoomBot.
-- **The running gag:** everyone reads his pictures exactly right, and says what he meant, in
-  full. Flambé, shown a flame crossed out and the fridge: "No fire near the fridge - because the
-  last fire got three drawings taken down. ...That's fair. That's actually very fair." Lugnut,
-  shown a magnet, a heart and the fridge: "You love the fridge, and you want a magnet strong
-  enough you never come down again. Pal, one's yours."
-- **Ending.** A Gold Star Sticker drifts down and sticks to his page. A picture bubble: one
-  enormous heart. Narrator: "First on the fridge. Still on the fridge."
+- **The running gag:** every fight starts with "GET READY FOR EVIL STUNTS!", and everyone takes
+  it seriously. He tells Triguy to slow down, because walking is elite. Flambé, told "no fire
+  near the fridge, not after last time": "...That's fair. That's actually very fair." Lugnut,
+  asked for a magnet so strong he never comes down again: "Pal, I've got just the one."
+- **Ending.** A Gold Star Sticker drifts down and sticks to his page. "DUUUUUUUUUUDE. A GOLD
+  STAR!" Narrator: "First on the fridge. Still on the fridge." Circy: "Okaly dokaly. Going for a
+  walk."
 
 ### Triguy - Can't Stand Still
 
@@ -308,8 +311,8 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
     side, exactly like the handle on a fridge door. **"THAT. IS. AN. ARM."**
   - **Lugnut:** "Pal, I've installed plenty of fridges. You look like one, sure. Doesn't make it
     yours." He holds up the Metre Stick and squints. "...And you're not even level."
-  - **Circy** holds up a picture: a fridge, an equals sign, DoomBot. DoomBot: "...IS THAT. AN
-    EQUALS SIGN." Beat. **"I AM NOT A FRIDGE."**
+  - **Circy:** "Bro. You literally look like the fridge. Same shape. No cap." DoomBot: "...NO.
+    CAP?" Beat. **"I AM NOT A FRIDGE."**
   - **Triguy** makes his surprised face, looking from DoomBot to the fridge and back - a whip
     pan each way. DoomBot: "DO NOT. MAKE. THAT FACE." Triguy: "not kewl."
 - **The meltdown.** A steam whistle. His heat climbs to full, he glows, he smokes, and each word
@@ -323,7 +326,7 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
 - **When he falls.** He cools, with a long hiss of steam. Quietly, in lower case for the first
   time: "...i just wanted to be on the fridge." And the player's fighter answers in their own
   way - Lugnut builds him a spot, EdgeLord shrugs ("Fine. Behind me."), Flambé offers him dessert,
-  Circy holds up a picture of DoomBot with a heart, Triguy says the line, softly - before their
+  Circy says "Same, bro. Same.", Triguy says the line, softly - before their
   ending.
 
 ## What has to be built
@@ -408,8 +411,8 @@ DoomBot to the fridge beside him - the same shape" pans to the door's handle, no
 
 ## Decided (Eric, 2026-10-15)
 
-- **Circy always talks in pictures, Triguy always in catchphrases,** and whoever answers says
-  what they meant (see "The two kids' fighters").
+- **Triguy always talks in catchphrases,** and whoever answers says what he meant (see "The two
+  kids' fighters"). Circy talked in pictures until Elim told us how he talks (2026-10-19).
 - **DoomBot Mk. II** is the final boss of DoomBot's own story: a newer model, Eric's drawing
   with scrap armour bolted on - mismatched upgrades, drawn as separate pieces, so not a line of
   DoomBot is redrawn and DoomBot himself wears none of it (Eric, 2026-10-15).

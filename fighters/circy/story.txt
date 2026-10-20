@@ -1,8 +1,8 @@
 # Circy's story: First on the Fridge. How a script reads is at the top of fighters/doombot/story.txt.
-# Circy only ever talks in pictures (Eric, 2026-10-15) - and whoever answers him understands
-# exactly what he meant, and answers it the way you would, so what he said is obvious from the
-# answer. Nobody translates him. He was the first drawing ever put on this fridge, and he is
-# staying.
+# Circy talks like a normal kid - in memes, and VERY energetic - and his catchphrases are Elim's:
+# "duuuuuuuuuude", "GET READY FOR EVIL STUNTS" and "okaly dokaly". His real hobby is walking
+# (Elim, 2026-10-17; Eric's call, 2026-10-19, replacing the old "talks only in pictures"). He was
+# the first drawing ever put on this fridge, and he is staying.
 
 == chapters
 title First on the Fridge
@@ -30,8 +30,9 @@ wait 20
 player mark none
 player look angry
 player pose stomp
-player: [fridge] [heart] [!]
+player (shout): DUUUUUUUUUUDE. That's MY spot!
 player pose none
+player: Oldest page on the fridge. Not moving. Not even a little bit.
 player special
 wait 40
 narrator: He wasn't going anywhere.
@@ -45,13 +46,13 @@ cast circy at 400 facing left
 music story
 camera two player circy
 circy pose point
-circy: [fridge] [heart] [!]
+circy (shout): Duuuuuuuuuude! First on the fridge, coming through!
 circy pose none
 player pose shrug
 player: I know, I know. You were here first. Everybody knows.
 player pose none
 circy look angry
-circy: [bomb]
+circy (shout): Touch my page and GET READY FOR EVIL STUNTS!
 player look shocked
 player pose tremble
 player: Whoa. Okay. Nobody's touching your page. ...Except me.
@@ -64,11 +65,12 @@ cast player at -300
 cast circy at 300 facing left
 music story
 circy look sad
-circy: [heart] [?]
+circy: Bro... do I still get to stay on the fridge?
 player pose nod
 player: Course you're staying. You were here first.
 player pose none
 circy look happy
+circy (happy): Okaly dokaly!
 end
 
 # --- His own fights ----------------------------------------------------------------------------
@@ -83,13 +85,13 @@ camera two player triguy
 narrator: Triguy had his eye on the oldest page on the fridge.
 triguy: that's, really kewl.
 player pose shrug
-player: [?]
+player: Bro, slow down. Ever tried walking? Walking is elite.
 player pose none
 triguy show taunt_pose
 triguy (shout): THAT'S, REALLY KEWL.
 player look angry
 player pose stomp
-player: [bomb] [!]
+player (shout): My page? Nope. GET READY FOR EVIL STUNTS!
 player pose none
 triguy show none
 triguy look shocked
@@ -103,7 +105,7 @@ music story
 triguy show crying
 triguy (whisper): not kewl.
 player pose present
-player: [fridge] [heart] [star]
+player: Duuude, don't cry. There's room on the fridge. Be my neighbour!
 player pose none
 triguy show none
 triguy look happy
@@ -117,17 +119,17 @@ music story
 camera two player edgelord
 edgelord: A circle. You don't even have edges.
 player pose think
-player: [square] [?]
+player: Bro said "edges" like it's a flex.
 player pose none
 edgelord look squint
 edgelord pose hips
-edgelord: Better as a square? ...Yes. Obviously.
+edgelord: It IS a flex. You'd be better as a square. Obviously.
 edgelord pose none
 player look angry
-player: [bomb]
+player (shout): Skill issue. GET READY FOR EVIL STUNTS!
 edgelord look shocked
 edgelord pose shrug
-edgelord: Okay, put that away. ...Fair.
+edgelord: ...Evil stunts. Okay, that's a little bit cool.
 edgelord pose none
 camera wide
 fight
@@ -141,11 +143,11 @@ flambe pose present
 flambe (hot): Little circle! Want to see a trick?
 flambe pose none
 player pose crossarms
-player: [nofire] [fridge]
+player: Duuude. No fire near the fridge. Not after last time.
 player pose none
 flambe look shocked
 flambe pose think
-flambe: No fire? Near the fridge? ...After last time.
+flambe: ...After last time. Yes.
 flambe pose none
 flambe pose nod
 flambe: That's fair. That's actually very fair.
@@ -154,6 +156,7 @@ flambe look smug
 flambe pose beckon
 flambe (hot): I'll just kick you instead.
 flambe pose none
+player (shout): Okaly dokaly! Let's GO!
 camera wide
 fight
 
@@ -163,7 +166,7 @@ cast lugnut at 400 facing left
 music story
 camera two player lugnut
 player pose present
-player: [magnet] [heart] [fridge]
+player: Yo! Got a magnet so strong I never come down again? Asking for me.
 player pose none
 lugnut look happy
 lugnut pose think
@@ -188,7 +191,7 @@ lugnut pose present
 lugnut: Still want that magnet?
 lugnut pose none
 player pose cheer
-player: [magnet] [heart]
+player (shout): YES. Huge W. Biggest W of my life.
 player pose none
 lugnut look happy
 lugnut pose nod
@@ -202,12 +205,12 @@ end
 == roast
 camera on player zoom 1.2
 player pose point
-player: [fridge] [=] [doombot]
+player: Bro. You literally look like the fridge. Same shape. No cap.
 player pose none
 camera on doombot zoom 1.3 fast
 wait 40
 doombot pose think
-doombot: ...IS THAT. AN EQUALS SIGN.
+doombot: ...NO. CAP?
 doombot pose none
 wait 30
 doombot look angry
@@ -217,7 +220,7 @@ doombot pose none
 
 == answer
 player pose present
-player: [doombot] [heart]
+player: Duuude. You just wanted to be on the fridge? Same, bro. Same.
 player pose none
 wait 30
 doombot look shocked
@@ -240,8 +243,10 @@ sound magnet_clink
 narrator: It stuck to his page.
 player mark none
 player look happy
-player: [heart]
+player (shout): DUUUUUUUUUUDE. A GOLD STAR!
 player pose cheer
 narrator: First on the fridge. Still on the fridge.
+wait 30
+player: Okaly dokaly. Going for a walk.
 wait 60
 end

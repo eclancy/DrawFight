@@ -137,7 +137,7 @@ camera two circy triguy
 player pose point
 player: A circle and a triangle.
 player pose none
-circy: [square]
+circy (shout): And you're a square, bro! Shape squad!
 player look squint
 player pose laugh
 player: Ha. That's me, all right.
@@ -167,7 +167,7 @@ cast player at -200 facing right
 cast circy at 200 facing left
 cast triguy at 420 facing left
 music story
-circy: [fridge] [?]
+circy: Duuude. Is there room on the fridge for us?
 player pose present
 player: Yes. There's room on the fridge for you. For both of you.
 player pose none

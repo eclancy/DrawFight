@@ -225,7 +225,7 @@ public partial class FighterData : Resource
 	/// </summary>
 	public MoveData[] Taunts = System.Array.Empty<MoveData>();
 
-	/// <summary>What he says in a speech bubble for each taunt, in the same order; a "[picture]" for Circy.</summary>
+	/// <summary>What he says in a speech bubble for each taunt, in the same order.</summary>
 	public string[] TauntLines = System.Array.Empty<string>();
 
 	/// <summary>The grab (block plus attack on the ground) - see <see cref="Grabs"/>.</summary>
@@ -534,15 +534,15 @@ public partial class FighterData : Resource
 		};
 		data.Moves = DefaultMoveset.Build(data.Weight, Specials.Circy(),
 			CharacterNormals.Circy, CharacterNormals.CircyJab());
-		// Circy is Elim's: he does a star jump, and talks only in pictures (Eric's call for his
-		// story, 2026-10-15) - never words Elim did not give him.
+		// Circy is Elim's: he does a star jump, and says Elim's three catchphrases (Elim,
+		// 2026-10-17; Eric's call, 2026-10-19, ending "talks only in pictures").
 		data.Taunts = new[]
 		{
 			global::Taunts.Make(AttackAnim.Spread, propArt: ""),
 			global::Taunts.Pose("wave"),
 			global::Taunts.Pose("cheer"),
 		};
-		data.TauntLines = new[] { "[star]", "[heart]", "[fridge] [heart]" };
+		data.TauntLines = new[] { "GET READY FOR EVIL STUNTS!", "Duuuuuuuuuude!", "Okaly dokaly!" };
 		// In a team: his yellow.
 		data.TeamHue = 54.0f;
 		data.TeamHueWidth = 24.0f;

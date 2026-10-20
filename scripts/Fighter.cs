@@ -4455,7 +4455,7 @@ public partial class Fighter : CharacterBody2D
 
 		Font font = ThemeDB.FallbackFont;
 		const int FontSize = 30;
-		// Circy talks in pictures: "[heart]" is a drawn heart, not the word.
+		// A line of "[heart]" is a drawn heart, not the word (StoryPictures).
 		string[] pictures = tauntLine.StartsWith("[") ? tauntLine.Replace("[", "").Replace("]", "").Split(' ') : null;
 		const float Picture = 54.0f;
 		Vector2 textSize = pictures != null
