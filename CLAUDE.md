@@ -134,7 +134,8 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   by itself. Check it with `--parade --only=100`.
 - Every cut script ends by lifting the fighter's eyes and mouth out of the drawing so they can
   move (`tools/art/faces.py`, the boxes in `tools/art/face_specs.py`); Flambé's and Lugnut's are
-  drawn as separate parts in their own scripts (`FACE`). See "Faces" in `.ai/art-pipeline.md`.
+  drawn as separate parts in their own scripts (`FACE`), and Triguy's are lifted in
+  `cut_triguy.py` itself, so they stay level when his body turns upright. See "Faces" in `.ai/art-pipeline.md`.
 - **`bash tools/intake/pull_submissions.sh`** — "check for new fighters". Copies new
   submissions from the ecec.dev/draw form into `fighters/incoming/<id>/` (photos, `answers.json`,
   `sheet.md`), and stages drawn in the game and suggestions typed in it into `incoming/stages/`
