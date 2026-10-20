@@ -76,8 +76,10 @@ Switching a stage between the two should be a one-line change, and it is: `Stage
 
 Three stages made for three and four players (Eric, 2026-10-16), each about half as wide again as
 Big Show, built from platform looks like every other stage - no stage has drawing code of its own
-(its speakers are the one moving part: `StageData.Speakers`, `SpeakerBlast` - the cones thump on
-the beat, and every nine to fifteen seconds one stack swells for a second and blasts a ring of sound
+(its speakers are the one moving part: `StageData.Speakers`, `SpeakerBlast` - each stack one tall
+cabinet in dark grille cloth, a big woofer under a small tweeter in bright metal rims, metal
+corners, a gold-panelled amp head, because grey boxes of round windows read as ovens (Elim,
+2026-10-19); the cones always buzz a little, thump on the beat with arcs of sound either side, and every nine to fifteen seconds one stack swells for a second and blasts a ring of sound
 that shoves whoever is near it back, 5% and a long push):
 
 - **Playground** (`OutsideTheLines`): recess on a playing field that ends at both sides - a slide
