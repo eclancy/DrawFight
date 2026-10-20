@@ -91,7 +91,8 @@ that shoves whoever is near it back, 5% and a long push):
   over it, a site office (`SiteCabin`, hazard stripes in yellow and pale grey, never black), cones.
   Each beam hangs on two cables from a hook under a trolley that runs in and out along its jib
   (`StagePlatform.Travel`, a moving platform that carries whoever stands on it); the counterweight
-  is on the back end, away from the load.
+  is on the back end, away from the load. The cranes themselves are scenery (`PropKind.TowerCrane`,
+  no outline) - only the beams are stood on (Eric, 2026-10-20).
 - **Kitchen Counter** (`PinnedPages`): the kitchen the story happens in, drawn on one big sheet on
   the fridge - kitchen units (`Countertop`: the worktop is what you stand on), a sink set between
   them to drop into and climb out of (`Sink`), a toaster and a pile of cookbooks on the worktop,

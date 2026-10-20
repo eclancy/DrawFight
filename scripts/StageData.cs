@@ -81,7 +81,8 @@ public enum PlatformLook
 
 	/// <summary>
 	/// The jib of a tower crane - the long arm you stand on. The mast is drawn from under its
-	/// middle down to the ground, with the cab, a counterweight and a hook.
+	/// middle down to the ground, with the cab, a counterweight and a hook. A crane you cannot
+	/// stand on is the prop <see cref="PropKind.TowerCrane"/>, drawn the same.
 	/// </summary>
 	CraneJib,
 
@@ -182,7 +183,7 @@ public sealed class StagePlatform
 }
 
 /// <summary>Scenery. Never collidable - if a fighter can stand on it, it is a platform.</summary>
-public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline, Window, Cone }
+public enum PropKind { Sun, Moon, Cloud, Star, Hill, Bush, TapedDrawing, FridgeHandle, Fence, Tree, Grass, FridgeMagnet, Skyline, Window, Cone, TowerCrane }
 
 public sealed class StageProp
 {

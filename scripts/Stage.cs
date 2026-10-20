@@ -373,7 +373,7 @@ public partial class Stage : Node2D
 			case PlatformLook.TreeTop: DrawTreeTop(platform, seed); break;
 			case PlatformLook.PencilLedge: DrawPencilLedge(platform, seed); break;
 			case PlatformLook.Road: DrawRoad(platform, seed); break;
-			case PlatformLook.CraneJib: DrawCrane(platform, seed); break;
+			case PlatformLook.CraneJib: DrawCrane(platform.Rect, seed, platform); break;
 			case PlatformLook.HangingBeam: DrawHangingBeam(platform, seed); break;
 			case PlatformLook.Scaffold: DrawScaffold(platform, seed); break;
 			case PlatformLook.StageDeck: DrawStageDeck(platform, seed); break;
@@ -672,13 +672,14 @@ public partial class Stage : Node2D
 	static readonly Color CraneYellow = new Color(0.98f, 0.78f, 0.24f);
 
 	/// <summary>
-	/// A tower crane. The rectangle is the jib, the arm you stand on, drawn as a yellow lattice
-	/// girder; the mast comes down from under its middle to the ground, with the driver's cab at
-	/// the top, a concrete counterweight on the back end and a hook on the front.
+	/// A tower crane. The rectangle is the jib, drawn as a yellow lattice girder; the mast comes
+	/// down from under its middle to the ground, with the driver's cab at the top, a concrete
+	/// counterweight on the back end and a hook on the front. As a platform (CraneJib) the jib is
+	/// outlined, solid or dashed, because you can stand on it; as scenery (PropKind.TowerCrane)
+	/// it has no outline, because you cannot.
 	/// </summary>
-	void DrawCrane(StagePlatform platform, int seed)
+	void DrawCrane(Rect2 jib, int seed, StagePlatform platform)
 	{
-		Rect2 jib = platform.Rect;
 		float mastX = jib.GetCenter().X;
 		// The front of the jib is the end its load hangs from; the counterweight goes on the back.
 		StagePlatform load = LoadUnder(jib);
@@ -734,7 +735,7 @@ public partial class Stage : Node2D
 			float y1 = j % 2 == 0 ? jib.End.Y : jib.Position.Y;
 			CrayonBrush.InkLine(this, new Vector2(x, y0), new Vector2(Mathf.Min(x + jib.Size.Y * 1.2f, jib.End.X), y1), CraneYellow, 5.0f, seed + 30 + j, 0.6f);
 		}
-		OutlinePlatform(jib, platform.OneWay, seed);
+		if (platform != null) OutlinePlatform(jib, platform.OneWay, seed);
 	}
 
 	void DrawHangingBeam(StagePlatform platform, int seed)
@@ -1433,6 +1434,10 @@ public partial class Stage : Node2D
 					new Vector2(r.End.X - r.Size.X * 0.08f, r.End.Y + 20.0f), new Vector2(r.End.X + 40.0f, r.End.Y + 20.0f) }, curtain);
 				break;
 			}
+
+			case PropKind.TowerCrane:
+				DrawCrane(r, prop.Seed, null);
+				break;
 
 			case PropKind.Cone:
 			{

@@ -508,11 +508,10 @@ public static class StageCatalog
 			// A scaffold plank across the pit, its poles standing on the edge of each side.
 			new StagePlatform(new Rect2(-540.0f, -210.0f, 1080.0f, 18.0f), true, PlatformLook.Scaffold),
 
-			// A tower crane each side, the jibs reaching out over the pit, a beam hanging off each -
-			// run in and out along the jib on its trolley, the two in step, so the way across the
-			// top keeps changing (Eric, 2026-10-18).
-			new StagePlatform(new Rect2(-1200.0f, -720.0f, 900.0f, 22.0f), true, PlatformLook.CraneJib),
-			new StagePlatform(new Rect2(300.0f, -720.0f, 900.0f, 22.0f), true, PlatformLook.CraneJib),
+			// A tower crane each side (props, below), the jibs reaching out over the pit, a beam
+			// hanging off each - run in and out along the jib on its trolley, the two in step, so
+			// the way across the top keeps changing (Eric, 2026-10-18). Only the beams are stood
+			// on; the cranes themselves are scenery (Eric, 2026-10-20).
 			new StagePlatform(new Rect2(-605.0f, -720.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam)
 				{ Travel = new Vector2(115.0f, 0.0f), TravelFrames = 420 },
 			new StagePlatform(new Rect2(435.0f, -720.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam)
@@ -532,6 +531,10 @@ public static class StageCatalog
 			new StageProp(PropKind.Skyline, new Rect2(-3900.0f, -760.0f, 7800.0f, 760.0f), 71),
 			new StageProp(PropKind.Cloud, new Rect2(-900.0f, -1350.0f, 320.0f, 110.0f), 24),
 			new StageProp(PropKind.Cloud, new Rect2(500.0f, -1250.0f, 260.0f, 90.0f), 26),
+			// The two tower cranes the beams hang from - their jibs at -720, a cable's drop above
+			// the beams (StageData.CraneDrop), so each beam finds its crane.
+			new StageProp(PropKind.TowerCrane, new Rect2(-1200.0f, -720.0f, 900.0f, 22.0f), 91),
+			new StageProp(PropKind.TowerCrane, new Rect2(300.0f, -720.0f, 900.0f, 22.0f), 92),
 			// The hoarding round the site, along the back.
 			new StageProp(PropKind.Fence, new Rect2(-1980.0f, -150.0f, 1420.0f, 150.0f), 62),
 			new StageProp(PropKind.Fence, new Rect2(560.0f, -150.0f, 1420.0f, 150.0f), 63),
