@@ -349,7 +349,8 @@ public static class StoryScript
 				if (step.Arg(0) != "" && !step.Arg(0).IsValidInt()) Bad($"{step.Verb} takes a number of frames");
 				break;
 			case "drop":
-				if (step.Args.Length > 0 && !(step.Arg(0) == "at" && IsPlace(step.Arg(1)))) Bad("drop is \"drop\" or \"drop at X\"");
+				if (step.Args.Length > 0 && !(step.Arg(0) == "at" && IsPlace(step.Arg(1))) && !(step.Arg(0) == "from" && step.Arg(1) == "eye"))
+					Bad("drop is \"drop\", \"drop at X\" or \"drop from eye\"");
 				break;
 			case "at":
 				if (!IsPlace(step.Arg(0))) Bad("at is \"at X\"");

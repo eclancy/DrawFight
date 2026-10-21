@@ -74,6 +74,9 @@ public partial class StoryBoard : Node2D
 
 	public void CloseEye() => eyeOpen = false;
 
+	/// <summary>Where the red eye last opened in the dark - "drop from eye" brings him in there.</summary>
+	public Vector2 EyeAt => eyeAt;
+
 	Vector2? pageAt;
 	int pageFrames;
 

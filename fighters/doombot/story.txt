@@ -18,6 +18,7 @@
 #                                   ground there); add "facing left" or "facing right"
 #   cast doombot offstage           ...or hidden, until they "drop" in
 #   doombot drop at 260             falls in from above, onto the floor at x = 260
+#   doombot drop from eye           ...or out of the dark from where his red eye opened
 #   player walk to 100 / run to doombot / at 0
 #   player face right / face doombot / turn
 #   player look angry               a face: normal, closed, squint, angry, shout, hurt, shocked,
@@ -96,7 +97,7 @@ wait 50
 eye at -300 -260
 narrator: A factory hum. A red eye flickers on beside the fridge.
 wait 30
-player drop at -300
+player drop from eye
 eye close
 dark off
 shake 60
@@ -428,7 +429,7 @@ sound stomp
 shake 60
 wait 24
 eye close
-doombot drop at 200
+doombot drop from eye
 sound special_quake
 shake 110
 dark off
@@ -459,15 +460,16 @@ doombot: THE ONE TRUE RULER. OF THE FRIDGE.
 doombot pose none
 board at -620 -820
 camera at -120 -680 zoom 0.72
-doombot writes: 1. REMOVE DRAWINGS.
-doombot writes: 2. REMOVE MAGNETS.
-doombot writes: 3. FRIDGE.
+doombot writes: 1. MAKE THE DRAWINGS FIGHT.
+doombot writes: 2. TAKE DOWN EVERY LOSER.
+doombot writes: 3. RULE THE FRIDGE. ALONE.
 camera two player doombot
+doombot pose point
+doombot: STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE.
 doombot pose crossarms
-doombot: THE FRIDGE IS A MACHINE. I AM A MACHINE.
+doombot: WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL BE CLEAN. SHINY. EMPTY.
 doombot pose none
-doombot: WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL BE RETURNED TO FACTORY SETTINGS.
-doombot: SHINY. CLEAN.
+doombot: EXCEPT FOR ONE ROBOT.
 camera on doombot zoom 1.45 fast
 doombot pose fist
 doombot (shout): MINE.
@@ -483,8 +485,6 @@ wait 30
 doombot pose stomp
 doombot (slam): I. DO. NOT. LOOK. LIKE. THE. FRIDGE.
 doombot pose none
-camera at 1100 -560 zoom 0.9 slow
-wait 80
 camera on doombot zoom 1.1 slow
 wait 70
 doombot mark none

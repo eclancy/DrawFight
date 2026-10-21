@@ -316,12 +316,14 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   "NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY. THE ONE TRUE RULER. OF THE FRIDGE." His Eye
   Laser draws the plan on the fridge, one line at a time:
 
-  > 1. REMOVE DRAWINGS.
-  > 2. REMOVE MAGNETS.
-  > 3. FRIDGE.
+  > 1. MAKE THE DRAWINGS FIGHT.
+  > 2. TAKE DOWN EVERY LOSER.
+  > 3. RULE THE FRIDGE. ALONE.
 
-  "THE FRIDGE IS A MACHINE. I AM A MACHINE. WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL BE
-  RETURNED TO FACTORY SETTINGS. SHINY. CLEAN. **MINE.**"
+  "STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE. WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL
+  BE CLEAN. SHINY. EMPTY. EXCEPT FOR ONE ROBOT. **MINE.**" (Eric, 2026-10-21: a real plan to rule
+  the fridge - it used to say "REMOVE MAGNETS" and "3. FRIDGE.") He comes down out of the dark
+  right where his red eye opened (`drop from eye`).
 - **The roast.** Every fighter makes the same joke - he looks like the fridge, and that doesn't
   make it his - in their own words:
   - **EdgeLord:** "Looking like the fridge doesn't make it yours. You're not cool, DoomBot."
@@ -333,12 +335,10 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
     yours." He holds up the Metre Stick and squints. "...And you're not even level."
   - **Circy:** "Bro. You literally look like the fridge. Same shape. No cap." DoomBot: "...NO.
     CAP?" Beat. **"I AM NOT A FRIDGE."**
-  - **Triguy** makes his surprised face, looking from DoomBot to the fridge and back - a whip
-    pan each way. DoomBot: "DO NOT. MAKE. THAT FACE." Triguy: "not kewl."
+  - **Triguy** makes his surprised face, the camera whipping between him and DoomBot. DoomBot: "DO NOT. MAKE. THAT FACE." Triguy: "not kewl."
 - **The meltdown.** A steam whistle. His heat climbs to full, he glows, he smokes, and each word
   slams in on its own, shaking the screen: **"I. DO. NOT. LOOK. LIKE. THE. FRIDGE."** The camera
-  pans slowly from DoomBot to the fridge beside him and back. They are the same shape.
-  DoomBot's theme hits. FIGHT!
+  stays on him - no cutting away to look at the fridge (Eric, 2026-10-21). DoomBot's theme hits. FIGHT!
 - **The fight is the joke.** Mocked, he overheats: **he starts the fight at full heat** - his
   Furnace Blast loaded, his claws glowing - and that is also when his overheat stalls and rusty
   joints leave him most open. He has more stocks than the player. On his last one: "CORE
@@ -446,8 +446,7 @@ chapter n (from 0), and `--story=<fighter>:<n>:after` into the scene after that 
 frames, then quits - a scene is checked by looking at it all the way through. Pacing and jokes
 have to be watched; a build verifies none of it.
 
-What the finale still cannot show: the fridge door is the stage, so "the camera pans from
-DoomBot to the fridge beside him - the same shape" pans to the door's handle, not a whole fridge.
+
 
 ## Decided (Eric, 2026-10-15)
 

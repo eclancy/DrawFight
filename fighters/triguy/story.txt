@@ -177,7 +177,7 @@ player show none
 player show taunt_surprised
 camera on doombot zoom 1.2 whip
 wait 20
-camera at 1100 -560 zoom 1.0 whip
+camera on player zoom 1.3 whip
 wait 20
 camera on doombot zoom 1.2 whip
 wait 20

@@ -518,8 +518,18 @@ public partial class StoryDirector : Node
 			case "drop":
 				if (first)
 				{
-					float x = Match.GroundNear(step.Arg(0) == "at" ? PlaceX(step.Arg(1), actor) : actor.GlobalPosition.X);
-					actor.ReviveForScene(new Vector2(x, camera.VisibleRect().Position.Y - 300.0f));
+					if (step.Arg(0) == "from")
+					{
+						// Out of the dark where his eye was: his head where the red dot hung, then
+						// down onto the floor under it (Eric, 2026-10-21: he landed off to one side).
+						Vector2 eye = board.EyeAt;
+						actor.ReviveForScene(new Vector2(Match.GroundNear(eye.X), eye.Y + actor.Data.BodySize.Y * 0.35f));
+					}
+					else
+					{
+						float x = Match.GroundNear(step.Arg(0) == "at" ? PlaceX(step.Arg(1), actor) : actor.GlobalPosition.X);
+						actor.ReviveForScene(new Vector2(x, camera.VisibleRect().Position.Y - 300.0f));
+					}
 				}
 				// Down past the platforms, onto the floor - a scene drops someone onto the stage.
 				float feet = actor.GlobalPosition.Y + actor.Data.BodySize.Y * 0.5f;
