@@ -407,6 +407,51 @@ public static class FighterAnimations
 			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
 			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))));
 
+	/// <summary>
+	/// Crawling: down held and pushed left or right (Fighter.CrawlSpeed). A duck-walk - squatting
+	/// on deeply bent knees, body folded forward over them and the guard up as in the crouch, the
+	/// feet shuffling one past the other along the floor, each lifted only a little as it passes.
+	/// Chosen over hands and knees because every fighter is an upright drawing: a ball on stick
+	/// legs, a triangle on long legs and a boxy robot all squat the same way, where going down on
+	/// all fours would lay a drawing on its face. The legs are solved, not posed (FighterRig.Crawling):
+	/// the clip's frame says where each foot is in its step, and the rig bends each leg, knee
+	/// forward, to put that foot on the floor - so legs drawn two lengths both reach it (a posed
+	/// duck-walk left Triguy's short leg in the air). The leg angles here are only what the solver
+	/// blends from, thighs in front of the hips so no leg turns round. A four-pose cycle like the
+	/// run, contact on 0 and 12; played as fast as he moves (Fighter.UpdateRig), and a robot steps
+	/// it like his stomp.
+	/// </summary>
+	public static readonly AnimationClip Crawl = new AnimationClip("crawl", true,
+		// Contact: the front foot set down ahead, the back one behind on its toe.
+		(0, new Pose(new Vector2(0, 12),
+			(Torso, -32), (Head, 20),
+			(AFU, -32), (AFL, -70), (ABU, 8), (ABL, -50),
+			(LFU, -50), (LFL, 66), (LBU, -16), (LBL, 66))),
+		// Passing: the weight over the front foot, the back one drawn through under him.
+		(6, new Pose(new Vector2(0, 10),
+			(Torso, -34), (Head, 22),
+			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
+			(LFU, -34), (LFL, 70), (LBU, -46), (LBL, 86))),
+		(12, new Pose(new Vector2(0, 12),
+			(Torso, -32), (Head, 20),
+			(AFU, -48), (AFL, -70), (ABU, 24), (ABL, -50),
+			(LFU, -16), (LFL, 66), (LBU, -50), (LBL, 66))),
+		(18, new Pose(new Vector2(0, 10),
+			(Torso, -34), (Head, 22),
+			(AFU, -40), (AFL, -70), (ABU, 16), (ABL, -50),
+			(LFU, -46), (LFL, 86), (LBU, -34), (LBL, 70))),
+		(24, new Pose(new Vector2(0, 12),
+			(Torso, -32), (Head, 20),
+			(AFU, -32), (AFL, -70), (ABU, 8), (ABL, -50),
+			(LFU, -50), (LFL, 66), (LBU, -16), (LBL, 66))));
+
+	/// <summary>
+	/// How fast the crawl plays at full crawling speed: its 24-frame cycle over 48 frames, a short
+	/// step every 24. Fighter.UpdateRig scales it by how fast he is actually going, as the run is
+	/// scaled, so the feet do not skate.
+	/// </summary>
+	public const float CrawlRate = 0.5f;
+
 	// --- Reacting ------------------------------------------------------------
 
 	public static readonly AnimationClip Hurt = new AnimationClip("hurt", true,
