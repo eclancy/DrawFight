@@ -400,7 +400,7 @@ In order, each step usable before the next:
    heaps the taken-down drawings behind him, and `page at` pins up the drawing of DoomBot in his
    ending (`StoryBoard`). The pile (`TakenDownPile`, Eric, 2026-10-21) is four sheets of
    paper, one for each of the other fighters - everyone but DoomBot and the player, nobody twice
-   - each thrown down anyhow, on its side or upside down, and each carrying that fighter's real
+   - piled fairly neatly, mostly right way up, each knocked a little crooked, and each carrying that fighter's real
    rig caught in an action pose: the frame one of their own attacks hits, weapon in hand (Eric,
    2026-10-21). Each rig is rendered once into its own texture when the
    pile goes down (it stays through the boss fight, so nothing costly happens per frame), and

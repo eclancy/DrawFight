@@ -68,13 +68,16 @@ public partial class MatchHud : CanvasLayer
 
 			// His name in his own letters (NameLettering) - DoomBot's glowing as hot as he is.
 			Fighter fighter = fighters[i];
+			// The whole HUD sits low and compact, in the bottom 190 pixels (GameCamera.HudBand), so
+			// it stays under the fight rather than over it (Eric, 2026-10-21: the percent still
+			// got in the fighters' way at 112 pixels high from y 872).
 			var name = new NameTag
 			{
-				FontSize = 34,
+				FontSize = 30,
 				Align = HorizontalAlignment.Center,
 				FitWidth = true,
-				Position = new Vector2(left, 842.0f),
-				Size = new Vector2(Column, 44.0f),
+				Position = new Vector2(left, 918.0f),
+				Size = new Vector2(Column, 38.0f),
 				Heat = fighter.Data.HasHeat ? () => fighter.IsOverheated ? 1.0f : fighter.HeatFraction : null,
 			};
 			name.SetFighter(fighter.Data);
@@ -82,21 +85,21 @@ public partial class MatchHud : CanvasLayer
 
 			if (seats)
 			{
-				Label tag = MakeLabel(root, 28, fighters[i].SideTint, 9);
+				Label tag = MakeLabel(root, 24, fighters[i].SideTint, 8);
 				tag.Text = fighters[i].TagText;
-				tag.Position = new Vector2(left, 808.0f);
-				tag.Size = new Vector2(Column, 36.0f);
+				tag.Position = new Vector2(left, 890.0f);
+				tag.Size = new Vector2(Column, 30.0f);
 			}
 
-			Label percent = MakeLabel(root, 112, Ink, 18);
+			Label percent = MakeLabel(root, 84, Ink, 16);
 			percent.Text = "0%";
-			percent.Position = new Vector2(left, 872.0f);
-			percent.Size = new Vector2(Column, 130.0f);
+			percent.Position = new Vector2(left, 946.0f);
+			percent.Size = new Vector2(Column, 98.0f);
 			percentLabels.Add(percent);
 
 			Label stocks = MakeLabel(root, 34, Ink, 10);
-			stocks.Position = new Vector2(left, 1000.0f);
-			stocks.Size = new Vector2(Column, 44.0f);
+			stocks.Position = new Vector2(left, 1036.0f);
+			stocks.Size = new Vector2(Column, 40.0f);
 			stockLabels.Add(stocks);
 
 			heatGauges.Add(fighters[i].Data.HasHeat ? MakeHeatGauge(root, fighters[i], centreX) : null);
@@ -220,8 +223,8 @@ public partial class MatchHud : CanvasLayer
 	{
 		var gauge = new Control
 		{
-			Position = new Vector2(centreX + 118.0f, 892.0f),
-			Size = new Vector2(30.0f, 96.0f),
+			Position = new Vector2(centreX + 96.0f, 958.0f),
+			Size = new Vector2(26.0f, 76.0f),
 			MouseFilter = Control.MouseFilterEnum.Ignore,
 		};
 		root.AddChild(gauge);

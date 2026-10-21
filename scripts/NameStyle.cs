@@ -122,18 +122,21 @@ public partial class NameStyle : Resource
 	// character (.ai/art-direction.md): the edges are deep colours, not black.
 
 	/// <summary>Flambé: hot orange running to yellow, leaning into it, with flames licking off the tops.</summary>
+	// Deep red-orange letters with a thick dark edge, barely leaning and holding still - the fire
+	// is in the flames on top, not in the letters (Eric, 2026-10-21: the pale, flickering,
+	// slanted orange was hard to read).
 	public static NameStyle Flambe() => new NameStyle
 	{
-		Fill = new Color(1.0f, 0.50f, 0.12f),
-		FillTo = new Color(1.0f, 0.78f, 0.20f),
-		Edge = new Color(0.66f, 0.16f, 0.08f),
-		EdgeWidth = 0.14f,
-		Bevel = 0.025f,
-		Highlight = new Color(1.0f, 0.93f, 0.62f),
-		Shade = new Color(0.86f, 0.30f, 0.08f),
-		Slant = 0.14f,
-		Embolden = 0.5f,
-		Flicker = 0.07f,
+		Fill = new Color(0.86f, 0.24f, 0.08f),
+		FillTo = new Color(0.97f, 0.50f, 0.10f),
+		Edge = new Color(0.40f, 0.09f, 0.05f),
+		EdgeWidth = 0.17f,
+		Bevel = 0.02f,
+		Highlight = new Color(1.0f, 0.80f, 0.50f),
+		Shade = new Color(0.62f, 0.14f, 0.05f),
+		Slant = 0.06f,
+		Embolden = 0.9f,
+		Spacing = 0.02f,
 		Deco = NameDeco.Flames,
 	};
 

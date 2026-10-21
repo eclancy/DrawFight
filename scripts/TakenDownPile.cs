@@ -8,7 +8,7 @@ using Godot;
 /// some half rubbed out with an eraser; some with a corner bent over or the tape still on that
 /// held them up.
 ///
-/// One sheet for each of them, nobody twice, thrown down on its side or upside down. Every
+/// One sheet for each of them, nobody twice, piled a little crooked. Every
 /// drawing is the fighter's real rig caught in an action pose - the frame one of their attacks
 /// hits, weapon in hand (Eric, 2026-10-21) - rendered once into its own
 /// texture when the pile goes down - never redrawn (CLAUDE.md, rule 1). The damage only ever takes
@@ -39,16 +39,18 @@ public class TakenDownPile
 
 	/// <summary>
 	/// The heap, bottom sheet first: where each lies against the pile's centre, how far up the
-	/// heap it sits, its tilt, and what he did to it. One sheet per drawing - nobody twice - and
-	/// every one thrown down anyhow: on its side, upside down (Eric, 2026-10-21). The ones at the
-	/// bottom lie furthest back, so they peek out over the top of the ones in front.
+	/// heap it sits, its tilt, and what he did to it. One sheet per drawing - nobody twice -
+	/// stacked fairly neatly, mostly right way up, each just knocked a little crooked, as if
+	/// dropped on the pile (Eric, 2026-10-21: first they were thrown about on their sides and
+	/// upside down, which read as scattered). The ones at the bottom sit further back, so they
+	/// peek out over the top of the ones in front.
 	/// </summary>
 	static readonly (float dx, float rise, float angle, Tear tear, Rub rub, bool curl, bool tape)[] Layout =
 	{
-		(-215.0f, 26.0f, 1.50f, Tear.Bite, Rub.None, false, true),
-		(175.0f, 22.0f, -1.62f, Tear.None, Rub.Top, true, false),
-		(-55.0f, 118.0f, 3.04f, Tear.Corner, Rub.None, false, true),
-		(55.0f, 0.0f, -2.70f, Tear.Side, Rub.Patch, true, true),
+		(-205.0f, 30.0f, -0.18f, Tear.Bite, Rub.None, false, true),
+		(200.0f, 26.0f, 0.22f, Tear.None, Rub.Top, true, false),
+		(-70.0f, 12.0f, 0.10f, Tear.Corner, Rub.None, false, true),
+		(70.0f, 0.0f, -0.12f, Tear.Side, Rub.Patch, true, true),
 	};
 
 	/// <summary>

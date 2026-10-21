@@ -35,11 +35,11 @@ public partial class GameCamera : Camera2D
 
 	/// <summary>
 	/// The strip along the bottom of the screen the HUD covers - names, percents and lives
-	/// (MatchHud, from y 808 down). The screen may reach this far, in screen pixels, below the
+	/// (MatchHud, from y 890 down). The screen may reach this far, in screen pixels, below the
 	/// Floor, so the art's bottom edge sits behind the HUD rather than the ground does: pinned to
 	/// the art's very bottom, every stage sank down into the percentages (Eric, 2026-10-18).
 	/// </summary>
-	public const float HudBand = 272.0f;
+	public const float HudBand = 190.0f;
 
 	/// <summary>The lowest the bottom of the screen goes at this zoom: under the HUD, at the art's end.</summary>
 	float FloorFor(float zoom) => Mathf.Min(Floor + HudBand / zoom, Limits.End.Y);
