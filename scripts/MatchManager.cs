@@ -313,11 +313,12 @@ public partial class MatchManager : Node2D
 		return float.IsPositiveInfinity(best) ? stage.Platforms[0].Position.Y : best;
 	}
 
-	float SolidTop(float x)
+	float SolidTop(float x, bool street = true)
 	{
 		float best = float.PositiveInfinity;
 		foreach (StagePlatform platform in stage.Data.Platforms)
 		{
+			if (!street && platform.Look == PlatformLook.Road) continue;
 			if (!platform.OneWay && x >= platform.Rect.Position.X && x <= platform.Rect.End.X) best = Mathf.Min(best, platform.Rect.Position.Y);
 		}
 		return best;
@@ -325,7 +326,9 @@ public partial class MatchManager : Node2D
 
 	/// <summary>
 	/// The nearest spot to x with solid ground under it, a little in from any edge - so a scene
-	/// written for one stage stands people on the roofs of City Rooftops, not in the gaps.
+	/// written for one stage stands people on the roofs of City Rooftops, not in the gaps. The
+	/// street at the bottom of a gap is solid too, so it does not count: a scene cast at x -400
+	/// there stood EdgeLord in the road.
 	/// </summary>
 	public float GroundNear(float x)
 	{
@@ -334,8 +337,8 @@ public partial class MatchManager : Node2D
 		{
 			foreach (float at in new[] { x + d, x - d })
 			{
-				if (!float.IsPositiveInfinity(SolidTop(at)) && !float.IsPositiveInfinity(SolidTop(at - Margin))
-					&& !float.IsPositiveInfinity(SolidTop(at + Margin))) return at;
+				if (!float.IsPositiveInfinity(SolidTop(at, false)) && !float.IsPositiveInfinity(SolidTop(at - Margin, false))
+					&& !float.IsPositiveInfinity(SolidTop(at + Margin, false))) return at;
 			}
 		}
 		return x;

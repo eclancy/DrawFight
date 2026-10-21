@@ -412,7 +412,8 @@ In order, each step usable before the next:
    wobble, never random. It is drawn on the board, behind the fighters. `table at` sets a lunch table, and `pose sit` / `pose eat` sit someone
    at it on a stool (`FighterRig.Sitting`) - Flambe and Lugnut at lunch, before every fight
    against the two of them (Eric, 2026-10-16). A scene never walks anyone off a drop
-   (`MatchManager.WalkableTo`), and no car comes down City Rooftops' street while one plays.
+   (`MatchManager.WalkableTo`), never casts anyone into the street at the bottom of a gap - a
+   cast over a gap moves to the nearest roof (`MatchManager.GroundNear`) - and no car comes down City Rooftops' street while one plays.
 4. **Two-on-one** - **built, 2026-10-15.** `MatchManager.Teams`: teammates cannot hit, grab,
    splash or trap each other, a CPU only goes after the other side, and a side is out when
    everyone on it is. The HUD and camera already take any number. A piece of M6, done early.

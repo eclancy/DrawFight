@@ -398,6 +398,9 @@ public partial class Stage : Node2D
 			case PlatformLook.CraneJib: DrawCrane(platform.Rect, seed, platform); break;
 			case PlatformLook.HangingBeam: DrawHangingBeam(platform, seed); break;
 			case PlatformLook.Scaffold: DrawScaffold(platform, seed); break;
+			case PlatformLook.FireEscape: DrawFireEscape(platform, seed); break;
+			case PlatformLook.WaterTower: DrawWaterTower(platform, seed); break;
+			case PlatformLook.Billboard: DrawBillboard(platform, seed); break;
 			case PlatformLook.StageDeck: DrawStageDeck(platform, seed); break;
 			case PlatformLook.AmpStack: DrawAmpStack(platform, seed); break;
 			case PlatformLook.Girder: DrawGirder(platform, seed); break;
@@ -829,6 +832,298 @@ public partial class Stage : Node2D
 	static readonly Color Wood = new Color(0.86f, 0.66f, 0.42f);
 	static readonly Color Steel = new Color(0.62f, 0.66f, 0.74f);
 
+	// --- The city -------------------------------------------------------------------------------
+
+	/// <summary>Fire escapes are painted iron. Green, not the black they are in life: black is the fighters'.</summary>
+	static readonly Color FireIron = new Color(0.42f, 0.60f, 0.56f);
+	static readonly Color TankWood = new Color(0.84f, 0.62f, 0.44f);
+
+	/// <summary>
+	/// A colour pressed on harder: the darker edge a coloured-in thing gets instead of ink, since
+	/// ink round something says you can stand on it.
+	/// </summary>
+	static Color Shade(Color c, float by) => new Color(c.R * by, c.G * by, c.B * by, c.A);
+
+	/// <summary>The top of the solid ground under x, at or below y: a roof, or else the street.</summary>
+	float SolidTopBelow(float x, float y)
+	{
+		float best = Data.GroundLine;
+		foreach (StagePlatform p in Data.Platforms)
+		{
+			if (p.OneWay || x < p.Rect.Position.X || x > p.Rect.End.X || p.Rect.Position.Y < y - 1.0f) continue;
+			best = Mathf.Min(best, p.Rect.Position.Y);
+		}
+		return best;
+	}
+
+	/// <summary>
+	/// One landing of a fire escape: an iron grating bolted to the building its end butts against,
+	/// a railing round it and a bracket under it back to the wall. Landings stacked on one wall
+	/// join up by themselves - stairs from each up to the next, a drop ladder under the lowest that
+	/// stops short of the street, as a real one does, and a ladder from the highest up and over the
+	/// edge of the roof - so a stage only lists the landings. Only the gratings are outlined: the
+	/// rest is ironwork you cannot stand on, coloured in.
+	/// </summary>
+	void DrawFireEscape(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+
+		// Which side the wall is on, and how high it goes: the building the landing butts against.
+		int toWall = 1;
+		float roof = r.Position.Y;
+		foreach (StagePlatform p in Data.Platforms)
+		{
+			if (p.OneWay || p.Rect.Position.Y > r.Position.Y || p.Rect.End.Y < r.End.Y) continue;
+			if (Mathf.Abs(p.Rect.Position.X - r.End.X) < 2.0f) { toWall = 1; roof = p.Rect.Position.Y; }
+			else if (Mathf.Abs(p.Rect.End.X - r.Position.X) < 2.0f) { toWall = -1; roof = p.Rect.Position.Y; }
+		}
+		float wallX = toWall > 0 ? r.End.X : r.Position.X;
+		float outerX = toWall > 0 ? r.Position.X : r.End.X;
+		Color rail = Shade(FireIron, 0.85f);
+
+		StagePlatform above = null, below = null;
+		foreach (StagePlatform p in Data.Platforms)
+		{
+			if (p == platform || p.Look != PlatformLook.FireEscape) continue;
+			if (p.Rect.End.X < r.Position.X || p.Rect.Position.X > r.End.X) continue;
+			if (p.Rect.Position.Y < r.Position.Y && (above == null || p.Rect.Position.Y > above.Rect.Position.Y)) above = p;
+			if (p.Rect.Position.Y > r.Position.Y && (below == null || p.Rect.Position.Y < below.Rect.Position.Y)) below = p;
+		}
+
+		// The bracket: a short strut from under the landing down to the wall - short, so it never
+		// reads as another flight of stairs.
+		CrayonBrush.InkLine(this, new Vector2(Mathf.Lerp(outerX, wallX, 0.45f), r.End.Y), new Vector2(wallX, r.End.Y + 40.0f), FireIron, 5.0f, seed + 1, 0.6f);
+
+		// Stairs up to the next landing, from this one's outer end to that one's wall end: steps
+		// drawn the way a kid draws stairs, a zigzag of treads and risers, on a stringer, with a
+		// handrail over them.
+		if (above != null)
+		{
+			var foot = new Vector2(outerX + toWall * 18.0f, r.Position.Y);
+			var head = new Vector2(wallX - toWall * 22.0f, above.Rect.Position.Y);
+			CrayonBrush.InkLine(this, foot + new Vector2(0.0f, 8.0f), head + new Vector2(0.0f, 8.0f), FireIron, 6.0f, seed + 2, 0.6f);
+			int steps = Mathf.Max(3, Mathf.RoundToInt((foot.Y - head.Y) / 24.0f));
+			Vector2 step = (head - foot) / steps;
+			Vector2 at = foot;
+			for (int s = 0; s < steps; s++)
+			{
+				var riser = at + new Vector2(0.0f, step.Y);
+				var tread = riser + new Vector2(step.X, 0.0f);
+				CrayonBrush.InkLine(this, at, riser, FireIron, 3.5f, seed + 10 + s, 0.3f);
+				CrayonBrush.InkLine(this, riser, tread, FireIron, 4.5f, seed + 40 + s, 0.3f);
+				at = tread;
+			}
+			var lift = new Vector2(0.0f, -50.0f);
+			CrayonBrush.InkLine(this, foot + lift, head + lift, rail, 3.5f, seed + 3, 0.6f);
+			CrayonBrush.InkLine(this, foot, foot + lift, rail, 3.0f, seed + 4, 0.3f);
+			CrayonBrush.InkLine(this, foot.Lerp(head, 0.5f), foot.Lerp(head, 0.5f) + lift, rail, 3.0f, seed + 5, 0.3f);
+		}
+
+		// Under the lowest landing, the drop ladder, hanging short of the street.
+		if (below == null)
+		{
+			float x = outerX + toWall * 36.0f;
+			float bottom = Mathf.Min(r.End.Y + 120.0f, SolidTopBelow(x, r.End.Y) - 70.0f);
+			if (bottom > r.End.Y + 40.0f) DrawLadder(x, r.End.Y, bottom, 26.0f, FireIron, seed + 6, rail);
+		}
+
+		// Over the highest, a ladder up the wall whose rails bend over the edge onto the roof.
+		if (above == null && roof < r.Position.Y - 60.0f)
+		{
+			float x = wallX - toWall * 20.0f;
+			float over = roof - 30.0f;
+			DrawLadder(x, over, r.Position.Y, 26.0f, FireIron, seed + 7, rail);
+			int k = 0;
+			foreach (float side in new[] { -13.0f, 13.0f })
+			{
+				float x0 = x + side;
+				float x1 = x0 + toWall * 34.0f;
+				var bend = new[]
+				{
+					new Vector2(x0, over), new Vector2(x0 + toWall * 8.0f, over - 14.0f),
+					new Vector2(x1 - toWall * 8.0f, over - 14.0f), new Vector2(x1, over), new Vector2(x1, roof),
+				};
+				for (int i = 0; i < bend.Length - 1; i++)
+				{
+					CrayonBrush.InkLine(this, bend[i], bend[i + 1], rail, 4.0f, seed + 20 + k * 10 + i, 0.3f);
+				}
+				k++;
+			}
+		}
+
+		// The railing along the landing: a top rail, a middle rail and bars.
+		float railTop = r.Position.Y - 52.0f;
+		CrayonBrush.InkLine(this, new Vector2(outerX, railTop), new Vector2(wallX, railTop), rail, 4.0f, seed + 8, 0.6f);
+		CrayonBrush.InkLine(this, new Vector2(outerX, r.Position.Y - 26.0f), new Vector2(wallX, r.Position.Y - 26.0f), rail, 2.5f, seed + 9, 0.6f);
+		int bar = 0;
+		for (float x = outerX; toWall * (wallX - x) > 6.0f; x += toWall * 16.0f, bar++)
+		{
+			CrayonBrush.InkLine(this, new Vector2(x, railTop), new Vector2(x, r.Position.Y), rail, bar == 0 ? 4.5f : 2.0f, seed + 60 + bar, 0.3f);
+		}
+
+		// The grating itself: what you stand on.
+		DrawRect(r, FireIron);
+		for (float x = r.Position.X + 8.0f; x < r.End.X - 4.0f; x += 12.0f)
+		{
+			DrawLine(new Vector2(x, r.Position.Y + 3.0f), new Vector2(x, r.End.Y - 3.0f), Shade(FireIron, 0.78f), 2.5f);
+		}
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// A rooftop water tower, the shape every city skyline has. The rectangle is its lid, which is
+	/// what you stand on: flat, where a kid's would have a pointed hat, because people stand there.
+	/// The wooden tank hangs under it in iron hoops, on four legs down to the roof - tall enough
+	/// to walk under - braced across, with a ladder up the side.
+	/// </summary>
+	void DrawWaterTower(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		const float TankH = 100.0f;
+		var tank = new Rect2(r.Position.X + 10.0f, r.End.Y, r.Size.X - 20.0f, TankH);
+		float roof = SolidTopBelow(tank.GetCenter().X, tank.End.Y);
+		Color leg = Shade(Steel, 0.9f);
+
+		// The legs: the outer two splayed, the inner two near straight.
+		float[] tops = { tank.Position.X + 10.0f, tank.Position.X + tank.Size.X * 0.37f, tank.Position.X + tank.Size.X * 0.63f, tank.End.X - 10.0f };
+		float[] feet = { tops[0] - 18.0f, tops[1] - 5.0f, tops[2] + 5.0f, tops[3] + 18.0f };
+		for (int i = 0; i < 4; i++)
+		{
+			CrayonBrush.InkLine(this, new Vector2(tops[i], tank.End.Y), new Vector2(feet[i], roof), leg, i == 0 || i == 3 ? 6.0f : 4.5f, seed + 1 + i, 0.6f);
+		}
+		// Braced across the outer legs: two crosses, and a tie between them.
+		float LegX(int i, float y) => Mathf.Lerp(tops[i], feet[i], (y - tank.End.Y) / (roof - tank.End.Y));
+		float mid = (tank.End.Y + roof) * 0.5f;
+		Color brace = Shade(Steel, 0.95f);
+		foreach ((float y0, float y1, int s) in new[] { (tank.End.Y + 8.0f, mid, 10), (mid, roof - 6.0f, 20) })
+		{
+			CrayonBrush.InkLine(this, new Vector2(LegX(0, y0), y0), new Vector2(LegX(3, y1), y1), brace, 2.5f, seed + s, 0.4f);
+			CrayonBrush.InkLine(this, new Vector2(LegX(3, y0), y0), new Vector2(LegX(0, y1), y1), brace, 2.5f, seed + s + 1, 0.4f);
+		}
+		CrayonBrush.InkLine(this, new Vector2(LegX(0, mid), mid), new Vector2(LegX(3, mid), mid), leg, 3.5f, seed + 30, 0.4f);
+
+		// A ladder up the outside, from the roof to the lid.
+		DrawLadder(r.Position.X - 6.0f, r.Position.Y - 18.0f, roof, 22.0f, Steel, seed + 31, leg);
+
+		// The tank: wooden staves in iron hoops, its sides pressed darker rather than inked.
+		DrawRect(tank, TankWood);
+		CrayonBrush.CrayonFill(this, tank, new Color(Shade(TankWood, 0.86f), 0.55f), seed + 40, 10.0f, 2.0f, 5.0f);
+		Color stave = Shade(TankWood, 0.78f);
+		for (float x = tank.Position.X + 20.0f; x < tank.End.X - 8.0f; x += 20.0f)
+		{
+			CrayonBrush.InkLine(this, new Vector2(x, tank.Position.Y + 2.0f), new Vector2(x, tank.End.Y - 2.0f), stave, 2.0f, seed + Mathf.RoundToInt(x), 0.5f);
+		}
+		CrayonBrush.InkLine(this, tank.Position, new Vector2(tank.Position.X, tank.End.Y), Shade(TankWood, 0.7f), 4.0f, seed + 41, 0.8f);
+		CrayonBrush.InkLine(this, new Vector2(tank.End.X, tank.Position.Y), tank.End, Shade(TankWood, 0.7f), 4.0f, seed + 42, 0.8f);
+		CrayonBrush.InkLine(this, new Vector2(tank.Position.X, tank.End.Y), tank.End, Shade(TankWood, 0.7f), 4.0f, seed + 43, 0.8f);
+		int h = 0;
+		foreach (float t in new[] { 0.22f, 0.55f, 0.86f })
+		{
+			float y = tank.Position.Y + TankH * t;
+			CrayonBrush.InkLine(this, new Vector2(tank.Position.X - 3.0f, y), new Vector2(tank.End.X + 3.0f, y), leg, 4.0f, seed + 50 + h++, 0.6f);
+		}
+
+		// The lid, overhanging the tank.
+		DrawRect(r, Shade(TankWood, 0.9f));
+		CrayonBrush.CrayonFill(this, r, new Color(Shade(TankWood, 0.75f), 0.5f), seed + 60, 9.0f, 0.0f, 5.0f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
+	/// <summary>
+	/// A billboard up on a roof. The rectangle is the top of its frame, which you stand on; the
+	/// board hangs under it - a giant pencil drawing a line, the game's own advert - lit from
+	/// below at night, and two lattice legs stand it on the roof, high enough to fight under.
+	/// </summary>
+	void DrawBillboard(StagePlatform platform, int seed)
+	{
+		Rect2 r = platform.Rect;
+		const float BoardH = 130.0f;
+		var board = new Rect2(r.Position.X + 6.0f, r.End.Y, r.Size.X - 12.0f, BoardH);
+		Color frame = Shade(Steel, 0.92f);
+
+		// The legs, lattice like the crane's mast but steel, and not inked - set well in from the
+		// ends, so the people a story stands under it stand between them, not in them.
+		const float LegW = 28.0f;
+		int l = 0;
+		foreach (float x in new[] { r.Position.X + 90.0f, r.End.X - 90.0f - LegW })
+		{
+			float roof = SolidTopBelow(x + LegW * 0.5f, board.End.Y);
+			var legRect = new Rect2(x, board.End.Y, LegW, roof - board.End.Y);
+			DrawRect(legRect, new Color(Steel, 0.3f));
+			CrayonBrush.InkLine(this, legRect.Position, new Vector2(legRect.Position.X, legRect.End.Y), frame, 4.0f, seed + 1 + l, 0.8f);
+			CrayonBrush.InkLine(this, new Vector2(legRect.End.X, legRect.Position.Y), legRect.End, frame, 4.0f, seed + 3 + l, 0.8f);
+			int k = 0;
+			for (float y = legRect.Position.Y; y < legRect.End.Y - 10.0f; y += LegW, k++)
+			{
+				float x0 = k % 2 == 0 ? legRect.Position.X : legRect.End.X;
+				float x1 = k % 2 == 0 ? legRect.End.X : legRect.Position.X;
+				CrayonBrush.InkLine(this, new Vector2(x0, y), new Vector2(x1, Mathf.Min(y + LegW, legRect.End.Y)), Steel, 3.0f, seed + 20 + k + l * 50, 0.5f);
+			}
+			l++;
+		}
+
+		// The board: a pale sheet in a steel frame.
+		DrawRect(board, frame);
+		Rect2 face = board.Grow(-8.0f);
+		DrawRect(face, Data.PropFill);
+		CrayonBrush.CrayonFill(this, face, new Color(Data.PropCrayon, 0.35f), seed + 70, 14.0f, 0.0f, 6.0f);
+
+		// The pencil, lying across it: eraser, ferrule, a yellow body, the sharpened wood and its point.
+		float cy = face.GetCenter().Y + 4.0f;
+		const float H = 34.0f;
+		float x0p = face.Position.X + 18.0f;
+		float tip = face.Position.X + face.Size.X * 0.62f;
+		var eraser = new Rect2(x0p, cy - H * 0.5f, 24.0f, H);
+		var ferrule = new Rect2(eraser.End.X, cy - H * 0.5f, 14.0f, H);
+		var body = new Rect2(ferrule.End.X, cy - H * 0.5f, tip - 44.0f - ferrule.End.X, H);
+		var pink = new Color(0.95f, 0.64f, 0.68f);
+		var yellow = new Color(0.99f, 0.82f, 0.32f);
+		var bare = new Color(0.96f, 0.84f, 0.64f);
+		var lead = new Color(0.58f, 0.58f, 0.64f);
+		DrawRect(eraser, pink);
+		DrawRect(ferrule, new Color(0.82f, 0.84f, 0.88f));
+		DrawLine(new Vector2(ferrule.Position.X + 5.0f, ferrule.Position.Y), new Vector2(ferrule.Position.X + 5.0f, ferrule.End.Y), Shade(Steel, 0.9f), 2.0f);
+		DrawLine(new Vector2(ferrule.Position.X + 10.0f, ferrule.Position.Y), new Vector2(ferrule.Position.X + 10.0f, ferrule.End.Y), Shade(Steel, 0.9f), 2.0f);
+		DrawRect(body, yellow);
+		DrawRect(new Rect2(body.Position.X, cy - H * 0.12f, body.Size.X, H * 0.24f), Shade(yellow, 0.92f));
+		DrawColoredPolygon(new[] { new Vector2(body.End.X, cy - H * 0.5f), new Vector2(tip, cy), new Vector2(body.End.X, cy + H * 0.5f) }, bare);
+		DrawColoredPolygon(new[] { new Vector2(tip - 15.0f, cy - H * 0.17f), new Vector2(tip, cy), new Vector2(tip - 15.0f, cy + H * 0.17f) }, lead);
+		Color edge = Shade(yellow, 0.72f);
+		CrayonBrush.InkLine(this, new Vector2(eraser.Position.X, cy - H * 0.5f), new Vector2(body.End.X, cy - H * 0.5f), edge, 2.5f, seed + 80, 0.6f);
+		CrayonBrush.InkLine(this, new Vector2(eraser.Position.X, cy + H * 0.5f), new Vector2(body.End.X, cy + H * 0.5f), edge, 2.5f, seed + 81, 0.6f);
+		CrayonBrush.InkLine(this, new Vector2(body.End.X, cy - H * 0.5f), new Vector2(tip, cy), edge, 2.5f, seed + 82, 0.4f);
+		CrayonBrush.InkLine(this, new Vector2(body.End.X, cy + H * 0.5f), new Vector2(tip, cy), edge, 2.5f, seed + 83, 0.4f);
+
+		// The line it is drawing: loops along to the edge of the board.
+		var line = new List<Vector2>();
+		float run = face.End.X - 14.0f - tip;
+		for (int i = 0; i <= 40; i++)
+		{
+			float t = i / 40.0f;
+			float a = t * Mathf.Tau * 2.5f;
+			line.Add(new Vector2(tip + run * t - Mathf.Sin(a) * 9.0f, cy - (1.0f - Mathf.Cos(a)) * 14.0f * (1.0f - t * 0.3f)));
+		}
+		DrawPolyline(line.ToArray(), new Color(0.42f, 0.56f, 0.90f), 4.0f, true);
+
+		// Two lamps along its foot, washing the board with pale light.
+		foreach (float t in new[] { 0.25f, 0.75f })
+		{
+			var lamp = new Vector2(board.Position.X + board.Size.X * t, board.End.Y + 8.0f);
+			DrawColoredPolygon(new[]
+			{
+				lamp + new Vector2(-8.0f, -6.0f), lamp + new Vector2(8.0f, -6.0f),
+				new Vector2(lamp.X + 70.0f, board.Position.Y + 8.0f), new Vector2(lamp.X - 70.0f, board.Position.Y + 8.0f),
+			}, new Color(Data.Celestial, 0.22f));
+			DrawRect(new Rect2(lamp.X - 10.0f, lamp.Y - 6.0f, 20.0f, 12.0f), frame);
+			DrawCircle(lamp + new Vector2(0.0f, -6.0f), 6.0f, Data.Celestial);
+		}
+
+		// The top of the frame: what you stand on.
+		DrawRect(r, frame);
+		CrayonBrush.CrayonFill(this, r, new Color(Shade(Steel, 0.8f), 0.5f), seed + 90, 9.0f, 0.0f, 5.0f);
+		OutlinePlatform(r, platform.OneWay, seed);
+	}
+
 	/// <summary>
 	/// A concert stage floor. The rectangle is the deck, boards running across it; below it hangs
 	/// the stage's skirt, pleated, down to where the deck would meet the floor of the hall.
@@ -936,11 +1231,15 @@ public partial class Stage : Node2D
 	static readonly Color PlayBlue = new Color(0.46f, 0.70f, 0.94f);
 	static readonly Color Sand = new Color(0.97f, 0.88f, 0.62f);
 
-	/// <summary>A ladder of two rails and rungs, from <paramref name="top"/> straight down to <paramref name="bottom"/>.</summary>
-	void DrawLadder(float x, float top, float bottom, float width, Color colour, int seed)
+	/// <summary>
+	/// A ladder of two rails and rungs, from <paramref name="top"/> straight down to <paramref name="bottom"/>.
+	/// The rails are inked unless given a colour: a ladder on scenery you cannot stand on is coloured in, not outlined.
+	/// </summary>
+	void DrawLadder(float x, float top, float bottom, float width, Color colour, int seed, Color? rails = null)
 	{
-		CrayonBrush.InkLine(this, new Vector2(x - width * 0.5f, top), new Vector2(x - width * 0.5f, bottom), Data.Ink, 4.0f, seed, 0.8f);
-		CrayonBrush.InkLine(this, new Vector2(x + width * 0.5f, top), new Vector2(x + width * 0.5f, bottom), Data.Ink, 4.0f, seed + 1, 0.8f);
+		Color rail = rails ?? Data.Ink;
+		CrayonBrush.InkLine(this, new Vector2(x - width * 0.5f, top), new Vector2(x - width * 0.5f, bottom), rail, 4.0f, seed, 0.8f);
+		CrayonBrush.InkLine(this, new Vector2(x + width * 0.5f, top), new Vector2(x + width * 0.5f, bottom), rail, 4.0f, seed + 1, 0.8f);
 		int k = 0;
 		for (float y = top + 34.0f; y < bottom - 10.0f; y += 52.0f, k++)
 		{
