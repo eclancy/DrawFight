@@ -143,8 +143,9 @@ player: IT IS NOT KEWL. IT IS TRESPASSING.
 triguy show none
 triguy look sad
 triguy (whisper): not kewl.
+player look smug
 player pose nod
-player: AGREED.
+player: CORRECT. NOT KEWL. FOR YOU.
 player pose none
 player (slam): REMOVING.
 camera wide
@@ -156,12 +157,20 @@ cast circy at 380 facing left
 music story
 camera two player circy
 player pose point
-player: ROUND DRAWING. OLDEST PAGE ON THE FRIDGE. FIRST TO GO.
+player: ROUND DRAWING. OLDEST PAGE ON THE FRIDGE.
+player: OLDEST GOES FIRST.
 player pose none
-circy: Duuude. Rude. I LOVE this fridge.
+circy look angry
+circy (shout): Duuude, rude! I was here first! Why do YOU get the fridge?
 player pose hips
-player: I ALSO LOVE THE FRIDGE. ONLY ONE OF US IS A MACHINE.
+player: THE FRIDGE IS A MACHINE. DOOMBOT IS A MACHINE.
+player: MACHINES STICK TOGETHER. LIKE MAGNETS.
+player pose laugh
+player: HA. HA. HA.
 player pose none
+circy look squint
+circy: Bro. That joke was mid.
+circy look angry
 circy pose stomp
 circy (shout): GET READY FOR EVIL STUNTS!
 circy pose none
@@ -181,7 +190,7 @@ music story
 camera two player edgelord
 edgelord look smug
 edgelord pose hips
-edgelord: Nice robot. Bit rusty.
+edgelord: A robot? Bit rusty, aren't you?
 edgelord pose none
 player look angry
 player pose present
@@ -189,7 +198,8 @@ player: I AM NOT RUSTY. I AM... VINTAGE.
 player pose none
 edgelord twirl
 edgelord pose point
-edgelord: Rust never sleeps. Neither do I. Try to keep up.
+edgelord: Vintage. Right. My swords are brand new.
+edgelord: Try to keep up, old timer.
 edgelord pose none
 player pose stomp
 player (slam): I. WILL. KEEP. UP.
@@ -204,7 +214,8 @@ music story
 camera two player lugnut
 lugnut look shocked
 lugnut pose present
-lugnut: Whoa, whoa. You're taking drawings down? Pal, there's room for everybody.
+lugnut: Whoa, whoa. You're taking drawings down?
+lugnut: Pal, there's room on this fridge for everybody.
 lugnut pose none
 player pose hips
 player: THERE IS ROOM FOR ONE. ME.
@@ -237,12 +248,12 @@ camera two player lugnut slow
 lugnut pose none
 lugnut face player
 lugnut pose beckon
-lugnut: Round two, robot. You took me down off this fridge once already.
+lugnut: Round two, robot. You knocked me off this fridge once already.
 lugnut pose none
 flambe pose none
 flambe look angry
 flambe pose point
-flambe: And me. One at a time, like a coward.
+flambe (hot): You took down my best friend? While I was busy cooking?
 flambe pose none
 lugnut pose crossarms
 lugnut: So we're teaming up. Buddy system - first rule on any site.
@@ -253,7 +264,7 @@ flambe (hot): And in any kitchen. Order up.
 flambe pose none
 player look angry
 player pose point
-player: TWO TARGETS. EFFICIENT.
+player: TWO TARGETS. ONE TRIP. EFFICIENT.
 player pose none
 camera wide
 fight
@@ -391,13 +402,15 @@ sound magnet_clink
 wait 50
 circy drop at -520
 circy face player
-circy (shout): Duuude! You put us back! Can we stay? We wanna keep playing!
+circy (shout): Duuude! You put us back up!
+circy: Can we stay? For real? We wanna keep playing!
 edgelord drop at 560
 edgelord face player
 edgelord: Admit it, robot. It's more fun with all of us up here.
 camera on player zoom 1.0
 player look happy
-player: ...AFFIRMATIVE. PLAYING IS... FUN.
+player: ...AFFIRMATIVE. YOU MAY STAY.
+player: IT IS... MORE FUN. WITH ALL OF YOU.
 player pose hips
 player: THE FRIDGE IS... A LITTLE BIT MINE.
 wait 60
@@ -440,9 +453,9 @@ camera two player doombot
 doombot pose bow
 doombot: GREETINGS, SMALL DRAWING.
 doombot pose hips
-doombot: YOU HAVE MET MY... DISTRACTION.
-doombot pose point
-doombot: EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING.
+doombot: ALL THOSE FIGHTS. ALL THAT FUSS. IT WAS A... DISTRACTION.
+doombot pose present
+doombot: SEE THAT PILE? EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I TOOK ONE DOWN.
 doombot pose laugh
 doombot: YOU BLAMED EACH OTHER. NOBODY SUSPECTED...
 doombot pose none
@@ -456,7 +469,7 @@ camera on doombot zoom 1.3
 doombot pose fist
 doombot: NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY.
 doombot pose hips
-doombot: THE ONE TRUE RULER. OF THE FRIDGE.
+doombot: TO BE THE ONE TRUE RULER. OF THE FRIDGE.
 doombot pose none
 board at -620 -820
 camera at -120 -680 zoom 0.72
@@ -467,9 +480,10 @@ camera two player doombot
 doombot pose point
 doombot: STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE.
 doombot pose crossarms
-doombot: WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL BE CLEAN. SHINY. EMPTY.
+doombot: WHEN THE LAST DRAWING COMES DOWN...
+doombot: THE FRIDGE WILL BE CLEAN. SHINY. EMPTY.
 doombot pose none
-doombot: EXCEPT FOR ONE ROBOT.
+doombot: AND ALL...
 camera on doombot zoom 1.45 fast
 doombot pose fist
 doombot (shout): MINE.

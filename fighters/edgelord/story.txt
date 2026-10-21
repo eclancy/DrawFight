@@ -55,7 +55,7 @@ camera on edgelord zoom 1.2
 edgelord look smug
 edgelord twirl
 edgelord pose hips
-edgelord: On the cutting edge of the fridge. And you're... not.
+edgelord: I'm on the cutting edge of this fridge. And you're... not.
 edgelord pose none
 edgelord pose point
 edgelord: Try to keep up.
@@ -68,7 +68,11 @@ cast player at -300
 cast edgelord at 300 facing left
 music story
 edgelord pose crossarms
-edgelord: I let you win. ...Point taken.
+edgelord: I let you win.
+wait 30
+edgelord look sad
+edgelord: ...Okay. I didn't. Point taken.
+edgelord pose none
 end
 
 # --- His own fights ----------------------------------------------------------------------------
@@ -86,10 +90,12 @@ player pose none
 triguy: that's, really kewl.
 player look smug
 player pose point
-player: A race? You're on.
+player: I know. Coolest swords on the fridge.
 player pose none
 triguy show none
+triguy mark sparkle
 triguy: that's, really kewl.
+triguy mark none
 player look angry
 player pose facepalm
 player: It IS really cool. Stop saying it like that.
@@ -130,7 +136,7 @@ circy (happy): Exactly. Ball is life.
 player pose shrug
 player: I don't know what that means.
 player pose none
-circy (shout): It means GET READY FOR EVIL STUNTS!
+circy (shout): It means I ROLL, bro. GET READY FOR EVIL STUNTS!
 player look shocked
 player: ...I don't like how excited you are about that.
 camera wide
@@ -160,7 +166,7 @@ player pose laugh
 player: A hard hat? Against swords?
 player pose none
 lugnut block 40
-narrator: He tapped it.
+narrator: Lugnut tapped his hard hat.
 lugnut pose hips
 lugnut: Safety first.
 lugnut pose none
@@ -185,7 +191,8 @@ flambe: Always. The hair of a true artist.
 flambe pose none
 player look smug
 player pose think
-player: Looks a little long on top. Lucky for you, I've got swords. Lots of swords.
+player: Looks a little long on top, though.
+player: Lucky for you, I've got swords. Lots of swords.
 player pose none
 flambe look shocked
 flambe pose tremble
@@ -241,7 +248,8 @@ flambe pose point
 flambe: And gave me a haircut I did not order.
 flambe pose none
 lugnut pose crossarms
-lugnut: You picked us off one at a time. So we're switching to the buddy system.
+lugnut: You picked us off one at a time.
+lugnut: So we're switching to the buddy system.
 lugnut pose none
 flambe look smug
 flambe pose fist
@@ -291,7 +299,7 @@ player pose none
 == answer
 player look normal
 player pose shrug
-player: ...Fine.
+player: ...Fine. You can have a spot.
 player pose none
 wait 30
 player turn

@@ -62,7 +62,9 @@ cast player at -300
 cast flambe at 300 facing left
 music story
 flambe pose slump
-flambe: Too hot for me? ...That's new.
+flambe: Me? Burned? On my own stage?
+flambe: ...That's new.
+flambe pose none
 end
 
 # Flambe and Lugnut on their lunch break, sat at a table together, the two of them against
@@ -93,7 +95,8 @@ flambe pose point
 flambe (hot): And knocked ME out of my own kitchen.
 flambe pose none
 lugnut pose crossarms
-lugnut: Picked us off one at a time, huh? Rookie move. On my site, nobody works alone.
+lugnut: Picked us off one at a time, huh? Rookie move.
+lugnut: On my site, nobody works alone.
 lugnut pose none
 flambe look smug
 flambe pose present
@@ -244,6 +247,7 @@ edgelord: Exactly. Stick with me.
 edgelord pose none
 triguy show none
 triguy face edgelord
+triguy walk to 520
 triguy mark sparkle
 triguy: that's, really kewl.
 edgelord look angry
@@ -255,6 +259,8 @@ triguy look sad
 triguy (whisper): not kewl.
 camera on player zoom 1.2
 player look smug
+player pose laugh
+player: Unstoppable? You can't even share a sword.
 player pose beckon
 player (hot): Order up.
 player pose none
@@ -300,7 +306,8 @@ player pose point
 player (hot): The fridge is not yours, mon ami.
 player pose none
 player pose shrug
-player: Even if you do look so alike that I almost grabbed your handle to put the butter away.
+player: Even if you do look so alike...
+player: ...that I almost grabbed your handle to put the butter away.
 player pose none
 camera on doombot zoom 1.35 fast
 doombot look angry
@@ -345,7 +352,8 @@ lugnut pose none
 circy drop at -480
 circy face player
 camera wide
-circy (shout): Duuude, do the encore! And let us stay on the fridge - we wanna keep playing!
+circy (shout): Duuude, do the encore!
+circy: And let us stay on the fridge! We wanna keep playing!
 edgelord drop at -760
 edgelord face player
 edgelord: A show is better with a cast. ...Not that I care.
