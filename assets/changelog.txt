@@ -2,6 +2,20 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.11.0 | 2026-10-21
+DoomBot turned toward you: now you see his face and chest from the front - both eyes, his mouth, all his controls.
+Crouch and crawl: hold down and push left or right to creep along low.
+Air dodges look like dodges now, not rolls.
+EdgeLord's up-B grabs whoever it hooks, holds them in place, and pulls him over to them.
+Lugnut's traffic cones bounce off walls and land on the floor, never inside it.
+Story mode: every ending has everyone asking to stay on the fridge and keep playing, DoomBot thanks you for clearing the fridge for him, and all the dialogue reads better.
+EdgeLord gives Flambé a haircut, and Flambé and Lugnut team up because you beat them both.
+DoomBot drops in right where his red eye was, with a real three-step plan, and his pile is the other fighters' own drawings - torn and rubbed out.
+Pressing A no longer skips story lines by accident - one press after reading moves on.
+City Rooftops: a fire escape, a water tower and a billboard instead of the crane.
+The percentages sit lower and smaller, out of the fight's way, and Flambé's name is easier to read.
+Draw your own now asks for three-quarter view, facing right.
+
 == 0.10.1 | 2026-10-20
 Escape on the main menu asks if you want to quit.
 
