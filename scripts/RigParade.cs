@@ -356,7 +356,7 @@ public partial class RigParade : Node2D
 	/// moved by FighterRig.SetFace. --film=turn: the paper turn about the upright axis, then a roll
 	/// round in the plane of the page (Fighter.Twirl). --film=story: every pose a story can have
 	/// him strike (FighterAnimations.StoryPose), held where a scene holds it - face on, for a
-	/// fighter drawn face on, as he stands in a scene. --film=talk: his body talking, at the height
+	/// fighter who stands face on, as he stands in a scene. --film=talk: his body talking, at the height
 	/// of a gesture, for each way a line is said.
 	/// </summary>
 	void BuildFaceFilm()

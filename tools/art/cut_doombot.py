@@ -9,20 +9,38 @@ Writes fighters/doombot/parts/*.png          the head, body and four limbs, in c
        fighters/doombot/rig.json             bone tree, offsets and pivots - and Mk. II's armour put
                                              back on it (mk2_armour.py draws that; this only hangs it)
 
-The drawing is a boxy robot on a photographed sheet of paper, facing the viewer. Every part is
-a traced shape (coordinates below, in pixels of the photo at half size) with the paper removed:
-paper is whatever pale, grey-ish colour can be reached from outside the shape without crossing
-his outline, so the cut follows his line exactly and never trims it.
+The drawing is a boxy robot on a photographed sheet of paper, arms and legs spread. Every part
+is a traced shape (coordinates below, in pixels of the photo at half size) with the paper
+removed: paper is whatever pale, grey-ish colour can be reached from outside the shape without
+crossing his outline, so the cut follows his line exactly and never trims it.
+
+HIS HEAD AND BODY ARE DRAWN SIDE ON, AND ARE TURNED TOWARD US (Eric's call, 2026-10-21). The red
+slash with the green tip is an antenna on the side of his head - his ear - the round grille eye
+is his right eye, and the teeth run to the front edge of his face. The body is the same: his
+near arm comes out of a round shoulder socket on its side, and his far arm off its front edge.
+So each box is turned three-quarters toward the camera, still facing right (turn_head,
+turn_torso; Eric picked 60/40 from the mockups in doombot_front_mockup.py):
+  - 40% of it is his drawn side, the drawing left of the corner squeezed and its back edge a
+    little shorter - the ear on the head, the socket and the hatch on the body;
+  - 60% is a new front facing us, filled with his own grey pencil, carrying copies of his marks:
+    his eye as drawn nearer the corner, a mirrored copy at 88% as the far eye, each with its
+    brow, his teeth (the left half, mirrored) as a mouth across it, and on the body his block of
+    controls exactly as drawn;
+  - the only new lines are the edges of the new fronts and the corner, in his marker colour at
+    his line width.
+Copied, mirrored, cropped and scaled - nothing of his redrawn. The joints, the socket, the eye
+and the antenna tips are moved with the turn, and both eyes, both brows and the mouth are lifted
+out by faces.py like any face. This is his own drawing, at his request; not a precedent.
 
 ONE THING IS FILLED IN, because a rig needs it. His right arm (on the left of the page) is drawn
-across the front of his body, coming out of the black socket on his chest. Cut free, that arm
+across the front of his body, coming out of the black socket on his side. Cut free, that arm
 leaves a hole in the body where nothing was drawn. The hole is filled with grey cloned from the
 body just below it, and his body's outline is continued down through it - filling in what is
 missing, never replacing what is there.
 
-He faces the viewer, so, as with Circy, the limbs on the right of the page are the front ones.
+The leg on the right of the page is the front leg, as with Circy.
 
-HIS RIGHT ARM IS THE FRONT ARM. It is drawn coming out of the black socket on his chest, so it
+HIS RIGHT ARM IS THE FRONT ARM. It is drawn coming out of the black socket on his side, so it
 is the near arm, in front of his body, and his left arm - out from his side on the right of the
 page - is the far one, behind his body and darkened a little. (Both once drew in front, which
 read as two front arms; then the wrong one went behind. Eric's call, 2026-10-04.) The socket is
@@ -76,7 +94,7 @@ HEAD = [(592, 190), (918, 196), (952, 340), (944, 636), (762, 628), (762, 646), 
         (632, 624), (518, 614), (540, 318)]
 TORSO = [(492, 622), (932, 634), (990, 1360), (452, 1358)]
 
-# His right arm, drawn across his body: the upper arm runs from the socket on his chest out to
+# His right arm, drawn across his body: the upper arm runs from the socket on his side out to
 # the elbow block; the forearm hangs from the block down to the claw.
 RIGHT_UPPER = [(222, 698), (606, 698), (606, 820), (222, 822)]
 RIGHT_LOWER = [(222, 698), (378, 702), (378, 962), (436, 950), (436, 1166), (96, 1166), (96, 950),
@@ -106,6 +124,7 @@ RIGHT_SHOULDER = (622, 758)
 RIGHT_ELBOW = (296, 760)
 RIGHT_HAND = (268, 1150)
 LEFT_SHOULDER = (928, 760)
+FAR_ARM_EDGE = 932          # the body's front edge at that shoulder: the far arm comes out from behind it
 LEFT_ELBOW = (1182, 758)
 LEFT_HAND = (1188, 428)
 BACK_HIP = (586, 1354)
@@ -121,8 +140,9 @@ BODY_EDGE = [(491, 690), (489, 826)]
 
 # Named spots on the drawing that moves come out of, in the same pixels: his round grille eye
 # fires the eye laser, and the tips of his antennae throw the up smash's lightning. Written into
-# rig.json relative to the head's joint, so they move with his head.
-EYE = (831, 464)
+# rig.json relative to the head's joint, so they move with his head - from wherever the turn
+# (below) puts them.
+EYE = (836, 453)
 
 # Where each claw begins on its forearm, in the same pixels: the stretched-arm grab stretches the
 # arm above this and leaves the claw below it its own size. Written into rig.json as the texture
@@ -151,6 +171,49 @@ LEVELS_BLACK = 18
 LEVELS_WHITE = 200
 LEVELS_GAMMA = 0.85
 SATURATION = 1.2
+
+# --- The turn (Eric's call, 2026-10-21) ------------------------------------------------------
+# His head and body are drawn side on; each is turned three-quarters toward us. Of each box's
+# width, FRONT_SHARE is the new front and the rest his drawn side, squeezed; the turned box is
+# TURN_WIDEN times as wide as the drawn profile, and the back edge of the side is TURN_TAPER of
+# its height shorter at each end, as the far edge of a box is. The far eye is FAR_EYE the size of
+# the near one. The new panel edges are PANEL_LINE wide, his own line width.
+FRONT_SHARE = 0.60
+TURN_WIDEN = 1.12
+TURN_TAPER = 0.035
+FAR_EYE = 0.88
+PANEL_LINE = 6
+
+# The head: its slanted back edge, the corner - just short of his teeth, where the front of his
+# face begins - and its front edge; the rows the side is taken from; the top and bottom lines at
+# the corner. The antennae are above the top line, split between back and front at
+# ANTENNA_SPLIT_X, each stood back on the new top at the point it grew from.
+HEAD_LEFT, HEAD_CORNER, HEAD_FRONT = 525, 725, 930
+HEAD_ROWS = (322, 617)
+HEAD_TOP, HEAD_BOTTOM = 342, 610
+ANTENNAE = [(540, 170), (960, 170), (960, 338), (540, 318)]
+ANTENNA_SPLIT_X = 760
+BACK_ANTENNA_BASE = (695, 325)
+FRONT_ANTENNA_BASE = (815, 331)
+# His eye and the dark brow over it; his teeth from their left end to the middle of the third gap
+# (mirrored about it, six teeth closed at both ends); clean grey between the antenna-ear and the
+# eye, which the new face is filled with; and the short neck under the head.
+EYE_BOX = (786, 366, 895, 499)
+TEETH_HALF = (727, 517, 852, 603)
+HEAD_GREY = (700, 362, 786, 505)
+NECK_BOX = (632, 617, 762, 650)
+# Where faces.py finds each feature on a copy of the eye, in the eye's own box: the eye, the brow,
+# and a point on each.
+EYE_IN_BOX = ((2, 47, 100, 132), (49, 86))
+BROW_IN_BOX = ((40, 2, 106, 52), (72, 28))
+
+# The body: the hatch seam is the corner - socket and hatch on his side, the controls on his
+# front. The front is filled with the clean grey under the black slot.
+TORSO_LEFT, TORSO_CORNER, TORSO_FRONT = 470, 680, 945
+TORSO_ROWS = (633, 1368)
+TORSO_TOP, TORSO_BOTTOM = 640, 1353
+CONTROLS = (679, 742, 938, 1170)
+TORSO_GREY = (700, 1182, 928, 1338)
 
 
 def level(v):
@@ -419,6 +482,216 @@ def canonical(piece, joint, end, name_upper, name_lower, parts_dir, parts, split
     return length * split
 
 
+# --- The turn ---------------------------------------------------------------------------------
+
+
+def turn_split(left, right, share):
+    """A drawn box from `left` to `right`, turned: where its corner goes, and how wide its new
+    front and its squeezed side are. It stays centred where it was drawn."""
+    total = (right - left) * TURN_WIDEN
+    front, side = total * share, total * (1.0 - share)
+    return (left + right) / 2.0 - total / 2.0 + side, front, side
+
+
+class Side(object):
+    """His drawn side of a box, from x0 to the corner x1, squeezed so its corner lands at `corner`
+    and its back edge `width` to the left of it - the back edge a little shorter, as the far edge
+    of a box is. Copied and scaled; nothing on it is redrawn."""
+
+    def __init__(self, x0, x1, rows, width, corner):
+        self.x0, self.x1, self.rows, self.width, self.corner = x0, x1, rows, width, corner
+        self.t = TURN_TAPER * (rows[1] - rows[0])
+        self.sx = width / float(x1 - x0)
+
+    def paste(self, canvas, piece):
+        y0, y1 = self.rows
+        t = self.t
+        quad = (self.x0, y0 - t, self.x0, y1 + t, self.x1, y1 + 0.0, self.x1, y0 + 0.0)
+        img = piece.transform((int(round(self.width)), y1 - y0), Image.QUAD, quad, Image.BICUBIC)
+        canvas.alpha_composite(img, (int(round(self.corner - self.width)), y0))
+
+    def map(self, p):
+        """Where a point on the drawn side ends up."""
+        x, y = p
+        y0, y1 = self.rows
+        u = (x - self.x0) / float(self.x1 - self.x0)
+        top, bottom = y0 - self.t * (1 - u), y1 + self.t * (1 - u)
+        return (self.corner - self.width + u * self.width, y0 + (y - top) / (bottom - top) * (y1 - y0))
+
+
+def tiled(patch, size):
+    """His pencil grey, tiled with every other copy mirrored so no seam lines up."""
+    out = Image.new('RGBA', size, (0, 0, 0, 0))
+    pw, ph = patch.size
+    for j in range(0, size[1], ph):
+        for i in range(0, size[0], pw):
+            p = patch
+            if (i // pw) % 2:
+                p = p.transpose(Image.FLIP_LEFT_RIGHT)
+            if (j // ph) % 2:
+                p = p.transpose(Image.FLIP_TOP_BOTTOM)
+            out.paste(p, (i, j))
+    return out
+
+
+def feathered(size, inset=5, blur=2.5):
+    mask = Image.new('L', size, 0)
+    ImageDraw.Draw(mask).rectangle([inset, inset, size[0] - 1 - inset, size[1] - 1 - inset], fill=255)
+    return mask.filter(ImageFilter.GaussianBlur(blur))
+
+
+def masked(img, mask):
+    out = img.convert('RGBA')
+    out.putalpha(ImageChops.multiply(out.split()[3], mask))
+    return out
+
+
+def marks(photo, box):
+    """His marks inside `box` - dark lines and coloured pencil - as a soft mask, so a copy of an
+    eye takes the eye and not the grey round it."""
+    crop = photo.crop(box)
+    mask = Image.new('L', crop.size, 0)
+    src, dst = crop.load(), mask.load()
+    for y in range(crop.size[1]):
+        for x in range(crop.size[0]):
+            r, g, b = src[x, y]
+            if (r + g + b) / 3.0 < 112 or max(r, g, b) - min(r, g, b) > 32:
+                dst[x, y] = 255
+    return mask.filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(1.2))
+
+
+def panel_ink(look):
+    """His marker colour: the darkest of the head's own front edge."""
+    px = sorted(look.crop((923, 400, 935, 580)).getdata(), key=sum)
+    px = px[:len(px) // 5]
+    return tuple(int(sum(p[i] for p in px) / len(px)) for i in range(3)) + (255,)
+
+
+def panel_lines(draw, x0, x1, top, bottom, ink):
+    """The only new lines: round the new front, and the corner where it meets his side."""
+    h = PANEL_LINE / 2.0
+    draw.line([(x0, top), (x1, top)], fill=ink, width=PANEL_LINE)
+    draw.line([(x1, top - h), (x1, bottom + h)], fill=ink, width=PANEL_LINE)
+    draw.line([(x0, bottom), (x1, bottom)], fill=ink, width=PANEL_LINE)
+    draw.line([(x0, top - h), (x0, bottom + h)], fill=ink, width=PANEL_LINE)
+
+
+def turn_torso(torso, look, share=FRONT_SHARE):
+    """
+    His body turned toward us: the drawn side (socket and hatch) squeezed on the left, and a new
+    front on the right, his grey pencil with his block of controls on it exactly as drawn.
+    Returns the body and where things on it went: 'side' (a Side, to map points on it), 'front'
+    (the front's left and right edges) and 'across' (a drawn x carried across the whole body,
+    for the hips under it).
+    """
+    corner, wf, ws = turn_split(TORSO_LEFT, TORSO_FRONT, share)
+    # Taken from a little behind the back edge, which slants out at the bottom.
+    x0 = TORSO_LEFT - 20
+    side = Side(x0, TORSO_CORNER, TORSO_ROWS, ws * (TORSO_CORNER - x0) / float(TORSO_CORNER - TORSO_LEFT), corner)
+    out = Image.new('RGBA', torso.size, (0, 0, 0, 0))
+    side.paste(out, torso)
+    f0, f1 = int(round(corner)), int(round(corner + wf))
+    out.alpha_composite(tiled(look.crop(TORSO_GREY).convert('RGBA'), (f1 - f0, TORSO_BOTTOM - TORSO_TOP)), (f0, TORSO_TOP))
+    block = look.crop(CONTROLS).convert('RGBA')
+    block.putalpha(feathered(block.size))
+    out.alpha_composite(block, (f0 + int(round((wf - block.size[0]) / 2.0)), CONTROLS[1]))
+    panel_lines(ImageDraw.Draw(out), f0, f1, TORSO_TOP, TORSO_BOTTOM, panel_ink(look))
+    left, right = corner - ws, corner + wf
+
+    def across(x):
+        return left + (x - TORSO_LEFT) / float(TORSO_FRONT - TORSO_LEFT) * (right - left)
+
+    return out, {'side': side, 'front': (f0, f1), 'across': across}
+
+
+def turn_head(head, photo, look, share=FRONT_SHARE):
+    """
+    His head turned toward us: his drawn side with the antenna-ear squeezed on the left, and a new
+    face on the right - his grey pencil, his eye as drawn nearer the corner, a mirrored copy of it
+    (brow and all) a little smaller as the far eye, and his teeth mirrored into a mouth across it.
+    The antennae stand back on the top and the neck goes under the middle. Returns the head and
+    where things went: 'neck', 'eye' (the near eye's middle), 'antenna_back'/'antenna_front' (how
+    far each antenna moved) and 'faces' (each feature's box and points, for faces.py).
+    """
+    corner, wf, ws = turn_split(HEAD_LEFT, HEAD_FRONT, share)
+    x0 = HEAD_LEFT - 8
+    side = Side(x0, HEAD_CORNER, HEAD_ROWS, ws * (HEAD_CORNER - x0) / float(HEAD_CORNER - HEAD_LEFT), corner)
+    antennae = poly_mask(head.size, ANTENNAE)
+    body = masked(head, ImageChops.invert(antennae))
+    antennae = masked(head, antennae)
+
+    # The neck first, under the middle of the turned head, so the head covers its top.
+    out = Image.new('RGBA', head.size, (0, 0, 0, 0))
+    neck_x = int(round(corner - ws + (ws + wf) / 2.0 - (NECK_BOX[2] - NECK_BOX[0]) / 2.0))
+    out.paste(head.crop(NECK_BOX), (neck_x, NECK_BOX[1]))
+    side.paste(out, body)
+
+    f0, f1 = int(round(corner)), int(round(corner + wf))
+    out.alpha_composite(tiled(look.crop(HEAD_GREY).convert('RGBA'), (f1 - f0, HEAD_BOTTOM - HEAD_TOP)), (f0, HEAD_TOP))
+    eye = masked(look.crop(EYE_BOX), marks(photo, EYE_BOX))
+    ex, ey = EYE[0] - EYE_BOX[0], EYE[1] - EYE_BOX[1]
+    near = (int(round(f0 + wf * 0.28 - ex)), EYE_BOX[1])
+    out.alpha_composite(eye, near)
+    far_eye = eye.transpose(Image.FLIP_LEFT_RIGHT)
+    far_eye = far_eye.resize((int(round(far_eye.size[0] * FAR_EYE)), int(round(far_eye.size[1] * FAR_EYE))), Image.LANCZOS)
+    w = EYE_BOX[2] - EYE_BOX[0]
+    far = (int(round(f0 + wf * 0.72 - (w - ex) * FAR_EYE)), int(round(EYE[1] - ey * FAR_EYE)))
+    out.alpha_composite(far_eye, far)
+
+    half = look.crop(TEETH_HALF).convert('RGBA')
+    hw, hh = half.size
+    mouth = Image.new('RGBA', (hw * 2 - 2, hh), (0, 0, 0, 0))
+    mouth.paste(half, (0, 0))
+    mouth.paste(half.transpose(Image.FLIP_LEFT_RIGHT), (hw - 2, 0))
+    mw = int(round(wf * 0.8))
+    mouth = mouth.resize((mw, hh), Image.LANCZOS)
+    mouth.putalpha(ImageChops.multiply(mouth.split()[3], feathered(mouth.size, inset=1, blur=1.2)))
+    mx = int(round(f0 + (wf - mw) / 2.0))
+    out.alpha_composite(mouth, (mx, TEETH_HALF[1]))
+    panel_lines(ImageDraw.Draw(out), f0, f1, HEAD_TOP, HEAD_BOTTOM, panel_ink(look))
+
+    # The antennae: the back one where its root on the side went, the front one on the new top.
+    bx, by = side.map(BACK_ANTENNA_BASE)
+    back_shift = (int(round(bx - BACK_ANTENNA_BASE[0])), int(round(by - BACK_ANTENNA_BASE[1])))
+    fx = f0 + wf * (FRONT_ANTENNA_BASE[0] - HEAD_CORNER) / float(HEAD_FRONT - HEAD_CORNER)
+    front_shift = (int(round(fx - FRONT_ANTENNA_BASE[0])), int(round(HEAD_TOP - PANEL_LINE / 2.0 - FRONT_ANTENNA_BASE[1])))
+    for shift, box in ((back_shift, (0, 0, ANTENNA_SPLIT_X, head.size[1])),
+                       (front_shift, (ANTENNA_SPLIT_X, 0, head.size[0], head.size[1]))):
+        one = Image.new('RGBA', head.size, (0, 0, 0, 0))
+        one.paste(antennae.crop(box), (box[0] + shift[0], box[1] + shift[1]))
+        out = Image.alpha_composite(out, one)
+
+    # Where faces.py will find each feature: on the near eye as in the drawing, on the far one
+    # mirrored and scaled with it.
+    def near_box(spec):
+        (a, b, c, d), (sx, sy) = spec
+        return (near[0] + a, near[1] + b, near[0] + c, near[1] + d), [(near[0] + sx, near[1] + sy)]
+
+    def far_box(spec):
+        (a, b, c, d), (sx, sy) = spec
+        k = FAR_EYE
+        return ((int(round(far[0] + k * (w - c))), int(round(far[1] + k * b)),
+                 int(round(far[0] + k * (w - a))), int(round(far[1] + k * d))),
+                [(int(round(far[0] + k * (w - sx))), int(round(far[1] + k * sy)))])
+
+    faces_at = {
+        'EyeNear': near_box(EYE_IN_BOX), 'BrowNear': near_box(BROW_IN_BOX),
+        'EyeFar': far_box(EYE_IN_BOX), 'BrowFar': far_box(BROW_IN_BOX),
+        'Mouth': ((mx - 4, TEETH_HALF[1] - 2, mx + mw + 4, HEAD_BOTTOM - PANEL_LINE),
+                  [(int(round(mx + mw * f)), 560) for f in (0.1, 0.35, 0.65, 0.9)]),
+    }
+    return out, {
+        'neck': (neck_x + NECK[0] - NECK_BOX[0], NECK[1]),
+        'eye': (near[0] + ex, near[1] + ey),
+        'antenna_back': back_shift, 'antenna_front': front_shift,
+        'faces': faces_at,
+    }
+
+
+def moved(p, shift):
+    return (p[0] + shift[0], p[1] + shift[1])
+
+
 def main():
     parts_dir = os.path.join(ROOT, 'parts')
     if not os.path.isdir(parts_dir):
@@ -432,9 +705,19 @@ def main():
     torso = cut(photo, TORSO, look)
     arm_over_body = ImageChops.multiply(poly_mask(WORK, COVERED), poly_mask(WORK, TORSO))
     torso = fill_covered(torso, look)
+    # Turned toward us, and everything that hangs on him moved with it.
+    torso, body_turn = turn_torso(torso, look)
+    side = body_turn['side']
+    socket_at = side.map(SOCKET[0])
+    right_shoulder = side.map(RIGHT_SHOULDER)
+    left_shoulder = (body_turn['front'][1] - (FAR_ARM_EDGE - LEFT_SHOULDER[0]), LEFT_SHOULDER[1])
+    back_hip = (body_turn['across'](BACK_HIP[0]), BACK_HIP[1])
+    front_hip = (body_turn['across'](FRONT_HIP[0]), FRONT_HIP[1])
 
-    # The socket, lifted out of the finished body (rim and all) to sit over the front arm's root.
-    (cx, cy), (rx, ry) = SOCKET
+    # The socket, lifted out of the finished body (rim and all) to sit over the front arm's root -
+    # narrower now, on the squeezed side.
+    (cx, cy), (rx, ry) = socket_at, SOCKET[1]
+    rx *= side.sx
     hole = Image.new('L', WORK, 0)
     ImageDraw.Draw(hole).ellipse([cx - rx - 7, cy - ry - 7, cx + rx + 7, cy + ry + 7], fill=255)
     socket = Image.new('RGBA', WORK, (0, 0, 0, 0))
@@ -448,10 +731,12 @@ def main():
     torso.crop(tbox).save(os.path.join(parts_dir, 'Torso.png'))
     parts['Torso'] = {'texture': 'parts/Torso.png', 'pivot': [HIP[0] - tbox[0], HIP[1] - tbox[1]]}
 
-    head = ringed(cut(photo, HEAD, look), below=ANTENNA_BASE_Y)
+    head, head_turn = turn_head(cut(photo, HEAD, look), photo, look)
+    head = ringed(head, below=ANTENNA_BASE_Y)
     hbox = head.getbbox()
     head.crop(hbox).save(os.path.join(parts_dir, 'Head.png'))
-    parts['Head'] = {'texture': 'parts/Head.png', 'pivot': [NECK[0] - hbox[0], NECK[1] - hbox[1]]}
+    neck = head_turn['neck']
+    parts['Head'] = {'texture': 'parts/Head.png', 'pivot': [neck[0] - hbox[0], neck[1] - hbox[1]]}
 
     # Arms: each half cut from its own shape, so the elbow block is in both and covers the joint.
     # His right arm, out of the socket, is the front one; his left arm the back one.
@@ -474,20 +759,20 @@ def main():
     shin_back = math.hypot(BACK_FOOT[0] - BACK_HIP[0], BACK_FOOT[1] - BACK_HIP[1]) - knee_back
     shin_front = math.hypot(FRONT_FOOT[0] - FRONT_HIP[0], FRONT_FOOT[1] - FRONT_HIP[1]) - knee_front
 
-    def rel(p):
-        return [p[0] - HIP[0], p[1] - HIP[1]]
+    def rel(p, to=HIP):
+        return [round(p[0] - to[0], 1), round(p[1] - to[1], 1)]
 
     bones = [
         {'name': 'Hip', 'parent': None, 'offset': [0, 0], 'part': None},
-        {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': rel(BACK_HIP), 'part': 'LegBack_Upper'},
+        {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': rel(back_hip), 'part': 'LegBack_Upper'},
         {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': [0, round(knee_back, 1)], 'part': 'LegBack_Lower'},
-        {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': rel(FRONT_HIP), 'part': 'LegFront_Upper'},
+        {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': rel(front_hip), 'part': 'LegFront_Upper'},
         {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': [0, round(knee_front, 1)], 'part': 'LegFront_Lower'},
         {'name': 'Torso', 'parent': 'Hip', 'offset': [0, 0], 'part': 'Torso'},
-        {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': rel(LEFT_SHOULDER), 'part': 'ArmBack_Upper'},
+        {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': rel(left_shoulder), 'part': 'ArmBack_Upper'},
         {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': [0, round(upper_back, 1)], 'part': 'ArmBack_Lower'},
-        {'name': 'Head', 'parent': 'Torso', 'offset': rel(NECK), 'part': 'Head'},
-        {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': rel(RIGHT_SHOULDER), 'part': 'ArmFront_Upper'},
+        {'name': 'Head', 'parent': 'Torso', 'offset': rel(neck), 'part': 'Head'},
+        {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': rel(right_shoulder), 'part': 'ArmFront_Upper'},
         {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': [0, round(upper_front, 1)], 'part': 'ArmFront_Lower'},
     ]
     foot = max(BACK_BOOT + FRONT_BOOT, key=lambda p: p[1])[1]
@@ -509,15 +794,20 @@ def main():
              'always': True, 'foot': True},
         ],
         'points': [
-            # The socket on his chest, which the pocket missile comes out of.
-            {'name': 'socket', 'bone': 'Torso', 'offset': [SOCKET[0][0] - HIP[0], SOCKET[0][1] - HIP[1]]},
-            {'name': 'eye', 'bone': 'Head', 'offset': [EYE[0] - NECK[0], EYE[1] - NECK[1]]},
-            {'name': 'antenna_back', 'bone': 'Head', 'offset': [ANTENNA_BACK[0] - NECK[0], ANTENNA_BACK[1] - NECK[1]]},
-            {'name': 'antenna_front', 'bone': 'Head', 'offset': [ANTENNA_FRONT[0] - NECK[0], ANTENNA_FRONT[1] - NECK[1]]},
+            # The socket on his side, which the pocket missile comes out of.
+            {'name': 'socket', 'bone': 'Torso', 'offset': rel(socket_at)},
+            # His near eye - the one he drew - on his new face.
+            {'name': 'eye', 'bone': 'Head', 'offset': rel(head_turn['eye'], neck)},
+            {'name': 'antenna_back', 'bone': 'Head', 'offset': rel(moved(ANTENNA_BACK, head_turn['antenna_back']), neck)},
+            {'name': 'antenna_front', 'bone': 'Head', 'offset': rel(moved(ANTENNA_FRONT, head_turn['antenna_front']), neck)},
         ],
     }
     with open(os.path.join(ROOT, 'rig.json'), 'wb') as fh:
         fh.write(json.dumps(rig, indent=2, sort_keys=True).encode('utf-8'))
+    # Where the turn put his face, in the head part's pixels - what face_specs.py must say.
+    for name, (box, seeds) in sorted(head_turn['faces'].items()):
+        print('face %-8s box=%s seeds=%s' % (name, (box[0] - hbox[0], box[1] - hbox[1], box[2] - hbox[0], box[3] - hbox[1]),
+                                             [(x - hbox[0], y - hbox[1]) for x, y in seeds]))
     # Last: the eyes and mouth lifted out so the game can move them (faces.py, face_specs.py).
     faces.apply(ROOT, *FACES['doombot'])
     # Then Mk. II's scrap armour, hung back on the new cut (drawn by mk2_armour.py, not redrawn here).

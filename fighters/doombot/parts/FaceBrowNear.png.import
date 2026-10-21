@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dijwoeaciv3ww"
-path="res://.godot/imported/FaceEyeFront.png-ea9c9a7eba62d8650ec34d218e8a8a62.ctex"
+uid="uid://ccep42fqee33x"
+path="res://.godot/imported/FaceBrowNear.png-55b803c3b13d41fa16f28905418dde8e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://fighters/doombot/parts/FaceEyeFront.png"
-dest_files=["res://.godot/imported/FaceEyeFront.png-ea9c9a7eba62d8650ec34d218e8a8a62.ctex"]
+source_file="res://fighters/doombot/parts/FaceBrowNear.png"
+dest_files=["res://.godot/imported/FaceBrowNear.png-55b803c3b13d41fa16f28905418dde8e.ctex"]
 
 [params]
 

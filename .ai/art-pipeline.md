@@ -218,9 +218,10 @@ whole face reads best turned three-quarter toward the camera while the body stil
 ourselves,
 Flambé and Lugnut, are drawn that way: the face across the front of the head, both eyes on it,
 the ear at the back, and only the tip of the nose past the outline, which is what keeps which
-way he faces unambiguous. A drawing done **face on** - DoomBot, arms out - stays as drawn and
-fights side on as every rig does; for standing in a story scene and for celebrating it turns
-face on with a paper turn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`): the far arm comes
+way he faces unambiguous. DoomBot's head and body are drawn side on, so the cut turns them
+three-quarters toward us (see "A side view turned toward us", below). His arms are drawn spread
+wide. He fights side on as every rig does; for standing in a story scene and for celebrating he
+stands with his arms out as drawn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`): the far arm comes
 out in front of the body unshaded, no limb turns to face back, an elbow bends either way across
 the picture, and no pose is exaggerated, so his arms go where he drew them. Side-view story
 poses are turned face on for him (`FighterAnimations.FaceOn`); the ones that fold an arm across
@@ -554,7 +555,7 @@ small path rather than bending the rig.
   under the part it hangs on (his exhaust stacks, behind his body), and a rig point with an
   outfit (the stack tops, where his heat smoke comes out) is only there while it is worn. It
   covers part of the drawing it is worn over, so keep it off the face and anything a move comes
-  out of - his armour skips the socket on his chest - and never paint it into the artist's
+  out of - his armour skips the socket on his side - and never paint it into the artist's
   parts.
 - **Specks are not part of a piece.** A fleck of pencil on the paper beside a cut piece, not
   joined to it, gets its own outline ring and shows as a dark nugget stuck to the part - DoomBot's
@@ -566,3 +567,28 @@ small path rather than bending the rig.
   request (`ringed` in `tools/art/cut_doombot.py`): ring each whole shape before cutting it at a
   joint, so no line crosses an elbow or knee, and leave thin details (his antennae) out. Ask the
   artist before giving anyone else's drawing one.
+- **A side view turned toward us** (DoomBot, Eric's call 2026-10-21, on his own drawing at his
+  request; not a precedent). Eric drew DoomBot's head and body side on, which was misread twice.
+  The red slash with the green tip is an antenna on the side of his head (his ear), the round
+  grille eye is his right eye, and the teeth run to the front edge of his face. On the body, the
+  near arm comes out of a shoulder socket on its side and the far arm comes off its front edge.
+  A story needs the whole face, so `turn_head` and `turn_torso` in `tools/art/cut_doombot.py`
+  turn each box three-quarters toward the camera, still facing right. Eric picked 60/40 from the
+  three proportions in `tools/art/doombot_front_mockup.py`.
+  - **His side, 40% of the turned width:** the drawing left of the corner, squeezed, with its
+    back edge a little shorter. It keeps the ear, the socket and the hatch.
+  - **A new front, 60%:** filled with his own grey pencil, tiled. The head's front carries his
+    eye as drawn nearer the corner, a mirrored copy of it at 88% as the far eye, each with its
+    brow, and his teeth (the left half, mirrored) as a mouth across it. The body's front carries
+    his block of controls exactly as drawn.
+  - **New lines:** only the edges of the new fronts and the corner, in his marker colour at his
+    line width.
+
+  The turned box is 12% wider than the drawn profile and as tall, so his size and hurtbox do not
+  change. The cut moves everything that hangs on him with the turn: the near shoulder to the
+  socket on the squeezed side, the far shoulder to the front's right edge, the hips spread
+  across the whole turned body, and the neck under the middle of the head. The `eye` point
+  (the laser) goes on the near eye, and the antenna tips go where the antennae now stand. Both
+  eyes, both brows and the mouth are lifted out as face pieces (`EyeNear`, `BrowNear`, `EyeFar`,
+  `BrowFar`, `Mouth` in `tools/art/face_specs.py`; the cut prints their boxes). The ear stays on
+  the side. Mk. II's helmet band and belly plate go round the corner with it.

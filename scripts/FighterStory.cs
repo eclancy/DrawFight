@@ -113,8 +113,8 @@ public partial class Fighter
 
 	/// <summary>
 	/// What a story - or a win - has him doing over whatever standing would show, after the fight's
-	/// own pose: a pose struck, his hands going while he talks, his victory pose. Face on, if he was
-	/// drawn face on and is standing to talk or to celebrate.
+	/// own pose: a pose struck, his hands going while he talks, his victory pose. Face on, if he
+	/// stands face on and is standing to talk or to celebrate.
 	/// </summary>
 	void ApplyStoryLayer()
 	{
@@ -262,7 +262,7 @@ public partial class Fighter
 	const int FrontTurnFrames = 16;
 
 	/// <summary>
-	/// Whether a fighter drawn face on (FighterData.FrontOn) should be standing face on now: in a
+	/// Whether a fighter who stands face on (FighterData.FrontOn) should be standing face on now: in a
 	/// story scene, or having won, standing still - not walking, not mid-move, not in the air.
 	/// </summary>
 	bool WantsFrontOn() => Data.FrontOn && stillFrames >= StillBeforeFrontOn && string.IsNullOrEmpty(StoryShow) && !Twirling

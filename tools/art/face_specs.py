@@ -30,18 +30,21 @@ FACES = {
         dict(name='Mouth', kind='mouth', box=(232, 344, 340, 452), rule='teeth', fill='texture', grow=5, pivot='top', stretch=0.25,
              seeds=[(265, 420), (250, 400), (240, 370)]),
     ]),
-    # DoomBot (Eric's): a red slash of a brow over a green eye, a round red eye, and the yellow
-    # teeth - taken with the dark lines round them. Pencilled grey metal borrowed to fill behind.
+    # DoomBot (Eric's), turned toward us (cut_doombot.py, Eric's call 2026-10-21): on his new face,
+    # his round grille eye with its dark brow nearer the corner, its mirrored copy as the far eye,
+    # and his teeth mirrored into a mouth - taken with the dark lines round them. The red slash
+    # with the green tip is an antenna on the side of his head, his ear, not a face: it stays put.
+    # The cut prints these boxes after a re-cut. Pencilled grey metal borrowed to fill behind.
     'doombot': ('Head', 'Head', [
-        dict(name='BrowFront', kind='brow', box=(80, 172, 158, 286), rule='colour', fill='texture', grow=5, tilt=-1,
-             seeds=[(110, 230)]),
-        dict(name='EyeFront', kind='eye', box=(132, 280, 182, 318), rule='colour', fill='texture', grow=5, tilt=-1,
-             seeds=[(155, 298)]),
-        dict(name='EyeBack', kind='eye', box=(282, 208, 372, 292), rule='colour', fill='texture', grow=5, tilt=1,
-             seeds=[(325, 250)]),
-        dict(name='BrowBack', kind='brow', box=(318, 172, 368, 214), rule='colour', fill='texture', grow=5, tilt=1,
-             seeds=[(348, 196)]),
-        dict(name='Mouth', kind='mouth', box=(226, 322, 424, 398), rule='colour', fill='texture', grow=5, pivot='top', stretch=0.12,
-             seeds=[(300, 360), (245, 360), (385, 365), (410, 365)]),
+        dict(name='EyeNear', kind='eye', box=(225, 210, 323, 295), rule='colour', fill='texture', grow=5, tilt=1,
+             seeds=[(272, 249)]),
+        dict(name='BrowNear', kind='brow', box=(263, 165, 329, 215), rule='colour', fill='texture', grow=5, tilt=1,
+             seeds=[(295, 191)]),
+        dict(name='EyeFar', kind='eye', box=(349, 214, 435, 289), rule='colour', fill='texture', grow=5, tilt=-1,
+             seeds=[(394, 249)]),
+        dict(name='BrowFar', kind='brow', box=(344, 175, 402, 219), rule='colour', fill='texture', grow=5, tilt=-1,
+             seeds=[(374, 198)]),
+        dict(name='Mouth', kind='mouth', box=(220, 312, 446, 401), rule='colour', fill='texture', grow=5, pivot='top', stretch=0.12,
+             seeds=[(246, 357), (300, 357), (366, 357), (420, 357)]),
     ]),
 }

@@ -72,7 +72,7 @@ in the same place. Nothing is drawn new for a story; it is staged with what the 
   jolting on DoomBot's slams. A pose a script names wins over it.
 - **Faces show.** Every fighter is drawn so the whole face reads as they talk: Circy, Triguy
   and EdgeLord three-quarter on as drawn, Flambe and Lugnut redrawn three-quarter, turned to
-  the camera, and DoomBot - drawn face on, arms out - turns to face you whenever he stands in a
+  the camera, and DoomBot - head and body turned toward us by the cut, arms out as drawn - turns to face you whenever he stands in a
   scene or celebrates, with a paper turn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`). A
   fight is always side on.
   Marks over the head: anger vein, sweat drop, sparkle, heart, "!", "?", steam, tears (Triguy

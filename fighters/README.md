@@ -177,12 +177,21 @@ sheet, so it reads at match scale.
 
 `source/doombot.jpg` is the photo, the master copy. `python tools/art/cut_doombot.py` cuts it
 into `parts/` and `rig.json`: each part is a traced shape with the paper removed by flooding in
-from outside the shape, so the cut stops at his outline. He faces the viewer; the legs on the
-right of the page are the front ones, and the arm on the LEFT of the page is the front arm (see
-below).
+from outside the shape, so the cut stops at his outline. The legs on the right of the page are
+the front ones, and the arm on the LEFT of the page is the front arm (see below).
+
+**His head and body are drawn side on, and turned toward us** (Eric's call, 2026-10-21). The
+red slash with the green tip is an antenna on the side of his head, his ear; the round grille
+eye is his right eye. The cut turns each box three-quarters toward the camera, 60/40:
+- **His side:** what he drew, squeezed, with the ear, the socket and the hatch on it.
+- **A new front facing us:** his own grey pencil, carrying copies of his eye (and a mirrored
+  copy as the far eye), his brows, his teeth mirrored into a mouth, and his chest controls.
+- **New lines:** only at the edges of the new fronts and the corner.
+
+See `sheet.md` and "A side view turned toward us" in `.ai/art-pipeline.md`.
 
 **One thing is filled in.** His right arm (left of the page) is drawn across his body, coming
-out of the socket on his chest. Cut free, it leaves a hole in the body where nothing was drawn,
+out of the socket on his side. Cut free, it leaves a hole in the body where nothing was drawn,
 so that patch is filled with grey cloned from the body just below it and the body's outline is
 carried on through it - filling in what is missing, not replacing what is there.
 
@@ -224,7 +233,7 @@ black point, white point, the mid-greys lifted and a little more colour (`LEVELS
 the cut does not move, and `source/` is untouched. Eric's call, 2026-10-04.
 
 **Named spots.** `rig.json` also names three points on his head (`"points"`): his round grille
-`eye`, which the eye laser comes out of, and the tips of his two antennae, which the up smash's
+`eye` (the near one, as he drew it), which the eye laser comes out of, and the tips of his two antennae, which the up smash's
 lightning arcs from. They ride on the head bone, so they follow every pose.
 
 He is a heavy, built from Eric's own character sheet - `sheet.md` in this folder. He plays at

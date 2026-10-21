@@ -41,3 +41,19 @@ Two calls made along the way:
 - **The grab is a real command grab**, the second in the roster after EdgeLord's grapple (now
   his Chain Blade).
   Eric chose that over making it a blockable hook. See `.ai/character-design.md`.
+
+Turned toward us, on 2026-10-21, at Eric's call:
+
+- **His drawing is a side view.** The red slash with the green tip is an antenna on the side of
+  his head (his ear), the round grille eye is his right eye, and the teeth run to the front edge
+  of his face. His body is drawn side on too: the near arm comes out of a shoulder socket on its
+  side, and the far arm comes off its front edge.
+- **So his head and body are turned three-quarters toward us**, still facing right. Eric picked
+  the 60/40 version from three mockups (`tools/art/doombot_front_mockup.py`). Of each box, 40% is
+  his drawn side, squeezed, keeping the ear, the socket and the hatch. The other 60% is a new
+  front facing us. It carries copies of his own marks: his eye as drawn, a mirrored copy of it
+  at 88% size as the far eye, the brows with them, his teeth mirrored into a mouth across the
+  front, and his chest controls exactly as drawn. The front is filled with his own grey pencil.
+  The only new lines are the edges of the new fronts and the corner where each front meets his
+  side. Built by `tools/art/cut_doombot.py`. This was his own drawing, done at his request, and is
+  not a precedent for anyone else's.

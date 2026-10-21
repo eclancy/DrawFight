@@ -13,7 +13,7 @@ arm, spiked bracers, and knee caps over riveted shin guards.
 Nothing of DoomBot's is redrawn or covered over for good. The armour is its own parts, drawn and
 pencilled like the stand-ins (drawn.py, so this needs $GODOT_BIN), hung on his parts as rig.json
 extras of the outfit "mk2" - hidden on DoomBot, worn by Mk. II (FighterData.Outfit). It keeps
-clear of his face, so every expression still reads, and of the socket on his chest, which his
+clear of his face, so every expression still reads, and of the socket on his side, which his
 near arm comes out of and his missile is fired from: his near arm gets a band below it rather
 than a pauldron over it.
 
@@ -173,12 +173,16 @@ def saw_blade(cx, cy, r_in, r_out, teeth):
 # --- the pieces, each about its part's joint, in that part's pixels -----------------------------
 
 # The head: a saw blade standing up between his antennas, in a riveted band round the top of his
-# head - above his brows, so his face is exactly as drawn.
-HELMET = (saw_blade(64, -346, 84, 106, 20)
-          + poly([(-166, -356), (272, -326), (270, -274), (-164, -302)], 'rust')
-          + poly([(-164, -318), (270, -290), (270, -274), (-164, -302)], 'steel_dark', '{wi}')
-          + rivets((-140, -340), (246, -313), 6)
-          + '<path d="M 96,-330 C 112,-318 132,-318 146,-326" fill="none" stroke="{ink}" stroke-width="{wi}" '
+# head - above his brows, so his face is exactly as drawn. The band goes round the corner of his
+# turned head (cut_doombot.py), with a seam where his side meets his face.
+HEAD_CORNER_X = -44
+HELMET = (saw_blade(6, -346, 84, 106, 20)
+          + poly([(-224, -346), (228, -344), (228, -288), (-222, -292)], 'rust')
+          + poly([(-222, -306), (228, -304), (228, -288), (-222, -292)], 'steel_dark', '{wi}')
+          + '<path d="M %d,-344 L %d,-290" fill="none" stroke="{ink}" stroke-width="{wi}" stroke-linecap="round"/>'
+            % (HEAD_CORNER_X, HEAD_CORNER_X)
+          + rivets((-200, -330), (206, -328), 6)
+          + '<path d="M 38,-330 C 54,-318 74,-318 88,-326" fill="none" stroke="{ink}" stroke-width="{wi}" '
             'stroke-linecap="round"/>')
 
 # Behind his shoulder, leaning back: two stacks, so a hot DoomBot looks like a furnace.
@@ -186,12 +190,16 @@ STACKS = (pipe((-262, -520), (-324, -846), 50, (0.55, 0.82))
           + pipe((-212, -560), (-252, -934), 62, (0.45, 0.78)))
 EXHAUST = [('exhaust', (-252, -934)), ('exhaust2', (-324, -846))]
 
-# Across the bottom of his body, below everything drawn on it: a steel plate with a strip of
-# road barrier along it, stencilled II - which, unlike MK II, still reads facing the other way.
-BELLY = (poly([(-288, -142), (290, -136), (292, 20), (-290, 24)], 'steel')
-         + hazard(-262, -60, 264, 0)
-         + stencil('II', -31, -130, 58, width=16)
-         + rivet(-266, -120) + rivet(268, -114) + rivet(-268, 6) + rivet(270, 2))
+# Across the bottom of his body, below everything drawn on it: a steel plate across his front with
+# a strip of road barrier along it, stencilled II - which, unlike MK II, still reads facing the
+# other way - and a rusty plate that does not match round his side.
+BELLY_CORNER_X = -68
+BELLY = (poly([(-286, -136), (BELLY_CORNER_X, -142), (BELLY_CORNER_X, 24), (-284, 18)], 'rust')
+         + rivet(-266, -116) + rivet(-88, -122) + rivet(-266, 0) + rivet(-88, 6)
+         + poly([(BELLY_CORNER_X + 6, -142), (248, -138), (250, 20), (BELLY_CORNER_X + 6, 24)], 'steel')
+         + hazard(-46, -60, 234, 0)
+         + stencil('II', 63, -130, 58, width=16)
+         + rivet(-44, -120) + rivet(230, -116) + rivet(-44, 6) + rivet(232, 2))
 
 # His far shoulder (no socket there): a domed pauldron with spikes, bulging out the far side,
 # where it shows past his body.
@@ -204,7 +212,7 @@ PAULDRON = (poly([(-96, 84), (-104, 20), (-80, -40), (-30, -72), (12, -78), (62,
                    'steel_dark')
             + rivets((-70, 50), (100, 50), 5))
 
-# His near arm comes out of the socket on his chest, so its armour is a band further down, clear
+# His near arm comes out of the socket on his side, so its armour is a band further down, clear
 # of the socket however the arm swings, with spikes on the outside.
 BAND = (spike((-94, 146), (-94, 178), (-152, 156))
         + spike((-94, 192), (-94, 224), (-148, 204))
@@ -241,7 +249,7 @@ GREAVE = (poly([(-80, 52), (78, 48), (72, 228), (-74, 232)], 'rust')
 
 # name: (svg, viewBox about the joint). Untrimmed, so the joint is always at -viewBox origin.
 PIECES = {
-    'Mk2Helmet': (HELMET, (-185, -470, 290, -255)),
+    'Mk2Helmet': (HELMET, (-245, -470, 250, -255)),
     'Mk2Stacks': (STACKS, (-370, -980, -150, -500)),
     'Mk2Belly': (BELLY, (-305, -155, 305, 36)),
     'Mk2Pauldron': (PAULDRON, (-115, -165, 160, 135)),

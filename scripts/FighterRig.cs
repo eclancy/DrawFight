@@ -2242,8 +2242,8 @@ public partial class FighterRig : Node2D
 	// --- Face on ----------------------------------------------------------------------------------
 
 	/// <summary>
-	/// Stood face on, the way a drawing done straight on was drawn - DoomBot, his arms out to his
-	/// sides (FighterData.FrontOn), for talking and for celebrating; a fight is always side on. Both
+	/// Stood face on, his arms out to his sides the way they were drawn - DoomBot, whose head and
+	/// body the cut turns toward us (FighterData.FrontOn), for talking and for celebrating; a fight is always side on. Both
 	/// arms come out in front of his body and neither is shaded, since neither is the far one; no
 	/// limb turns round to face back; and an elbow bends either way across the picture, because
 	/// facing you there is no "forward" for it to fold toward. Nothing is redrawn: it is his own

@@ -13,8 +13,8 @@
     {
       "name": "LegBack_Upper", 
       "offset": [
-        -136, 
-        0
+        -150.6, 
+        0.0
       ], 
       "parent": "Hip", 
       "part": "LegBack_Upper"
@@ -31,8 +31,8 @@
     {
       "name": "LegFront_Upper", 
       "offset": [
-        204, 
-        0
+        230.2, 
+        0.0
       ], 
       "parent": "Hip", 
       "part": "LegFront_Upper"
@@ -58,8 +58,8 @@
     {
       "name": "ArmBack_Upper", 
       "offset": [
-        206, 
-        -594
+        248.0, 
+        -594.0
       ], 
       "parent": "Torso", 
       "part": "ArmBack_Upper"
@@ -76,8 +76,8 @@
     {
       "name": "Head", 
       "offset": [
-        -27, 
-        -712
+        4.0, 
+        -712.0
       ], 
       "parent": "Torso", 
       "part": "Head"
@@ -85,8 +85,8 @@
     {
       "name": "ArmFront_Upper", 
       "offset": [
-        -100, 
-        -596
+        -126.5, 
+        -591.8
       ], 
       "parent": "Torso", 
       "part": "ArmFront_Upper"
@@ -101,7 +101,7 @@
       "part": "ArmFront_Lower"
     }
   ], 
-  "canonicalHeight": 1152, 
+  "canonicalHeight": 1151, 
   "extras": [
     {
       "always": true, 
@@ -138,42 +138,14 @@
     {
       "always": true, 
       "bone": "Head", 
-      "face": "brow", 
-      "name": "faceBrowFront", 
-      "offset": [
-        -66.0, 
-        -211.0
-      ], 
-      "onPart": true, 
-      "part": "FaceBrowFront", 
-      "stretch": 1.1, 
-      "tilt": -1
-    }, 
-    {
-      "always": true, 
-      "bone": "Head", 
       "face": "eye", 
-      "name": "faceEyeFront", 
+      "name": "faceEyeNear", 
       "offset": [
-        -28.0, 
-        -141.0
+        33.5, 
+        -186.5
       ], 
       "onPart": true, 
-      "part": "FaceEyeFront", 
-      "stretch": 1.1, 
-      "tilt": -1
-    }, 
-    {
-      "always": true, 
-      "bone": "Head", 
-      "face": "eye", 
-      "name": "faceEyeBack", 
-      "offset": [
-        142.0, 
-        -190.0
-      ], 
-      "onPart": true, 
-      "part": "FaceEyeBack", 
+      "part": "FaceEyeNear", 
       "stretch": 1.1, 
       "tilt": 1
     }, 
@@ -181,15 +153,43 @@
       "always": true, 
       "bone": "Head", 
       "face": "brow", 
-      "name": "faceBrowBack", 
+      "name": "faceBrowNear", 
       "offset": [
-        158.0, 
-        -247.0
+        54.5, 
+        -249.0
       ], 
       "onPart": true, 
-      "part": "FaceBrowBack", 
+      "part": "FaceBrowNear", 
       "stretch": 1.1, 
       "tilt": 1
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "eye", 
+      "name": "faceEyeFar", 
+      "offset": [
+        151.0, 
+        -187.5
+      ], 
+      "onPart": true, 
+      "part": "FaceEyeFar", 
+      "stretch": 1.1, 
+      "tilt": -1
+    }, 
+    {
+      "always": true, 
+      "bone": "Head", 
+      "face": "brow", 
+      "name": "faceBrowFar", 
+      "offset": [
+        132.0, 
+        -242.0
+      ], 
+      "onPart": true, 
+      "part": "FaceBrowFar", 
+      "stretch": 1.1, 
+      "tilt": -1
     }, 
     {
       "always": true, 
@@ -197,8 +197,8 @@
       "face": "mouth", 
       "name": "faceMouth", 
       "offset": [
-        140.0, 
-        -118.0
+        92.0, 
+        -124.0
       ], 
       "onPart": true, 
       "part": "FaceMouth", 
@@ -339,37 +339,37 @@
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
-    "FaceBrowBack": {
+    "FaceBrowFar": {
       "pivot": [
-        25.0, 
-        21.0
+        29.0, 
+        22.0
       ], 
-      "texture": "parts/FaceBrowBack.png"
+      "texture": "parts/FaceBrowFar.png"
     }, 
-    "FaceBrowFront": {
+    "FaceBrowNear": {
       "pivot": [
-        39.0, 
-        57.0
+        32.5, 
+        25.0
       ], 
-      "texture": "parts/FaceBrowFront.png"
+      "texture": "parts/FaceBrowNear.png"
     }, 
-    "FaceEyeBack": {
+    "FaceEyeFar": {
       "pivot": [
-        45.0, 
-        42.0
+        43.0, 
+        37.5
       ], 
-      "texture": "parts/FaceEyeBack.png"
+      "texture": "parts/FaceEyeFar.png"
     }, 
-    "FaceEyeFront": {
+    "FaceEyeNear": {
       "pivot": [
-        25.0, 
-        19.0
+        48.5, 
+        42.5
       ], 
-      "texture": "parts/FaceEyeFront.png"
+      "texture": "parts/FaceEyeNear.png"
     }, 
     "FaceMouth": {
       "pivot": [
-        99.0, 
+        109.0, 
         0.0
       ], 
       "texture": "parts/FaceMouth.png"
@@ -390,8 +390,8 @@
     }, 
     "Head": {
       "pivot": [
-        185, 
-        440
+        241, 
+        439
       ], 
       "texture": "parts/Head.png"
     }, 
@@ -460,7 +460,7 @@
     }, 
     "Mk2Helmet": {
       "pivot": [
-        185.0, 
+        245.0, 
         470.0
       ], 
       "texture": "parts/Mk2Helmet.png"
@@ -481,15 +481,15 @@
     }, 
     "Socket": {
       "pivot": [
-        151, 
-        682
+        179, 
+        679
       ], 
       "texture": "parts/Socket.png"
     }, 
     "Torso": {
       "pivot": [
-        277, 
-        743
+        306, 
+        733
       ], 
       "texture": "parts/Torso.png"
     }
@@ -499,32 +499,32 @@
       "bone": "Torso", 
       "name": "socket", 
       "offset": [
-        -92, 
-        -583
+        -118.4, 
+        -579.6
       ]
     }, 
     {
       "bone": "Head", 
       "name": "eye", 
       "offset": [
-        136, 
-        -178
+        32.0, 
+        -189.0
       ]
     }, 
     {
       "bone": "Head", 
       "name": "antenna_back", 
       "offset": [
-        -71, 
-        -423
+        -142.0, 
+        -422.0
       ]
     }, 
     {
       "bone": "Head", 
       "name": "antenna_front", 
       "offset": [
-        184, 
-        -409
+        139.0, 
+        -401.0
       ]
     }, 
     {

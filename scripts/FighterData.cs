@@ -246,8 +246,9 @@ public partial class FighterData : Resource
 	public MoveData[] Throws = System.Array.Empty<MoveData>();
 
 	/// <summary>
-	/// Drawn face on (DoomBot): standing in a story scene, and celebrating a win, he turns to face
-	/// you with his arms out the way he was drawn (FighterRig.SetFrontOn). A fight is side on.
+	/// Stands face on (DoomBot, drawn with his arms spread): standing in a story scene, and
+	/// celebrating a win, he turns to face you with his arms out the way he was drawn
+	/// (FighterRig.SetFrontOn). A fight is side on.
 	/// </summary>
 	public bool FrontOn;
 
@@ -485,7 +486,8 @@ public partial class FighterData : Resource
 			Robotic = true,
 			// No rolling: he stays in his block instead.
 			CanRoll = false,
-			// Eric drew him face on, arms out: that is how he stands to talk and to celebrate.
+			// Eric drew him arms out - and his head and body are turned toward us by the cut
+			// (tools/art/cut_doombot.py): that is how he stands to talk and to celebrate.
 			FrontOn = true,
 			Lettering = NameStyle.DoomBot(),
 		};

@@ -104,7 +104,7 @@ public enum AttackAnim
 
 	/// <summary>
 	/// Firing something out of his chest: arms swept back out of the way and the chest pushed out,
-	/// head back. DoomBot's pocket missile, which comes out of the socket on his chest.
+	/// head back. DoomBot's pocket missile, which comes out of the socket on his side.
 	/// </summary>
 	ChestOut,
 
@@ -1193,7 +1193,7 @@ public static class FighterAnimations
 	}
 
 	// --- Face on -----------------------------------------------------------------------------
-	// For a fighter drawn face on (FighterData.FrontOn: DoomBot), standing to talk or to celebrate
+	// For a fighter who stands face on (FighterData.FrontOn: DoomBot), standing to talk or to celebrate
 	// (FighterRig.SetFrontOn). His near arm is on the left of the picture and his far arm on the
 	// right, both in front of him; out to the side is positive for the left arm and negative for
 	// the right.

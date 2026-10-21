@@ -74,7 +74,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
    replace what is there. This is the entire point of the project. (The allowed exceptions, for
    readability at match size: widening every line uniformly, in place, when it is too thin to
    see - Circy's and Triguy's `LINE_BOOST` - on Eric's own DoomBot at his request, a dark
-   ring round the outside edge - and, on Eric's call, Circy's front foot redrawn flat, and
+   ring round the outside edge, and his side-view head and body turned three-quarters toward us
+   (Eric's call, 2026-10-21): his drawn side squeezed, a new front carrying copies of his own
+   eye, brows, teeth and controls, mirrored or scaled, filled with his own pencil, with new lines
+   only at the new panel edges and corner - and, on Eric's call, Circy's front foot redrawn flat, and
    Triguy's white coloured in with a white pencil and a sheen on his hat, not a line of his moved. Each
    was asked for by name; none is a precedent for the next drawing. Eyes and mouths are lifted out
    whole and moved - squashed to blink, stretched to talk - never redrawn, and at rest the face
@@ -130,7 +133,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's rig: colours his
   drawing, cuts it, and draws the swords and turning frames. About a minute.
 - **`python tools/art/cut_doombot.py`** — re-cut DoomBot from the photo of his drawing,
-  including the patch of body filled in behind his arm. About 25 seconds.
+  including the patch of body filled in behind his arm, and turn his head and body three-quarters
+  toward us. About 30 seconds. `python tools/art/doombot_front_mockup.py` lays the turn out at other
+  front:side proportions beside the photo, in `.shots/`.
 - **`python tools/art/mk2_armour.py`** — redraw DoomBot Mk. II's scrap armour: separate
   pieces in coloured pencil, hung on DoomBot's rig as the outfit `mk2`, which only Mk. II wears
   (`FighterData.Outfit`). Needs `$GODOT_BIN`; a few seconds. A re-cut of DoomBot hangs it back on
