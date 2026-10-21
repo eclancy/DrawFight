@@ -158,9 +158,13 @@ any of them:
   then crosses the whole distance in its active frames. The glint is the price of the speed.
 - `OncePerAirtime` - usable once until landing, like every up special. Any special that moves
   a fighter far must have it, or chaining it becomes a second recovery.
-- `GrabThrow` - on a `DelayedLaunch` recovery, the tether catches the first fighter it touches,
-  reels them in, and throws them with this move as the launch fires. The recovery happens
-  either way. One of the roster's two command grabs (EdgeLord's Chain Blade); see below.
+- `GrabThrow` - on a `DelayedLaunch` recovery, the tether catches the first fighter it touches
+  and holds them right where they are - in the air or on the floor, never dragged anywhere -
+  until the launch fires; then he is hauled along it to them, and this move hits them as he
+  arrives (Eric, 2026-10-21: it used to reel them in and throw them down, which pulled people to
+  the ground). The recovery happens either way: he carries on up the line the chain was flung
+  with whatever of its length the haul did not use. One of the roster's two command grabs
+  (EdgeLord's Chain Blade); see below.
 - `TetherArt` - a tether drawn as a chain with one of the fighter's drawings on the end, pointing
   the way it flies, instead of a rope or a stretched arm. EdgeLord's dagger on a chain.
 - `MaxOut` - how many of a move's hazards can exist at once; another removes the oldest.
@@ -245,7 +249,10 @@ any of them:
   does not flinch: no knockback, no hitstun, a clang. Bigger hits and grabs get through. Lug's
   hard hat (8%, on his smashes and barge), which glints for exactly as long as it is on.
 - `SlideFriction` - a `Trap` that is shoved along the floor instead of set down, skidding to a
-  stop and dropping off any edge it slides over. Lug's traffic cone.
+  stop and dropping off any edge it slides over. It is solid (Eric, 2026-10-21: the cones went
+  into the terrain): it bounces back off a wall with about half its speed, falls until it lands
+  on solid ground or comes down onto a soft platform from above, and is never put down inside a
+  wall he is standing against. Lug's traffic cone.
 - `Walker` + `Burst` - a summon: a small copy of the fighter's own rig that walks along the floor,
   stops at an edge, and goes off as `Burst` when it touches someone or runs out of time. It never
   hits by itself. DoomBot's MiniBot.
@@ -371,7 +378,7 @@ two: EdgeLord's Chain Blade and DoomBot's Claw Grab. The rule was "at most one" 
 a real grab for DoomBot over a blockable hook (2026-10-02). Universal grabs are still out of
 scope (see `.ai/fighting-design.md`). A command grab is fine while it reads as that character's
 identity rather than a mechanic everyone must learn, so each one has to look and play
-differently: EdgeLord's is a recovery that throws down, DoomBot's is a slow, long ground reach
+differently: EdgeLord's is a recovery that pins them in place and hauls him to them, DoomBot's is a slow, long ground reach
 that is punished hard when it misses. A third should be a conversation, not a default.
 
 ### Worked example: DoomBot

@@ -252,7 +252,8 @@ public static class CharacterNormals
 		m.LaunchAngleDegrees = 80.0f;
 
 		// Cone Shove: he bends down, plants a traffic cone and shoves it along the floor with both
-		// hands. It skids to a stop and stays put, and the next one to run into it trips over it
+		// hands. It skids to a stop and stays put - bouncing back off any wall it meets on the way
+		// (Hazard.TickSlide) - and the next one to run into it trips over it
 		// and goes head over heels. Low along the ground, so it is still a sweep - one that leaves
 		// something behind. It was a kick, his one attack with a foot, until he was redrawn with
 		// little legs under a huge top half (Eric, 2026-10-08).

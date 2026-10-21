@@ -376,8 +376,9 @@ public static class RegressionChecks
 					foreach (MoveData throwMove in attacker.Throws) Report("  " + throwMove.MoveName, throwMove, victim);
 				}
 
-				// A command grab hits with what follows it, and a vent with however hot he is.
-				if (move?.Special == SpecialKind.CommandGrab && move.GrabThrow != null)
+				// A command grab hits with what follows it - DoomBot's kick, the cut EdgeLord arrives
+				// with up his chain - and a vent with however hot he is.
+				if (move?.GrabThrow != null)
 				{
 					Report("  " + move.GrabThrow.MoveName, move.GrabThrow, victim);
 				}

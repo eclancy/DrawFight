@@ -293,7 +293,6 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>Who this fighter's tether has caught, and where they were caught.</summary>
 	Fighter grabbed;
 	Vector2 grabPoint;
-	int grabFrame;
 
 	/// <summary>Who is holding this fighter, if anyone. Held, they go where they are put.</summary>
 	Fighter heldBy;
@@ -1451,7 +1450,7 @@ public partial class Fighter : CharacterBody2D
 				break;
 
 			case SpecialKind.Recovery when currentMove.DelayedLaunch:
-				TickGrapple(input, activeStart);
+				TickGrapple(input, activeStart, dt);
 				if (active) QueryHits();
 				break;
 
@@ -1859,6 +1858,7 @@ public partial class Fighter : CharacterBody2D
 			case SpecialKind.Recovery when move.DelayedLaunch:
 				// The launch waits for the hook; startup only brakes the fall.
 				hookFired = false;
+				zipping = false;
 				airJumpsUsed = 0;
 				tetherAim = new Vector2(Facing * move.SpecialSpeed, -move.SpecialRise).Normalized();
 				break;
@@ -3360,9 +3360,10 @@ public partial class Fighter : CharacterBody2D
 		if (Mathf.Abs(tetherAim.X) > 0.1f) Facing = tetherAim.X > 0.0f ? 1 : -1;
 	}
 
-	void TickGrapple(InputState input, int activeStart)
+	void TickGrapple(InputState input, int activeStart, float dt)
 	{
-		if (currentMove.StickAimed && !hookFired && moveFrame <= activeStart) AimTether(input);
+		// Once the chain is on someone it stays on them: the stick no longer swings it about.
+		if (currentMove.StickAimed && !hookFired && grabbed == null && moveFrame <= activeStart) AimTether(input);
 
 		// A swung drawing he lets go of drops away at the end of the pull.
 		int activeEnd = activeStart + currentMove.ActiveFrames;
@@ -3377,20 +3378,100 @@ public partial class Fighter : CharacterBody2D
 		if (moveFrame <= activeStart)
 		{
 			Velocity = new Vector2(Velocity.X * 0.8f, Mathf.Min(Velocity.Y * 0.8f, 120.0f));
-			if (currentMove.GrabThrow != null) TickGrab(activeStart);
+			if (currentMove.GrabThrow != null && grabbed == null)
+			{
+				CatchAt(HookOrigin() + TetherDirection() * currentMove.TetherLength * TetherReach());
+				// Whoever it catches is held right where they were caught - in the air or on the
+				// floor - and is never this move's hit as well as its arrival.
+				if (grabbed != null) alreadyHitThisMove.Add(grabbed);
+			}
 			return;
 		}
 
+		if (zipping)
+		{
+			TickZip(activeStart + currentMove.ActiveFrames, dt);
+			return;
+		}
 		if (hookFired) return;
 		hookFired = true;
 
-		// The throw goes on the same frame as the launch: one yank flings them down and him up.
-		if (grabbed != null) ThrowGrabbed(currentMove.GrabThrow);
+		// On someone: he is hauled along the chain to them instead (Eric, 2026-10-21: it pulled
+		// them down to the ground; it should hold them where they are and pull him to them).
+		if (StillHolding())
+		{
+			zipping = true;
+			zipFrom = GlobalPosition;
+			float dx = grabbed.GlobalPosition.X - GlobalPosition.X;
+			if (Mathf.Abs(dx) > 4.0f) Facing = dx > 0.0f ? 1 : -1;
+			TickZip(activeStart + currentMove.ActiveFrames, dt);
+			return;
+		}
 
 		Vector2 pull = new Vector2(Facing * currentMove.SpecialSpeed, -currentMove.SpecialRise);
 		if (currentMove.StickAimed) pull = tetherAim * pull.Length();
 		hookPoint = HookOrigin() + pull.Normalized() * currentMove.TetherLength;
 		Velocity = pull;
+	}
+
+	/// <summary>Being hauled along the chain to whoever it caught.</summary>
+	bool zipping;
+
+	/// <summary>How far short of them he stops: his body just touching theirs.</summary>
+	const float ZipArriveGap = 20.0f;
+
+	/// <summary>
+	/// The least of the haul's speed he keeps once he gets there, so the pull still carries him up
+	/// and on a little - it is his recovery - without throwing him straight past them.
+	/// </summary>
+	const float ZipCarry = 0.35f;
+
+	/// <summary>Where the haul started, for how much of the chain it used up.</summary>
+	Vector2 zipFrom;
+
+	/// <summary>The chain is still on whoever it caught - nobody else has knocked them off it.</summary>
+	bool StillHolding() => grabbed != null && IsInstanceValid(grabbed) && grabbed.heldBy == this;
+
+	/// <summary>
+	/// Hauls him along the chain to whoever it caught, at the speed the empty chain would have
+	/// flung him, while they hang where they were caught. On arrival they take the move's
+	/// <see cref="MoveData.GrabThrow"/> - a cut that pops them up and away, so the catch is a way
+	/// home and a little damage, never a combo: he is spent, and they are flying. If he cannot get
+	/// there by the end of the active frames - a wall in the way - they are simply let go.
+	/// </summary>
+	void TickZip(int activeEnd, float dt)
+	{
+		float speed = new Vector2(currentMove.SpecialSpeed, currentMove.SpecialRise).Length();
+		if (!StillHolding())
+		{
+			grabbed = null;
+			zipping = false;
+			return;
+		}
+
+		hookPoint = grabbed.GlobalPosition;
+		Vector2 to = grabbed.GlobalPosition - GlobalPosition;
+		Vector2 dir = to.Normalized();
+		bool touching = BodyRect().Grow(ZipArriveGap).Intersects(grabbed.BodyRect());
+		if (touching || to.Length() <= speed * dt)
+		{
+			zipping = false;
+			ThrowGrabbed(currentMove.GrabThrow);
+			// Up the way the chain was flung, with whatever of its length the haul did not use:
+			// someone caught close to him never costs him the way home.
+			float used = (GlobalPosition - zipFrom).Length() / Mathf.Max(1.0f, currentMove.TetherLength);
+			Velocity = TetherDirection() * speed * Mathf.Max(ZipCarry, 1.0f - used);
+			return;
+		}
+		if (moveFrame >= activeEnd)
+		{
+			zipping = false;
+			ReleaseGrabbed();
+			return;
+		}
+
+		// Gravity is added after this, every frame; aiming at them afresh each frame takes it out.
+		Velocity = dir * speed;
 	}
 
 	Vector2 HookOrigin() => currentMove != null && currentMove.HangFromArt
@@ -3403,23 +3484,6 @@ public partial class Fighter : CharacterBody2D
 
 	/// <summary>How far out the tether is through the startup, 0 to 1.</summary>
 	float TetherReach() => Mathf.Clamp(moveFrame / (float)Mathf.Max(1, currentMove.StartupFrames), 0.0f, 1.0f);
-
-	/// <summary>
-	/// The tether's tip catches the first fighter it touches, and reels them in to his hand over
-	/// the rest of the startup. This is the roster's one command grab (see
-	/// .ai/character-design.md): it goes through blocking, and there is only ever one.
-	/// </summary>
-	void TickGrab(int activeStart)
-	{
-		if (grabbed == null)
-		{
-			CatchAt(HookOrigin() + TetherDirection() * currentMove.TetherLength * TetherReach());
-			return;
-		}
-
-		float t = (moveFrame - grabFrame) / (float)Mathf.Max(1, activeStart - grabFrame);
-		grabbed.GlobalPosition = grabPoint.Lerp(GrabHand(), t * t);
-	}
 
 	/// <summary>Where a reeled-in fighter ends up: just in front of the hand.</summary>
 	/// <summary>
@@ -3464,7 +3528,6 @@ public partial class Fighter : CharacterBody2D
 
 			grabbed = other;
 			grabPoint = other.GlobalPosition;
-			grabFrame = moveFrame;
 			hitSomethingThisMove = true;
 			other.BeginHeld(this);
 			return;

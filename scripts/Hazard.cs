@@ -164,6 +164,7 @@ public partial class Hazard : Node2D
 		this.lifeFrames = lifeFrames;
 
 		GlobalPosition = position;
+		if (move.SlideFriction > 0.0f && owner != null) PlaceClearOfWalls(owner.GlobalPosition);
 		if (move.Beam) beamDir = velocity.X < 0.0f ? -1 : 1;
 		if (move.Special == SpecialKind.Walker) BuildMiniRig();
 	}
@@ -405,17 +406,14 @@ public partial class Hazard : Node2D
 		{
 			if (TickTopple(dt)) return;
 		}
+		else if (move.SlideFriction > 0.0f)
+		{
+			TickSlide(dt);
+		}
 		else
 		{
 			velocity = new Vector2(velocity.X, velocity.Y + gravity * dt);
 			GlobalPosition += velocity * dt;
-
-			// A kicked trap skids to a stop along the floor - and drops off an edge it slides over.
-			if (move.SlideFriction > 0.0f && gravity == 0.0f)
-			{
-				velocity = new Vector2(Mathf.MoveToward(velocity.X, 0.0f, move.SlideFriction * dt), 0.0f);
-				if (!LandsOnGround()) gravity = 3000.0f;
-			}
 		}
 
 		// Risen and fallen back into the floor: gone.
@@ -514,6 +512,108 @@ public partial class Hazard : Node2D
 		if (!toppling) return GlobalPosition + new Vector2(0.0f, -half + radius);
 		var foot = new Vector2(GlobalPosition.X, riseGround);
 		return foot + new Vector2(0.0f, -(half * 2.0f - radius)).Rotated(toppleDir * toppleAngle);
+	}
+
+	// --- Shoved along the floor: Lug's traffic cone ------------------------------------------
+
+	/// <summary>How hard a shoved trap falls once it has slid off an edge, in pixels a second squared.</summary>
+	const float SlideFallGravity = 3000.0f;
+
+	/// <summary>How much of its speed a shoved trap keeps when it bounces back off a wall.</summary>
+	const float SlideWallBounce = 0.55f;
+
+	/// <summary>
+	/// A shoved trap is a solid thing (Eric, 2026-10-21: the cones went into the terrain). It skids
+	/// along whatever it stands on and slows to a stop; it bounces back off a wall, losing some
+	/// speed; slid off an edge it falls, keeping its way, until it lands on anything that can be
+	/// stood on - a soft platform too, but only coming down onto it from above, as a fighter does.
+	/// Each frame it moves across, then down, each move swept as a box against the stage, so it
+	/// stops at the surface it meets rather than ending up inside it.
+	/// </summary>
+	void TickSlide(float dt)
+	{
+		Vector2 half = SlideHalf();
+		bool grounded = velocity.Y >= 0.0f && LandsOnGround();
+		velocity = grounded
+			? new Vector2(Mathf.MoveToward(velocity.X, 0.0f, move.SlideFriction * dt), 0.0f)
+			: new Vector2(velocity.X, velocity.Y + SlideFallGravity * dt);
+
+		// Across. Only solid ground is a wall: soft platforms never stop anything sideways. The
+		// box is lifted a little off the floor it slides on, so the floor itself is not a wall.
+		if (velocity.X != 0.0f)
+		{
+			float dx = velocity.X * dt;
+			var box = new Vector2(half.X, half.Y - 3.0f);
+			float safe = SweepSolid(GlobalPosition + new Vector2(0.0f, -3.0f), box, new Vector2(dx, 0.0f));
+			GlobalPosition += new Vector2(dx * safe, 0.0f);
+			if (safe < 1.0f)
+			{
+				int side = dx > 0.0f ? 1 : -1;
+				velocity = new Vector2(-velocity.X * SlideWallBounce, velocity.Y);
+				spinSign = -spinSign;
+				match?.Dust(GlobalPosition + new Vector2(side * half.X, half.Y * 0.4f), 0.35f, -side * 120.0f);
+			}
+		}
+
+		// Down, onto solid ground or the top of a soft platform; up, only into solid ground.
+		if (velocity.Y != 0.0f)
+		{
+			float dy = velocity.Y * dt;
+			var box = new Vector2(half.X - 2.0f, half.Y);
+			float safe = SweepSolid(GlobalPosition, box, new Vector2(0.0f, dy));
+			if (dy > 0.0f)
+			{
+				Vector2 bottom = GlobalPosition + new Vector2(0.0f, half.Y);
+				var ray = PhysicsRayQueryParameters2D.Create(bottom, bottom + new Vector2(0.0f, dy), 0b10);
+				Godot.Collections.Dictionary hit = GetWorld2D().DirectSpaceState.IntersectRay(ray);
+				if (hit.Count > 0) safe = Mathf.Min(safe, (((Vector2)hit["position"]).Y - bottom.Y) / dy);
+			}
+			GlobalPosition += new Vector2(0.0f, dy * safe);
+			if (safe < 1.0f)
+			{
+				if (dy > 0.0f && velocity.Y > 900.0f) match?.Dust(GlobalPosition + new Vector2(0.0f, half.Y), 0.4f, 0.0f);
+				velocity = new Vector2(velocity.X, 0.0f);
+			}
+		}
+	}
+
+	/// <summary>Half the size of a shoved trap's box: its drawing, as it is drawn.</summary>
+	Vector2 SlideHalf()
+	{
+		float halfHeight = move.FxArtSize > 0.0f ? move.FxArtSize * 0.5f : move.FxRadius;
+		if (move.FxTexture == null) return new Vector2(move.FxRadius, halfHeight);
+		Vector2 size = move.FxTexture.GetSize();
+		return new Vector2(halfHeight * size.X / Mathf.Max(1.0f, size.Y), halfHeight);
+	}
+
+	/// <summary>
+	/// How far along <paramref name="motion"/>, 0 to 1, a box of half size <paramref name="half"/>
+	/// centred at <paramref name="from"/> can go before it meets solid ground.
+	/// </summary>
+	float SweepSolid(Vector2 from, Vector2 half, Vector2 motion)
+	{
+		var query = new PhysicsShapeQueryParameters2D
+		{
+			Shape = new RectangleShape2D { Size = half * 2.0f },
+			Transform = new Transform2D(0.0f, from),
+			Motion = motion,
+			CollisionMask = 0b01,
+		};
+		float[] result = GetWorld2D().DirectSpaceState.CastMotion(query);
+		return result.Length > 0 ? Mathf.Clamp(result[0], 0.0f, 1.0f) : 1.0f;
+	}
+
+	/// <summary>
+	/// A shoved trap is put down in front of whoever shoved it - but never inside a wall he is
+	/// standing up against: it goes down as far out as there is room for, and bounces off from there.
+	/// </summary>
+	void PlaceClearOfWalls(Vector2 from)
+	{
+		Vector2 half = SlideHalf();
+		var start = new Vector2(from.X, GlobalPosition.Y - 3.0f);
+		var box = new Vector2(half.X, half.Y - 3.0f);
+		float safe = SweepSolid(start, box, new Vector2(GlobalPosition.X - from.X, 0.0f));
+		GlobalPosition = new Vector2(from.X + (GlobalPosition.X - from.X) * safe, GlobalPosition.Y);
 	}
 
 	/// <summary>Whether there is floor just under this hazard's height at <paramref name="x"/>.</summary>
