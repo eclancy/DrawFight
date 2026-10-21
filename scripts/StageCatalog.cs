@@ -266,18 +266,28 @@ public static class StageCatalog
 			// The street: past both side blast zones, so it has no corners to grab and no end.
 			new StagePlatform(new Rect2(-2600.0f, Street, 5200.0f, 420.0f), false, PlatformLook.Road),
 
-			// A building site in the first gap: a tower crane whose jib you can stand on, with a
-			// steel beam hanging off its hook - both soft, so you can jump up through them.
-			new StagePlatform(new Rect2(-760.0f, -380.0f, 470.0f, 22.0f), true, PlatformLook.CraneJib),
-			new StagePlatform(new Rect2(-425.0f, -380.0f + StageData.CraneDrop, 170.0f, 20.0f), true, PlatformLook.HangingBeam),
+			// A water tower on the first roof, the city's own shape: its lid is up where a crane's
+			// jib used to be, with nothing over it, and its legs are tall enough to walk under. It
+			// keeps to the far end of the roof, clear of the spawn and of the stories' -780.
+			new StagePlatform(new Rect2(-1062.0f, -300.0f, 150.0f, 16.0f), true, PlatformLook.WaterTower),
+
+			// A fire escape bolted to the wall facing the first gap, the way out of the street on
+			// that side (Eric, 2026-10-21: it was a crane beam hung too close to the buildings).
+			// 210 up to each landing and 140 more to the roof - one jump for most, two for Circy -
+			// and 140 of open air between it and the next building, so falling into the street is
+			// still a thing that happens. The top landing sits just above the first roof, a hop
+			// across from it.
+			new StagePlatform(new Rect2(-470.0f, 140.0f, 130.0f, 14.0f), true, PlatformLook.FireEscape),
+			new StagePlatform(new Rect2(-470.0f, -70.0f, 130.0f, 14.0f), true, PlatformLook.FireEscape),
 
 			// Scaffolding up the side of the second gap: two levels, a way to climb back out of
 			// the street before the next car comes.
 			new StagePlatform(new Rect2(100.0f, 40.0f, 210.0f, 18.0f), true, PlatformLook.Scaffold),
 			new StagePlatform(new Rect2(100.0f, 190.0f, 210.0f, 18.0f), true, PlatformLook.Scaffold),
 
-			// A billboard gantry, so the middle of the map is contestable in the air.
-			new StagePlatform(new Rect2(-80.0f, -560.0f, 300.0f, 24.0f), true, PlatformLook.Ledge),
+			// A billboard, so the middle of the map is contestable in the air. It stands on the
+			// roof under it, wholly - its legs need a roof to stand on, not a gap.
+			new StagePlatform(new Rect2(-230.0f, -560.0f, 300.0f, 24.0f), true, PlatformLook.Billboard),
 		};
 
 		data.Props = new[]
@@ -295,8 +305,9 @@ public static class StageCatalog
 
 			data.SpawnPoints = new[]
 		{
-			new Vector2(-850.0f, -340.0f), new Vector2(520.0f, -370.0f),
-			new Vector2(-130.0f, -520.0f), new Vector2(930.0f, -1060.0f),
+			// The first roof clear of the water tower; the third under the billboard, not in it.
+			new Vector2(-740.0f, -340.0f), new Vector2(520.0f, -370.0f),
+			new Vector2(-110.0f, -320.0f), new Vector2(930.0f, -1060.0f),
 		};
 		data.RespawnPoint = new Vector2(-130.0f, -900.0f);
 		return data;

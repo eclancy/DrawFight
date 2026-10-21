@@ -92,6 +92,21 @@ public enum PlatformLook
 	/// <summary>A scaffolding plank, with its poles and cross-braces drawn down to the ground.</summary>
 	Scaffold,
 
+	// --- The city ---
+
+	/// <summary>
+	/// One landing of a fire escape, bolted to the side of the building its end butts against:
+	/// a railing round it, a bracket under it to the wall, stairs up to the landing above, a drop
+	/// ladder under the lowest and a ladder up over the roof's edge from the highest.
+	/// </summary>
+	FireEscape,
+
+	/// <summary>A rooftop water tower: the lid is what you stand on, the tank and its legs drawn down to the roof.</summary>
+	WaterTower,
+
+	/// <summary>A billboard: the top of its frame is what you stand on, the picture and its legs drawn down to the roof.</summary>
+	Billboard,
+
 	/// <summary>
 	/// A street: a pavement along the top and a road with a dashed centre line. When the stage
 	/// has <see cref="StageData.Traffic"/>, cars drive along the top of it.
