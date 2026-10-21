@@ -223,6 +223,15 @@ public partial class RigParade : Node2D
 				rig.Play(FighterAnimations.Crouch);
 				rig.Advance();
 				break;
+			case "crawl":
+				// Crawling at full crawling speed, as Fighter.UpdateRig plays it: the duck-walk solved
+				// onto the floor (FighterRig.Crawling).
+				rig.SetPlanted(true);
+				rig.Crawling = true;
+				rig.CarryOnShoulder = data.ShouldersProp;
+				rig.Play(FighterAnimations.Crawl);
+				rig.Advance(FighterAnimations.CrawlRate);
+				break;
 			case "block":
 				rig.SetPlanted(true);
 				rig.SetStanding(true);
@@ -479,7 +488,7 @@ public partial class RigParade : Node2D
 		// The frames to show: through the whole move and a little after, or a stretch of a clip.
 		int first = move != null || Film == "roll" || Film == "airdodge" ? FilmLeadIn - 2 : 0;
 		int span = move != null ? move.TotalFrames + 14
-			: Film == "roll" ? Fighter.RollFrames + 8 : Film == "airdodge" ? Fighter.AirDodgeFrames + 8 : (Film == "jump" ? 60 : Film == "run" ? 34 : 54);
+			: Film == "roll" ? Fighter.RollFrames + 8 : Film == "airdodge" ? Fighter.AirDodgeFrames + 8 : (Film == "jump" ? 60 : Film == "run" ? 34 : Film == "crawl" ? 51 : 54);
 		var pose = new Pose();
 
 		for (int cell = 0; cell < Cells; cell++)
@@ -731,6 +740,7 @@ public partial class RigParade : Node2D
 				("fall", FighterAnimations.Fall, null),
 				("land", FighterAnimations.Land, null),
 				("crouch", FighterAnimations.Crouch, null),
+				("crawl", FighterAnimations.Crawl, null),
 				("block", FighterAnimations.Block, null),
 				("hurt", FighterAnimations.Hurt, null),
 				("windup", null, d => FighterAnimations.AttackWindup),
@@ -791,6 +801,7 @@ public partial class RigParade : Node2D
 				// Standing on flat feet, as in a match (FighterRig.StandOnFeet).
 				rig.SetStanding(columnLabel == "idle" || columnLabel == "block" || columnLabel == "stretch" || columnLabel == "crouch");
 				rig.Kneeling = columnLabel == "crouch";
+				rig.Crawling = columnLabel == "crawl";
 
 				// Each attack shows the weapon it puts in his hand, or an empty hand, as in a match.
 				MoveData shown = Attacks ? MoveFor(data, columns[index].label) : null;
@@ -802,7 +813,7 @@ public partial class RigParade : Node2D
 				// A hammer carried on the shoulder stays there for what is done on the ground without
 				// a swing - and the dash, a head-first barge - as in a match.
 				bool carrying = Attacks ? shown != null && shown.CarryOnShoulder
-					: columnLabel is "idle" or "run" or "crouch" or "block" or "land" or "dash";
+					: columnLabel is "idle" or "run" or "crouch" or "crawl" or "block" or "land" or "dash";
 				rig.CarryOnShoulder = data.ShouldersProp && carrying;
 				// And a hand on his hip, standing about.
 				rig.HandOnHip = data.HandOnHip && !Attacks && columnLabel == "idle";

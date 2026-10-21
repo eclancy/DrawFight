@@ -849,6 +849,127 @@ public partial class FighterRig : Node2D
 	}
 
 	/// <summary>
+	/// Crawling (Eric, 2026-10-21): a duck-walk, squatting on bent knees, the feet stepping one past
+	/// the other along the floor. Solved, like the kneel, for every fighter's own legs: each sole (or
+	/// ankle) is put on a point on the floor and the leg bent to reach it, knee forward - so legs drawn
+	/// two lengths both reach the floor, where a pose naming each leg's angle left a short leg's foot
+	/// in the air (Triguy's). Played with FighterAnimations.Crawl, whose frame is the step; the clip
+	/// sets the rest of him. Whoever drives the rig sets it each frame.
+	/// </summary>
+	public bool Crawling;
+
+	float crawlBlend;
+
+	/// <summary>How low the hips squat crawling, as a share of leg length - about as low as the kneel puts them.</summary>
+	const float CrawlSquat = 0.42f;
+
+	/// <summary>How far the hips rise passing one foot by the other, as a share of leg length.</summary>
+	const float CrawlBob = 0.03f;
+
+	/// <summary>A step's length, from the front foot set down to the back one picked up, as a share of leg length.</summary>
+	const float CrawlStride = 0.5f;
+
+	/// <summary>How high a foot is lifted passing under him, as a share of leg length - a shuffle, barely off the floor.</summary>
+	const float CrawlLift = 0.1f;
+
+	/// <summary>How far ahead of the hips the feet step, between them, as a share of leg length: under the body leaning over them.</summary>
+	const float CrawlAhead = 0.08f;
+
+	/// <summary>
+	/// Where the crawl is in its step cycle, in clip frames: a robot's stepped from key to key as he
+	/// snaps, so his feet move when the rest of him does.
+	/// </summary>
+	float CrawlFrame => Robotic
+		? Mathf.Lerp(robotFromFrame, robotToFrame, Mathf.Min(1.0f, robotFrames / (float)Mathf.Max(1, robotSnap)))
+		: clipFrame;
+
+	/// <summary>
+	/// The legs of a crawl: the hips down at the squat, bobbing as the feet pass; each foot on the
+	/// floor sliding back under him through the first half of its cycle, then lifted a little and
+	/// carried forward through the second. The front leg's cycle starts set down ahead, as the clip's
+	/// does, and the back leg's half a cycle on.
+	/// </summary>
+	void CrawlOnFeet(float blend)
+	{
+		int hip = (int)RigBone.Hip;
+		if (!present[hip]) return;
+		float leg = LegLength * legStretch;
+		float cycle = FighterAnimations.Crawl.LengthFrames;
+		float phase = Mathf.PosMod(CrawlFrame / cycle, 1.0f);
+
+		// Lowest with both feet down, highest as one passes the other - twice a cycle.
+		Vector2 at = bones[hip].Position;
+		at.X = current.HipOffset.X * HipShift;
+		at.Y = leg * (CrawlSquat + CrawlBob * 0.5f * (1.0f + Mathf.Cos(phase * Mathf.Tau * 2.0f)));
+
+		var legs = new[] { (RigBone.LegFrontUpper, RigBone.LegFrontLower, 0.0f), (RigBone.LegBackUpper, RigBone.LegBackLower, 0.5f) };
+
+		// The floor, as standing finds it: as far down as the shorter leg reaches straight.
+		float floor = float.MaxValue;
+		foreach ((RigBone upper, RigBone lower, float _) in legs)
+		{
+			Vector2? end = CrawlEnd(lower);
+			if (end == null || !present[(int)upper]) return;
+			Vector2 straight = bones[(int)upper].Position + bones[(int)lower].Position + end.Value;
+			float depth = feet[(int)lower] != null ? FootDepth(feet[(int)lower]) : 0.0f;
+			floor = Mathf.Min(floor, straight.Y + depth);
+		}
+
+		bones[hip].Position = bones[hip].Position.Lerp(at, blend);
+		foreach ((RigBone upper, RigBone lower, float offset) in legs)
+		{
+			Vector2 knee = bones[(int)lower].Position;
+			Vector2 end = CrawlEnd(lower).Value;
+			Sprite2D foot = feet[(int)lower];
+			float depth = foot != null ? FootDepth(foot) : 0.0f;
+
+			// Where this foot is in its step: back along the floor, then up and forward.
+			float p = Mathf.PosMod(phase + offset, 1.0f);
+			float along, lift;
+			if (p < 0.5f)
+			{
+				along = 0.5f - p * 2.0f;
+				lift = 0.0f;
+			}
+			else
+			{
+				float q = (p - 0.5f) * 2.0f;
+				along = -0.5f + (0.5f - 0.5f * Mathf.Cos(q * Mathf.Pi));
+				lift = Mathf.Sin(q * Mathf.Pi);
+			}
+			Vector2 rest = bones[(int)upper].Position + knee + end;
+			float spread = foot == null ? 0.0f : lower == RigBone.LegBackLower ? stanceSpread : -stanceSpread;
+			var target = new Vector2(rest.X + spread + leg * (CrawlAhead + CrawlStride * along), floor - depth - leg * CrawlLift * lift);
+
+			// Two bones to the target, knee forward - as StandOnAnkles stands.
+			Vector2 joint = at + bones[(int)upper].Position;
+			float l1 = knee.Length(), l2 = end.Length();
+			if (l1 < 1.0f || l2 < 1.0f) continue;
+			Vector2 d = target - joint;
+			float reach = Mathf.Clamp(d.Length(), Mathf.Abs(l1 - l2) + 0.5f, l1 + l2 - 0.01f);
+			float bend = Mathf.Acos(Mathf.Clamp((l1 * l1 + reach * reach - l2 * l2) / (2.0f * l1 * reach), -1.0f, 1.0f));
+			float toward = d.Angle();
+			float thighDir = toward - bend;
+			if (Mathf.Cos(toward + bend) > Mathf.Cos(toward - bend)) thighDir = toward + bend;
+			Vector2 kneeAt = joint + Vector2.Right.Rotated(thighDir) * l1;
+			float thigh = thighDir - knee.Angle();
+			float shinTurn = (target - kneeAt).Angle() - end.Angle();
+			bones[(int)upper].Rotation = Mathf.LerpAngle(bones[(int)upper].Rotation, thigh, blend);
+			bones[(int)lower].Rotation = Mathf.LerpAngle(bones[(int)lower].Rotation, shinTurn - thigh, blend);
+		}
+	}
+
+	/// <summary>
+	/// The end of a lower leg a crawl puts on the floor, from the knee as drawn: the ankle, for a
+	/// drawing with its feet cut separately (levelled after, as standing levels it), or else the sole.
+	/// </summary>
+	Vector2? CrawlEnd(RigBone lower)
+	{
+		if (feet[(int)lower] != null) return feet[(int)lower].Position;
+		return LevelSole(lower)?.sole;
+	}
+
+	/// <summary>
 	/// How much further apart than his hips a fighter with feet stands (rig.json "stance", canonical
 	/// units each way): the far foot that much ahead, the near one that much behind. Zero stands each
 	/// ankle under its hip. Flambe stands with his feet apart, a hotshot (Eric, 2026-10-08).
@@ -1973,7 +2094,8 @@ public partial class FighterRig : Node2D
 
 	void AdvanceRobot()
 	{
-		bool walk = clip == FighterAnimations.StompWalk;
+		// A crawl is stepped like the stomp: a foot set down on each key, at its own angles.
+		bool walk = clip == FighterAnimations.StompWalk || clip == FighterAnimations.Crawl;
 		float length = walk ? StompKey : RobotBeat;
 		int key = Mathf.FloorToInt(clipFrame / length);
 		if (!ReferenceEquals(robotOwner, clip) || key != robotKey)
@@ -2104,6 +2226,8 @@ public partial class FighterRig : Node2D
 		if (standBlend > 0.0f) StandOnFeet(standBlend);
 		if (Kneeling && standBlend > 0.0f) Kneel(standBlend);
 		else kneelDrop = Mathf.MoveToward(kneelDrop, 0.0f, LegLength * 0.08f);
+		crawlBlend = Mathf.MoveToward(crawlBlend, Crawling && planted && !Sitting ? 1.0f : 0.0f, 0.2f);
+		if (crawlBlend > 0.0f) CrawlOnFeet(crawlBlend);
 		for (int l = 0; l < Limbs.Length; l++) KeepBoneInRange(l);
 
 		plantBlend = Mathf.MoveToward(plantBlend, planted ? 1.0f : 0.0f, 0.25f);

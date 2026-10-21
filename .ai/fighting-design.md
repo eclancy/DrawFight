@@ -431,7 +431,8 @@ between the hits. Stopping after one jab is still a quick poke.
 
 ## Crouching
 
-Holding down on the ground crouches: no walking (the stick still turns you round), and the
+Holding down on the ground crouches: no walking (the stick still turns you round, and crawls -
+below), and the
 hurtbox shrinks to the lower 55% of the body, so a jab or a tilt aimed at the chest passes over.
 The crouch pose folds the body well forward over deeply bent knees, and with planted feet that is
 what drops the body: a crouching fighter is visibly about half height, matching the hurtbox. Attacking from a
@@ -439,6 +440,31 @@ crouch is the down tilt, and **every fighter's down tilt works along the floor**
 something sent along it - Lug's traffic cone, kicked out to trip people, and DoomBot's MiniBot,
 set down to walk at them. Never a move that hits high.
 Down plus jump on a soft platform is still a drop-through, checked before crouching.
+
+**Crawling** (Eric's call, 2026-10-21): crouched, pushing left or right creeps that way, still
+crouched - the same low hurtbox, so a player can duck-walk under a high attack - and turns to
+face the way he goes. It is a creep, not a way to get about: **15% of top running speed**
+(`Fighter.CrawlSpeed`; 132 pixels a second for a medium), about a third of a half-pushed walk,
+reached on the ground's acceleration. Letting go of the side stops dead on the crouch's grip, and a
+run ducked into is shed on that grip exactly as a plain crouch sheds it. The stick is read as the
+crouch reads it: **more than half way down is down** (as before), and down with **more than 0.4 to
+one side** (the lean that already turned a crouch round) crawls - so a stick held down-forward
+crawls rather than standing up to walk, and one held mostly sideways (less than 30 degrees below
+level) walks or runs as ever. One speed, not a dial: past the lean it is the full crawl. Attack
+out of a crawl is still the down tilt (down is checked before the side), special the down
+special, down plus jump the drop-through, and down in the air the fast-fall. **A crawl stops at
+the edge** of whatever he is on (`Fighter.FloorAhead`, the probe that stops a ground move there):
+crawling off it would leave him in the air holding down, fast-falling off the stage. The computer
+never crawls - it only ever holds down straight - and its brake, which holds the stick against a
+slide, works on a crouch as it did, since a crawl never goes faster than the brake cares about.
+
+It looks like a duck-walk (`FighterAnimations.Crawl`, `FighterRig.Crawling`): squatting on bent
+knees about as low as the kneel, the body folded forward with the guard up as in the crouch, the
+feet shuffling one past the other and barely lifted. The legs are solved, not posed - each foot
+is put on the floor (or just above it, passing) and the leg bent to reach it, knee forward - so
+legs drawn two lengths both touch the floor, as the kneel's do. The cycle plays as fast as he is
+actually moving, as the run does, and DoomBot steps it, as he stomps. Not hands and knees: every
+fighter is an upright drawing, and all fours would put Circy's face on the floor.
 
 ## Tilts and smashes
 

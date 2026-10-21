@@ -126,6 +126,15 @@ public partial class Fighter : CharacterBody2D
 	public bool IsCrouching { get; private set; }
 
 	/// <summary>
+	/// Crouched and crawling along (FighterAnimations.Crawl): down held and pushed to one side, and
+	/// moving. Still crouching - the same low hurtbox, and attack is still the down tilt.
+	/// </summary>
+	public bool IsCrawling => IsCrouching && crawlWay != 0 && Mathf.Abs(Velocity.X) > 20.0f;
+
+	/// <summary>The way a crouching fighter is pushing the stick to crawl: -1, 1, or 0 to stay put.</summary>
+	int crawlWay;
+
+	/// <summary>
 	/// How much of the standing height is left to hit while crouched. Just over half: a jab or a
 	/// tilt aimed at the chest goes over the top of someone ducking.
 	/// </summary>
@@ -835,6 +844,7 @@ public partial class Fighter : CharacterBody2D
 		rig.HandOnHip = false;
 		rig.BackArmForward = 0.0f;
 		rig.Kneeling = false;
+		rig.Crawling = false;
 		rig.Sitting = IsSitting;
 		rig.ArmBackLimit = StrikingPose ? FighterRig.ArmBackMost : Data.ArmReachBack;
 
@@ -902,6 +912,16 @@ public partial class Fighter : CharacterBody2D
 				rig.SetStanding(true);
 				rig.Play(FighterAnimations.Block);
 				rig.Advance();
+				break;
+
+			case FighterState.Grounded when IsCrawling:
+				// Crawling: a duck-walk, its legs solved onto the floor for each fighter's own legs
+				// (FighterRig.Crawling), played as fast as he is actually going, as the run is - and
+				// a robot steps it, as he stomps.
+				rig.Crawling = true;
+				rig.Play(FighterAnimations.Crawl);
+				rig.Advance(Mathf.Clamp(Mathf.Abs(Velocity.X) / (RunSpeed * CrawlSpeed), 0.3f, 1.5f) * FighterAnimations.CrawlRate
+					* SizeLevels.StrideRate(sizeLevel));
 				break;
 
 			case FighterState.Grounded when IsCrouching:
@@ -1173,12 +1193,17 @@ public partial class Fighter : CharacterBody2D
 			return;
 		}
 
-		// Holding down crouches: no walking, but the stick still turns you round.
+		// Holding down crouches. Down and to one side crawls that way, slowly and still crouched -
+		// low enough to creep under a high attack - turning to face the way he goes (Eric,
+		// 2026-10-21). The stick is read for crouching as before: more than half way down is down,
+		// so a stick held down-forward crawls instead of standing up to walk, and one held mostly
+		// sideways walks or runs.
 		if (input.Move.Y > 0.5f)
 		{
 			IsCrouching = true;
-			if (Mathf.Abs(input.Move.X) > 0.4f) Facing = input.Move.X > 0.0f ? 1 : -1;
-			ApplyFriction(dt, GroundFriction);
+			crawlWay = Mathf.Abs(input.Move.X) > CrawlStick ? (input.Move.X > 0.0f ? 1 : -1) : 0;
+			if (crawlWay != 0) Facing = crawlWay;
+			Crawl(crawlWay, dt);
 			return;
 		}
 
@@ -1196,6 +1221,48 @@ public partial class Fighter : CharacterBody2D
 		{
 			ApplyFriction(dt, GroundFriction);
 		}
+	}
+
+	/// <summary>
+	/// Crawling speed against top running speed: about a third of a half-pushed walk, so a crawl is
+	/// a creep - slow enough that ducking under something is a commitment, not a way to get about.
+	/// </summary>
+	const float CrawlSpeed = 0.15f;
+
+	/// <summary>
+	/// How far to one side a stick held down has to lean to crawl - the same lean that turns a
+	/// crouching fighter round, so a thumb resting straight down never creeps.
+	/// </summary>
+	const float CrawlStick = 0.4f;
+
+	/// <summary>
+	/// Crouched, one step of the crawl: speeding up to the crawl the way <paramref name="way"/>
+	/// points, or with no way, stopping on the crouch's grip - and anything faster, a run ducked
+	/// into, is shed on that grip too, as a plain crouch sheds it. Never off the edge of what he is
+	/// on: holding down past a ledge would fast-fall him off the stage, so a crawl stops there.
+	/// </summary>
+	void Crawl(int way, float dt)
+	{
+		float target = way * RunSpeed * CrawlSpeed;
+		bool speedingUp = way != 0 && Mathf.Sign(Velocity.X) != -way && Mathf.Abs(Velocity.X) < Mathf.Abs(target);
+		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, target, (speedingUp ? GroundAcceleration : GroundFriction) * dt), Velocity.Y);
+		if (Mathf.Abs(Velocity.X) > 1.0f && Mathf.Sign(Velocity.X) == way && !FloorAhead(way, dt))
+		{
+			Velocity = new Vector2(0.0f, Velocity.Y);
+		}
+	}
+
+	/// <summary>
+	/// Whether there is floor just past his feet the way he is going, a frame from now - the probe
+	/// that stops a move started on the ground, or a crawl, at the edge.
+	/// </summary>
+	bool FloorAhead(float dir, float dt)
+	{
+		var probe = new Vector2(
+			GlobalPosition.X + dir * (Mathf.Min(footWidth * 0.5f, bodySize.X * 0.35f) + Mathf.Abs(Velocity.X) * dt),
+			GlobalPosition.Y + bodySize.Y * 0.5f + 8.0f);
+		var query = new PhysicsPointQueryParameters2D { Position = probe, CollisionMask = CollisionMask };
+		return GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count > 0;
 	}
 
 	/// <summary>How much of his own gravity again holding down adds on the way down.</summary>
@@ -1736,15 +1803,7 @@ public partial class Fighter : CharacterBody2D
 		if (moving && currentMove.Blink && blinkToTrap) return;
 		if (!IsOnFloor() || Mathf.Abs(Velocity.X) < 1.0f) return;
 
-		float dir = Mathf.Sign(Velocity.X);
-		var probe = new Vector2(
-			GlobalPosition.X + dir * (Mathf.Min(footWidth * 0.5f, bodySize.X * 0.35f) + Mathf.Abs(Velocity.X) * dt),
-			GlobalPosition.Y + bodySize.Y * 0.5f + 8.0f);
-		var query = new PhysicsPointQueryParameters2D { Position = probe, CollisionMask = CollisionMask };
-		if (GetWorld2D().DirectSpaceState.IntersectPoint(query, 1).Count == 0)
-		{
-			Velocity = new Vector2(0.0f, Velocity.Y);
-		}
+		if (!FloorAhead(Mathf.Sign(Velocity.X), dt)) Velocity = new Vector2(0.0f, Velocity.Y);
 	}
 
 	/// <summary>Starts a move from its first frame, with nothing carried over from the last one.</summary>
