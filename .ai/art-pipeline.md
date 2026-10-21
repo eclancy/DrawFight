@@ -163,8 +163,8 @@ A kid draws one arm and one leg clearly and no elbows. The pipeline fills the re
 mechanically:
 
 - **Back limbs** default to a **darkened copy** of the front limb (`modulate` to roughly 70%
-  brightness), drawn behind the torso in the layer order. Not mirrored — in profile both arms
-  point the same way, so a mirrored copy reads as a broken elbow. This is exactly the trick
+  brightness), drawn behind the torso in the layer order. Not mirrored — facing one way, both
+  arms point the same way, so a mirrored copy reads as a broken elbow. This is exactly the trick
   traditional cutout animation uses, it costs nothing, and the darkening reads correctly as
   depth. If he did draw a distinct far arm, use it.
 - **Elbows and knees** are almost never drawn. When a limb is boxed as a single piece, the tool
@@ -183,26 +183,39 @@ both arbitrary and unfixable later.
 
 ## Facing
 
-**Fighters are drawn in side view, in profile, facing right.** Facing left is a horizontal flip
-of the whole rig, which is exactly correct for a profile drawing — the character genuinely turns
-around rather than appearing to moonwalk.
+**Fighters are drawn in three-quarter view, facing right** (Eric's call, 2026-10-21; until then
+the guide asked for side view, in profile). The body turns a little toward us but clearly points
+right: we see his front and his right side, both eyes on the face - the far one a little smaller
+and nearer the edge - and the nose pointing right of centre, its tip just past the outline. It is
+how Circy and EdgeLord were drawn, and the fighters already in the game stay exactly as they were
+drawn; the rule is for new drawings. Facing left is still a horizontal flip of the whole rig,
+which is correct for a drawing that points one way - the character genuinely turns around rather
+than appearing to moonwalk.
 
-Side view is somewhat harder for a kid to draw than a front view, and it is worth it. In a
-platform fighter the single most important thing to read at a glance is *which way a fighter is
-pointing*, because that is what decides whether an attack is about to hit you. A front-facing
-puppet is ambiguous about this in every frame. A profile is never ambiguous.
+In a platform fighter the single most important thing to read at a glance is *which way a
+fighter is pointing*, because that is what decides whether an attack is about to hit you. A
+front-facing puppet is ambiguous about this in every frame. A three-quarter drawing is not -
+the eyes crowd toward the front, the nose breaks the outline on that side, the feet point that
+way - and unlike a strict profile it shows the whole face, which a story scene and a win need
+(see below). It is also closer to how kids draw a person anyway, so it asks less of them.
 
-Side view also solves a rigging problem for free: in profile the near arm and far arm are
-naturally offset from each other rather than symmetrically flanking the body, so a walking or
-striding pose separates all four limbs without the drawing looking like a starfish.
+**What it means for cutting.** Facing right, his near side (his right) is on the left of the
+picture and the far side on the right. The near arm and leg are in front of the body and cut
+whole. The far arm and leg are **partly behind the body**: cut as much as shows and fill in the
+hidden end (rule 1 - fill in what is missing, never replace what is there), and if a far limb
+barely shows, fall back to the darkened copy of the near one (above). Both eyes are on the face,
+so `tools/art/faces.py` lifts both out with the mouth (see "Faces"). This is why the guide still asks for the arms and legs spread apart, not drawn over the body: a
+striding pose separates all four limbs, near pair in front and far pair behind, without the
+drawing looking like a starfish.
 
 **Always ask for the character facing right.** Consistency matters more than which direction —
 a left-facing drawing has to be flipped on import, which flips any text, asymmetric details, or
 handedness he drew deliberately.
 
-**But the face has to show.** A story has everyone talk, and a win has them celebrate, so the
+**The face has to show.** A story has everyone talk, and a win has them celebrate, so the
 whole face reads best turned three-quarter toward the camera while the body still points right
-- the way Circy, Triguy and EdgeLord were drawn (Eric, 2026-10-15). The two we draw ourselves,
+- the way Circy, Triguy and EdgeLord were drawn (Eric, 2026-10-15), and why it became the rule. The two we draw
+ourselves,
 Flambé and Lugnut, are drawn that way: the face across the front of the head, both eyes on it,
 the ear at the back, and only the tip of the nose past the outline, which is what keeps which
 way he faces unambiguous. A drawing done **face on** - DoomBot, arms out - stays as drawn and

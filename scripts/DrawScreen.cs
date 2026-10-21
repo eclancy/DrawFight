@@ -943,7 +943,7 @@ public partial class DrawScreen : Node2D
 	{
 		string hint = Page.Kind switch
 		{
-			PageKind.Fighter => "Side view, facing right",
+			PageKind.Fighter => "Three-quarter view, facing right",
 			PageKind.Shot => "Draw it flying to the right",
 			PageKind.Held => "Draw it standing up, handle at the bottom",
 			PageKind.Stage => "Draw it wide, like the guide",
@@ -962,6 +962,35 @@ public partial class DrawScreen : Node2D
 		CrayonBrush.InkLine(canvas, new Vector2(end, tip.Y), tip, HintInk, 4.0f, 7, 1.0f);
 		CrayonBrush.InkLine(canvas, tip, tip + new Vector2(-16.0f, -12.0f), HintInk, 4.0f, 8, 0.5f);
 		CrayonBrush.InkLine(canvas, tip, tip + new Vector2(-16.0f, 12.0f), HintInk, 4.0f, 9, 0.5f);
+		if (Page.Kind == PageKind.Fighter) DrawThreeQuarterHead(tip + new Vector2(60.0f, 0.0f), 34.0f);
+	}
+
+	/// <summary>
+	/// The guide's three-quarter head, small after the arrow: both eyes, crowded toward the side it
+	/// faces, the far one smaller, and the nose breaking the outline. "Three-quarter" is a word a kid
+	/// may not know; the picture is what says it. Fighters are drawn this way from Eric's call,
+	/// 2026-10-21 - see `.ai/art-pipeline.md`.
+	/// </summary>
+	void DrawThreeQuarterHead(Vector2 centre, float radius)
+	{
+		const int Sides = 20;
+		for (int i = 0; i < Sides; i++)
+		{
+			Vector2 from = centre + Vector2.FromAngle(Mathf.Tau * i / Sides) * radius;
+			Vector2 to = centre + Vector2.FromAngle(Mathf.Tau * (i + 1) / Sides) * radius;
+			CrayonBrush.InkLine(canvas, from, to, HintInk, 4.5f, 31 + i, 0.4f);
+		}
+		canvas.DrawCircle(centre + new Vector2(radius * 0.18f, -radius * 0.22f), radius * 0.17f, HintInk);
+		canvas.DrawCircle(centre + new Vector2(radius * 0.66f, -radius * 0.24f), radius * 0.13f, HintInk);
+		canvas.DrawColoredPolygon(new[]
+		{
+			centre + new Vector2(radius * 0.84f, -radius * 0.1f),
+			centre + new Vector2(radius * 1.5f, radius * 0.2f),
+			centre + new Vector2(radius * 0.9f, radius * 0.32f),
+		}, HintInk);
+		Vector2 smile = centre + new Vector2(radius * 0.38f, radius * 0.56f);
+		CrayonBrush.InkLine(canvas, centre + new Vector2(radius * 0.06f, radius * 0.4f), smile, HintInk, 4.0f, 52, 0.3f);
+		CrayonBrush.InkLine(canvas, smile, centre + new Vector2(radius * 0.66f, radius * 0.42f), HintInk, 4.0f, 53, 0.3f);
 	}
 
 	/// <summary>

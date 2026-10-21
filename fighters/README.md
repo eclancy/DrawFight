@@ -9,6 +9,11 @@ One directory per fighter. Each holds:
   rig.json             bone tree, offsets and pivots
 ```
 
+New drawings are asked for in **three-quarter view, facing right**: turned a little toward us,
+both eyes showing, nose pointing right (Eric's call, 2026-10-21; the guide asked for side view
+before). The far arm and leg are partly behind the body - see "Facing" in `.ai/art-pipeline.md`
+for what that means for the cut. Every fighter below stays exactly as drawn.
+
 ## `swift/` and `lug/` are STAND-INS, not content
 
 `swift/` and `lug/` are **drawn by scripts**, not by a kid. They began as generated stick figures,
@@ -133,7 +138,7 @@ Everything else in `circy/` is generated from them by `python tools/art/cut_circ
 
 Two things about Elim's art that the code works around rather than changes:
 
-- **He drew Circy facing the viewer, not in side view.** A round face mirrors cleanly, so it is
+- **He drew Circy facing the viewer, not in side view** (which the guide asked for then). A round face mirrors cleanly, so it is
   used as drawn; the limbs on the right of the page are treated as the front limbs.
 - **The limbs are thin lines.** At match size they came out under one pixel wide and shimmered
   as he moved. Eric's call (2026-10-04): the cut widens every line of ink by the same amount, in

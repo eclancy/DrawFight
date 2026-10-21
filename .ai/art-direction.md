@@ -213,8 +213,9 @@ The drawing screen is the kid's page, so it is the one place outside a fighter w
 belongs: its palette has black in it, because what is drawn there *is* a character. Everything
 round the page - the desk, the panels, the buttons - keeps to the menus' look and the 30% line.
 
-- **The page is lined paper**, like every menu, with a pencilled reminder in its corner ("Side
-  view, facing right"). The paper is never sent: every picture goes see-through.
+- **The page is lined paper**, like every menu, with a pencilled reminder in its corner
+  ("Three-quarter view, facing right", an arrow, and a little head turned that way: both eyes,
+  nose past the outline). The paper is never sent: every picture goes see-through.
 - **The coloured pencil has the game's grain.** Its tooth is the same recipe as
   `CrayonBrush.PencilFill` - close strokes at a slant, a lighter cross-hatch - fixed to the page,
   so a kid's colouring in and the game's own pencil art look like the same pencils. Going over

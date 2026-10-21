@@ -264,7 +264,9 @@ something is unstated here, default to however that project does it.
   and its cost is paid in chip damage raising your percent. The shield does wear down - it
   cracks with every blocked hit and breaks at 45 damage, leaving him reeling (Eric's call,
   2026-10-10) - but it never shrinks, so there is no shield poking. See `.ai/fighting-design.md`.
-- Accept or request a drawing that is not in **side view facing right**.
+- Accept or request a drawing that is not in **three-quarter view facing right**: turned a little
+  toward us, both eyes showing, nose pointing right (Eric's call, 2026-10-21; it used to be side
+  view). The fighters already in the game stay as drawn - see "Facing" in `.ai/art-pipeline.md`.
 - Write a PSD parser for the importer. Layered art arrives as a folder of exported PNGs, which
   every tablet app can produce and Godot can already read. `.ora` is the only single-file format
   worth adding later. See `.ai/art-pipeline.md`.
