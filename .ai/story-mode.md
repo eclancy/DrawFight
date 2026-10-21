@@ -398,10 +398,11 @@ In order, each step usable before the next:
    `.ai/audio-direction.md`. The reveal is staged: `stage bare` takes the other drawings off the
    door, `dark on` dims it to night lavender, `eye at` opens his red eye up in the dark, `pile at`
    heaps the taken-down drawings behind him, and `page at` pins up the drawing of DoomBot in his
-   ending (`StoryBoard`). The pile (`TakenDownPile`, Eric, 2026-10-21) is seven sheets of
-   paper, each carrying one of the other fighters' real rigs standing idle, facing right as
-   drawn - everyone but DoomBot and the player, so the four in front are the four of them and
-   the three buried behind repeat them. Each rig is rendered once into its own texture when the
+   ending (`StoryBoard`). The pile (`TakenDownPile`, Eric, 2026-10-21) is four sheets of
+   paper, one for each of the other fighters - everyone but DoomBot and the player, nobody twice
+   - each thrown down anyhow, on its side or upside down, and each carrying that fighter's real
+   rig caught in an action pose: the frame one of their own attacks hits, weapon in hand (Eric,
+   2026-10-21). Each rig is rendered once into its own texture when the
    pile goes down (it stays through the boss fight, so nothing costly happens per frame), and
    then damaged the way he took it down, only ever by taking away (rule 1): torn - the sheet and
    the drawing cut to a ragged outline with a piece missing, its torn edge white paper fibre,

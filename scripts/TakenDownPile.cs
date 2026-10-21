@@ -8,7 +8,9 @@ using Godot;
 /// some half rubbed out with an eraser; some with a corner bent over or the tape still on that
 /// held them up.
 ///
-/// Every drawing is the fighter's real rig standing in its idle pose, rendered once into its own
+/// One sheet for each of them, nobody twice, thrown down on its side or upside down. Every
+/// drawing is the fighter's real rig caught in an action pose - the frame one of their attacks
+/// hits, weapon in hand (Eric, 2026-10-21) - rendered once into its own
 /// texture when the pile goes down - never redrawn (CLAUDE.md, rule 1). The damage only ever takes
 /// away: a tear hides part of the sheet and the drawing on it behind a ragged edge, and the eraser
 /// fades the drawing back into the paper. What the pile adds is paper, tape and smudge, all well
@@ -37,27 +39,23 @@ public class TakenDownPile
 
 	/// <summary>
 	/// The heap, bottom sheet first: where each lies against the pile's centre, how far up the
-	/// heap it sits, its tilt, and what he did to it. The ones at the bottom lie furthest back, so
-	/// they peek out over the top of the ones in front. The four in front carry the four different
-	/// drawings, fanned out so every one of them can be told apart; the three behind are the same
-	/// drawings again, mostly buried.
+	/// heap it sits, its tilt, and what he did to it. One sheet per drawing - nobody twice - and
+	/// every one thrown down anyhow: on its side, upside down (Eric, 2026-10-21). The ones at the
+	/// bottom lie furthest back, so they peek out over the top of the ones in front.
 	/// </summary>
 	static readonly (float dx, float rise, float angle, Tear tear, Rub rub, bool curl, bool tape)[] Layout =
 	{
-		(-165.0f, 62.0f, -0.30f, Tear.Bite, Rub.None, false, true),
-		(168.0f, 58.0f, 0.28f, Tear.None, Rub.Top, true, false),
-		(4.0f, 78.0f, 0.06f, Tear.Corner, Rub.None, false, true),
-		(-132.0f, 30.0f, 0.15f, Tear.None, Rub.Patch, false, true),
-		(152.0f, 36.0f, -0.13f, Tear.Side, Rub.None, true, false),
-		(-60.0f, 0.0f, -0.07f, Tear.None, Rub.Top, false, true),
-		(64.0f, 4.0f, 0.06f, Tear.Corner, Rub.None, true, false),
+		(-215.0f, 26.0f, 1.50f, Tear.Bite, Rub.None, false, true),
+		(175.0f, 22.0f, -1.62f, Tear.None, Rub.Top, true, false),
+		(-55.0f, 118.0f, 3.04f, Tear.Corner, Rub.None, false, true),
+		(55.0f, 0.0f, -2.70f, Tear.Side, Rub.Patch, true, true),
 	};
 
 	/// <summary>
-	/// Whose drawing each sheet is, by place in the list of the others: the four in front are the
-	/// four of them, and each one behind is someone not lying right next to it.
+	/// What each one is caught doing on their sheet: an action pose, the frame one of their own
+	/// attacks hits, weapon and all - never standing about (Eric, 2026-10-21).
 	/// </summary>
-	static readonly int[] Drawing = { 0, 3, 2, 3, 2, 1, 0 };
+	static readonly MoveSlot[] Action = { MoveSlot.ForwardSmash, MoveSlot.UpSmash, MoveSlot.ForwardAir, MoveSlot.DashAttack };
 
 	class Sheet
 	{
@@ -96,24 +94,27 @@ public class TakenDownPile
 		}
 		if (others.Count == 0) return;
 
-		for (int i = 0; i < Layout.Length; i++)
+		for (int i = 0; i < Layout.Length && i < others.Count; i++)
 		{
 			var lay = Layout[i];
 			int seed = 900 + 37 * i;
 			float w = 176.0f + 26.0f * Mathf.Abs(CrayonBrush.Noise(seed, 1));
 			var size = new Vector2(w, w * 0.76f);
+			float angle = lay.angle + CrayonBrush.Noise(seed, 2) * 0.04f;
+			// Tipped on its side a sheet stands taller: rest its lowest corner on the floor.
+			float halfHigh = Mathf.Abs(size.X * 0.5f * Mathf.Sin(angle)) + Mathf.Abs(size.Y * 0.5f * Mathf.Cos(angle));
 			var sheet = new Sheet
 			{
 				Size = size,
 				Seed = seed,
-				Angle = lay.angle + CrayonBrush.Noise(seed, 2) * 0.04f,
-				Centre = new Vector2(x + lay.dx + CrayonBrush.Noise(seed, 3) * 10.0f, floor - size.Y * 0.3f - lay.rise),
+				Angle = angle,
+				Centre = new Vector2(x + lay.dx + CrayonBrush.Noise(seed, 3) * 10.0f, floor - halfHigh * 0.8f - lay.rise),
 			};
-			FighterData drawing = others[Drawing[i] % others.Count];
+			FighterData drawing = others[i];
 			// Drawn a little off-centre, the way nobody centres a drawing - and on the sheets at the
 			// sides of the heap, off towards the side that shows.
 			float off = Mathf.Abs(lay.dx) > 100.0f ? Mathf.Sign(lay.dx) * 0.1f : 0.06f * CrayonBrush.Noise(seed, 5);
-			sheet.Texture = Render(owner, drawing, size, off, lay.rub, seed);
+			sheet.Texture = Render(owner, drawing, drawing.Move(Action[i % Action.Length]), size, off, lay.rub, seed);
 			Shape(sheet, lay.tear, lay.curl, lay.tape, lay.dx);
 			sheets.Add(sheet);
 		}
@@ -132,7 +133,7 @@ public class TakenDownPile
 	/// The sheet as it lies flat: paper, the fighter's own drawing standing on it as he was drawn,
 	/// facing right, and wherever the eraser went over it. Rendered once and never again.
 	/// </summary>
-	ViewportTexture Render(Node owner, FighterData data, Vector2 size, float off, Rub rub, int seed)
+	ViewportTexture Render(Node owner, FighterData data, MoveData action, Vector2 size, float off, Rub rub, int seed)
 	{
 		var view = new SubViewport
 		{
@@ -165,7 +166,22 @@ public class TakenDownPile
 			rig.HandOnHip = data.HandOnHip;
 			rig.SetPlanted(true);
 			rig.SetStanding(true);
-			for (int i = 0; i < 12; i++) rig.PoseAt(FighterAnimations.Idle, 0.0f, 1.0f);
+			if (action != null)
+			{
+				// Caught mid-attack, at the frame it hits, as the attack parade shows it: the
+				// weapon the move draws in his hand, reaching as far as a match lets him.
+				var pose = new Pose();
+				FighterAnimations.SampleAttack(action, FighterAnimations.ShowFrame(action), pose, drama: data.AnimationDrama);
+				rig.HandOnHip = false;
+				rig.CarryOnShoulder = data.ShouldersProp && action.CarryOnShoulder;
+				rig.ArmBackLimit = FighterRig.ArmBackMost;
+				rig.ShowProp(action.PropArt ?? "");
+				for (int i = 0; i < 60; i++) rig.ApplyDirect(pose, 0.75f);
+			}
+			else
+			{
+				for (int i = 0; i < 12; i++) rig.PoseAt(FighterAnimations.Idle, 0.0f, 1.0f);
+			}
 			Rect2 bounds = rig.BodyBounds(holder);
 			if (bounds.Size.X >= 1.0f && bounds.Size.Y >= 1.0f)
 			{
