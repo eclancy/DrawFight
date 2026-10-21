@@ -189,14 +189,20 @@ THE PICTURE to get there.
 - **Triguy.** Triguy zooms in and strikes a pose. "You may be fast, but my swords
   are faster." - "that's, really kewl." - "It IS really cool. Stop saying it like that." After, from the floor: "that's...
   really kewl." - "Try to keep up."
-- **Circy.** "A circle. You don't even have edges." "Edges? Skill issue. GET READY FOR EVIL
-  STUNTS!" "...Was that a threat?" "Nah, bro. It's a friendly explosion." "I genuinely cannot tell."
+- **Circy.** "A circle. You don't even have edges." - "Bro, I don't NEED edges. I'm built
+  different." - "...You're built round. You are a ball." - "Exactly. Ball is life." After: "GG, bro.
+  You're kinda goated, no cap." - "...Then yes. I am goated. No cap." Memes that make sense in the
+  conversation, with EdgeLord the straight man who doesn't get them (Eric, 2026-10-21).
 - **Lugnut.** "A hard hat? Against swords?" He taps it. "Safety first." Beat. "...Respect."
-- **Flambé.** "Nice mohawk. Is it... on fire?" - "Always." - "Cool. I mean - hot. Whatever." -
-  "Too hot for you?" - "Nothing is too hot for - OW." (the mohawk)
-- **The two-on-one.** Lugnut: "Heard you've been cutting people out of the picture." Flambé: "So
-  we're putting you back in it." Lugnut: "Face first." EdgeLord: "Two against one. Finally, a
-  challenge worthy of my edge."
+- **Flambé: the haircut** (Eric, 2026-10-21). "Nice mohawk. Is it... on fire?" - "Always. The
+  hair of a true artist." - "Looks a little long on top. Lucky for you, I've got swords." - "Non.
+  NON. Nobody touches the hair." - "Just a little off the top." After: "Tell me the hair is still
+  there." - "I only took a little off the top." - "...Mon dieu. It is FABULOUS." Flambé's own
+  story plays it from his side, and he keeps his hair.
+- **The two-on-one.** Lugnut: "The guy who cut my break short." Flambé: "And gave me a haircut I
+  did not order." Lugnut: "You picked us off one at a time. So we're switching to the buddy
+  system." Flambé: "Two chefs, one recipe. You, well done." EdgeLord: "Two against one. Finally,
+  a challenge worthy of my edge."
 - **Ending.** Alone on top of the fridge, posing, cape blowing. The camera pulls back: nobody is
   watching. "...Cool." Long pause. From below, Flambé: "Dude. Come sit with us." - "Only because
   it's cooler over there." He hides a smile behind a sword. Narrator: "Still the coolest. Now
@@ -278,9 +284,11 @@ Everyone else meets them one at a time, as their challenger scenes - then, later
 - **Flambé alone.** Cooking, of course. "You're just in time. ...To get roasted."
 - **Lugnut alone.** On a break, a sandwich in his hand. He sighs, puts it down carefully. "Break's
   over."
-- **Together: the lunch break.** They're sharing lunch on top of a girder. The player walks up.
-  Flambé and Lugnut look at each other, then the player. Lugnut: "You hungry?" Flambé: "For
-  a fight." Lugnut: "...I was gonna offer half a sandwich." They team up.
+- **Together: the lunch break.** They're sharing lunch on top of a girder. The player walks up -
+  the one who already beat each of them alone - and they team up on it, each in his own trade
+  (Eric, 2026-10-21): Lugnut: "Picked us off one at a time, huh? Rookie move. On my site,
+  nobody works alone." Flambé: "And in my kitchen, every dish needs two cooks." Lugnut: "Buddy
+  system." Every two-on-one (and DoomBot's) says the same thing in its own words.
 
 ## The finale: DoomBot
 

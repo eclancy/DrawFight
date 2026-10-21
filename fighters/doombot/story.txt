@@ -235,12 +235,19 @@ camera two player lugnut slow
 lugnut pose none
 lugnut face player
 lugnut pose beckon
-lugnut: Round two, robot. And this time I brought a friend.
+lugnut: Round two, robot. You took me down off this fridge once already.
 lugnut pose none
 flambe pose none
+flambe look angry
+flambe pose point
+flambe: And me. One at a time, like a coward.
+flambe pose none
+lugnut pose crossarms
+lugnut: So we're teaming up. Buddy system - first rule on any site.
+lugnut pose none
 flambe look smug
 flambe pose bow
-flambe (hot): Order up.
+flambe (hot): And in any kitchen. Order up.
 flambe pose none
 player look angry
 player pose point

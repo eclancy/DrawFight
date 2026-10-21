@@ -87,18 +87,22 @@ flambe face player
 flambe look shocked
 lugnut look shocked
 wait 20
-lugnut look happy
-lugnut: You hungry?
-flambe look smug
-flambe pose fist
-flambe (hot): For a fight.
-flambe pose none
-lugnut look sad
-lugnut: ...I was gonna offer half a sandwich.
 lugnut look angry
-lugnut pose flex
-lugnut: Break's over.
+lugnut: Hold it. You're the one who knocked me off my break.
+flambe pose point
+flambe (hot): And knocked ME out of my own kitchen.
+flambe pose none
+lugnut pose crossarms
+lugnut: Picked us off one at a time, huh? Rookie move. On my site, nobody works alone.
 lugnut pose none
+flambe look smug
+flambe pose present
+flambe: And in my kitchen, every dish needs two cooks.
+flambe pose none
+lugnut pose flex
+lugnut: Buddy system. Break's over - for both of us.
+lugnut pose none
+flambe (hot): Order up!
 camera wide
 fight
 
@@ -181,6 +185,45 @@ player pose cheer
 player special down
 narrator: A fist bump, and Fire Rain off the girder, like fireworks.
 wait 70
+player pose none
+end
+
+== vs edgelord
+cast player at -400 facing right
+cast edgelord at 400 facing left
+music story
+camera two player edgelord
+edgelord pose point
+edgelord: Nice mohawk. Bit long on top, though.
+edgelord pose none
+edgelord look smug
+edgelord pose hips
+edgelord: Lucky for you, I have swords. Lots of swords.
+edgelord pose none
+player look shocked
+player pose tremble
+player: Non. NON. Nobody touches the hair.
+player pose none
+edgelord pose beckon
+edgelord: Hold still. Just a little off the top.
+edgelord pose none
+player look angry
+player pose fist
+player (hot): Touch one hair and you get the chef's special.
+player pose none
+camera wide
+fight
+
+== beat edgelord
+cast player at -200 facing right
+cast edgelord at 200 facing left
+music story
+edgelord pose crossarms
+edgelord: ...Fine. Keep your hair.
+edgelord pose none
+player look smug
+player pose present
+player (hot): Merci. The hair thanks you too.
 player pose none
 end
 

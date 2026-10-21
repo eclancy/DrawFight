@@ -121,19 +121,18 @@ camera two player circy
 player pose point
 player: A circle. You don't even have edges.
 player pose none
-circy (shout): Edges? Skill issue. GET READY FOR EVIL STUNTS!
-player look shocked
-player pose tremble
-player: Was that a threat?
-player pose none
-circy (happy): Nah, bro. It's a friendly explosion. Love you, dude!
+circy (shout): Bro, I don't NEED edges. I'm built different.
 player look squint
 player pose think
-player: A nice explosion. Because you like me.
+player: ...You're built round. You are a ball.
 player pose none
+circy (happy): Exactly. Ball is life.
 player pose shrug
-player: I genuinely cannot tell if that's worse.
+player: I don't know what that means.
 player pose none
+circy (shout): It means GET READY FOR EVIL STUNTS!
+player look shocked
+player: ...I don't like how excited you are about that.
 camera wide
 fight
 
@@ -141,11 +140,15 @@ fight
 cast player at -200 facing right
 cast circy at 200 facing left
 music story
-circy: Bro... are we still friends?
-player look normal
+circy (happy): GG, bro. You're kinda goated, no cap.
+player look squint
 player pose crossarms
-player: ...Fine. Yes. I still like you. Don't tell anyone.
+player: I don't know what that means either.
 player pose none
+circy: It means you're the greatest of all time, dude.
+player look smug
+player: ...Then yes. I am goated. No cap.
+circy (shout): Okaly dokaly!
 end
 
 == vs lugnut
@@ -178,23 +181,46 @@ player pose point
 player: Nice mohawk. Is it... on fire?
 player pose none
 flambe pose hips
-flambe: Always.
+flambe: Always. The hair of a true artist.
 flambe pose none
-player pose shrug
-player: Cool. I mean - hot. Whatever.
+player look smug
+player pose think
+player: Looks a little long on top. Lucky for you, I've got swords. Lots of swords.
 player pose none
-flambe look smug
-flambe pose beckon
-flambe (hot): Too hot for you?
+flambe look shocked
+flambe pose tremble
+flambe: Non. NON. Nobody touches the hair.
 flambe pose none
-player: Nothing is too hot for -
-player mark !
-player look hurt
-player (shout): OW.
-player mark none
-narrator: (The mohawk.)
+player pose beckon
+player: Hold still. Just a little off the top.
+player pose none
+flambe look angry
+flambe pose fist
+flambe (hot): Come and try it, barber.
+flambe pose none
 camera wide
 fight
+
+== beat flambe
+cast player at -200 facing right
+cast flambe at 200 facing left
+music story
+flambe look shocked
+flambe pose facepalm
+flambe: Is it still there? Tell me the hair is still there.
+flambe pose none
+player look smug
+player pose hips
+player: Relax. I only took a little off the top.
+player pose none
+flambe pose think
+flambe: ...Hm. It is shorter. And sharper.
+flambe look happy
+flambe pose present
+flambe (hot): Mon dieu. It is FABULOUS.
+flambe pose none
+player: You're welcome. Next customer.
+end
 
 # At lunch together, one roof over from him (Eric, 2026-10-16).
 == vs flambe lugnut
@@ -209,13 +235,20 @@ camera two flambe lugnut cut
 wait 70
 lugnut look angry
 lugnut pose sit
-lugnut: Heard you've been cutting people out of the picture.
+lugnut: Well, look who it is. The guy who cut my break short.
 flambe face player
 flambe pose point
-flambe: So we're putting you back in it.
+flambe: And gave me a haircut I did not order.
+flambe pose none
+lugnut pose crossarms
+lugnut: You picked us off one at a time. So we're switching to the buddy system.
+lugnut pose none
+flambe look smug
+flambe pose fist
+flambe (hot): Two chefs, one recipe. You, well done.
 flambe pose none
 lugnut pose flex
-lugnut: Face first.
+lugnut: Hard hats on.
 lugnut pose none
 camera on player zoom 1.2
 player look smug
