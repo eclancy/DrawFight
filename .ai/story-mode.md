@@ -301,8 +301,14 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
 - **He explains the plan** - properly, the way a villain does. A stack of taken-down drawings is
   piled behind him. "GREETINGS, SMALL DRAWING. YOU HAVE MET MY... DISTRACTION." He points his
   claw at the pile. "EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING. YOU BLAMED
-  EACH OTHER. NOBODY SUSPECTED... THE ROBOT." His Eye Laser draws the plan on the fridge, one
-  line at a time:
+  EACH OTHER. NOBODY SUSPECTED... THE ROBOT."
+- **He thanks you** (Eric, 2026-10-21) - every drawing you beat on the way here, he took down,
+  so you did his work for him. Each story's own "== thanks", in its own terms: EdgeLord, "THANK
+  YOU FOR CUTTING OUT THE OTHER DRAWINGS" ("...I was cutting them out for YOU?"); Flambé,
+  roasting them ("I was your... sous-chef?"); Lugnut, clearing the site ("That was NOT the job");
+  Circy, the evil stunts ("Bro. I got played?!"); Triguy, running them off ("not kewl"). Then:
+  "NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY. THE ONE TRUE RULER. OF THE FRIDGE." His Eye
+  Laser draws the plan on the fridge, one line at a time:
 
   > 1. REMOVE DRAWINGS.
   > 2. REMOVE MAGNETS.
