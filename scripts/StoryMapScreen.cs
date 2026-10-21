@@ -2,11 +2,13 @@ using Godot;
 
 /// <summary>
 /// A story's chapters laid out on the fridge door, a magnet each, in order: the ones played wear
-/// a gold star, the next one glows, the rest wait. A plays the next chapter, B goes back to
-/// "Whose story?" - and after every chapter the story comes back here, so you can see how far you
-/// have got. A finished story gets its gold star on "Whose story?" and starts again from here.
-/// Left and right set how hard its fights are - Easy, Medium or Hard (GameOptions.StoryDifficulty),
-/// remembered for every story.
+/// a gold star, the next one glows, the rest wait. Left and right pick any chapter already
+/// reached - every one, once the story is finished - and A plays it; B goes back to "Whose
+/// story?". After every chapter the story comes back here, so you can see how far you have got.
+/// Down moves to how hard its fights are - Easy, Medium or Hard (GameOptions.StoryDifficulty),
+/// remembered for every story - where left and right change it, and up goes back to the
+/// chapters (Elim, 2026-10-21: once a story was beaten, left and right only changed the
+/// difficulty and no chapter could be picked).
 /// </summary>
 public partial class StoryMapScreen : Node2D
 {
@@ -14,6 +16,17 @@ public partial class StoryMapScreen : Node2D
 
 	MenuNav[] navs;
 	int frames;
+
+	/// <summary>The chapter A will play.</summary>
+	int selected;
+
+	/// <summary>Down at the difficulty strip, rather than on the chapters.</summary>
+	bool onDifficulty;
+
+	/// <summary>The furthest chapter that can be picked: everything once the story is finished.</summary>
+	int LastOpen => Run == null ? 0 : StoryProgress.Finished(Run.PlayerId)
+		? Run.Chapters.Count - 1
+		: Mathf.Clamp(Mathf.Max(Run.At, StoryProgress.ChapterReached(Run.PlayerId)), 0, Mathf.Max(0, Run.Chapters.Count - 1));
 
 	static readonly Color Steel = new Color(0.84f, 0.87f, 0.90f);
 	static readonly Color SteelLow = new Color(0.74f, 0.78f, 0.83f);
@@ -25,7 +38,13 @@ public partial class StoryMapScreen : Node2D
 
 	public override void _Ready()
 	{
-		navs = new[] { new MenuNav(ControllerAssignment.ForPlayers(1)[0]), new MenuNav(KeyboardInputSource.Player1()) };
+		// The first pad, and the keyboard - but with no pad plugged in, the first "pad" is the
+		// keyboard itself, and reading it twice moved two chapters a press.
+		IInputSource first = ControllerAssignment.ForPlayers(1)[0];
+		navs = first is KeyboardInputSource
+			? new[] { new MenuNav(first) }
+			: new[] { new MenuNav(first), new MenuNav(KeyboardInputSource.Player1()) };
+		if (Run != null) selected = Mathf.Clamp(Run.At, 0, LastOpen);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -45,7 +64,16 @@ public partial class StoryMapScreen : Node2D
 				Play();
 				return;
 			}
-			if (nav.StepX != 0)
+			if (nav.StepY != 0)
+			{
+				bool down = nav.StepY > 0;
+				if (down != onDifficulty)
+				{
+					onDifficulty = down;
+					SfxPlayer.Ui("ui_move");
+				}
+			}
+			if (nav.StepX != 0 && onDifficulty)
 			{
 				int was = GameOptions.StoryDifficulty;
 				GameOptions.StoryDifficulty = Mathf.Clamp(was + nav.StepX, 0, 2);
@@ -55,13 +83,21 @@ public partial class StoryMapScreen : Node2D
 					GameOptions.Save();
 				}
 			}
+			else if (nav.StepX != 0 && Run != null)
+			{
+				int was = selected;
+				selected = Mathf.Clamp(selected + nav.StepX, 0, LastOpen);
+				if (selected != was) SfxPlayer.Ui("ui_move");
+			}
 		}
 		QueueRedraw();
 	}
 
 	void Play()
 	{
-		if (Run == null || Run.Done) return;
+		if (Run == null || Run.Chapters.Count == 0) return;
+		Run.At = Mathf.Clamp(selected, 0, LastOpen);
+		Run.Tries = 0;
 		SfxPlayer.Ui("ui_ready");
 		GameRoot.Instance.GoStoryChapter();
 	}
@@ -105,6 +141,7 @@ public partial class StoryMapScreen : Node2D
 		float restAt = 150.0f + NameLettering.Measure(name, look, 72).X;
 		DrawString(font, new Vector2(restAt, 150.0f), rest, HorizontalAlignment.Left, -1, 72, MenuTheme.Text);
 		bool finished = StoryProgress.Finished(Run.PlayerId);
+		int reached = StoryProgress.ChapterReached(Run.PlayerId);
 		if (finished)
 		{
 			Item.DrawStarOn(this, new Vector2(restAt + font.GetStringSize(rest, HorizontalAlignment.Left, -1, 72).X + 60.0f, 126.0f), 36.0f, new Color(1.0f, 0.82f, 0.25f));
@@ -121,14 +158,15 @@ public partial class StoryMapScreen : Node2D
 			StoryChapter chapter = Run.Chapters[i];
 			Vector2 at = SpotOf(i, size);
 			// A finished story starts again from the top, but every chapter keeps its star.
-			bool played = finished || i < Run.At;
-			bool next = i == Run.At;
-			float pulse = next ? 1.0f + 0.08f * Mathf.Sin(frames * 0.12f) : 1.0f;
+			bool played = finished || i < reached;
+			bool open = i <= LastOpen;
+			bool picked = i == selected && !onDifficulty;
+			float pulse = picked ? 1.0f + 0.08f * Mathf.Sin(frames * 0.12f) : 1.0f;
 			float r = 58.0f * pulse;
 			Color colour = MagnetColours[i % MagnetColours.Length];
-			if (!played && !next) colour = colour.Lerp(Steel, 0.55f);
+			if (!open) colour = colour.Lerp(Steel, 0.55f);
 
-			if (next) DrawCircle(at, r + 22.0f, new Color(1.0f, 0.9f, 0.5f, 0.35f + 0.15f * Mathf.Sin(frames * 0.12f)));
+			if (i == selected) DrawCircle(at, r + 22.0f, new Color(1.0f, 0.9f, 0.5f, (onDifficulty ? 0.25f : 0.35f) + 0.15f * Mathf.Sin(frames * 0.12f)));
 			DrawCircle(at + new Vector2(6.0f, 9.0f), r, new Color(0.2f, 0.22f, 0.3f, 0.18f));
 			DrawCircle(at, r, colour);
 			DrawArc(at, r, 0.0f, Mathf.Tau, 40, MenuTheme.Ink, 5.0f, true);
@@ -136,16 +174,20 @@ public partial class StoryMapScreen : Node2D
 
 			string number = (i + 1).ToString();
 			DrawString(font, at + new Vector2(-r, 16.0f), number, HorizontalAlignment.Center, r * 2.0f, 48, MenuTheme.Text);
-			DrawTitle(chapter.Title, at + new Vector2(0.0f, r + 46.0f), played || next);
+			DrawTitle(chapter.Title, at + new Vector2(0.0f, r + 46.0f), open);
 			if (played) Item.DrawStarOn(this, at + new Vector2(r * 0.7f, -r * 0.7f), 26.0f, new Color(1.0f, 0.82f, 0.25f));
 		}
 
-		string hint = Run.Done ? "B: back" : $"A: play chapter {Run.At + 1}      B: back";
-		DrawString(font, new Vector2(150.0f, size.Y - 70.0f), hint, HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
+		string hint = onDifficulty
+			? $"< > how hard     up: chapters     A: play {selected + 1}     B: back"
+			: $"< > pick a chapter     down: how hard     A: play {selected + 1}     B: back";
+		DrawString(font, new Vector2(150.0f, size.Y - 70.0f), hint, HorizontalAlignment.Left, 690.0f, 28, MenuTheme.Soft);
 
 		// How hard, along the bottom: the three words, the one picked underlined, arrows to change it.
 		int difficulty = GameOptions.StoryDifficulty;
 		float baseline = size.Y - 70.0f;
+		// Picked out when it is where the stick is.
+		if (onDifficulty) CrayonBrush.InkRect(this, new Rect2(845.0f, baseline - 52.0f, 820.0f, 76.0f), MenuTheme.Ink, 3.5f, 77, 1.2f);
 		DrawString(font, new Vector2(860.0f, baseline), "How hard:", HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
 		for (int d = 0; d < 3; d++)
 		{
