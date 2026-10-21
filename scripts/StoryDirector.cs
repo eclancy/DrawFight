@@ -365,7 +365,7 @@ public partial class StoryDirector : Node
 				return true;
 
 			case "pile":
-				board.Pile(step.Arg(0) == "clear" ? (float?)null : step.Number(1, 0), Match.FloorAt(step.Number(1, 0)));
+				board.Pile(step.Arg(0) == "clear" ? (float?)null : step.Number(1, 0), Match.FloorAt(step.Number(1, 0)), Run.PlayerId);
 				return true;
 
 			case "table":
