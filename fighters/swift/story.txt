@@ -281,6 +281,20 @@ end
 
 # --- The finale -------------------------------------------------------------------------------
 
+# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+== thanks
+camera on doombot zoom 1.2
+doombot pose bow
+doombot: AND YOU, CHEF. THANK YOU FOR ROASTING THE OTHER DRAWINGS.
+doombot pose present
+doombot: ONE BY ONE. EVERY ONE YOU ROASTED, I TOOK DOWN. WELL DONE.
+doombot pose none
+camera on player zoom 1.2 fast
+player look shocked
+player mark !
+player: Mon dieu. I was your... sous-chef?
+player mark none
+
 == roast
 player pose point
 player (hot): The fridge is not yours, mon ami.

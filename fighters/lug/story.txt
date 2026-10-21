@@ -181,6 +181,20 @@ end
 
 # --- The finale -------------------------------------------------------------------------------
 
+# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+== thanks
+camera on doombot zoom 1.2
+doombot pose bow
+doombot: AND YOU, BUILDER. THANK YOU FOR CLEARING THE SITE.
+doombot pose present
+doombot: EVERY DRAWING YOU KNOCKED DOWN, I TOOK DOWN. DEMOLITION COMPLETE. AHEAD OF SCHEDULE.
+doombot pose none
+camera on player zoom 1.2 fast
+player look shocked
+player mark !
+player: ...Pal. That was NOT the job.
+player mark none
+
 == roast
 player pose hips
 player: Pal, I've installed plenty of fridges.

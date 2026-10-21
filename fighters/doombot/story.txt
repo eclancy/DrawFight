@@ -51,6 +51,7 @@
 #   eye at 0 -900 / eye close       a red eye opening up there in the dark
 #   page at 380 -560 / page clear   a new drawing pinned up on the door, with a magnet
 #   include player roast            plays the scene called "roast" from the player's own story
+#                                   (the finale also includes each player's "thanks")
 #   fight                           the scene ends and the fight starts, right where they stand
 #   end                             the scene ends, no fight
 #
@@ -438,6 +439,13 @@ wait 30
 camera on doombot zoom 1.3 fast
 doombot pose present
 doombot: ...THE ROBOT.
+doombot pose none
+include player thanks
+camera on doombot zoom 1.3
+doombot pose fist
+doombot: NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY.
+doombot pose hips
+doombot: THE ONE TRUE RULER. OF THE FRIDGE.
 doombot pose none
 board at -620 -820
 camera at -120 -680 zoom 0.72

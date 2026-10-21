@@ -202,6 +202,20 @@ end
 
 # --- The finale -------------------------------------------------------------------------------
 
+# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+== thanks
+camera on doombot zoom 1.2
+doombot pose bow
+doombot: AND YOU, ROUND ONE. THANK YOU FOR THE EVIL STUNTS.
+doombot pose present
+doombot: EVERY DRAWING YOU STUNTED ON, I TOOK DOWN. YOU CLEARED THE FRIDGE. FOR ME.
+doombot pose none
+camera on player zoom 1.2 fast
+player look shocked
+player mark !
+player (shout): Bro. BRO. I got played?!
+player mark none
+
 == roast
 camera on player zoom 1.2
 player pose point

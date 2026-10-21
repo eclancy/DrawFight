@@ -160,6 +160,19 @@ fight
 
 # --- The finale -------------------------------------------------------------------------------
 
+# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+== thanks
+camera on doombot zoom 1.2
+doombot pose bow
+doombot: AND YOU, TRIANGLE. THANK YOU FOR RUNNING THE OTHER DRAWINGS RIGHT OFF THE FRIDGE.
+doombot pose present
+doombot: SO FAST. SO HELPFUL. EVERY ONE YOU BEAT, I TOOK DOWN.
+doombot pose none
+camera on player zoom 1.2 fast
+player show taunt_surprised
+player: not kewl.
+player show none
+
 == roast
 player show taunt_surprised
 camera on doombot zoom 1.2 whip
