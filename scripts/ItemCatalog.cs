@@ -172,7 +172,7 @@ public static class ItemCatalog
 		new ItemData
 		{
 			Id = "paint_bucket", DisplayName = "Paint Bucket", Use = ItemUse.Throw, Impact = ItemImpact.Splash, Size = 80.0f,
-			Blurb = "Bursts in a big splash. Anyone in it drips paint and slips when they land.",
+			Blurb = "Bursts in a big splash of paint and leaves a slippery puddle on the floor.",
 			Hit = Hit("Paint Splash", 10.0f, 40.0f, 0.6f, 70.0f), Radius = 125.0f, Duration = 300, Tint = PaintBlue,
 		},
 		new ItemData
