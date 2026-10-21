@@ -398,8 +398,10 @@ public partial class MoveData : Resource
 
 	/// <summary>
 	/// A <see cref="DelayedLaunch"/> recovery whose tether GRABS the first fighter it touches:
-	/// they are reeled in through the startup, then thrown with this move as the launch fires.
-	/// The recovery still happens either way - grabbing never costs the way home.
+	/// they are held where they were caught, he is hauled along the tether to them when the launch
+	/// fires, and this move hits them as he arrives. The recovery still happens either way -
+	/// grabbing never costs the way home. (For a <see cref="SpecialKind.CommandGrab"/> it is the
+	/// follow-up played once the victim is reeled in.)
 	/// </summary>
 	public MoveData GrabThrow;
 

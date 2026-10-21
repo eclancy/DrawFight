@@ -471,9 +471,11 @@ public static class Specials
 
 	/// <summary>
 	/// Up: the recovery. He flings a dagger on a chain up and forward and hauls himself after it.
-	/// If it catches someone on the way out, he reels them in and throws them down as he goes up -
-	/// one pull that sends them down and him up. Grabbing never costs the recovery: he rises
-	/// either way. One of the roster's two command grabs (see .ai/character-design.md).
+	/// If it catches someone on the way out, it holds them right where they are and hauls him to
+	/// them instead, and he arrives with a cut that pops them up and away (Eric, 2026-10-21: it
+	/// used to reel them in and throw them down, which dragged people to the ground). Grabbing
+	/// never costs the recovery: either way he goes up the chain. One of the roster's two command
+	/// grabs (see .ai/character-design.md).
 	/// </summary>
 	static MoveData GrappleArm() => new MoveData
 	{
@@ -491,10 +493,12 @@ public static class Specials
 		SpecialRise = 1920.0f, SpecialSpeed = 780.0f,
 		GrabThrow = new MoveData
 		{
-			MoveName = "Grapple Throw",
+			MoveName = "Chain Cut",
+			// Up and away, the way the haul was going: he is spent when he gets there, so a pop
+			// that leaves them flying is a trade, not a combo starter.
 			Damage = 9.0f, BaseKnockback = 44.0f, KnockbackGrowth = 0.6f,
-			LaunchAngleDegrees = -84.0f,
-			Spikes = true, Unblockable = true,
+			LaunchAngleDegrees = 70.0f,
+			Unblockable = true,
 		},
 		FxColor = new Color(0.49f, 0.06f, 0.09f), FxRadius = 18.0f,
 	};

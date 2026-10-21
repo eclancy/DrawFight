@@ -252,6 +252,16 @@ that takes half a second to reach it never gets there in a fight.
   only his up special is gone until he lands. And a recovery marked `SpentKeepsAttacks` (Triguy's
   trampoline, Eric's call, 2026-10-20) leaves him spent but still able to use his normal
   attacks on the way down - no specials, jump or dodge, and no second bounce.
+- **A tether that catches someone pulls him, not them** (EdgeLord's Chain Blade, Eric's call,
+  2026-10-21). They are held right where the chain caught them - frozen in the air or on the
+  floor, never dragged or spiked - while he is hauled along it to them at the speed an empty
+  chain would have flung him; arriving, he cuts them up and away (9%, 70 degrees: a small pop,
+  not a finisher) and carries on up the chain's line with whatever of its length the haul
+  did not use, so a catch never costs him the way home. He is spent when he gets there and they
+  are flying, so it is a trade, not a combo starter. The hold lasts from the catch to the
+  arrival (at most the 14 startup and 14 active frames), and if he cannot reach them by the end
+  of the active frames - a wall in the way - they are let go with ten frames of hitstun. Being
+  hit while hauling, or them being hit by someone else, ends it too. Teammates are never caught.
 - **Fast-fall**: holding down while falling pulls him down harder - another 60% of his gravity -
   up to his fast-fall speed. It used to snap straight to that speed, which flung him at the floor
   (Eric, 2026-10-04).
@@ -438,7 +448,9 @@ The crouch pose folds the body well forward over deeply bent knees, and with pla
 what drops the body: a crouching fighter is visibly about half height, matching the hurtbox. Attacking from a
 crouch is the down tilt, and **every fighter's down tilt works along the floor**: a sweep, or
 something sent along it - Lug's traffic cone, kicked out to trip people, and DoomBot's MiniBot,
-set down to walk at them. Never a move that hits high.
+set down to walk at them. Never a move that hits high. Whatever is sent along the floor is solid:
+the cone bounces back off a wall and lands on whatever it falls onto, and never ends up inside
+the stage (Eric, 2026-10-21).
 Down plus jump on a soft platform is still a drop-through, checked before crouching.
 
 **Crawling** (Eric's call, 2026-10-21): crouched, pushing left or right creeps that way, still
