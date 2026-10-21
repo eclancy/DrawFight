@@ -120,11 +120,12 @@ public partial class StoryOverlay : CanvasLayer
 
 	/// <summary>A button pressed: a line still typing finishes typing, a typed one is done.</summary>
 	/// <summary>
-	/// How long a line stands fully typed before A can send it on: a quarter of a second, so the
-	/// press that finished the typing - or a second press just after it - never throws the words
-	/// away before they are read (Eric, 2026-10-16).
+	/// How long a line stands fully typed, with A left alone, before A can send it on: half a
+	/// second. A press any sooner starts the wait again, so mashing A never throws words away
+	/// before they are read - it takes one deliberate press (Eric, 2026-10-16; mashing got
+	/// through the old quarter second, 2026-10-21).
 	/// </summary>
-	const int ReadBeforeHurry = 15;
+	const int ReadBeforeHurry = 30;
 
 	public void Hurry(Line line)
 	{
@@ -133,8 +134,13 @@ public partial class StoryOverlay : CanvasLayer
 		{
 			line.Shown = line.Glyphs.Count;
 			line.TypedFrames = 0;
+			// Its full reading time from now. Without this the hold was never set - it is only
+			// set when typing finishes on its own - so a line hurried mid-typing closed the very
+			// next frame, and one press of A threw the whole line away (Elim, 2026-10-21).
+			line.Hold = HoldFor(line);
 		}
 		else if (line.TypedFrames >= ReadBeforeHurry) line.Finished = true;
+		else line.TypedFrames = 0;
 	}
 
 	static int FontSizeOf(string mood) => mood switch

@@ -119,6 +119,7 @@ public partial class StoryDirector : Node
 		alongside.Clear();
 		InScene = true;
 		skipping = false;
+		hurryLockFrames = SceneStartLock;
 		shot = "wide";
 		shotZoom = -1.0f;
 		shotSpeed = 4.0f;
@@ -245,14 +246,28 @@ public partial class StoryDirector : Node
 		}
 	}
 
+	/// <summary>
+	/// Frames at the start of a scene when A does nothing: the fight that just ended was all
+	/// mashing buttons, and those presses must not throw the first lines away (Eric, 2026-10-21).
+	/// </summary>
+	const int SceneStartLock = 45;
+	int hurryLockFrames;
+
 	void ReadHumans()
 	{
 		bool hurry = false, holding = false;
 		foreach (IInputSource human in humans)
 		{
 			InputState s = human.Poll();
-			hurry |= s.JumpPressed || s.AttackPressed;
+			// Only A hurries a line (what the hint says) - not the attack button, which a
+			// player still swinging from the fight would be mashing.
+			hurry |= s.JumpPressed;
 			holding |= s.SpecialHeld;
+		}
+		if (hurryLockFrames > 0)
+		{
+			hurryLockFrames--;
+			hurry = false;
 		}
 
 		skipHeld = holding ? skipHeld + 1 : 0;

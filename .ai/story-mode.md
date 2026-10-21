@@ -340,7 +340,11 @@ In order, each step usable before the next:
    match opens on its scene instead of the 3-2-1; `fight` hands the fighters back (the player to
    their pad, everyone else to the CPU) and the fight starts on FIGHT!, in place. Won, the scene
    after plays where they stand (a KO'd loser is put back, `Fighter.ReviveForScene`); lost, the
-   chapter starts again. **A** hurries a line; **holding B** skips the scene by running it at
+   chapter starts again. **A** hurries a line - the first press finishes its typing and it
+   still gets its full reading time; only a single press after it has stood half a second sends
+   it on, an earlier press restarts that wait, and A does nothing for the first three quarters of
+   a second of a scene - so mashing A, or presses carried over from the fight, never throw
+   words away unread (Elim, 2026-10-21: a hurried line used to close the next frame); **holding B** skips the scene by running it at
    eight times speed under a sheet of paper, so everyone still ends up where the scene leaves
    them. The DoomBot finale and the scene after it play end to end for all five fighters.
 2. **The script format** - **built, 2026-10-15.** One plain-text script per fighter,
