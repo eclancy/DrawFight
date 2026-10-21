@@ -299,7 +299,8 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   The camera tilts up to the freezer door. A red eye opens. Heavy footsteps, each one a shake.
   DoomBot lands on rocket boots.
 - **He explains the plan** - properly, the way a villain does. A stack of taken-down drawings is
-  piled behind him. "GREETINGS, SMALL DRAWING. YOU HAVE MET MY... DISTRACTION." He points his
+  piled behind him, and they are the other fighters' own drawings - everyone's but his and
+  yours - partly torn or rubbed out (Eric, 2026-10-21; `TakenDownPile`, below). "GREETINGS, SMALL DRAWING. YOU HAVE MET MY... DISTRACTION." He points his
   claw at the pile. "EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING. YOU BLAMED
   EACH OTHER. NOBODY SUSPECTED... THE ROBOT."
 - **He thanks you** (Eric, 2026-10-21) - every drawing you beat on the way here, he took down,
@@ -392,7 +393,17 @@ In order, each step usable before the next:
    `.ai/audio-direction.md`. The reveal is staged: `stage bare` takes the other drawings off the
    door, `dark on` dims it to night lavender, `eye at` opens his red eye up in the dark, `pile at`
    heaps the taken-down drawings behind him, and `page at` pins up the drawing of DoomBot in his
-   ending (`StoryBoard`). `table at` sets a lunch table, and `pose sit` / `pose eat` sit someone
+   ending (`StoryBoard`). The pile (`TakenDownPile`, Eric, 2026-10-21) is seven sheets of
+   paper, each carrying one of the other fighters' real rigs standing idle, facing right as
+   drawn - everyone but DoomBot and the player, so the four in front are the four of them and
+   the three buried behind repeat them. Each rig is rendered once into its own texture when the
+   pile goes down (it stays through the boss fight, so nothing costly happens per frame), and
+   then damaged the way he took it down, only ever by taking away (rule 1): torn - the sheet and
+   the drawing cut to a ragged outline with a piece missing, its torn edge white paper fibre,
+   not ink - or half rubbed out, the eraser's scrubbing in the paper's own colour fading the
+   drawing in streaks, with a graphite smear and eraser crumbs; and a bent-over corner or the
+   tape still on it that held it up. Every placement and tear is a fixed table plus hashed
+   wobble, never random. It is drawn on the board, behind the fighters. `table at` sets a lunch table, and `pose sit` / `pose eat` sit someone
    at it on a stool (`FighterRig.Sitting`) - Flambe and Lugnut at lunch, before every fight
    against the two of them (Eric, 2026-10-16). A scene never walks anyone off a drop
    (`MatchManager.WalkableTo`), and no car comes down City Rooftops' street while one plays.

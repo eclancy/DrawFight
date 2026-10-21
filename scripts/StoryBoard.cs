@@ -53,8 +53,7 @@ public partial class StoryBoard : Node2D
 	bool eyeOpen;
 	float eyeOpenness;
 
-	float? pileX;
-	float pileFloor;
+	TakenDownPile pile;
 
 	public MatchManager Match;
 
@@ -88,11 +87,17 @@ public partial class StoryBoard : Node2D
 		pageFrames = 0;
 	}
 
-	/// <summary>The heap of taken-down drawings on the floor at x, or none.</summary>
-	public void Pile(float? x, float floorY)
+	/// <summary>
+	/// The heap of taken-down drawings on the floor at x, or none: the other fighters' own
+	/// drawings, everyone's but DoomBot's and <paramref name="playerId"/>'s (TakenDownPile).
+	/// </summary>
+	public void Pile(float? x, float floorY, string playerId)
 	{
-		pileX = x;
-		pileFloor = floorY;
+		pile?.Free();
+		pile = null;
+		if (x == null) return;
+		pile = new TakenDownPile();
+		pile.Build(this, playerId, x.Value, floorY);
 	}
 
 	/// <summary>A table set for lunch on the floor at x, or none - the stools go with it.</summary>
@@ -153,35 +158,6 @@ public partial class StoryBoard : Node2D
 			}
 		}
 		QueueRedraw();
-	}
-
-	/// <summary>
-	/// A heap of drawings taken off the fridge: pages lying every which way, each with a scribble
-	/// of a drawing on it and the odd magnet - the other fighters' pages, by their colours.
-	/// </summary>
-	void DrawPile(float x, float floor)
-	{
-		Color ink = new Color(0.19f, 0.31f, 0.61f);
-		Color[] doodles = { new Color(0.97f, 0.55f, 0.2f), new Color(0.98f, 0.85f, 0.2f), new Color(0.5f, 0.78f, 0.45f),
-			new Color(0.86f, 0.3f, 0.3f), new Color(0.4f, 0.6f, 0.95f), new Color(0.75f, 0.5f, 0.9f) };
-		for (int i = 0; i < 9; i++)
-		{
-			float w = 150.0f + 40.0f * Mathf.Abs(CrayonBrush.Noise(i, 401));
-			float h = w * 0.75f;
-			float layer = i / 3;
-			Vector2 centre = new Vector2(x + CrayonBrush.Noise(i, 402) * 120.0f, floor - h * 0.3f - layer * 34.0f);
-			float angle = CrayonBrush.Noise(i, 403) * 0.5f;
-			DrawSetTransform(centre, angle, Vector2.One);
-			var page = new Rect2(-w * 0.5f, -h * 0.5f, w, h);
-			DrawRect(new Rect2(page.Position + new Vector2(6.0f, 8.0f), page.Size), new Color(0.3f, 0.3f, 0.4f, 0.18f));
-			DrawRect(page, new Color(0.98f, 0.97f, 0.93f));
-			CrayonBrush.InkRect(this, page, new Color(ink, 0.7f), 2.5f, 410 + i, 1.4f);
-			// The drawing on it: a scribbled figure in one of their colours.
-			Color c = doodles[i % doodles.Length];
-			CrayonBrush.Scribble(this, new Vector2(0.0f, -h * 0.05f), new Vector2(w * 0.45f, h * 0.55f), c, 420 + i);
-			if (i % 3 == 0) DrawCircle(new Vector2(-w * 0.35f, -h * 0.4f), 13.0f, new Color(0.9f, 0.3f, 0.3f));
-		}
-		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
 	}
 
 	static readonly Color FurnitureInk = new Color(0.19f, 0.31f, 0.61f);
@@ -313,7 +289,7 @@ public partial class StoryBoard : Node2D
 	public override void _Draw()
 	{
 		if (darkness > 0.0f) DrawRect(new Rect2(-6000.0f, -6000.0f, 12000.0f, 12000.0f), new Color(0.24f, 0.21f, 0.38f, 0.6f * darkness));
-		if (pileX.HasValue) DrawPile(pileX.Value, pileFloor);
+		pile?.Draw(this);
 		if (tableX.HasValue) DrawLunch(tableX.Value, tableFloor);
 		if (eyeOpenness > 0.0f) DrawEye();
 		if (pageAt.HasValue) DrawPinnedPage(pageAt.Value);
