@@ -109,6 +109,9 @@ Circy and Triguy are Elim's.
   at EdgeLord's sword gets "Hands off the sword."; Circy's "[bomb]" gets "Whoa. Okay. Nobody's
   touching your page." Where nobody else is in the scene, the scene around him carries it - a
   pose, a mark, the narrator setting it up beforehand.
+- **Nobody else's scene puts words in his mouth.** A challenger or defeated scene gives the
+  player lines, so a story with Triguy as the player writes its own `== vs WHO` / `== beat WHO`
+  wherever the opponent's scene would have him talk (his own `vs circy`, 2026-10-21).
 
 That keeps them Elim's - nothing put in their mouths - and the scene still tells the story.
 
@@ -141,7 +144,8 @@ headliner. This kitchen is my stage."
   "Inspection?" - "Stress test." - "So I can play?" - "With pyro, even." A fist bump, and Fire Rain
   off the girder like fireworks.
 - **The two-on-one.** EdgeLord has recruited Triguy: "Speed and edge, kid. We're unstoppable."
-  Triguy: "that's, really kewl." Flambé: "Order up."
+  Triguy: "that's, really kewl." Then he goes for EdgeLord's sword - "Hands off the sword." - and
+  Flambé: "Unstoppable? You can't even share a sword. Order up."
 - **Ending.** The Big Show, on the middle of the fridge, Lugnut's lights on the girder.
   Flambé headlines, Fire Rain for fireworks. Lugnut, in the crowd: "ENCORE!" - "I don't do
   encores." Beat. "...Okay. One encore."
@@ -169,8 +173,8 @@ to listen, so he has to stop them first.
   "Then I'm on overtime." After, they sit together and Flambé hands it over. Lugnut tries it.
   "...Okay. That's actually really good." - "I KNOW."
 - **The two-on-one.** Circy and Triguy, side by side. "A circle and a triangle." Circy: "And you're
-  a square, bro! Shape squad!" "Ha. That's me, all right. ...Pal, I'm a rectangle at most."
-  Triguy: "that's, really kewl." Lugnut: "Thank you."
+  a square, bro! Shape squad!" "Ha. That's me, all right. ...Pal, I'm more of a rectangle."
+  Triguy: "that's, really kewl." Lugnut: "Thanks, kid. Rectangles are load-bearing."
 - **Ending.** Every drawing back on the fridge, moved round and stuck on straight, a magnet on
   each - room for everybody, even a little spot for a MiniBot. Lugnut, wiping his hands: "Built
   to code." Flambé: "Why am I behind DoomBot?" - "Structural reasons."
@@ -190,7 +194,8 @@ THE PICTURE to get there.
   Throws them over his shoulder. "I'll use my swords."
 - **Fights:** Triguy, Circy, Lugnut, Flambé, then Flambé and Lugnut together, then DoomBot.
 - **Triguy.** Triguy zooms in and strikes a pose. "You may be fast, but my swords
-  are faster." - "that's, really kewl." - "It IS really cool. Stop saying it like that." After, from the floor: "that's...
+  are faster." - "that's, really kewl." - "I know. Coolest swords on the fridge." - "that's, really kewl." -
+  "It IS really cool. Stop saying it like that." After, from the floor: "that's...
   really kewl." - "Try to keep up."
 - **Circy.** "A circle. You don't even have edges." - "Bro, I don't NEED edges. I'm built
   different." - "...You're built round. You are a ball." - "Exactly. Ball is life." After: "GG, bro.
@@ -198,7 +203,7 @@ THE PICTURE to get there.
   conversation, with EdgeLord the straight man who doesn't get them (Eric, 2026-10-21).
 - **Lugnut.** "A hard hat? Against swords?" He taps it. "Safety first." Beat. "...Respect."
 - **Flambé: the haircut** (Eric, 2026-10-21). "Nice mohawk. Is it... on fire?" - "Always. The
-  hair of a true artist." - "Looks a little long on top. Lucky for you, I've got swords." - "Non.
+  hair of a true artist." - "Looks a little long on top, though. Lucky for you, I've got swords." - "Non.
   NON. Nobody touches the hair." - "Just a little off the top." After: "Tell me the hair is still
   there." - "I only took a little off the top." - "...Mon dieu. It is FABULOUS." Flambé's own
   story plays it from his side, and he keeps his hair.
@@ -257,7 +262,8 @@ A rogue factory robot, built big. Strong, slow, rusty, always overheating. Speak
 robot ALL CAPS - until he is upset, and then it shakes, grows and goes red.
 
 **Wants:** the whole fridge. "THE FRIDGE IS A MACHINE. DOOMBOT IS A MACHINE. MACHINES STICK
-TOGETHER." Beat. "LIKE MAGNETS." Beat. "HA. HA. HA."
+TOGETHER." Beat. "LIKE MAGNETS." Beat. "HA. HA. HA." (He tells Circy, who wants to know why HE
+gets the fridge: "Bro. That joke was mid.")
 
 His own story is the villain's side:
 
@@ -305,23 +311,25 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   DoomBot lands on rocket boots.
 - **He explains the plan** - properly, the way a villain does. A stack of taken-down drawings is
   piled behind him, and they are the other fighters' own drawings - everyone's but his and
-  yours - partly torn or rubbed out (Eric, 2026-10-21; `TakenDownPile`, below). "GREETINGS, SMALL DRAWING. YOU HAVE MET MY... DISTRACTION." He points his
-  claw at the pile. "EVERY NIGHT, WHILE YOU FOUGHT EACH OTHER, I REMOVED ONE DRAWING. YOU BLAMED
-  EACH OTHER. NOBODY SUSPECTED... THE ROBOT."
+  yours - partly torn or rubbed out (Eric, 2026-10-21; `TakenDownPile`, below). "GREETINGS, SMALL DRAWING. ALL THOSE FIGHTS. ALL THAT
+  FUSS. IT WAS A... DISTRACTION." He shows off the pile. "SEE THAT PILE? EVERY NIGHT,
+  WHILE YOU FOUGHT EACH OTHER, I TOOK ONE DOWN. YOU BLAMED EACH OTHER. NOBODY SUSPECTED... THE
+  ROBOT."
 - **He thanks you** (Eric, 2026-10-21) - every drawing you beat on the way here, he took down,
   so you did his work for him. Each story's own "== thanks", in its own terms: EdgeLord, "THANK
   YOU FOR CUTTING OUT THE OTHER DRAWINGS" ("...I was cutting them out for YOU?"); Flambé,
   roasting them ("I was your... sous-chef?"); Lugnut, clearing the site ("That was NOT the job");
-  Circy, the evil stunts ("Bro. I got played?!"); Triguy, running them off ("not kewl"). Then:
-  "NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY. THE ONE TRUE RULER. OF THE FRIDGE." His Eye
-  Laser draws the plan on the fridge, one line at a time:
+  Circy, the evil stunts ("Bro. I got played?!"); Triguy, running them off ("not kewl." - "NOT
+  KEWL FOR THEM. VERY KEWL. FOR ME."). Then:
+  "NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY. TO BE THE ONE TRUE RULER. OF THE FRIDGE."
+  His Eye Laser draws the plan on the fridge, one line at a time:
 
   > 1. MAKE THE DRAWINGS FIGHT.
   > 2. TAKE DOWN EVERY LOSER.
   > 3. RULE THE FRIDGE. ALONE.
 
-  "STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE. WHEN THE LAST DRAWING COMES DOWN, THE FRIDGE WILL
-  BE CLEAN. SHINY. EMPTY. EXCEPT FOR ONE ROBOT. **MINE.**" (Eric, 2026-10-21: a real plan to rule
+  "STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE. WHEN THE LAST DRAWING COMES DOWN... THE FRIDGE
+  WILL BE CLEAN. SHINY. EMPTY. AND ALL... **MINE.**" (Eric, 2026-10-21: a real plan to rule
   the fridge - it used to say "REMOVE MAGNETS" and "3. FRIDGE.") He comes down out of the dark
   right where his red eye opened (`drop from eye`).
 - **The roast.** Every fighter makes the same joke - he looks like the fridge, and that doesn't
@@ -335,7 +343,9 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
     yours." He holds up the Metre Stick and squints. "...And you're not even level."
   - **Circy:** "Bro. You literally look like the fridge. Same shape. No cap." DoomBot: "...NO.
     CAP?" Beat. **"I AM NOT A FRIDGE."**
-  - **Triguy** makes his surprised face, the camera whipping between him and DoomBot. DoomBot: "DO NOT. MAKE. THAT FACE." Triguy: "not kewl."
+  - **Triguy** makes his surprised face, the camera whipping between him and DoomBot, and
+    whispers "that's... really kewl." DoomBot: "DO NOT. MAKE. THAT FACE. I KNOW WHAT YOU ARE
+    THINKING." - and the meltdown says what that was.
 - **The meltdown.** A steam whistle. His heat climbs to full, he glows, he smokes, and each word
   slams in on its own, shaking the screen: **"I. DO. NOT. LOOK. LIKE. THE. FRIDGE."** The camera
   stays on him - no cutting away to look at the fridge (Eric, 2026-10-21). DoomBot's theme hits. FIGHT!
@@ -345,7 +355,7 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   TEMPERATURE CRITICAL," he flashes red, MiniBots come out, the music doubles in speed.
 - **When he falls.** He cools, with a long hiss of steam. Quietly, in lower case for the first
   time: "...i just wanted to be on the fridge." And the player's fighter answers in their own
-  way - Lugnut builds him a spot, EdgeLord shrugs ("Fine. Behind me."), Flambé offers him dessert,
+  way - Lugnut builds him a spot, EdgeLord shrugs ("Fine. You can have a spot. ...Behind me."), Flambé offers him dessert,
   Circy says "Same, bro. Same.", Triguy says the line, softly - before their
   ending.
 

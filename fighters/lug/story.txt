@@ -69,7 +69,8 @@ cast player at -300
 cast lugnut at 300 facing left
 music story
 lugnut pose slump
-lugnut: Should've stayed on break.
+lugnut: Should've stayed on my break.
+lugnut pose none
 end
 
 # --- His own fights ----------------------------------------------------------------------------
@@ -143,15 +144,14 @@ player pose laugh
 player: Ha. That's me, all right.
 player pose none
 player pose shrug
-player: ...Pal, I'm a rectangle at most.
+player: ...Pal, I'm more of a rectangle.
 player pose none
 triguy show taunt_pog
 triguy mark sparkle
 triguy: that's, really kewl.
 player look happy
-player block 20
-player pose nod
-player: Thanks, kid. Safety's always in style.
+player pose hips
+player: Thanks, kid. Rectangles are load-bearing.
 player pose none
 triguy mark none
 triguy show none
@@ -169,7 +169,7 @@ cast triguy at 420 facing left
 music story
 circy: Duuude. Is there room on the fridge for us?
 player pose present
-player: Yes. There's room on the fridge for you. For both of you.
+player: There sure is. Room for you, and room for you.
 player pose none
 triguy show taunt_pose
 triguy (shout): THAT'S, REALLY KEWL.
@@ -187,7 +187,8 @@ camera on doombot zoom 1.2
 doombot pose bow
 doombot: AND YOU, BUILDER. THANK YOU FOR CLEARING THE SITE.
 doombot pose present
-doombot: EVERY DRAWING YOU KNOCKED DOWN, I TOOK DOWN. DEMOLITION COMPLETE. AHEAD OF SCHEDULE.
+doombot: EVERY DRAWING YOU KNOCKED DOWN, I TOOK DOWN.
+doombot: DEMOLITION COMPLETE. AHEAD OF SCHEDULE.
 doombot pose none
 camera on player zoom 1.2 fast
 player look shocked

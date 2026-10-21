@@ -55,7 +55,9 @@ circy look angry
 circy (shout): Touch my page and GET READY FOR EVIL STUNTS!
 player look shocked
 player pose tremble
-player: Whoa. Okay. Nobody's touching your page. ...Except me.
+player: Whoa. Okay. Nobody's touching your page.
+player pose beckon
+player: ...Your evil stunts, though? Bring 'em.
 player pose none
 camera wide
 fight
@@ -80,18 +82,22 @@ cast player at -400 facing right
 cast triguy at 900 facing left
 music story
 triguy run to 300
-triguy show taunt_surprised
 camera two player triguy
-narrator: Triguy had his eye on the oldest page on the fridge.
-triguy: that's, really kewl.
 player pose shrug
-player: Bro, slow down. Ever tried walking? Walking is elite.
+player: Duuude, slow down! Ever tried walking? Walking is elite.
+player pose none
+triguy show taunt_surprised
+narrator: But Triguy had his eye on the oldest page on the fridge.
+triguy: that's, really kewl.
+player look happy
+player pose present
+player: Right?! Oldest page on the fridge. And it's MINE.
 player pose none
 triguy show taunt_pose
 triguy (shout): THAT'S, REALLY KEWL.
 player look angry
 player pose stomp
-player (shout): My page? Nope. GET READY FOR EVIL STUNTS!
+player (shout): You want it? No way, bro. GET READY FOR EVIL STUNTS!
 player pose none
 triguy show none
 triguy look shocked
@@ -123,10 +129,10 @@ player: Bro said "edges" like it's a flex.
 player pose none
 edgelord look squint
 edgelord pose hips
-edgelord: It IS a flex. You'd be better as a square. Obviously.
+edgelord: It IS a flex. Edges are sharp. You're just... round.
 edgelord pose none
 player look angry
-player (shout): Skill issue. GET READY FOR EVIL STUNTS!
+player (shout): Round means I can ROLL, bro. GET READY FOR EVIL STUNTS!
 edgelord look shocked
 edgelord pose shrug
 edgelord: ...Evil stunts. Okay, that's a little bit cool.
@@ -178,7 +184,7 @@ lugnut pose none
 wait 30
 lugnut look angry
 lugnut pose flex
-lugnut: Right after I stop you fighting. Break's over.
+lugnut: But first, the fighting stops. Break's over.
 lugnut pose none
 camera wide
 fight
@@ -208,7 +214,8 @@ camera on doombot zoom 1.2
 doombot pose bow
 doombot: AND YOU, ROUND ONE. THANK YOU FOR THE EVIL STUNTS.
 doombot pose present
-doombot: EVERY DRAWING YOU STUNTED ON, I TOOK DOWN. YOU CLEARED THE FRIDGE. FOR ME.
+doombot: EVERY DRAWING YOU STUNTED ON, I TOOK DOWN.
+doombot: YOU CLEARED THE FRIDGE. FOR ME.
 doombot pose none
 camera on player zoom 1.2 fast
 player look shocked
@@ -239,7 +246,7 @@ player pose none
 wait 30
 doombot look shocked
 doombot pose facepalm
-doombot: ...YOU. LIKE. ME?
+doombot: ...YOU. UNDERSTAND. ME?
 doombot pose none
 doombot look happy
 doombot mark heart
