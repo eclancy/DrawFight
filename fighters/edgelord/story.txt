@@ -11,7 +11,7 @@ fight lugnut at rooftops
 fight flambe at bigshow
 fight flambe lugnut at rooftops
 finale
-ending with flambe at fridge
+ending with flambe circy lugnut triguy at fridge
 
 == opening
 cast player at 520 facing left
@@ -302,28 +302,43 @@ player pose none
 
 == ending
 cast player at 0 facing right
+cast circy offstage
+cast lugnut offstage
 cast flambe offstage
+cast triguy offstage
 music story
 camera on player zoom 1.1 cut
-narrator: Alone on top of the fridge. Cape blowing.
+narrator: DoomBot was beaten. The fridge was safe.
 player taunt
 player look smug
-camera wide slow
-wait 60
-narrator: Nobody was watching.
-player look sad
-player pose slump
-player: ...Cool.
+player pose hips
+player: The sharpest drawing on the fridge. Obviously.
 player pose none
-wait 50
-flambe drop at -450
+wait 30
+circy drop at -430
+circy face player
+camera two player circy
+circy (shout): Duuude! Can we stay on the fridge too?
+lugnut drop at -700
+lugnut face player
+lugnut: Fighting you was the most fun I've had all week, pal. Don't take us down.
+flambe drop at 440
 flambe face player
-flambe pose beckon
-flambe: Dude. Come sit with us.
+flambe pose present
+flambe: Without us, who would you even fight, mon ami?
 flambe pose none
-player face flambe
+triguy drop at 700
+triguy face player
+triguy show taunt_pose
+triguy: that's, really kewl.
+triguy show none
+camera wide
+player look squint
+player pose think
+player: ...Fair point.
+player pose none
 player pose crossarms
-player: Only because it's cooler over there.
+player: Fine. Everybody stays. Somebody has to keep losing to me.
 player pose none
 player look happy
 narrator: Still the coolest. Now with company. A cut above.

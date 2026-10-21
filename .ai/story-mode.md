@@ -29,7 +29,10 @@ after each:
 3. **A two-on-one**: Flambé and Lugnut, on a lunch break, teaming up on the player. In Flambé's
    and Lugnut's own stories another pair teams up instead.
 4. **The finale: DoomBot**, on top of the fridge - the roast, the meltdown, the boss fight.
-5. **Their ending.**
+5. **Their ending.** Every ending turns on the same thing (Eric, 2026-10-21): DoomBot beaten,
+   the drawings the player fought come back and ask to stay on the fridge - so they can all keep
+   playing, because it's fun - and the player says yes, in their own way. Whoever is in it is
+   named on the chapter line (`ending with flambe circy lugnut triguy at fridge`).
 
 A lost fight is retried straight away, its scene skippable the second time. Any scene can be
 skipped by holding a button. Progress is saved per fighter, and a finished story gets a gold
@@ -180,7 +183,7 @@ He talks in edge puns: on the cutting edge, a cut above, look sharp, point taken
 **Wants:** to be the coolest drawing on the fridge, and doesn't care who he has to CUT OUT OF
 THE PICTURE to get there.
 
-- **Opening.** Silhouetted on top of the freezer door, wind from an Airbrush blowing his cape.
+- **Opening.** Silhouetted on top of the freezer door, wind from an Airbrush blowing past him (he has no cape).
   "This fridge has too many drawings. And not enough... edge." The narrator: "EdgeLord. The
   coolest drawing on the fridge. (He said so.)" - "Anyone who isn't cool gets cut out of the
   picture." He draws a pair of Safety Scissors with a flourish. Looks at them. "...Round tips."
@@ -203,10 +206,12 @@ THE PICTURE to get there.
   did not order." Lugnut: "You picked us off one at a time. So we're switching to the buddy
   system." Flambé: "Two chefs, one recipe. You, well done." EdgeLord: "Two against one. Finally,
   a challenge worthy of my edge."
-- **Ending.** Alone on top of the fridge, posing, cape blowing. The camera pulls back: nobody is
-  watching. "...Cool." Long pause. From below, Flambé: "Dude. Come sit with us." - "Only because
-  it's cooler over there." He hides a smile behind a sword. Narrator: "Still the coolest. Now
-  with company. A cut above."
+- **Ending.** On top of the fridge, posing: "The sharpest drawing on the fridge. Obviously." One by
+  one the others drop in and ask to stay - Circy: "Duuude! Can we stay on the fridge too?"
+  Lugnut: "Fighting you was the most fun I've had all week, pal." Flambé: "Without us, who would
+  you even fight?" Triguy: "that's, really kewl." - "...Fair point. Fine. Everybody stays.
+  Somebody has to keep losing to me." Narrator: "Still the coolest. Now with company. A cut
+  above."
 
 ### Circy - First on the Fridge
 

@@ -13,7 +13,7 @@ fight lugnut at plains
 fight flambe at bigshow
 fight flambe lugnut at rooftops
 finale
-ending at fridge
+ending with circy edgelord at fridge
 
 == opening
 cast player at -300 facing right
@@ -202,6 +202,8 @@ doombot look happy
 
 == ending
 cast player at 0 facing right
+cast circy offstage
+cast edgelord offstage
 music story
 camera on player zoom 1.2 cut
 narrator: A Glue Bottle.
@@ -217,8 +219,17 @@ player crouch 20
 player look happy
 player: that's... really kewl.
 wait 30
+circy drop at -480
+circy face player
+camera wide
+circy (shout): Duuude, you're stuck up here? Can we stay too? Racing you was SO fun.
+edgelord drop at 470
+edgelord face player
+edgelord: Next time I'm winning. ...So we'd need to stay on the fridge for a next time.
 player show taunt_pog
 player (shout): THAT'S, REALLY KEWL.
 wait 50
 player show none
+narrator: Triguy, glued to his page. Everybody else stuck on beside him.
+wait 30
 end

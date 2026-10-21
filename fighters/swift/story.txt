@@ -10,7 +10,7 @@ fight edgelord at rooftops
 fight lugnut at bigshow
 fight edgelord triguy at rooftops
 finale
-ending with lugnut at bigshow
+ending with lugnut circy edgelord triguy at bigshow
 
 == opening
 cast player at 0 facing right
@@ -326,6 +326,9 @@ doombot look happy
 == ending
 cast player at 0 facing right
 cast lugnut at 560 facing left
+cast circy offstage
+cast edgelord offstage
+cast triguy offstage
 music story
 camera on player zoom 1.0 cut
 narrator: The Big Show. The middle of the fridge. Eye level.
@@ -338,14 +341,26 @@ lugnut (shout): ENCORE!
 player pose crossarms
 player: I don't do encores.
 player pose none
-wait 40
+lugnut pose none
+circy drop at -480
+circy face player
+camera wide
+circy (shout): Duuude, do the encore! And let us stay on the fridge - we wanna keep playing!
+edgelord drop at -760
+edgelord face player
+edgelord: A show is better with a cast. ...Not that I care.
+triguy drop at 300
+triguy face player
+triguy show taunt_pose
+triguy: that's, really kewl.
+triguy show none
+wait 20
 player look happy
 player pose fist
-player: ...Okay. One encore.
+player: ...Okay. One encore. And everybody stays. A headliner needs a band.
 player pose none
 player taunt
-lugnut pose none
 wait 40
-narrator: The Headliner. Top of the bill. Middle of the fridge.
+narrator: The Headliner. Top of the bill. Middle of the fridge. Everybody on it.
 wait 40
 end

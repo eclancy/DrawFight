@@ -13,7 +13,7 @@ fight flambe at bigshow
 fight lugnut at fridge
 fight flambe lugnut at rooftops
 finale
-ending at fridge
+ending with edgelord lugnut triguy at fridge
 
 == opening
 cast player at 0 facing right
@@ -248,6 +248,9 @@ doombot mark none
 
 == ending
 cast player at 0 facing right
+cast edgelord offstage
+cast lugnut offstage
+cast triguy offstage
 music story
 camera on player zoom 1.2 cut
 narrator: A Gold Star Sticker drifted down.
@@ -259,8 +262,26 @@ player mark none
 player look happy
 player (shout): DUUUUUUUUUUDE. A GOLD STAR!
 player pose cheer
-narrator: First on the fridge. Still on the fridge.
 wait 30
-player: Okaly dokaly. Going for a walk.
+player pose none
+edgelord drop at -560
+edgelord face player
+camera wide
+edgelord: Hey. Ball. ...Can we stay up here too? Fighting you was actually fun.
+lugnut drop at 430
+lugnut face player
+lugnut: A fridge is no fun with one drawing on it, pal.
+triguy drop at 680
+triguy face player
+triguy show taunt_pog
+triguy: that's, really kewl.
+triguy show none
+player look happy
+player pose cheer
+player (shout): Duuude. OBVIOUSLY. More drawings, more evil stunts!
+player pose none
+narrator: First on the fridge. Still on the fridge. And never on it alone.
+wait 30
+player: Okaly dokaly. Round two - after my walk.
 wait 60
 end

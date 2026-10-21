@@ -84,7 +84,7 @@ fight edgelord at rooftops
 fight lugnut at fridge
 fight lugnut flambe at bigshow
 fight mk2 at fridge boss
-ending at fridge
+ending with circy edgelord at fridge
 
 == opening
 cast player offstage
@@ -347,6 +347,8 @@ end
 
 == ending
 cast player at -150
+cast circy offstage
+cast edgelord offstage
 music stop
 stage bare
 camera on player zoom 1.0 cut
@@ -386,7 +388,15 @@ sound magnet_clink
 wait 15
 sound magnet_clink
 wait 50
+circy drop at -520
+circy face player
+circy (shout): Duuude! You put us back! Can we stay? We wanna keep playing!
+edgelord drop at 560
+edgelord face player
+edgelord: Admit it, robot. It's more fun with all of us up here.
 camera on player zoom 1.0
+player look happy
+player: ...AFFIRMATIVE. PLAYING IS... FUN.
 player pose hips
 player: THE FRIDGE IS... A LITTLE BIT MINE.
 wait 60

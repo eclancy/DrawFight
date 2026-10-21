@@ -11,7 +11,7 @@ fight edgelord at rooftops
 fight flambe at fridge
 fight circy triguy at plains
 finale
-ending with flambe at fridge
+ending with flambe circy edgelord at fridge
 
 == opening
 cast player at -260 facing right
@@ -221,8 +221,25 @@ doombot: ...A SPOT.
 == ending
 cast player at -220 facing right
 cast flambe at 260 facing left
+cast circy offstage
+cast edgelord offstage
 music story
-camera wide cut
+camera two player flambe cut
+narrator: DoomBot was beaten. But every drawing had come down off the fridge.
+flambe pose present
+flambe: Mon ami. Put us back up? It is no fun down here on the floor.
+flambe pose none
+circy drop at 520
+circy face player
+circy (shout): Yeah, dude! We wanna keep playing!
+edgelord drop at -560
+edgelord face player
+edgelord: ...Fine. Getting knocked around by you was a little fun.
+camera wide
+player look happy
+player pose flex
+player: Then everybody goes back up. That's the job.
+player pose none
 narrator: Every drawing back on the fridge. Moved round, stuck on straight, a magnet on each.
 sound magnet_clink
 wait 20
