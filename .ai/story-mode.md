@@ -315,8 +315,8 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   he only had to take them down, and he thanks you for it (Eric, 2026-10-21). "GREETINGS, SMALL
   DRAWING. SEE THAT PILE? EVERY DRAWING ON IT, YOU BEAT. ALL I HAD TO DO WAS TAKE THEM DOWN."
   Then each story's own "== thanks", in its own terms: EdgeLord, "THANK YOU FOR CUTTING OUT THE
-  OTHER DRAWINGS. NOW THE FRIDGE IS ALMOST MINE." - and EdgeLord, unbothered: "Yours? Please. I
-  cut out every drawing on this fridge. There's just one more to go." - "...ONE MORE?"; Flambé,
+  OTHER DRAWINGS. NOW THE FRIDGE IS ALMOST MINE." - and EdgeLord, unbothered: "Yours? Please. Just
+  one more to go." - "...ONE MORE?"; Flambé,
   roasting them ("I was your... sous-chef?"); Lugnut, clearing the site ("That was NOT the job");
   Circy, the evil stunts ("Bro. I got played?!"); Triguy, running them off ("not kewl." - "NOT
   KEWL FOR THEM. VERY KEWL. FOR ME."). Then:
