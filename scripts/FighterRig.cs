@@ -1991,6 +1991,10 @@ public partial class FighterRig : Node2D
 		// Squash keeps the area: taller is thinner, shorter is wider.
 		float width = puppetScale / Mathf.Sqrt(Mathf.Max(0.2f, squash));
 		Scale = new Vector2(width * facingSign * spinWidth, puppetScale * squash);
+		// A ball rolling on the floor rests on its lowest point, which moves when it turns round
+		// or narrows: set down again, or a forward roll - which turns him round in the middle
+		// (FighterAnimations.RollTurnWidth) - sinks into the floor for the frame it flips.
+		if (rollingOnFloor) PlaceHip();
 	}
 
 	float spinWidth = 1.0f;

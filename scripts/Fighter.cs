@@ -185,6 +185,12 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>The dodge going on is in the air: a flinch away, not a roll (FighterAnimations.AirDodge).</summary>
 	bool airDodge;
 
+	/// <summary>
+	/// This roll goes the way he faces, so it turns him round: he comes up facing back the way he
+	/// came (FighterAnimations.RollTurnWidth). A roll backward already ends facing that way.
+	/// </summary>
+	bool rollTurns;
+
 	/// <summary>Where the dodge started, for an air dodge's wake.</summary>
 	Vector2 dodgeFrom;
 
@@ -834,7 +840,7 @@ public partial class Fighter : CharacterBody2D
 		rig.SetRoll(DodgeRoll() + VictimSpinRoll() + AirDashLean() + DiveRoll() + CutoutFlutter() + TwirlRoll() + TrembleRoll() + HeaveRoll(),
 			State == FighterState.Dodging && groundRoll);
 		TickFrontOn();
-		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth() * FrontTurnWidth() * AirDodgeWidth());
+		rig.SetSpinWidth(DiveSpinWidth() * TurnWidth() * CutoutWidth() * TwirlWidth() * FrontTurnWidth() * AirDodgeWidth() * RollWidth());
 		UpdateFace();
 		UpdateWrist();
 		rig.SetFrontLegReach(LegReachNow());
@@ -2274,6 +2280,12 @@ public partial class Fighter : CharacterBody2D
 			dodgeVelocity = Vector2.Zero;
 		}
 
+		// Whichever way he rolls, he ends facing back against it - at whoever he rolled past, or
+		// still at whoever he rolled away from - as in Smash. Only a forward roll has to turn.
+		// An air dodge never turns him: in the air only the second jump does (TickAirborne), so a
+		// back air stays a back air after one, as Smash's air dodge does.
+		rollTurns = groundRoll && Mathf.Sign(dodgeVelocity.X) == Facing;
+
 		dodgeStartFrames = dodgeFrames;
 		IsBlocking = false;
 		Velocity = dodgeVelocity;
@@ -2293,6 +2305,10 @@ public partial class Fighter : CharacterBody2D
 		{
 			float t = 1.0f - dodgeFrames / (float)dodgeStartFrames;
 			Velocity = new Vector2(dodgeVelocity.X * FighterAnimations.RollSpeed(t), Velocity.Y);
+			// Halfway, as the drawing goes edge-on (RollWidth), his facing goes round with it - set,
+			// not turned, since the roll is already showing the turn. Invulnerable then, so no hit
+			// can find him facing one way and drawn the other.
+			if (rollTurns && t >= 0.5f && Facing == Mathf.Sign(dodgeVelocity.X)) Face(-Facing);
 		}
 		else
 		{
@@ -2471,6 +2487,9 @@ public partial class Fighter : CharacterBody2D
 		{
 			dodgeFrames = dodgeStartFrames = RollFrames;
 			groundRoll = true;
+			// Getting up from a ledge rolls in onto the stage and comes up still facing in, where
+			// the fight is - not the shield roll past someone that turns him round.
+			rollTurns = false;
 			dodgeVelocity = new Vector2(Facing * Data.RunSpeed * RollSpeed, 0.0f);
 			Velocity = dodgeVelocity;
 			State = FighterState.Dodging;
@@ -4900,10 +4919,13 @@ public partial class Fighter : CharacterBody2D
 		float r = BallRadius() * (1.35f + 0.45f * charge);
 		Vector2 centre = new Vector2(0.0f, bodySize.Y * 0.5f - BallRadius());
 		bool rolling = moveFrame > currentMove.StartupFrames;
-		// Rolling, the flames stream straight back the way he is going - off the ball, not turned
-		// round with him as he rolls; charging on the spot, they rise off the top.
-		Vector2 back = !rolling ? Vector2.Up
-			: Velocity.LengthSquared() > 60.0f * 60.0f ? -Velocity : new Vector2(-Facing, 0.0f);
+		// Rolling, the flames stream straight back along the roll - off the ball, not turned round
+		// with him as he rolls; charging on the spot, they rise off the top. Back along the roll,
+		// not against his velocity: a hit stops the roll dead and pops him up and back off whoever
+		// it hit (HopOnHit), and a tail that followed the velocity swung forward-down through the
+		// pop, up at the top of it and back again on the way down - three turns in half a second
+		// (Eric, 2026-10-22). The roll goes the way he faces and he cannot turn inside it.
+		Vector2 back = rolling ? new Vector2(-Facing, 0.0f) : Vector2.Up;
 		FlameFx.Comet(this, centre, r, back, fxFrames);
 	}
 
@@ -5638,6 +5660,14 @@ public partial class Fighter : CharacterBody2D
 	/// <summary>Narrowing edge-on through an air dodge (FighterAnimations.AirDodgeWidth); 1 otherwise.</summary>
 	float AirDodgeWidth() => State == FighterState.Dodging && airDodge && dodgeStartFrames > 0
 		? FighterAnimations.AirDodgeWidth(1.0f - dodgeFrames / (float)dodgeStartFrames) : 1.0f;
+
+	/// <summary>
+	/// Turning round through a forward roll (FighterAnimations.RollTurnWidth); 1 otherwise. Its
+	/// size only: the mirroring is his facing, which TickDodging turns round as this goes edge-on,
+	/// so the picture never flips a frame before or after the facing does.
+	/// </summary>
+	float RollWidth() => State == FighterState.Dodging && rollTurns && dodgeStartFrames > 0
+		? Mathf.Abs(FighterAnimations.RollTurnWidth(1.0f - dodgeFrames / (float)dodgeStartFrames)) : 1.0f;
 
 	/// <summary>
 	/// A directional air dodge's wake: two faint copies of him back along the way he slipped, so
