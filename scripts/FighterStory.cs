@@ -125,6 +125,7 @@ public partial class Fighter
 		bool faceOn = rig.FrontOn;
 		string pose = StoryPose;
 		if (string.IsNullOrEmpty(pose) && Celebrating && IsStandingStill) pose = Data.VictoryPose;
+		rig.SetFarArmAcross(faceOn && FighterAnimations.FarArmAcross(pose));
 		if (!string.IsNullOrEmpty(pose) && (faceOn || State == FighterState.Grounded || State == FighterState.Airborne)
 			&& StrikePose(pose, faceOn))
 		{

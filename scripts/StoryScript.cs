@@ -79,7 +79,7 @@ public static class StoryScript
 	static readonly string[] SceneWords =
 	{
 		"wait", "camera", "shake", "music", "sound", "board", "include", "cast", "fight", "end",
-		"stage", "pile", "table", "dark", "eye", "page",
+		"stage", "pile", "table", "dark", "eye", "page", "pyro",
 	};
 
 	static Dictionary<string, Dictionary<string, StoryScene>> scripts;
@@ -291,6 +291,9 @@ public static class StoryScript
 			case "dark":
 				if (step.Arg(0) is not ("on" or "off")) Bad("dark is \"dark on\" or \"dark off\"");
 				return;
+			case "pyro":
+				if (step.Arg(0) != "at" || step.Args.Length < 2 || !System.Array.TrueForAll(step.Args[1..], x => x.IsValidFloat())) Bad("pyro is \"pyro at X X X...\"");
+				return;
 			case "eye":
 				if (!(step.Arg(0) == "close" || step.Arg(0) == "at" && step.Arg(1).IsValidFloat() && step.Arg(2).IsValidFloat())) Bad("eye is \"eye at X Y\" or \"eye close\"");
 				return;
@@ -360,7 +363,7 @@ public static class StoryScript
 				if (!step.Arg(0).IsValidFloat()) Bad($"{step.Verb} needs a number");
 				break;
 			case "hold":
-				if (ItemCatalog.IndexOf(step.Arg(0)) < 0) Bad($"no item \"{step.Arg(0)}\"");
+				if (ItemCatalog.Find(step.Arg(0)) == null) Bad($"no item \"{step.Arg(0)}\"");
 				break;
 			case "pose":
 				if (step.Arg(0) != "none" && System.Array.IndexOf(FighterAnimations.StoryPoses, step.Arg(0)) < 0)

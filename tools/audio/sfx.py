@@ -643,6 +643,14 @@ def smoke_alarm():
     return S.reverb(S.pad(v, 1.1), size=0.35, damp=0.5, mix=0.12)
 
 
+def power_chord():
+    """Flambe's guitar, struck once for the show: the Big Show's own A power chord, doubled
+    through the amp, left to ring out."""
+    import music
+    v = music.gtropen(110.0, 1.8)
+    return S.env_mul(v, S.decay(len(v), 1.3))
+
+
 def steam_whistle():
     """A steam whistle, for DoomBot's meltdown: steam first, then a shriek climbing up out of it
     as the pressure builds, wavering while it screams, and sagging as it runs out. Two pipes a
@@ -762,4 +770,6 @@ REGISTRY = [
     ("smoke_alarm", "story", -15.0, smoke_alarm, False),
     # Once a story, at the meltdown: as loud as the win fanfare, the biggest sustained sound.
     ("steam_whistle", "story", -11.0, steam_whistle, False),
+    # Flambe's guitar at the end of his show: once or twice a story, as loud as the whistle.
+    ("power_chord", "story", -10.0, power_chord, False),
 ]

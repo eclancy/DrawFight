@@ -152,6 +152,12 @@ public partial class GameRoot : Node2D
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
 			if (arg == "--storyselect") startAt = "storyselect";
+			if (arg.StartsWith("--storydone="))
+			{
+				// "--storydone=flambe": the end of a story - STORY: COMPLETED - without playing it.
+				storyMapFor = arg.Substring(12);
+				startAt = "storydone";
+			}
 			if (arg.StartsWith("--storymap="))
 			{
 				// "--storymap=lugnut": a story's map, where its saved progress has got to.
@@ -216,6 +222,10 @@ public partial class GameRoot : Node2D
 			case "select": GoCharacterSelect(); break;
 			case "storyselect": GoStorySelect(); break;
 			case "storymap": GoStory(storyMapFor); break;
+			case "storydone":
+				Story = StoryRun.For(storyMapFor);
+				GoStoryComplete();
+				break;
 			case "stages": GoStageSelect(); break;
 			case "items": GoItemSettings(); break;
 			case "options": GoOptions(null); break;
@@ -392,11 +402,16 @@ public partial class GameRoot : Node2D
 		}
 		if (Story.Done)
 		{
-			// Finished: it starts again from the top next time, gold star and all.
+			// Finished: it starts again from the top next time, gold star and all - after its
+			// moment, and then the main menu (Eric, 2026-10-22).
 			Story.At = 0;
+			GoStoryComplete();
+			return;
 		}
 		GoStoryMap();
 	}
+
+	public void GoStoryComplete() => Show(new StoryCompleteScreen { Run = Story });
 
 	/// <summary>Booted straight into a story chapter (--story) to look at it: chapter after chapter, no map.</summary>
 	public bool StoryDirectStart;

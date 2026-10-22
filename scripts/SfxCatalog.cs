@@ -25,7 +25,7 @@ public static class SfxCatalog
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
 		"clang", "shield_break", "minibot_pop", "splash", "boing", "stomp",
 		"item_pickup", "item_spray", "item_snip", "item_heal", "item_gust", "item_crumple",
-		"magnet_clink", "fridge_hum", "smoke_alarm", "steam_whistle",
+		"magnet_clink", "fridge_hum", "smoke_alarm", "steam_whistle", "power_chord",
 	};
 
 	/// <summary>Sounds that loop until stopped. Everything else is a one-shot.</summary>

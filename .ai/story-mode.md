@@ -141,14 +141,18 @@ headliner. This kitchen is my stage."
   "Then nobody plays till it passes inspection." The flame on his head flares: "**You're
   cancelling my SHOW?!**" Lugnut tightens his hard hat. "...Break's over, I guess." They fight on
   the stage, the girder overhead. After, Lugnut looks at the dents. "...Okay. It passed." -
-  "Inspection?" - "Stress test." - "So I can play?" - "With pyro, even." A fist bump, and Fire Rain
-  off the girder like fireworks.
-- **The two-on-one.** EdgeLord has recruited Triguy: "Speed and edge, kid. We're unstoppable."
-  Triguy: "that's, really kewl." Then he goes for EdgeLord's sword - "Hands off the sword." - and
-  Flambé: "Unstoppable? You can't even share a sword. Order up."
-- **Ending.** The Big Show, on the middle of the fridge, Lugnut's lights on the girder.
-  Flambé headlines, Fire Rain for fireworks. Lugnut, in the crowd: "ENCORE!" - "I don't do
-  encores." Beat. "...Okay. One encore."
+  "Inspection?" - "Stress test." - "So I can play?" - "With pyro, even." He pulls out his guitar
+  (a flame-painted flying V - `hold guitar`, a story prop, never an item in a match), a power
+  chord, and pillars of fire go off behind the stage (`pyro`): "The show... goes on." (Eric,
+  2026-10-22: it was a fist bump and Fire Rain.)
+- **The two-on-one.** EdgeLord asks Triguy to team up: "Hey. Triangle. You're fast. I'm sharp.
+  Team up?" Triguy: "that's, really kewl." Then he goes for EdgeLord's sword - "Hands off the
+  sword." Flambé: "Wait. Didn't I already roast you two?" - EdgeLord: "One at a time. Now we're
+  a combo." - "Then it's a double order. Order up."
+- **Ending.** The Big Show, on the middle of the fridge. The guitar out, a power chord, pyro:
+  "Lights up. Guitar out. Pyro on cue." Lugnut, in the crowd: "ENCORE!" - "I don't do
+  encores." Beat. "...Okay. One encore." - and the guitar again, the pyro bigger (Eric,
+  2026-10-22: no Fire Rain, and no "Too hot for you!" taunt, at the end of his story).
 
 ### Lugnut - Room for Everybody
 
@@ -316,9 +320,13 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   "GREETINGS, SMALL DRAWING." Then each story's own "== thanks", in its own terms: EdgeLord, "THANK YOU FOR CUTTING OUT THE
   OTHER DRAWINGS. NOW THE FRIDGE IS ALMOST MINE." - and EdgeLord, unbothered: "Yours? Please. Just
   one more to go." - "...ONE MORE?"; Flambé,
-  roasting them ("I was your... sous-chef?"); Lugnut, clearing the site ("That was NOT the job");
-  Circy, the evil stunts ("Bro. I got played?!"); Triguy, running them off ("not kewl." - "NOT
-  KEWL FOR THEM. VERY KEWL. FOR ME."). Then:
+  roasting them; Lugnut, clearing the site; Circy, the evil stunts; Triguy, running them off.
+  **Nobody answers surprised** - nobody finds out they were working for him (Eric, 2026-10-22).
+  Each knew what they were doing it for, and it was never him: Flambé, "Mon ami. I do not cook
+  for you. I cook for the crowd. And the crowd wants a headliner."; Lugnut, "Wasn't working for
+  you, pal. I was making room. For everybody."; Circy, "Duuude. Those stunts weren't for you.
+  They were for the CLIPS."; Triguy, a proud "that's, really kewl." - and DoomBot, getting it:
+  "...YOU WERE NOT DOING IT FOR ME. YOU JUST LIKE RUNNING." Then:
   "NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY. TO BE THE ONE TRUE RULER. OF THE FRIDGE."
   His Eye Laser draws the plan on the fridge, one line at a time:
 
@@ -331,7 +339,8 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   EMPTY. AND ALL... **MINE.**" He never made anyone fight and never took anyone down: he let
   them fight, and step two is the thank-you he has just given you (Eric, 2026-10-21; it used to
   say "MAKE THE DRAWINGS FIGHT" and "TAKE DOWN EVERY LOSER", and before that "REMOVE MAGNETS"
-  and "3. FRIDGE.") He comes down out of the dark
+  and "3. FRIDGE.") It is burned onto the bare fridge door above the pages (`board at -620
+  -1130`), not over them (Eric, 2026-10-22). He comes down out of the dark
   right where his red eye opened (`drop from eye`).
 - **The roast.** Every fighter makes the same joke - he looks like the fridge, and that doesn't
   make it his - in their own words:
@@ -432,8 +441,9 @@ In order, each step usable before the next:
 5. **CPU difficulty** - **built, 2026-10-15.** `CpuInputSource.Level`, 1 to 9: reaction time,
    how often it hesitates, blocks, swings and closes in. Level 4 is the versus CPU, unchanged. A
    story's fights climb from 2 to 5 down the chapter list, and the boss plays at 6 - on
-   Medium. **Easy, Medium or Hard** is picked on the story's map (left and right;
-   `GameOptions.StoryDifficulty`, saved, the same for every story; Eric, 2026-10-19): Easy plays
+   Medium. **Easy, Medium or Hard** is picked on "Whose story?", three buttons along the top
+   where versus has Teams and Items (`GameOptions.StoryDifficulty`, saved, the same for every
+   story; Eric, 2026-10-19; moved off the story's map, 2026-10-22): Easy plays
    three levels down and gives the player a fourth life, Hard two levels up. A two-on-one is a
    level down and each of the two has 2 lives (1 on Easy, 3 on Hard) - with 3 each it was six
    lives against three, and Elim found it too hard. A boss keeps his scene's `stocks`. **Boss rules**
@@ -448,14 +458,17 @@ In order, each step usable before the next:
 6. **The story screens** - **built, 2026-10-15.** Main menu Story → "Whose story?" (a gold star
    on every story finished) → the story's map (`StoryMapScreen`: the fridge door, a magnet per
    chapter, a star on each played, the next one glowing) → play. After every chapter the story
-   comes back to its map. Progress is saved per fighter in `user://story.cfg`; a finished story
-   starts again from the top.
+   comes back to its map - until the last: then **STORY: COMPLETED** (`StoryCompleteScreen`;
+   Eric, 2026-10-22), the fighter cheering, a rubber stamp slammed onto the page and the gold
+   star popping on, and Press Start back to the main menu. A press before the prompt only
+   hurries it to the star. Progress is saved per fighter in `user://story.cfg`; a finished
+   story starts again from the top.
 7. **All six stories are written** (2026-10-15). **Not yet:** a full play through each, watched
    and listened to - pacing, the jokes, the CPU levels and the boss fight all need playing.
 
 Checking it: `--story=<fighter>` boots into a fighter's story, `--story=<fighter>:<n>` into its
 chapter n (from 0), and `--story=<fighter>:<n>:after` into the scene after that chapter's fight;
-`--storyselect` opens "Whose story?". `--shots=60,400,900` takes a screenshot at each of those
+`--storyselect` opens "Whose story?" and `--storydone=<fighter>` its STORY: COMPLETED. `--shots=60,400,900` takes a screenshot at each of those
 frames, then quits - a scene is checked by looking at it all the way through. Pacing and jokes
 have to be watched; a build verifies none of it.
 

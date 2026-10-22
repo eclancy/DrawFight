@@ -381,6 +381,12 @@ public partial class StoryDirector : Node
 				else board.OpenEye(new Vector2(step.Number(1, 0), step.Number(2, 0)));
 				return true;
 
+			case "pyro":
+				var at = new List<(float, float)>();
+				for (int i = 1; i < step.Args.Length; i++) at.Add((step.Number(i, 0), Match.FloorAt(Match.GroundNear(step.Number(i, 0)))));
+				board.Pyro(at);
+				return true;
+
 			case "page":
 				if (step.Arg(0) == "clear") board.Page(null);
 				else
@@ -558,8 +564,8 @@ public partial class StoryDirector : Node
 				return !actor.Twirling;
 
 			case "hold":
-				int item = ItemCatalog.IndexOf(step.Arg(0));
-				if (item >= 0) actor.CatchItem(Match.SpawnItem(ItemCatalog.Get(item), actor.GlobalPosition, Vector2.Zero));
+				ItemData item = ItemCatalog.Find(step.Arg(0));
+				if (item != null) actor.CatchItem(Match.SpawnItem(item, actor.GlobalPosition, Vector2.Zero));
 				return true;
 		}
 		return true;

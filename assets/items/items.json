@@ -179,6 +179,21 @@
     ], 
     "texture": "gold_star.png"
   }, 
+  "guitar": {
+    "grip": [
+      76.0, 
+      283.0
+    ], 
+    "head": [
+      76.0, 
+      53.0
+    ], 
+    "size": [
+      152, 
+      369
+    ], 
+    "texture": "guitar.png"
+  }, 
   "ink_bottle": {
     "grip": [
       65.0, 

@@ -845,6 +845,35 @@ def tracing_paper():
     return s, (150, 178), (75, 89), (75, 89)
 
 
+
+def guitar():
+    """Flambe's electric guitar for the show (a story prop, never dropped in a match): a red
+    flying V with flames up its wings, held up by the neck, body to the sky (Eric, 2026-10-22)."""
+    body = ('M 75,226 L 10,58 C 4,40 12,26 30,26 L 54,26 L 75,104 L 96,26 L 120,26 '
+            'C 138,26 146,40 140,58 Z')
+    s = P(body, 'red')
+    s += clip('vflame', body,
+              F('M 16,140 C 22,100 18,76 30,46 C 36,74 46,84 44,112 C 54,96 54,74 62,62 '
+                'C 72,96 68,124 75,160 L 16,160 Z', 'orange')
+              + F('M 134,140 C 128,100 132,76 120,46 C 114,74 104,84 106,112 C 96,96 96,74 88,62 '
+                  'C 78,96 82,124 75,160 L 134,160 Z', 'orange')
+              + F('M 34,150 C 38,124 36,108 44,92 C 50,112 56,124 56,150 Z', 'yellow')
+              + F('M 116,150 C 112,124 114,108 106,92 C 100,112 94,124 94,150 Z', 'yellow'))
+    s += L(body, 'wo')
+    s += P(rect(62, 140, 88, 156, 3), 'silver', 'wi')
+    s += P(rect(62, 168, 88, 184, 3), 'silver', 'wi')
+    s += P(rect(64, 196, 86, 204, 2), 'silver_dark', 'wi')
+    s += P(rect(66, 200, 84, 334, 3), 'wood')
+    for y in range(222, 330, 16):
+        s += L('M 66,%d L 84,%d' % (y, y), 3, 'silver_dark')
+    for x in (70, 74, 78, 82):
+        s += L('M %d,146 L %d,338' % (x, x), 1.5, 'silver_light')
+    s += P('M 64,330 L 86,330 L 92,372 Q 75,382 58,372 Z', 'red')
+    for y in (342, 356):
+        s += P(ellipse(54, y, 5), 'silver', 'wi') + P(ellipse(96, y, 5), 'silver', 'wi')
+    return s, (150, 384), (75, 300), (75, 70)
+
+
 ITEMS = [
     ('pencil', pencil(174)), ('pencil_stub', pencil(30)),
     ('eraser', eraser()),
@@ -880,6 +909,7 @@ ITEMS = [
     ('white_out', white_out()),
     ('magnifying_glass', magnifying_glass()),
     ('tracing_paper', tracing_paper()),
+    ('guitar', guitar()),
 ]
 
 

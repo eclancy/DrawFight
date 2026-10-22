@@ -400,6 +400,7 @@ public partial class RigParade : Node2D
 				rig.HandOnHip = false;
 				var pose = new Pose();
 				rig.SetFrontOn(data.FrontOn);
+				rig.SetFarArmAcross(data.FrontOn && !talk && FighterAnimations.FarArmAcross(names[i]));
 				if (talk)
 				{
 					string mood = names[i] == "talk" ? "" : names[i];

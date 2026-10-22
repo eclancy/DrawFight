@@ -208,7 +208,7 @@ end
 
 # --- The finale -------------------------------------------------------------------------------
 
-# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+# DoomBot thanks you for beating everyone for him - and you were never doing it for him (Eric, 2026-10-22).
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow
@@ -218,10 +218,13 @@ doombot: YOU STUNTED ON EVERY DRAWING ON THIS FRIDGE.
 doombot: YOU CLEARED THE FRIDGE. FOR ME.
 doombot pose none
 camera on player zoom 1.2 fast
-player look shocked
-player mark !
-player (shout): Bro. BRO. I got played?!
-player mark none
+player look happy
+player pose laugh
+player (shout): Duuude. Those stunts weren't for you.
+player pose none
+player pose cheer
+player (shout): They were for the CLIPS.
+player pose none
 
 == roast
 camera on player zoom 1.2

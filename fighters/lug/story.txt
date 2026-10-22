@@ -181,7 +181,7 @@ end
 
 # --- The finale -------------------------------------------------------------------------------
 
-# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+# DoomBot thanks you for beating everyone for him - and you were never doing it for him (Eric, 2026-10-22).
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow
@@ -191,10 +191,12 @@ doombot: EVERY DRAWING ON THIS FRIDGE, KNOCKED DOWN.
 doombot: DEMOLITION COMPLETE. AHEAD OF SCHEDULE.
 doombot pose none
 camera on player zoom 1.2 fast
-player look shocked
-player mark !
-player: ...Pal. That was NOT the job.
-player mark none
+player look squint
+player pose crossarms
+player: Wasn't working for you, pal.
+player pose point
+player: I was making room. For everybody.
+player pose none
 
 == roast
 player pose hips

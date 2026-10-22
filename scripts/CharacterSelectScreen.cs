@@ -99,6 +99,27 @@ public partial class CharacterSelectScreen : Node2D
 	/// </summary>
 	static readonly Rect2 ItemsBox = new Rect2(840.0f, 64.0f, 310.0f, 76.0f);
 
+	/// <summary>
+	/// A story's Easy, Medium and Hard, along the top where versus has Teams and Items - picked
+	/// here, before the story, rather than on its chapter map (Eric, 2026-10-22). Remembered for
+	/// every story (GameOptions.StoryDifficulty).
+	/// </summary>
+	static Rect2 DifficultyBox(int d) => new Rect2(840.0f + d * 256.0f, 64.0f, 240.0f, 76.0f);
+
+	static readonly string[] Difficulties = { "Easy", "Medium", "Hard" };
+
+	bool TryDifficulty(Vector2 at)
+	{
+		for (int d = 0; d < Difficulties.Length; d++)
+		{
+			if (!DifficultyBox(d).HasPoint(at)) continue;
+			GameOptions.StoryDifficulty = d;
+			GameOptions.Save();
+			return true;
+		}
+		return false;
+	}
+
 	bool TeamBattle
 	{
 		get => GameRoot.Instance.TeamBattle;
@@ -859,6 +880,12 @@ public partial class CharacterSelectScreen : Node2D
 				continue;
 			}
 
+			if (ForStory && TryDifficulty(cursor.Position))
+			{
+				SfxPlayer.Ui("ui_select");
+				continue;
+			}
+
 			if (!ForStory && ItemsBox.HasPoint(cursor.Position))
 			{
 				ItemSettings items = GameRoot.Instance.Items;
@@ -1076,6 +1103,16 @@ public partial class CharacterSelectScreen : Node2D
 			ItemFrequency frequency = GameRoot.Instance.Items.Frequency;
 			MenuTheme.DrawButton(this, ItemsBox, "Items: " + ItemSettings.Describe(frequency), 81, itemsHot,
 				frequency != ItemFrequency.Off, fontSize: 34);
+		}
+		else
+		{
+			DrawString(ThemeDB.FallbackFont, new Vector2(DifficultyBox(0).Position.X, 48.0f), "How hard?", HorizontalAlignment.Left, -1, 26, MenuTheme.Soft);
+			for (int d = 0; d < Difficulties.Length; d++)
+			{
+				Slot seat = slots[0];
+				bool hot = seat.Human && seat.Cursor != null && DifficultyBox(d).HasPoint(seat.Cursor.Position);
+				MenuTheme.DrawButton(this, DifficultyBox(d), Difficulties[d], 83 + d, hot, GameOptions.StoryDifficulty == d, fontSize: 36);
+			}
 		}
 
 		for (int i = 0; i < slots.Length && !ForStory; i++)

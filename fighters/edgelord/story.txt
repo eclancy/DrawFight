@@ -268,7 +268,7 @@ fight
 
 # --- The finale -------------------------------------------------------------------------------
 
-# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+# DoomBot thanks you for beating everyone for him - and you were never doing it for him (Eric, 2026-10-22).
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow

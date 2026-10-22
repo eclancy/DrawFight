@@ -182,12 +182,14 @@ lugnut look happy
 lugnut pose nod
 lugnut: With pyro, even.
 lugnut pose none
-player walk to lugnut
-sound clang
+player hold guitar
+wait 20
 player pose cheer
-player special down
-narrator: A fist bump, and Fire Rain off the girder, like fireworks.
-wait 70
+sound power_chord
+pyro at -720 720 -540 540
+wait 30
+narrator: The show... goes on.
+wait 50
 player pose none
 end
 
@@ -236,8 +238,12 @@ cast edgelord at 420 facing left
 cast triguy at 640 facing left
 music story
 camera two edgelord triguy
-edgelord pose fist
-edgelord: Speed and edge, kid. We're unstoppable.
+edgelord face triguy
+edgelord pose beckon
+edgelord: Hey. Triangle. You're fast. I'm sharp.
+edgelord pose none
+edgelord pose point
+edgelord: Team up? Speed and edge. We'd be unstoppable.
 edgelord pose none
 triguy show taunt_pose
 triguy: that's, really kewl.
@@ -259,10 +265,21 @@ triguy look sad
 triguy (whisper): not kewl.
 camera on player zoom 1.2
 player look smug
-player pose laugh
-player: Unstoppable? You can't even share a sword.
+player pose think
+player: Wait. Didn't I already roast you two?
+player pose none
+camera two edgelord triguy
+edgelord face player
+triguy face player
+edgelord pose crossarms
+edgelord: One at a time. Now we're a combo.
+edgelord pose none
+triguy show taunt_pose
+triguy: that's, really kewl.
+triguy show none
+camera on player zoom 1.2
 player pose beckon
-player (hot): Order up.
+player (hot): Then it's a double order. Order up.
 player pose none
 camera wide
 fight
@@ -287,7 +304,7 @@ end
 
 # --- The finale -------------------------------------------------------------------------------
 
-# DoomBot thanks you for doing his work: every drawing you beat, he took down (Eric, 2026-10-21).
+# DoomBot thanks you for beating everyone for him - and you were never doing it for him (Eric, 2026-10-22).
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow
@@ -296,10 +313,12 @@ doombot pose present
 doombot: ONE BY ONE. EVERY LAST ONE. WELL DONE.
 doombot pose none
 camera on player zoom 1.2 fast
-player look shocked
-player mark !
-player: Mon dieu. I was your... sous-chef?
-player mark none
+player look smug
+player pose crossarms
+player: Mon ami. I do not cook for you.
+player pose present
+player (hot): I cook for the crowd. And the crowd wants a headliner.
+player pose none
 
 == roast
 player pose point
@@ -339,9 +358,14 @@ cast triguy offstage
 music story
 camera on player zoom 1.0 cut
 narrator: The Big Show. The middle of the fridge. Eye level.
-player taunt
-player special down
-narrator: Lugnut's lights up on the girder. Fire Rain for fireworks.
+player hold guitar
+wait 20
+player pose cheer
+sound power_chord
+pyro at -820 820 -400 400
+wait 30
+narrator: Lights up. Guitar out. Pyro on cue.
+player pose none
 camera two player lugnut
 lugnut pose cheer
 lugnut (shout): ENCORE!
@@ -367,8 +391,11 @@ player look happy
 player pose fist
 player: ...Okay. One encore. And everybody stays. A headliner needs a band.
 player pose none
-player taunt
-wait 40
+player pose cheer
+sound power_chord
+pyro at -1150 1150 -950 950 -620 430 800
+wait 70
+player pose none
 narrator: The Headliner. Top of the bill. Middle of the fridge. Everybody on it.
 wait 40
 end

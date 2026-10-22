@@ -103,6 +103,60 @@ public partial class StoryBoard : Node2D
 		pile.Build(this, playerId, x.Value, floorY);
 	}
 
+	// --- Pyro --------------------------------------------------------------------------------
+	// Stage pyrotechnics for Flambe's show: pillars of fire bursting up off the floor, one after
+	// another, and dying back down (Eric, 2026-10-22). Fire rises (FlameFx).
+
+	class Pillar
+	{
+		public float X, Floor;
+		public int Age, Delay, Seed;
+	}
+
+	readonly List<Pillar> pillars = new List<Pillar>();
+
+	const int PillarFrames = 110;
+	const int PillarStagger = 7;
+	const float PillarHeight = 460.0f;
+	const float PillarWidth = 110.0f;
+
+	/// <summary>A pillar of fire off the floor at each x, going off in turn from the first.</summary>
+	public void Pyro(IReadOnlyList<(float x, float floor)> at)
+	{
+		for (int i = 0; i < at.Count; i++)
+		{
+			pillars.Add(new Pillar { X = at[i].x, Floor = at[i].floor, Delay = i * PillarStagger, Seed = 11 + i * 5 });
+		}
+	}
+
+	void TickPyro()
+	{
+		foreach (Pillar p in pillars)
+		{
+			if (p.Delay > 0 && --p.Delay > 0) continue;
+			if (p.Age == 0 && !Skipping) SfxPlayer.At("furnace_blast", new Vector2(p.X, p.Floor), 0.1f);
+			p.Age++;
+		}
+		pillars.RemoveAll(p => p.Age >= PillarFrames);
+	}
+
+	/// <summary>Up in a burst, roaring a moment, then sinking back into the floor.</summary>
+	void DrawPillar(Pillar p)
+	{
+		if (p.Age <= 0) return;
+		float up = Mathf.Min(1.0f, p.Age / 8.0f);
+		float down = Mathf.Clamp((PillarFrames - p.Age) / 34.0f, 0.0f, 1.0f);
+		float h = PillarHeight * (1.0f - (1.0f - up) * (1.0f - up)) * down;
+		if (h < 24.0f) return;
+		var root = new Vector2(p.X, p.Floor);
+		// No wider than a flame that short can be: a squat, wide tongue does not close into a shape.
+		float w = Mathf.Min(PillarWidth, h * 0.4f);
+		FlameFx.Glow(this, root + Vector2.Up * h * 0.25f, w * 0.9f, 0.45f * down);
+		FlameFx.Tongue(this, root + Vector2.Left * w * 0.3f, Vector2.Up.Rotated(-0.2f), h * 0.6f, w * 0.7f, -0.2f, frames, p.Seed, 1.0f);
+		FlameFx.Tongue(this, root + Vector2.Right * w * 0.3f, Vector2.Up.Rotated(0.2f), h * 0.62f, w * 0.7f, 0.2f, frames, p.Seed + 1, 1.0f);
+		FlameFx.Tongue(this, root, Vector2.Up, h, w, 0.1f, frames, p.Seed + 2, 1.0f);
+	}
+
 	/// <summary>A table set for lunch on the floor at x, or none - the stools go with it.</summary>
 	public void Table(float? x, float floorY)
 	{
@@ -131,6 +185,7 @@ public partial class StoryBoard : Node2D
 	public override void _PhysicsProcess(double delta)
 	{
 		frames++;
+		TickPyro();
 		darkness = Mathf.MoveToward(darkness, Dark ? 1.0f : 0.0f, 1.0f / 30.0f);
 		eyeOpenness = Mathf.MoveToward(eyeOpenness, eyeOpen ? 1.0f : 0.0f, 1.0f / 14.0f);
 		if (clearing)
@@ -293,6 +348,7 @@ public partial class StoryBoard : Node2D
 	{
 		if (darkness > 0.0f) DrawRect(new Rect2(-6000.0f, -6000.0f, 12000.0f, 12000.0f), new Color(0.24f, 0.21f, 0.38f, 0.6f * darkness));
 		pile?.Draw(this);
+		foreach (Pillar p in pillars) DrawPillar(p);
 		if (tableX.HasValue) DrawLunch(tableX.Value, tableFloor);
 		if (eyeOpenness > 0.0f) DrawEye();
 		if (pageAt.HasValue) DrawPinnedPage(pageAt.Value);

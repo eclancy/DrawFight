@@ -5,10 +5,7 @@ using Godot;
 /// a gold star, the next one glows, the rest wait. Left and right pick any chapter already
 /// reached - every one, once the story is finished - and A plays it; B goes back to "Whose
 /// story?". After every chapter the story comes back here, so you can see how far you have got.
-/// Down moves to how hard its fights are - Easy, Medium or Hard (GameOptions.StoryDifficulty),
-/// remembered for every story - where left and right change it, and up goes back to the
-/// chapters (Elim, 2026-10-21: once a story was beaten, left and right only changed the
-/// difficulty and no chapter could be picked).
+/// How hard its fights are is picked on "Whose story?" (Eric, 2026-10-22), not here.
 /// </summary>
 public partial class StoryMapScreen : Node2D
 {
@@ -19,9 +16,6 @@ public partial class StoryMapScreen : Node2D
 
 	/// <summary>The chapter A will play.</summary>
 	int selected;
-
-	/// <summary>Down at the difficulty strip, rather than on the chapters.</summary>
-	bool onDifficulty;
 
 	/// <summary>The furthest chapter that can be picked: everything once the story is finished.</summary>
 	int LastOpen => Run == null ? 0 : StoryProgress.Finished(Run.PlayerId)
@@ -64,26 +58,7 @@ public partial class StoryMapScreen : Node2D
 				Play();
 				return;
 			}
-			if (nav.StepY != 0)
-			{
-				bool down = nav.StepY > 0;
-				if (down != onDifficulty)
-				{
-					onDifficulty = down;
-					SfxPlayer.Ui("ui_move");
-				}
-			}
-			if (nav.StepX != 0 && onDifficulty)
-			{
-				int was = GameOptions.StoryDifficulty;
-				GameOptions.StoryDifficulty = Mathf.Clamp(was + nav.StepX, 0, 2);
-				if (GameOptions.StoryDifficulty != was)
-				{
-					SfxPlayer.Ui("ui_move");
-					GameOptions.Save();
-				}
-			}
-			else if (nav.StepX != 0 && Run != null)
+			if (nav.StepX != 0 && Run != null)
 			{
 				int was = selected;
 				selected = Mathf.Clamp(selected + nav.StepX, 0, LastOpen);
@@ -160,13 +135,13 @@ public partial class StoryMapScreen : Node2D
 			// A finished story starts again from the top, but every chapter keeps its star.
 			bool played = finished || i < reached;
 			bool open = i <= LastOpen;
-			bool picked = i == selected && !onDifficulty;
+			bool picked = i == selected;
 			float pulse = picked ? 1.0f + 0.08f * Mathf.Sin(frames * 0.12f) : 1.0f;
 			float r = 58.0f * pulse;
 			Color colour = MagnetColours[i % MagnetColours.Length];
 			if (!open) colour = colour.Lerp(Steel, 0.55f);
 
-			if (i == selected) DrawCircle(at, r + 22.0f, new Color(1.0f, 0.9f, 0.5f, (onDifficulty ? 0.25f : 0.35f) + 0.15f * Mathf.Sin(frames * 0.12f)));
+			if (i == selected) DrawCircle(at, r + 22.0f, new Color(1.0f, 0.9f, 0.5f, 0.35f + 0.15f * Mathf.Sin(frames * 0.12f)));
 			DrawCircle(at + new Vector2(6.0f, 9.0f), r, new Color(0.2f, 0.22f, 0.3f, 0.18f));
 			DrawCircle(at, r, colour);
 			DrawArc(at, r, 0.0f, Mathf.Tau, 40, MenuTheme.Ink, 5.0f, true);
@@ -178,31 +153,8 @@ public partial class StoryMapScreen : Node2D
 			if (played) Item.DrawStarOn(this, at + new Vector2(r * 0.7f, -r * 0.7f), 26.0f, new Color(1.0f, 0.82f, 0.25f));
 		}
 
-		string hint = onDifficulty
-			? $"< > how hard     up: chapters     A: play {selected + 1}     B: back"
-			: $"< > pick a chapter     down: how hard     A: play {selected + 1}     B: back";
-		DrawString(font, new Vector2(150.0f, size.Y - 70.0f), hint, HorizontalAlignment.Left, 690.0f, 28, MenuTheme.Soft);
-
-		// How hard, along the bottom: the three words, the one picked underlined, arrows to change it.
-		int difficulty = GameOptions.StoryDifficulty;
-		float baseline = size.Y - 70.0f;
-		// Picked out when it is where the stick is.
-		if (onDifficulty) CrayonBrush.InkRect(this, new Rect2(845.0f, baseline - 52.0f, 820.0f, 76.0f), MenuTheme.Ink, 3.5f, 77, 1.2f);
-		DrawString(font, new Vector2(860.0f, baseline), "How hard:", HorizontalAlignment.Left, -1, 32, MenuTheme.Soft);
-		for (int d = 0; d < 3; d++)
-		{
-			float centre = 1180.0f + d * 170.0f;
-			string word = d switch { 0 => "Easy", 2 => "Hard", _ => "Medium" };
-			bool on = d == difficulty;
-			if (on)
-			{
-				DrawRect(new Rect2(centre - 80.0f, baseline - 40.0f, 160.0f, 56.0f), new Color(1.0f, 0.9f, 0.5f, 0.6f));
-				CrayonBrush.InkLine(this, new Vector2(centre - 70.0f, baseline + 12.0f), new Vector2(centre + 70.0f, baseline + 12.0f), MenuTheme.Ink, 4.0f, 70 + d, 1.4f);
-			}
-			DrawString(font, new Vector2(centre - 85.0f, baseline), word, HorizontalAlignment.Center, 170.0f, 32, on ? MenuTheme.Text : MenuTheme.Soft);
-		}
-		DrawString(font, new Vector2(1060.0f, baseline), "<", HorizontalAlignment.Center, 40.0f, 32, difficulty > 0 ? MenuTheme.Text : MenuTheme.Soft);
-		DrawString(font, new Vector2(1600.0f, baseline), ">", HorizontalAlignment.Center, 40.0f, 32, difficulty < 2 ? MenuTheme.Text : MenuTheme.Soft);
+		string hint = $"Left / Right: Pick a chapter     A: Play chapter {selected + 1}     B: Back";
+		DrawString(font, new Vector2(0.0f, size.Y - 70.0f), hint, HorizontalAlignment.Center, size.X, 30, MenuTheme.Soft);
 	}
 
 	/// <summary>

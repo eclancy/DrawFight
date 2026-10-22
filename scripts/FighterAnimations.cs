@@ -1195,8 +1195,11 @@ public static class FighterAnimations
 	// --- Face on -----------------------------------------------------------------------------
 	// For a fighter who stands face on (FighterData.FrontOn: DoomBot), standing to talk or to celebrate
 	// (FighterRig.SetFrontOn). His near arm is on the left of the picture and his far arm on the
-	// right, both in front of him; out to the side is positive for the left arm and negative for
-	// the right.
+	// right, behind him unless it reaches across him (FarArmAcross); out to the side is positive for
+	// the left arm and negative for the right.
+
+	/// <summary>The face-on poses whose far arm reaches across his body, and so is drawn in front of it.</summary>
+	public static bool FarArmAcross(string name) => name is "crossarms" or "laugh" or "think" or "facepalm";
 
 	/// <summary>DoomBot as Eric drew him: arms straight out, one claw hanging down, one up.</summary>
 	public static readonly Pose FrontIdle = new Pose(Vector2.Zero,

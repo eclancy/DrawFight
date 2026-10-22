@@ -26,6 +26,31 @@ public static class ItemCatalog
 		return -1;
 	}
 
+	static List<ItemData> storyProps;
+
+	/// <summary>
+	/// Things a story puts in someone's hand that are not items: never dropped in a match and not
+	/// on the item settings screen. Flambe's guitar, for his show (Eric, 2026-10-22).
+	/// </summary>
+	static List<ItemData> StoryProps => storyProps ??= new List<ItemData>
+	{
+		new ItemData
+		{
+			Id = "guitar", DisplayName = "Guitar", Use = ItemUse.Swing, Size = 140.0f, Swings = 1, SpawnWeight = 0.0f,
+			Swing = Swing("Power Chord", AttackAnim.Slash, 8, 3, 16, 0.0f, 0.0f, 0.0f, 45.0f, 30.0f),
+			Hit = Hit("Thrown Guitar", 0.0f, 0.0f, 0.0f, 45.0f),
+		},
+	};
+
+	/// <summary>An item, or a story prop, by id - what a story's "hold" puts in a hand. Null if there is none.</summary>
+	public static ItemData Find(string id)
+	{
+		int i = IndexOf(id);
+		if (i >= 0) return All[i];
+		foreach (ItemData prop in StoryProps) if (prop.Id == id) return prop;
+		return null;
+	}
+
 	/// <summary>An item's drawing, or a piece of one ("crayon_red", "pencil_stub"); null if missing.</summary>
 	public static ItemArt Art(string id)
 	{

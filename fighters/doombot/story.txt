@@ -34,7 +34,7 @@
 #   player mark anger               over the head: anger, sweat, sparkle, heart, !, ?, steam,
 #                                   tears - or none
 #   player jump / attack forward / smash up / special down / taunt / block 60 / crouch 40
-#   player hold scissors / throw back     an item in hand, and thrown
+#   player hold scissors / throw back     an item in hand, and thrown (or a story prop: guitar)
 #   player twirl / roll             a paper turn on the spot, or a spin in the page
 #   doombot heat 100 / doombot stocks 3
 #
@@ -51,6 +51,7 @@
 #   dark on / dark off              the lights down
 #   eye at 0 -900 / eye close       a red eye opening up there in the dark
 #   page at 380 -560 / page clear   a new drawing pinned up on the door, with a magnet
+#   pyro at -540 540 -720 720       pillars of fire off the floor, going off in that order
 #   include player roast            plays the scene called "roast" from the player's own story
 #                                   (the finale also includes each player's "thanks")
 #   fight                           the scene ends and the fight starts, right where they stand
@@ -460,8 +461,8 @@ doombot: NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY.
 doombot pose hips
 doombot: TO BE THE ONE TRUE RULER. OF THE FRIDGE.
 doombot pose none
-board at -620 -916
-camera at -120 -680 zoom 0.72
+board at -620 -1130
+camera at -120 -740 zoom 0.72
 doombot writes: 1. LET THEM FIGHT.
 doombot writes: 2. THANK THE WINNER.
 doombot writes: 3. BEAT THE WINNER.

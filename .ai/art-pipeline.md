@@ -221,8 +221,11 @@ the ear at the back, and only the tip of the nose past the outline, which is wha
 way he faces unambiguous. DoomBot's head and body are drawn side on, so the cut turns them
 three-quarters toward us (see "A side view turned toward us", below). His arms are drawn spread
 wide. He fights side on as every rig does; for standing in a story scene and for celebrating he
-stands with his arms out as drawn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`): the far arm comes
-out in front of the body unshaded, no limb turns to face back, an elbow bends either way across
+stands with his arms out as drawn (`FighterData.FrontOn`, `FighterRig.SetFrontOn`): the far arm is
+unshaded and stays behind the body, turned three-quarters as it is, coming in front only for a
+pose that reaches across him - arms crossed, a laugh, a hand to his chin or face
+(`FighterAnimations.FarArmAcross`; Eric, 2026-10-22: in front all the time, both arms sat on top
+of him) - no limb turns to face back, an elbow bends either way across
 the picture, and no pose is exaggerated, so his arms go where he drew them. Side-view story
 poses are turned face on for him (`FighterAnimations.FaceOn`); the ones that fold an arm across
 the body have their own.

@@ -2255,9 +2255,10 @@ public partial class FighterRig : Node2D
 
 	/// <summary>
 	/// Stood face on, his arms out to his sides the way they were drawn - DoomBot, whose head and
-	/// body the cut turns toward us (FighterData.FrontOn), for talking and for celebrating; a fight is always side on. Both
-	/// arms come out in front of his body and neither is shaded, since neither is the far one; no
-	/// limb turns round to face back; and an elbow bends either way across the picture, because
+	/// body the cut turns toward us (FighterData.FrontOn), for talking and for celebrating; a fight is always side on. Neither
+	/// arm is shaded; the far arm stays behind his body, turned three-quarters as it is, and comes
+	/// in front only to reach across him (SetFarArmAcross) - in front all the time, both arms sat
+	/// on top of him (Eric, 2026-10-22); no limb turns round to face back; and an elbow bends either way across the picture, because
 	/// facing you there is no "forward" for it to fold toward. Nothing is redrawn: it is his own
 	/// parts, put the way he drew them.
 	/// </summary>
@@ -2287,26 +2288,36 @@ public partial class FighterRig : Node2D
 		Sprite2D farFoot = feet[(int)RigBone.LegBackLower];
 		if (farFoot != null) farFoot.Modulate = on ? Colors.White : new Color(limbDarken, limbDarken, limbDarken);
 
-		// The far arm from behind the body to in front of it, and back.
 		Node2D arm = bones[(int)RigBone.ArmBackUpper];
-		Sprite2D body = sprites[(int)RigBone.Torso];
-		if (arm != null && body != null && arm.GetParent() == body.GetParent())
-		{
-			Node parent = arm.GetParent();
-			if (on)
-			{
-				sideArmIndex = arm.GetIndex();
-				parent.MoveChild(arm, body.GetIndex() + (arm.GetIndex() < body.GetIndex() ? 0 : 1));
-			}
-			else
-			{
-				parent.MoveChild(arm, sideArmIndex);
-			}
-		}
+		if (on && arm != null) sideArmIndex = arm.GetIndex();
+		PlaceFarArm();
 		for (int l = 0; l < turned.Length; l++) turned[l] = false;
 	}
 
 	int sideArmIndex;
+	bool farArmAcross;
+
+	/// <summary>
+	/// Face on, the far arm reaching across his body - arms crossed, a hand on his chin - so it is
+	/// drawn in front of him for as long as the pose lasts. Whoever drives the rig sets it.
+	/// </summary>
+	public void SetFarArmAcross(bool across)
+	{
+		if (across == farArmAcross) return;
+		farArmAcross = across;
+		if (FrontOn) PlaceFarArm();
+	}
+
+	/// <summary>The far arm in front of the body, or back where the side view keeps it behind.</summary>
+	void PlaceFarArm()
+	{
+		Node2D arm = bones[(int)RigBone.ArmBackUpper];
+		Sprite2D body = sprites[(int)RigBone.Torso];
+		if (arm == null || body == null || arm.GetParent() != body.GetParent()) return;
+		Node parent = arm.GetParent();
+		if (FrontOn && farArmAcross) parent.MoveChild(arm, body.GetIndex() + (arm.GetIndex() < body.GetIndex() ? 0 : 1));
+		else parent.MoveChild(arm, sideArmIndex);
+	}
 
 	// --- Elbows and knees bend one way; limbs turn to face the way they point -------------------
 
