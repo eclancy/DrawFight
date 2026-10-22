@@ -460,17 +460,18 @@ doombot: NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY.
 doombot pose hips
 doombot: TO BE THE ONE TRUE RULER. OF THE FRIDGE.
 doombot pose none
-board at -620 -820
+board at -620 -916
 camera at -120 -680 zoom 0.72
-doombot writes: 1. MAKE THE DRAWINGS FIGHT.
-doombot writes: 2. TAKE DOWN EVERY LOSER.
-doombot writes: 3. RULE THE FRIDGE. ALONE.
+doombot writes: 1. LET THEM FIGHT.
+doombot writes: 2. THANK THE WINNER.
+doombot writes: 3. BEAT THE WINNER.
+doombot writes: 4. RULE THE FRIDGE.
 camera two player doombot
 doombot pose point
-doombot: STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE.
+doombot: STEP ONE: COMPLETE. STEP TWO: COMPLETE.
 doombot pose crossarms
-doombot: WHEN THE LAST DRAWING COMES DOWN...
-doombot: THE FRIDGE WILL BE CLEAN. SHINY. EMPTY.
+doombot: STEP THREE...
+doombot: THEN THE FRIDGE WILL BE CLEAN. SHINY. EMPTY.
 doombot pose none
 doombot: AND ALL...
 camera on doombot zoom 1.45 fast

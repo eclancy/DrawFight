@@ -322,13 +322,16 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   "NOW ONE DRAWING STANDS BETWEEN ME AND MY DESTINY. TO BE THE ONE TRUE RULER. OF THE FRIDGE."
   His Eye Laser draws the plan on the fridge, one line at a time:
 
-  > 1. MAKE THE DRAWINGS FIGHT.
-  > 2. TAKE DOWN EVERY LOSER.
-  > 3. RULE THE FRIDGE. ALONE.
+  > 1. LET THEM FIGHT.
+  > 2. THANK THE WINNER.
+  > 3. BEAT THE WINNER.
+  > 4. RULE THE FRIDGE.
 
-  "STEP ONE: COMPLETE. STEP TWO: ALMOST COMPLETE. WHEN THE LAST DRAWING COMES DOWN... THE FRIDGE
-  WILL BE CLEAN. SHINY. EMPTY. AND ALL... **MINE.**" (Eric, 2026-10-21: a real plan to rule
-  the fridge - it used to say "REMOVE MAGNETS" and "3. FRIDGE.") He comes down out of the dark
+  "STEP ONE: COMPLETE. STEP TWO: COMPLETE. STEP THREE... THEN THE FRIDGE WILL BE CLEAN. SHINY.
+  EMPTY. AND ALL... **MINE.**" He never made anyone fight and never took anyone down: he let
+  them fight, and step two is the thank-you he has just given you (Eric, 2026-10-21; it used to
+  say "MAKE THE DRAWINGS FIGHT" and "TAKE DOWN EVERY LOSER", and before that "REMOVE MAGNETS"
+  and "3. FRIDGE.") He comes down out of the dark
   right where his red eye opened (`drop from eye`).
 - **The roast.** Every fighter makes the same joke - he looks like the fridge, and that doesn't
   make it his - in their own words:
