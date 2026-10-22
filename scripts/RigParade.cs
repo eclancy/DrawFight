@@ -432,7 +432,7 @@ public partial class RigParade : Node2D
 			}
 			else
 			{
-				FaceState face = names[i] == "talking" ? FaceState.Talking : FaceState.Named(names[i]);
+				FaceState face = FaceState.Toned(names[i] == "talking" ? FaceState.Talking : FaceState.Named(names[i]), data.FaceStrength);
 				if (names[i] == "talking") face.Open = 0.85f;
 				rig.SetFace(face);
 				label = names[i];

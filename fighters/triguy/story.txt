@@ -220,7 +220,7 @@ fight
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow
-doombot: AND YOU, TRIANGLE. THANK YOU.
+doombot: TRIANGLE. THANK YOU.
 doombot: YOU RAN THE OTHER DRAWINGS RIGHT OFF THE FRIDGE.
 doombot pose present
 doombot: SO FAST. SO HELPFUL. EVERY ONE YOU BEAT, I TOOK DOWN.

@@ -270,6 +270,12 @@ public partial class FighterData : Resource
 		return i >= 0 && i < Moves.Length ? Moves[i] : null;
 	}
 
+	/// <summary>
+	/// How much his face shows what he feels, 0 to 1 (FaceState.Toned): 1 for everyone but a
+	/// deadpan robot, whose eyes and brows only move part of the way.
+	/// </summary>
+	public float FaceStrength = 1.0f;
+
 	/// <summary>Body weight for the knockback formula, derived from the weight class.</summary>
 	public float BodyWeight => WeightProfiles.BodyWeight(Weight);
 
@@ -461,6 +467,8 @@ public partial class FighterData : Resource
 		{
 			DisplayName = "DoomBot",
 			VoicePitch = 0.6f,
+			// A robot's poker face: his eyes and brows only go part of the way (Eric, 2026-10-21).
+			FaceStrength = 0.55f,
 			Artist = "Eric",
 			PlaceholderColor = new Color(0.86f, 0.28f, 0.26f),
 			Weight = WeightClass.Heavy,

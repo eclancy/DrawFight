@@ -59,7 +59,7 @@ public partial class Fighter
 		{
 			nextBlink = fxFrames + 150 + (int)(Mathf.Abs(CrayonBrush.Noise(fxFrames, PlayerIndex + 23)) * 170.0f);
 		}
-		FaceState shown = faceNow;
+		FaceState shown = FaceState.Toned(faceNow, Data.FaceStrength);
 		int untilBlink = nextBlink - fxFrames;
 		bool blinking = untilBlink <= BlinkFrames && State != FighterState.Hitstun;
 		if (blinking)

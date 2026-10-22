@@ -309,15 +309,14 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   narrator: "One by one, the drawings had been coming down. And not because of the fights."
   The camera tilts up to the freezer door. A red eye opens. Heavy footsteps, each one a shake.
   DoomBot lands on rocket boots.
-- **He explains the plan** - properly, the way a villain does. A stack of taken-down drawings is
-  piled behind him, and they are the other fighters' own drawings - everyone's but his and
-  yours - partly torn or rubbed out (Eric, 2026-10-21; `TakenDownPile`, below). "GREETINGS, SMALL DRAWING. ALL THOSE FIGHTS. ALL THAT
-  FUSS. IT WAS A... DISTRACTION." He shows off the pile. "SEE THAT PILE? EVERY NIGHT,
-  WHILE YOU FOUGHT EACH OTHER, I TOOK ONE DOWN. YOU BLAMED EACH OTHER. NOBODY SUSPECTED... THE
-  ROBOT."
-- **He thanks you** (Eric, 2026-10-21) - every drawing you beat on the way here, he took down,
-  so you did his work for him. Each story's own "== thanks", in its own terms: EdgeLord, "THANK
-  YOU FOR CUTTING OUT THE OTHER DRAWINGS" ("...I was cutting them out for YOU?"); Flambé,
+- **He thanks you.** A stack of taken-down drawings is piled behind him, and they are the
+  other fighters' own drawings - everyone's but his and yours - partly torn or rubbed out
+  (Eric, 2026-10-21; `TakenDownPile`, below). He does not sneak about at night: you beat them,
+  he only had to take them down, and he thanks you for it (Eric, 2026-10-21). "GREETINGS, SMALL
+  DRAWING. SEE THAT PILE? EVERY DRAWING ON IT, YOU BEAT. ALL I HAD TO DO WAS TAKE THEM DOWN."
+  Then each story's own "== thanks", in its own terms: EdgeLord, "THANK YOU FOR CUTTING OUT THE
+  OTHER DRAWINGS. NOW THE FRIDGE IS ALMOST MINE." - and EdgeLord, unbothered: "Yours? Please. I
+  cut out every drawing on this fridge. There's just one more to go." - "...ONE MORE?"; Flambé,
   roasting them ("I was your... sous-chef?"); Lugnut, clearing the site ("That was NOT the job");
   Circy, the evil stunts ("Bro. I got played?!"); Triguy, running them off ("not kewl." - "NOT
   KEWL FOR THEM. VERY KEWL. FOR ME."). Then:

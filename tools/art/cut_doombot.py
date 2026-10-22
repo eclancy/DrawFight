@@ -24,7 +24,7 @@ turn_torso; Eric picked 60/40 from the mockups in doombot_front_mockup.py):
     little shorter - the ear on the head, the socket and the hatch on the body;
   - 60% is a new front facing us, filled with his own grey pencil, carrying copies of his marks:
     his eye as drawn nearer the corner, a mirrored copy at 88% as the far eye, each with its
-    brow, his teeth (the left half, mirrored) as a mouth across it, and on the body his block of
+    brow, his whole row of teeth as drawn as a mouth across it, and on the body his block of
     controls exactly as drawn;
   - the only new lines are the edges of the new fronts and the corner, in his marker colour at
     his line width.
@@ -195,11 +195,15 @@ ANTENNAE = [(540, 170), (960, 170), (960, 338), (540, 318)]
 ANTENNA_SPLIT_X = 760
 BACK_ANTENNA_BASE = (695, 325)
 FRONT_ANTENNA_BASE = (815, 331)
-# His eye and the dark brow over it; his teeth from their left end to the middle of the third gap
-# (mirrored about it, six teeth closed at both ends); clean grey between the antenna-ear and the
-# eye, which the new face is filled with; and the short neck under the head.
+# His eye and the dark brow over it; his whole row of teeth as drawn, from its left end to the
+# head's front edge, which closes it (Eric, 2026-10-21: the mirrored half-row met in a V and read
+# as a grin - he wanted it straight-faced); clean grey between the antenna-ear and the eye, which
+# the new face is filled with; and the short neck under the head.
 EYE_BOX = (786, 366, 895, 499)
-TEETH_HALF = (727, 517, 852, 603)
+TEETH_HALF = (727, 517, 934, 603)
+# How far down the row's top edge comes at its right end, where his line slopes: above it is the
+# head's edge line, not mouth.
+TEETH_TOP_DROP = 18
 HEAD_GREY = (700, 362, 786, 505)
 NECK_BOX = (632, 617, 762, 650)
 # Where faces.py finds each feature on a copy of the eye, in the eye's own box: the eye, the brow,
@@ -608,7 +612,7 @@ def turn_head(head, photo, look, share=FRONT_SHARE):
     """
     His head turned toward us: his drawn side with the antenna-ear squeezed on the left, and a new
     face on the right - his grey pencil, his eye as drawn nearer the corner, a mirrored copy of it
-    (brow and all) a little smaller as the far eye, and his teeth mirrored into a mouth across it.
+    (brow and all) a little smaller as the far eye, and his row of teeth as a mouth across it.
     The antennae stand back on the top and the neck goes under the middle. Returns the head and
     where things went: 'neck', 'eye' (the near eye's middle), 'antenna_back'/'antenna_front' (how
     far each antenna moved) and 'faces' (each feature's box and points, for faces.py).
@@ -638,11 +642,12 @@ def turn_head(head, photo, look, share=FRONT_SHARE):
     far = (int(round(f0 + wf * 0.72 - (w - ex) * FAR_EYE)), int(round(EYE[1] - ey * FAR_EYE)))
     out.alpha_composite(far_eye, far)
 
-    half = look.crop(TEETH_HALF).convert('RGBA')
-    hw, hh = half.size
-    mouth = Image.new('RGBA', (hw * 2 - 2, hh), (0, 0, 0, 0))
-    mouth.paste(half, (0, 0))
-    mouth.paste(half.transpose(Image.FLIP_LEFT_RIGHT), (hw - 2, 0))
+    mouth = look.crop(TEETH_HALF).convert('RGBA')
+    hw, hh = mouth.size
+    # Only the teeth: not the bit of the head's edge line standing up past their sloping top.
+    keep = Image.new('L', mouth.size, 0)
+    ImageDraw.Draw(keep).polygon([(0, 0), (hw - 12, TEETH_TOP_DROP), (hw, TEETH_TOP_DROP), (hw, hh), (0, hh)], fill=255)
+    mouth.putalpha(ImageChops.multiply(mouth.split()[3], keep))
     mw = int(round(wf * 0.8))
     mouth = mouth.resize((mw, hh), Image.LANCZOS)
     mouth.putalpha(ImageChops.multiply(mouth.split()[3], feathered(mouth.size, inset=1, blur=1.2)))

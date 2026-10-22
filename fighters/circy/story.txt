@@ -212,7 +212,7 @@ end
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow
-doombot: AND YOU, ROUND ONE. THANK YOU FOR THE EVIL STUNTS.
+doombot: ROUND ONE. THANK YOU FOR THE EVIL STUNTS.
 doombot pose present
 doombot: EVERY DRAWING YOU STUNTED ON, I TOOK DOWN.
 doombot: YOU CLEARED THE FRIDGE. FOR ME.

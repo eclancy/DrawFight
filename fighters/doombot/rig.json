@@ -197,7 +197,7 @@
       "face": "mouth", 
       "name": "faceMouth", 
       "offset": [
-        92.0, 
+        94.5, 
         -124.0
       ], 
       "onPart": true, 
@@ -369,7 +369,7 @@
     }, 
     "FaceMouth": {
       "pivot": [
-        109.0, 
+        110.5, 
         0.0
       ], 
       "texture": "parts/FaceMouth.png"

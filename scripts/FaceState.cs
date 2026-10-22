@@ -43,6 +43,22 @@ public struct FaceState
 	public static readonly FaceState Smug = new FaceState { Squint = 0.55f, Angry = 0.25f, LookX = 0.5f };
 	public static readonly FaceState Talking = new FaceState { Open = 0.6f };
 
+	/// <summary>
+	/// The face with its feeling turned down to <paramref name="strength"/> (FighterData.FaceStrength):
+	/// squints, brows, wide eyes and grit all less far - a blink, talking and where he looks unchanged.
+	/// </summary>
+	public static FaceState Toned(FaceState f, float strength)
+	{
+		if (strength >= 1.0f) return f;
+		f.Squint *= strength;
+		f.Wide *= strength;
+		f.Angry *= strength;
+		f.Sad *= strength;
+		f.Surprise *= strength;
+		f.Grit *= strength;
+		return f;
+	}
+
 	public static FaceState Named(string name) => name switch
 	{
 		"closed" => Closed,

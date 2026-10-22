@@ -272,15 +272,21 @@ fight
 == thanks
 camera on doombot zoom 1.2
 doombot pose bow
-doombot: AND YOU, EDGELORD. THANK YOU FOR CUTTING OUT THE OTHER DRAWINGS.
+doombot: EDGELORD. THANK YOU FOR CUTTING OUT THE OTHER DRAWINGS.
 doombot pose present
-doombot: SO SHARP. SO HELPFUL. EVERY ONE YOU CUT, I TOOK DOWN.
+doombot: SO SHARP. SO HELPFUL. NOW THE FRIDGE IS ALMOST MINE.
 doombot pose none
 camera on player zoom 1.2 fast
-player look shocked
-player mark !
-player: ...I was cutting them out for YOU?
-player mark none
+player look smug
+player pose crossarms
+player: Yours? Please.
+player pose none
+player pose point
+player: I cut out every drawing on this fridge. There's just one more to go.
+player pose none
+camera on doombot zoom 1.3 fast
+doombot look shocked
+doombot: ...ONE MORE?
 
 == roast
 player look smug
