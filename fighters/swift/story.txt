@@ -156,7 +156,7 @@ player (hot): You're cancelling my SHOW?!
 player pose none
 lugnut pose none
 lugnut pose shrug
-lugnut: ...Break's over, I guess.
+lugnut: ...Postponed, pal. Pending inspection.
 lugnut pose none
 player mark none
 camera wide
