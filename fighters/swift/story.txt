@@ -254,6 +254,21 @@ player pose none
 camera wide
 fight
 
+== beat circy
+# Circy's own "defeated" scene, word for word but for Flambe's answer: he lets Circy stay on the
+# fridge on one condition, which is the headliner's. Everyone else keeps Circy's shared scene.
+cast player at -300
+cast circy at 300 facing left
+music story
+circy look sad
+circy: Bro... do I still get to stay on the fridge?
+player pose nod
+player: Only if you come to my show.
+player pose none
+circy look happy
+circy (happy): Okaly dokaly!
+end
+
 == beat triguy
 # Triguy's own "defeated" scene, word for word but for the one line: Flambe's worry is his hair,
 # not his footing. Lug and DoomBot still get Triguy's shared scene.
