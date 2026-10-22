@@ -107,7 +107,9 @@ public partial class MainMenuScreen : Node2D
 			if (leaving) break;
 			Vector2 was = cursor.Position;
 			cursor.Update(viewport);
-			if (cursor.Position != was)
+			// With the quit box up, the menu behind it is not being pointed at (Elim, 2026-10-21:
+			// it went on lighting up Story under the box).
+			if (cursor.Position != was && !quitPrompt.Open)
 			{
 				int over = CardUnder(cursor.Position);
 				if (over >= 0 && over != hovered) SfxPlayer.Ui("ui_move");
@@ -199,17 +201,9 @@ public partial class MainMenuScreen : Node2D
 		DrawCard(Choice.Story, "Story", "Fight for a place on the fridge.");
 		DrawCard(Choice.Draw, "Draw your own", "A fighter or a stage, sent in.");
 
-		bool quitHot = false;
-		foreach (MenuCursor cursor in cursors) quitHot |= QuitBox.HasPoint(cursor.Position);
-		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, quitHot, fontSize: 38);
-
-		bool bugHot = false;
-		foreach (MenuCursor cursor in cursors) bugHot |= BugBox.HasPoint(cursor.Position);
-		MenuTheme.DrawButton(this, BugBox, "Report a bug", 79, bugHot, fontSize: 32);
-
-		bool gearHot = false;
-		foreach (MenuCursor cursor in cursors) gearHot |= GearBox.HasPoint(cursor.Position);
-		MenuTheme.DrawButton(this, GearBox, "", 78, gearHot);
+		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, Pointed(QuitBox), fontSize: 38);
+		MenuTheme.DrawButton(this, BugBox, "Report a bug", 79, Pointed(BugBox), fontSize: 32);
+		MenuTheme.DrawButton(this, GearBox, "", 78, Pointed(GearBox));
 		DrawGear(this, GearBox.GetCenter(), 25.0f, MenuTheme.Ink);
 
 		DrawString(font, new Vector2(190.0f, 1050.0f), $"v{UpdateScreen.CurrentVersion}", HorizontalAlignment.Left, -1, 26, MenuTheme.Soft);
@@ -230,11 +224,18 @@ public partial class MainMenuScreen : Node2D
 		canvas.DrawCircle(at, radius * 0.32f, MenuTheme.Paper);
 	}
 
+	/// <summary>A cursor is over it - and nothing is, behind the quit box.</summary>
+	bool Pointed(Rect2 box)
+	{
+		if (quitPrompt.Open) return false;
+		foreach (MenuCursor cursor in cursors) if (box.HasPoint(cursor.Position)) return true;
+		return false;
+	}
+
 	void DrawCard(Choice choice, string title, string blurb)
 	{
 		Rect2 card = CardRect(choice);
-		bool hot = hovered == (int)choice;
-		foreach (MenuCursor cursor in cursors) hot |= card.HasPoint(cursor.Position);
+		bool hot = !quitPrompt.Open && hovered == (int)choice || Pointed(card);
 
 		DrawRect(new Rect2(card.Position + new Vector2(8.0f, 10.0f), card.Size), new Color(0.0f, 0.0f, 0.0f, 0.06f));
 		DrawRect(card, new Color(1.0f, 1.0f, 0.99f));
