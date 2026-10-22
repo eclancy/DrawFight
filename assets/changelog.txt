@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.11.2 | 2026-10-21
+DoomBot's finale is new: he thanks you for beating everyone, then lasers his four-step plan onto the fridge. The final boss has three lives, and on Easy he doesn't start red-hot. DoomBot keeps a straighter face. On the main menu, nothing behind the quit box lights up.
+
 == 0.11.1 | 2026-10-21
 Story mode: once you have reached a chapter you can pick it on the map and play it again - every chapter, once the story is beaten. Press down for Easy, Medium or Hard.
 The Paint Bucket's description says what its puddle does.
