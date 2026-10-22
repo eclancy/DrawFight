@@ -687,6 +687,9 @@ public partial class FighterRig : Node2D
 	const float KneelThighBack = 8.0f;
 	const float KneelShinDown = 4.0f;
 
+	/// <summary>How far the front shin may lean back from upright, kneeling: inside what an ankle bends (AnkleBend), so its foot stays flat.</summary>
+	const float KneelShinLean = 15.0f;
+
 	/// <summary>
 	/// Degrees the back arm is swung forward from the pose, standing idle: an arm drawn hanging
 	/// behind a wide body is hidden by it (DoomBot's, Eric 2026-10-18), and forward of it shows.
@@ -794,6 +797,15 @@ public partial class FighterRig : Node2D
 			var target = new Vector2(rest.X + spread, floor - FootDepth(foot));
 
 			float l1 = knee.Length(), l2 = shin.Length();
+			// Down on one knee the hips are low, and the front foot is set out ahead of them: left
+			// under them, its shin leans back further than the ankle bends, the toe digs into the
+			// floor, and planting lifts the kneeling leg off it (Flambe's; Eric, 2026-10-22).
+			if (Kneeling && lower == RigBone.LegFrontLower)
+			{
+				float lean = Mathf.DegToRad(KneelShinLean);
+				float rise = target.Y - joint.Y - l2 * Mathf.Cos(lean);
+				if (rise < l1) target.X = Mathf.Max(target.X, joint.X + Mathf.Sqrt(l1 * l1 - rise * rise) - l2 * Mathf.Sin(lean));
+			}
 			Vector2 d = target - joint;
 			float reach = Mathf.Clamp(d.Length(), Mathf.Abs(l1 - l2) + 0.5f, l1 + l2 - 0.01f);
 			float bend = Mathf.Acos(Mathf.Clamp((l1 * l1 + reach * reach - l2 * l2) / (2.0f * l1 * reach), -1.0f, 1.0f));

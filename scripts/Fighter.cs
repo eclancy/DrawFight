@@ -624,6 +624,16 @@ public partial class Fighter : CharacterBody2D
 			TakeBackFlung();
 		}
 
+		// Coming down with the stick held down drops through every soft platform on the way,
+		// with no jump to press (Eric, 2026-10-22). Kept up a frame at a time, so letting go
+		// lands on the next one.
+		if (input.Move.Y > 0.5f && Velocity.Y > 0.0f && !IsOnFloor()
+			&& (State == FighterState.Airborne || State == FighterState.Attacking))
+		{
+			dropThroughFrames = Mathf.Max(dropThroughFrames, 2);
+			CollisionMask = SolidOnlyMask;
+		}
+
 		if (State != FighterState.Respawning && State != FighterState.LedgeHang)
 		{
 			ApplyGravity(dt);
