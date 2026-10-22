@@ -142,8 +142,10 @@ headliner. This kitchen is my stage."
   cancelling my SHOW?!**" Lugnut tightens his hard hat. "...Break's over, I guess." They fight on
   the stage, the girder overhead. After, Lugnut looks at the dents. "...Okay. It passed." -
   "Inspection?" - "Stress test." - "So I can play?" - "With pyro, even." He pulls out his guitar
-  (a flame-painted flying V - `hold guitar`, a story prop, never an item in a match), a power
-  chord, and pillars of fire go off behind the stage (`pyro`): "The show... goes on." (Eric,
+  (a flame-painted flying V - `hold guitar`, a story prop, never an item in a match) and plays
+  it - `pose play`: the guitar at his hip, the neck angled up and forward, his other hand on it,
+  strumming (a pose struck holding an item places the arms; `Fighter.HoldItemPose` stands
+  aside) - a power chord, and pillars of fire go off behind the stage (`pyro`): "The show... goes on." (Eric,
   2026-10-22: it was a fist bump and Fire Rain.)
 - **The two-on-one.** EdgeLord asks Triguy to team up: "Hey. Triangle. You're fast. I'm sharp.
   Team up?" Triguy: "that's, really kewl." Then he goes for EdgeLord's sword - "Hands off the

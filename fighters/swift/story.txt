@@ -184,7 +184,7 @@ lugnut: With pyro, even.
 lugnut pose none
 player hold guitar
 wait 20
-player pose cheer
+player pose play
 sound power_chord
 pyro at -720 720 -540 540
 wait 30
@@ -414,7 +414,7 @@ camera on player zoom 1.0 cut
 narrator: The Big Show. The middle of the fridge. Eye level.
 player hold guitar
 wait 20
-player pose cheer
+player pose play
 sound power_chord
 pyro at -820 820 -400 400
 wait 30
@@ -445,7 +445,7 @@ player look happy
 player pose fist
 player: ...Okay. One encore. And everybody stays. A headliner needs a band.
 player pose none
-player pose cheer
+player pose play
 sound power_chord
 pyro at -1150 1150 -950 950 -620 430 800
 wait 70

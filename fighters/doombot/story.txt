@@ -26,7 +26,8 @@
 #   player pose cheer               a pose, held until "pose none": cheer, slump, point, shrug,
 #                                   laugh, stomp, tremble, crossarms, wave, fist, flex, hips,
 #                                   think, facepalm, present, beckon, nod, bow, sit, eat (sat at
-#                                   a "table", taking bites of lunch). Whoever is talking
+#                                   a "table", taking bites of lunch), play (strumming the
+#                                   guitar he holds). Whoever is talking
 #                                   talks with their hands anyway, in the way the line is said;
 #                                   a pose is for the moment that needs more. DoomBot, standing,
 #                                   turns to face you, the way Eric drew him.

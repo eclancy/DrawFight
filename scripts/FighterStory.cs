@@ -199,6 +199,14 @@ public partial class Fighter
 			case "nod":
 				storyPose.Set(RigBone.Head, storyPose[RigBone.Head] - 14.0f * Mathf.Abs(Mathf.Sin(fxFrames * 0.16f)));
 				break;
+			case "play":
+				// Strumming, fast - the elbow and the wrist turning against each other, so the hand
+				// moves but the guitar on it holds still - and his head banging along on the beat.
+				float strum = 6.0f * Mathf.Sin(fxFrames * 0.9f);
+				storyPose.Set(upper, storyPose[upper] + strum);
+				storyPose.Set(lower, storyPose[lower] - strum);
+				storyPose.Set(RigBone.Head, storyPose[RigBone.Head] - 12.0f * pump);
+				break;
 			case "flex":
 				// Squeezing: each fist curls further in toward his head, whichever way that bends.
 				storyPose.Set(RigBone.ArmFrontLower, storyPose[RigBone.ArmFrontLower] * (1.0f + 0.14f * pump));

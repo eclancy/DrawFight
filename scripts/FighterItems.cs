@@ -1078,6 +1078,8 @@ void fragment() {
 	{
 		if (heldItem == null || rig == null || !rig.Loaded) return;
 		if (State == FighterState.Attacking || State == FighterState.LedgeHang || State == FighterState.Dodging) return;
+		// A pose struck in a scene puts the arms where it wants them - Flambe playing his guitar.
+		if (!string.IsNullOrEmpty(StoryPose)) return;
 		HoldItemOut(rig, Facing, shieldRaised);
 	}
 

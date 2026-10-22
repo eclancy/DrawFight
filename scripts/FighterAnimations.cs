@@ -1038,14 +1038,26 @@ public static class FighterAnimations
 		"bow" => Bow,
 		"sit" => Sit,
 		"eat" => Sit,
+		"play" => Play,
 		_ => null,
 	};
 
 	public static readonly string[] StoryPoses =
 	{
 		"cheer", "slump", "point", "shrug", "laugh", "stomp", "tremble", "crossarms",
-		"wave", "fist", "flex", "hips", "think", "facepalm", "present", "beckon", "nod", "bow", "sit", "eat",
+		"wave", "fist", "flex", "hips", "think", "facepalm", "present", "beckon", "nod", "bow", "sit", "eat", "play",
 	};
+
+	/// <summary>
+	/// Playing the guitar he holds (Flambe's, "hold guitar"): the near hand down at his hip on its
+	/// body with the forearm angled up and forward, so the neck runs on up that line, and the far
+	/// hand reaching forward up the neck. Feet apart, leaning back into it. Strummed in
+	/// Fighter.StrikePose (Eric, 2026-10-22).
+	/// </summary>
+	static readonly Pose Play = new Pose(new Vector2(0, 4),
+		(Torso, 8), (Head, -10),
+		(AFU, 6), (AFL, -94), (ABU, -50), (ABL, -30),
+		(LFU, -16), (LFL, 10), (LBU, 16), (LBL, 8));
 
 	/// <summary>
 	/// Sat on a stool at a table: thighs out level, shins straight down, forearms resting on the

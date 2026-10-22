@@ -848,30 +848,32 @@ def tracing_paper():
 
 def guitar():
     """Flambe's electric guitar for the show (a story prop, never dropped in a match): a red
-    flying V with flames up its wings, held up by the neck, body to the sky (Eric, 2026-10-22)."""
-    body = ('M 75,226 L 10,58 C 4,40 12,26 30,26 L 54,26 L 75,104 L 96,26 L 120,26 '
-            'C 138,26 146,40 140,58 Z')
+    flying V with flames up its wings, the right way up for playing - headstock at the top, the
+    wings down - and held at the body, where he strums, so the neck runs on up his forearm's line
+    (Eric, 2026-10-22). Fire rises, so the flames go up the wings from their tips."""
+    body = ('M 75,150 L 10,318 C 4,336 12,350 30,350 L 54,350 L 75,272 L 96,350 L 120,350 '
+            'C 138,350 146,336 140,318 Z')
     s = P(body, 'red')
     s += clip('vflame', body,
-              F('M 16,140 C 22,100 18,76 30,46 C 36,74 46,84 44,112 C 54,96 54,74 62,62 '
-                'C 72,96 68,124 75,160 L 16,160 Z', 'orange')
-              + F('M 134,140 C 128,100 132,76 120,46 C 114,74 104,84 106,112 C 96,96 96,74 88,62 '
-                  'C 78,96 82,124 75,160 L 134,160 Z', 'orange')
-              + F('M 34,150 C 38,124 36,108 44,92 C 50,112 56,124 56,150 Z', 'yellow')
-              + F('M 116,150 C 112,124 114,108 106,92 C 100,112 94,124 94,150 Z', 'yellow'))
+              F('M 0,360 C 6,320 16,300 22,262 C 30,290 38,298 38,322 C 46,300 50,282 48,250 '
+                'C 62,284 66,320 75,360 Z', 'orange')
+              + F('M 150,360 C 144,320 134,300 128,262 C 120,290 112,298 112,322 C 104,300 100,282 102,250 '
+                  'C 88,284 84,320 75,360 Z', 'orange')
+              + F('M 18,360 C 22,334 24,320 30,300 C 38,320 44,334 44,360 Z', 'yellow')
+              + F('M 132,360 C 128,334 126,320 120,300 C 112,320 106,334 106,360 Z', 'yellow'))
     s += L(body, 'wo')
-    s += P(rect(62, 140, 88, 156, 3), 'silver', 'wi')
-    s += P(rect(62, 168, 88, 184, 3), 'silver', 'wi')
-    s += P(rect(64, 196, 86, 204, 2), 'silver_dark', 'wi')
-    s += P(rect(66, 200, 84, 334, 3), 'wood')
-    for y in range(222, 330, 16):
+    s += P(rect(66, 30, 84, 182, 3), 'wood')
+    for y in range(48, 176, 16):
         s += L('M 66,%d L 84,%d' % (y, y), 3, 'silver_dark')
+    s += P(rect(62, 186, 88, 202, 3), 'silver', 'wi')
+    s += P(rect(62, 214, 88, 230, 3), 'silver', 'wi')
+    s += P(rect(64, 244, 86, 252, 2), 'silver_dark', 'wi')
     for x in (70, 74, 78, 82):
-        s += L('M %d,146 L %d,338' % (x, x), 1.5, 'silver_light')
-    s += P('M 64,330 L 86,330 L 92,372 Q 75,382 58,372 Z', 'red')
-    for y in (342, 356):
-        s += P(ellipse(54, y, 5), 'silver', 'wi') + P(ellipse(96, y, 5), 'silver', 'wi')
-    return s, (150, 384), (75, 300), (75, 70)
+        s += L('M %d,26 L %d,248' % (x, x), 1.5, 'silver_light')
+    s += P('M 58,10 Q 75,0 92,10 L 86,34 L 64,34 Z', 'red')
+    for y in (14, 26):
+        s += P(ellipse(52, y, 5), 'silver', 'wi') + P(ellipse(98, y, 5), 'silver', 'wi')
+    return s, (150, 360), (75, 222), (75, 14)
 
 
 ITEMS = [
