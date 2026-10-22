@@ -223,7 +223,7 @@ doombot pose bow
 doombot: TRIANGLE. THANK YOU.
 doombot: YOU RAN THE OTHER DRAWINGS RIGHT OFF THE FRIDGE.
 doombot pose present
-doombot: SO FAST. SO HELPFUL. EVERY ONE YOU BEAT, I TOOK DOWN.
+doombot: SO FAST. SO HELPFUL.
 doombot pose none
 camera on player zoom 1.2 fast
 player show taunt_surprised

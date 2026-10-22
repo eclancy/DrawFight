@@ -427,7 +427,6 @@ dark on
 camera on player zoom 1.0 cut
 narrator: One by one, the drawings had been coming down off the fridge.
 narrator: Every one you had beaten.
-narrator: Somebody had been tidying up.
 player look shocked
 camera at 0 -760 zoom 0.7 slow
 eye at 120 -980
@@ -453,10 +452,6 @@ doombot face player
 camera two player doombot
 doombot pose bow
 doombot: GREETINGS, SMALL DRAWING.
-doombot pose present
-doombot: SEE THAT PILE? EVERY DRAWING ON IT, YOU BEAT.
-doombot pose hips
-doombot: ALL I HAD TO DO WAS TAKE THEM DOWN.
 doombot pose none
 include player thanks
 camera on doombot zoom 1.3

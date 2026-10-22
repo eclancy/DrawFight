@@ -187,7 +187,7 @@ camera on doombot zoom 1.2
 doombot pose bow
 doombot: BUILDER. THANK YOU FOR CLEARING THE SITE.
 doombot pose present
-doombot: EVERY DRAWING YOU KNOCKED DOWN, I TOOK DOWN.
+doombot: EVERY DRAWING ON THIS FRIDGE, KNOCKED DOWN.
 doombot: DEMOLITION COMPLETE. AHEAD OF SCHEDULE.
 doombot pose none
 camera on player zoom 1.2 fast

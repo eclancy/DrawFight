@@ -214,7 +214,7 @@ camera on doombot zoom 1.2
 doombot pose bow
 doombot: ROUND ONE. THANK YOU FOR THE EVIL STUNTS.
 doombot pose present
-doombot: EVERY DRAWING YOU STUNTED ON, I TOOK DOWN.
+doombot: YOU STUNTED ON EVERY DRAWING ON THIS FRIDGE.
 doombot: YOU CLEARED THE FRIDGE. FOR ME.
 doombot pose none
 camera on player zoom 1.2 fast

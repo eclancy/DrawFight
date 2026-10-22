@@ -311,10 +311,9 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   DoomBot lands on rocket boots.
 - **He thanks you.** A stack of taken-down drawings is piled behind him, and they are the
   other fighters' own drawings - everyone's but his and yours - partly torn or rubbed out
-  (Eric, 2026-10-21; `TakenDownPile`, below). He does not sneak about at night: you beat them,
-  he only had to take them down, and he thanks you for it (Eric, 2026-10-21). "GREETINGS, SMALL
-  DRAWING. SEE THAT PILE? EVERY DRAWING ON IT, YOU BEAT. ALL I HAD TO DO WAS TAKE THEM DOWN."
-  Then each story's own "== thanks", in its own terms: EdgeLord, "THANK YOU FOR CUTTING OUT THE
+  (Eric, 2026-10-21; `TakenDownPile`, below). He does not sneak about at night, and he never says he
+  took anyone down: he just thanks you for beating them all for him (Eric, 2026-10-21).
+  "GREETINGS, SMALL DRAWING." Then each story's own "== thanks", in its own terms: EdgeLord, "THANK YOU FOR CUTTING OUT THE
   OTHER DRAWINGS. NOW THE FRIDGE IS ALMOST MINE." - and EdgeLord, unbothered: "Yours? Please. Just
   one more to go." - "...ONE MORE?"; Flambé,
   roasting them ("I was your... sous-chef?"); Lugnut, clearing the site ("That was NOT the job");

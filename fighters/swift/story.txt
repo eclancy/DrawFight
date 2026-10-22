@@ -293,7 +293,7 @@ camera on doombot zoom 1.2
 doombot pose bow
 doombot: CHEF. THANK YOU FOR ROASTING THE OTHER DRAWINGS.
 doombot pose present
-doombot: ONE BY ONE. EVERY ONE YOU ROASTED, I TOOK DOWN. WELL DONE.
+doombot: ONE BY ONE. EVERY LAST ONE. WELL DONE.
 doombot pose none
 camera on player zoom 1.2 fast
 player look shocked
