@@ -250,6 +250,8 @@ public partial class RigParade : Node2D
 				rig.SetStanding(false);
 				rig.CarryOnShoulder = data.ShouldersProp;
 				rig.SetRoll(Mathf.Tau * FighterAnimations.RollTurned((frame - FilmLeadIn + 1) / (float)Fighter.RollFrames), true);
+				// A forward roll, so it turns him round: he comes up facing back the way he came.
+				rig.SetSpinWidth(FighterAnimations.RollTurnWidth((frame - FilmLeadIn + 1) / (float)Fighter.RollFrames));
 				rig.ApplyDirect(FighterAnimations.Tuck, 0.7f);
 				break;
 			case "airdodge" when frame >= FilmLeadIn && frame < FilmLeadIn + Fighter.AirDodgeFrames:

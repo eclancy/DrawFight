@@ -1486,6 +1486,23 @@ public static class FighterAnimations
 		return Covered(Mathf.Clamp(t, 0.0f, 1.0f)) / Covered(1.0f);
 	}
 
+	/// <summary>Where through a forward dodge roll he starts and finishes turning round (RollTurnWidth).</summary>
+	const float RollTurnFrom = 0.25f;
+	const float RollTurnTo = 0.75f;
+
+	/// <summary>
+	/// How wide a forward dodge roll draws him, <paramref name="t"/> from 0 to 1 through it: face
+	/// on, narrowing to an edge as the ball goes over the top, and opening out mirrored - his back
+	/// - so he comes up facing the way he came, at whoever he rolled past, as a roll does in Smash
+	/// (Eric, 2026-10-22). Negative is mirrored; edge-on at exactly halfway, which is where
+	/// Fighter turns his facing round. The whole turn sits inside the roll's invulnerable frames.
+	/// </summary>
+	public static float RollTurnWidth(float t)
+	{
+		float u = Mathf.Clamp((t - RollTurnFrom) / (RollTurnTo - RollTurnFrom), 0.0f, 1.0f);
+		return FighterRig.PaperTurnWidth(Mathf.Pi * u * u * (3.0f - 2.0f * u));
+	}
+
 	/// <summary>A plain punch landing - what a drawing out of the canvas hits with.</summary>
 	public static Pose AttackStrikePose => AttackStrike;
 

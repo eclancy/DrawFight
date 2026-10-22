@@ -385,6 +385,15 @@ slowing to a stop just as it ends (`FighterAnimations.RollSpeed`; Eric, 2026-10-
 It covers a little more ground than the old 26-frame roll in three quarters of the time, and its
 invulnerability ends 4 frames before it does, so coming out of it can still be punished.
 
+A roll ends facing **back against the way it went**, as in Smash (Eric, 2026-10-22): roll
+forward past someone and you come up facing them; roll backward away from them and you still
+are. A forward roll turns him round in its middle, inside the invulnerable frames - the drawing
+narrows edge-on as the ball goes over the top and opens out the other way
+(`FighterAnimations.RollTurnWidth`, `--film=roll`) - and his facing flips at the moment it is
+edge-on, so no hit can find him facing one way and drawn the other. An air dodge never turns
+him (only the second jump does, so a back air is still a back air after one), and nor does the
+roll in from a ledge, which comes up facing the stage.
+
 ## Ledges
 
 Solid platform corners inside the blast zone are **grabbable**, with a generous snap radius,
