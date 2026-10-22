@@ -323,7 +323,7 @@ Xbox pads are the primary input. Keyboard and mouse is the way to play without o
 | **LT/RT** + stick  | dodge roll / spot dodge / air dodge        |
 | **RB**             | grab; holding an item, throw it            |
 | **LB**             | taunt (on the ground) - three each: stick `↑` `→` `↓` picks one, still is any |
-| hold `↓` + **A**    | drop through a soft platform               |
+| hold `↓` + **A**    | drop through a soft platform (falling, `↓` alone does) |
 | Start              | pause: resume, pick fighters, or main menu (story: its map or main menu) |
 
 **This layout was specified, and it wins.** Earlier drafts argued first for platformer
@@ -368,6 +368,10 @@ Holding down and pressing jump falls through a soft platform. It is implemented 
 layer rather than by any special case in the platform: **solid ground is layer 1, soft platforms
 are layer 2**, and a drop-through masks layer 2 off for 12 frames. The same input on solid ground
 therefore does nothing at all, rather than dropping a fighter out of the bottom of the stage.
+
+**Coming down with down held drops through every soft platform on the way**, with no jump to
+press (Eric, 2026-10-22) - in the air or in an aerial, kept up one frame at a time, so letting
+go of down lands on the next platform. It is the same mask; solid ground still catches him.
 
 It only fires when the surface underfoot is actually a soft platform, read from the slide
 collisions that `MoveAndSlide` already computed. Pressing down and jump on solid ground gives a

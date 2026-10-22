@@ -97,7 +97,7 @@ Handy flags — each boots straight to one screen and can screenshot itself:
 | RB holding an item | throw it, the way the stick points (down on the ground sets it down) |
 | hold ↓ | crouch (ducks high attacks); attack from it for a low sweep. Hold ↓ and push left or right to crawl along slowly, still ducking |
 | hold ↓ + A | drop through a soft platform |
-| hold ↓ in the air | fall faster |
+| hold ↓ in the air | fall faster, and straight through soft platforms |
 | F11 | the game starts fullscreen; F11 switches to a window and back |
 
 Keyboard and mouse (P1): `W` `A` `S` `D` or the arrows to move, `Space` jump, left click or `J`
