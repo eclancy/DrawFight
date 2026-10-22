@@ -232,6 +232,60 @@ player (hot): Merci. The hair thanks you too.
 player pose none
 end
 
+== vs circy
+# Circy's own "challenger" scene, word for word but for the last line: Flambe has no idea what an
+# evil stunt is, and says so. Everyone else still gets Circy's shared scene.
+cast player at -400
+cast circy at 400 facing left
+music story
+camera two player circy
+circy pose point
+circy (shout): Duuuuuuuuuude! First on the fridge, coming through!
+circy pose none
+player pose shrug
+player: I know, I know. You were here first. Everybody knows.
+player pose none
+circy look angry
+circy (shout): Touch my page and GET READY FOR EVIL STUNTS!
+player look shocked
+player pose tremble
+player: Whoa. Okay. Nobody's touching your page.
+player pose shrug
+player: Your evil stunts though... What does that even mean...?
+player pose none
+camera wide
+fight
+
+== beat circy
+# Circy's own "defeated" scene, word for word but for Flambe's answer: he lets Circy stay on the
+# fridge on one condition, which is the headliner's. Everyone else keeps Circy's shared scene.
+cast player at -300
+cast circy at 300 facing left
+music story
+circy look sad
+circy: Bro... do I still get to stay on the fridge?
+player pose nod
+player: Only if you come to my show.
+player pose none
+circy look happy
+circy (happy): Okaly dokaly!
+end
+
+== beat triguy
+# Triguy's own "defeated" scene, word for word but for the one line: Flambe's worry is his hair,
+# not his footing. Lug and DoomBot still get Triguy's shared scene.
+cast player at -300
+cast triguy at 300 facing left
+music story
+triguy show crying
+triguy (whisper): not kewl.
+player pose shrug
+player: No crying... Wouldn't want to get my hair wet.
+player pose none
+player: You'll find your spot, kid.
+triguy show none
+end
+
 == vs edgelord triguy
 cast player at -780 facing right
 cast edgelord at 420 facing left
