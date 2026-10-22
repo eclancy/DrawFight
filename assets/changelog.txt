@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.12.0 | 2026-10-22
+Finishing a story now ends on STORY: COMPLETED. Pick Easy, Medium or Hard on Whose story? instead of the chapter map. Flambe pulls out his guitar with pyro going off, has new lines for Circy and Triguy, and kneels properly when he crouches. Nobody is surprised by DoomBot's thank-you anymore, and his plan is written higher up on the fridge. Hold down while falling to drop through platforms. A forward roll ends facing the other way.
+
 == 0.11.2 | 2026-10-21
 DoomBot's finale is new: he thanks you for beating everyone, then lasers his four-step plan onto the fridge. The final boss has three lives, and on Easy he doesn't start red-hot. DoomBot keeps a straighter face. On the main menu, nothing behind the quit box lights up.
 
