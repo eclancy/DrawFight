@@ -2,6 +2,10 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.11.1 | 2026-10-21
+Story mode: once you have reached a chapter you can pick it on the map and play it again - every chapter, once the story is beaten. Press down for Easy, Medium or Hard.
+The Paint Bucket's description says what its puddle does.
+
 == 0.11.0 | 2026-10-21
 DoomBot turned toward you: now you see his face and chest from the front - both eyes, his mouth, all his controls.
 Crouch and crawl: hold down and push left or right to creep along low.
