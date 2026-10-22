@@ -351,7 +351,8 @@ Every story but DoomBot's own ends the same way, with each fighter's own lines.
   stays on him - no cutting away to look at the fridge (Eric, 2026-10-21). DoomBot's theme hits. FIGHT!
 - **The fight is the joke.** Mocked, he overheats: **he starts the fight at full heat** - his
   Furnace Blast loaded, his claws glowing - and that is also when his overheat stalls and rusty
-  joints leave him most open. He has more stocks than the player. On his last one: "CORE
+  joints leave him most open - except on Easy, where he starts cool (Eric, 2026-10-21). He has
+  three lives, like the player (it was four; Elim found him too much). On his last one: "CORE
   TEMPERATURE CRITICAL," he flashes red, MiniBots come out, the music doubles in speed.
 - **When he falls.** He cools, with a long hiss of steam. Quietly, in lower case for the first
   time: "...i just wanted to be on the fridge." And the player's fighter answers in their own
@@ -435,8 +436,8 @@ In order, each step usable before the next:
    three levels down and gives the player a fourth life, Hard two levels up. A two-on-one is a
    level down and each of the two has 2 lives (1 on Easy, 3 on Hard) - with 3 each it was six
    lives against three, and Elim found it too hard. A boss keeps his scene's `stocks`. **Boss rules**
-   (`MatchManager.BossPlayer`, `StoryDirector.TickBoss`): more stocks and full heat from the
-   scene; his own theme on FIGHT!; on his last stock "CORE TEMPERATURE CRITICAL", he flashes red,
+   (`MatchManager.BossPlayer`, `StoryDirector.TickBoss`): three lives and full heat from the
+   scene (not on Easy - the "heat" line is skipped for the boss there); his own theme on FIGHT!; on his last stock "CORE TEMPERATURE CRITICAL", he flashes red,
    runs hot, sends a MiniBot after you every few seconds, and the music speeds up. DoomBot Mk. II
    (`FighterData.DoomBotMk2`, story id `mk2`) is DoomBot wearing the outfit `mk2` - scrap armour
    drawn by `tools/art/mk2_armour.py` and hung on DoomBot's own rig - fielded only by a story

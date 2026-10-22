@@ -541,7 +541,11 @@ public partial class StoryDirector : Node
 				return true;
 
 			case "heat":
-				actor.SetHeat(step.Number(0, 0));
+				// On Easy the boss does not walk into the fight already at full heat - he still
+				// boils over on his last life (TickBoss) (Eric, 2026-10-21).
+				bool easyBoss = GameOptions.StoryDifficulty == 0 && Match.BossPlayer >= 0
+					&& Match.BossPlayer < Match.Fighters.Count && Match.Fighters[Match.BossPlayer] == actor;
+				if (!easyBoss) actor.SetHeat(step.Number(0, 0));
 				return true;
 
 			case "stocks":

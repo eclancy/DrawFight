@@ -36,7 +36,7 @@
 #   player jump / attack forward / smash up / special down / taunt / block 60 / crouch 40
 #   player hold scissors / throw back     an item in hand, and thrown
 #   player twirl / roll             a paper turn on the spot, or a spin in the page
-#   doombot heat 100 / doombot stocks 4
+#   doombot heat 100 / doombot stocks 3
 #
 #   camera wide / on doombot / two player doombot / at 0 -900    then any of: zoom 1.3, slow,
 #                                   fast, whip, cut
@@ -338,7 +338,7 @@ player mark none
 camera two player mk2
 mk2 look angry
 mk2 heat 100
-mk2 stocks 4
+mk2 stocks 3
 camera wide
 fight
 
@@ -502,7 +502,7 @@ doombot pose none
 camera on doombot zoom 1.1 slow
 wait 70
 doombot mark none
-doombot stocks 4
+doombot stocks 3
 camera wide
 fight
 
