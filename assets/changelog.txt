@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.12.1 | 2026-10-23
+Triguy now stands the way Elim drew him standing still: a tall body with his triangle face on top, his hat over the point, and short legs. His point attacks bow him forward until his point sticks out in front. Flambe plays his guitar properly in his story, with the guitar at his hip.
+
 == 0.12.0 | 2026-10-22
 Finishing a story now ends on STORY: COMPLETED. Pick Easy, Medium or Hard on Whose story? instead of the chapter map. Flambe pulls out his guitar with pyro going off, has new lines for Circy and Triguy, and kneels properly when he crouches. Nobody is surprised by DoomBot's thank-you anymore, and his plan is written higher up on the fridge. Hold down while falling to drop through platforms. A forward roll ends facing the other way.
 
