@@ -168,6 +168,7 @@ public partial class Fighter
 			{
 				if (child is not Item coming || !coming.CatchableBy(this, bodySize.Y * 0.5f + 90.0f)) continue;
 				attackBufferFrames = grabBufferFrames = 0;
+				if (!IsOnFloor() && Achievements.ByPlayer(this)) Achievements.Grant("catch_palette");
 				CatchItem(coming);
 				SfxPlayer.At("item_pickup", GlobalPosition, 0.05f);
 				return true;

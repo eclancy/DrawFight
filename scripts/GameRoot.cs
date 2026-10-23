@@ -41,6 +41,15 @@ public partial class GameRoot : Node2D
 	/// <summary>The name each seat gave itself on fighter select, or null (PlayerNames).</summary>
 	public string[] SeatNames = new string[MaxPlayers];
 
+	/// <summary>Each seat's skin (Skins), by id - "" or null for none.</summary>
+	public string[] SeatSkins = new string[MaxPlayers];
+
+	AchievementToast toast;
+	readonly System.Collections.Generic.List<string> grants = new System.Collections.Generic.List<string>();
+
+	/// <summary>An achievement just earned, on screen for a moment over whatever is showing.</summary>
+	public void ToastAchievement(Achievement achievement) => toast?.Add(achievement);
+
 	/// <summary>
 	/// The controller a seat plays on: whoever sat in it - or, booted straight into a match with
 	/// nobody having sat anywhere (--match), the pads in order, then the keyboard.
@@ -104,6 +113,8 @@ public partial class GameRoot : Node2D
 		// menu to the next and a sound that starts on one screen finishes on the next.
 		AddChild(new SfxPlayer());
 		AddChild(new MusicPlayer());
+		toast = new AchievementToast();
+		AddChild(toast);
 
 		RegressionChecks.RunAll();
 		Items.Load();
@@ -154,6 +165,15 @@ public partial class GameRoot : Node2D
 			// DoomBot and Lugnut locked again for this run, nothing saved: to look at the
 			// silhouettes, NEW CHALLENGER and the unlocking without touching the real save.
 			if (arg == "--locked") Unlocks.ForceLocked = true;
+			if (arg == "--achievements") startAt = "achievements";
+			// "--grant=meteor": earn one, to look at its toast and the page (with --locked, unsaved).
+			if (arg.StartsWith("--grant=")) grants.Add(arg.Substring(8));
+			// "--skins=blueflame,,mk2": each seat's skin, in order, for a --match to look at.
+			if (arg.StartsWith("--skins="))
+			{
+				string[] picked = arg.Substring(8).Split(',');
+				for (int i = 0; i < SeatSkins.Length && i < picked.Length; i++) SeatSkins[i] = picked[i];
+			}
 			// "--challenger=lugnut" / "--unlocked=lugnut": either screen on its own, to look at.
 			if (arg.StartsWith("--challenger=")) { storyMapFor = arg.Substring(13); startAt = "challenger"; }
 			if (arg.StartsWith("--unlocked=")) { storyMapFor = arg.Substring(11); startAt = "unlocked"; }
@@ -212,6 +232,7 @@ public partial class GameRoot : Node2D
 		// Fullscreen or a window is an option now (OptionsScreen); the run's own flags still win.
 		bool windowed = shotAfter > 0 || System.Array.IndexOf(OS.GetCmdlineUserArgs(), "--windowed") >= 0;
 		GameOptions.Apply(!windowed);
+		foreach (string id in grants) Achievements.Grant(id);
 
 		switch (startAt)
 		{
@@ -249,6 +270,7 @@ public partial class GameRoot : Node2D
 			case "suggest": GoSuggest(); break;
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
+			case "achievements": GoAchievements(); break;
 			case "story": GoStoryChapter(); break;
 			case "drawings": GoDrawings(); break;
 			// The newest saved drawing, or a new one: for looking at the drawing screens.
@@ -306,6 +328,9 @@ public partial class GameRoot : Node2D
 
 	/// <summary>An idea for the game, typed and sent in (from the main menu).</summary>
 	public void GoSuggest() => Show(new SuggestScreen());
+
+	/// <summary>Every achievement, done or not (from the main menu).</summary>
+	public void GoAchievements() => Show(new AchievementsScreen());
 
 	/// <summary>Every version's changes (from Options).</summary>
 	public void GoChangelog(string key) => Show(new ChangelogScreen { OpenedBy = key });
@@ -422,6 +447,7 @@ public partial class GameRoot : Node2D
 		}
 		if (Story.Done)
 		{
+			StoryAchievements();
 			// Finished: it starts again from the top next time, gold star and all - after its
 			// moment, and then the main menu (Eric, 2026-10-22).
 			Story.At = 0;
@@ -432,6 +458,22 @@ public partial class GameRoot : Node2D
 	}
 
 	public void GoStoryComplete() => Show(new StoryCompleteScreen { Run = Story });
+
+	/// <summary>A story finished: what it earned (Achievements).</summary>
+	void StoryAchievements()
+	{
+		bool hard = GameOptions.StoryDifficulty == 2;
+		Achievements.Grant("story_first");
+		if (hard) Achievements.Grant("story_hard");
+		if (hard && Story.PlayerId == "doombot") Achievements.Grant("story_doombot_hard");
+		bool all = true;
+		for (int i = 0; i < FighterCatalog.Count; i++)
+		{
+			string id = StoryScript.IdOf(FighterCatalog.Get(i));
+			if (StoryRun.For(id).Chapters.Count > 0 && !StoryProgress.Finished(id)) all = false;
+		}
+		if (all) Achievements.Grant("story_all");
+	}
 
 	/// <summary>
 	/// A locked fighter beaten: unlocked, his screen, and then the story goes on - his chapter's
@@ -470,10 +512,14 @@ public partial class GameRoot : Node2D
 		var teams = new System.Collections.Generic.List<int>();
 		var names = new System.Collections.Generic.List<string>();
 		var levels = new System.Collections.Generic.List<int>();
+		var skins = new System.Collections.Generic.List<string>();
 		for (int seat = 0; seat < MaxPlayers; seat++)
 		{
 			if (SelectedFighters[seat] < 0) continue;
-			fighters.Add(SelectedFighters[seat]);
+			// A skin that is a fighter of its own - DoomBot in Mk. II's armour - is him, swapped in.
+			Skin skin = Skins.Find(SeatSkins[seat] ?? "");
+			fighters.Add(skin != null && skin.Becomes >= 0 ? skin.Becomes : SelectedFighters[seat]);
+			skins.Add(SeatSkins[seat] ?? "");
 			cpu.Add(CpuPlayers[seat]);
 			levels.Add(LevelFor(CpuDifficulty[seat]));
 			seats.Add(seat);
@@ -494,6 +540,7 @@ public partial class GameRoot : Node2D
 			OnlyItem = OnlyItem,
 			Names = names.ToArray(),
 			CpuLevels = levels.ToArray(),
+			SeatSkins = skins.ToArray(),
 		};
 		Show(match);
 	}

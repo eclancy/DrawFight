@@ -150,10 +150,26 @@ the story goes on into the scene after the fight. A save from before had its bea
 unlocked for it. `--locked` locks them again for one run without saving; `--challenger=lugnut`
 and `--unlocked=lugnut` show either screen on its own.
 
-**Achievements** - *planned* (Eric, 2026-10-23). Some kind of achievements - things done in a
-fight or a story, kept in the save - that may unlock more later: fighters, stages, outfits, items.
-Unlocking a fighter today is beating him in a story; an achievement would be another way to earn
-one, through the same `Unlocks`. Not designed yet.
+**Achievements** - **built, 2026-10-23** (Eric's call). Thirty (`Achievements.All`), saved in
+`user://achievements.cfg`, each said as what to do: some hard (a story on Hard, every story, a win
+with every fighter - a gold border), some fun, and many a clue to something a player might not
+find (catching the palette in the air on its way back, the three taunts, dropping through a
+dashed platform, a block worn until it breaks, a three-on-one team fight). Only a person playing
+earns one - never the computer, never a story scene (`Achievements.ByPlayer`). One earned pops up
+on a card at the top right over whatever is showing (`AchievementToast`). **The Achievements page**
+(main menu, `AchievementsScreen`) lists them all with a gold star on the ones done and how far the
+counted ones are - but not what they give, except that a fighter (or Mk. II) a tile earns shows
+on it as a silhouette until it is done. Beating Lugnut and DoomBot in a story are two of them, and
+unlock them. A save from before had its finished stories and beaten fighters carried over.
+
+**Skins** - **built, 2026-10-23** (`Skins`). Four, each earned by an achievement and picked on the
+fighter select screen by picking the fighter again: DoomBot's **Mk. II** armour (finish DoomBot's
+own story on Hard - he plays as Mk. II), Flambé's **Blue Flame** (set fighters on fire 25 times),
+Lugnut's **Safety Green** (50 KOs) and EdgeLord's **Shadow** (beat DoomBot at the end of a story
+without losing a life). The colour skins recolour him the way a team fight does (`TeamLook`) -
+never a line. Elim's fighters have none: a new colour on his drawings is his to ask for.
+Testing: `--grant=ID` earns one for a run, `--skins=blueflame,,mk2` boots a `--match` in them,
+`--achievements` opens the page, and `--locked` plays on an empty save that is not kept.
 
 ---
 

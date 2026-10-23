@@ -760,6 +760,21 @@ public partial class StoryDirector : Node
 	}
 
 	/// <summary>The fight is over: the match says who is left.</summary>
+	/// <summary>A story fight won: what it earned (Achievements).</summary>
+	void StoryFightAchievements()
+	{
+		StoryChapter chapter = Run.Chapter;
+		if (chapter == null) return;
+		foreach (string id in chapter.Opponents)
+		{
+			if (Achievements.Find("beat_" + id) != null) Achievements.Grant("beat_" + id);
+		}
+		Fighter player = Match.Fighters[0];
+		bool untouched = Match.StartStocks != null && Match.StartStocks.Length > 0 && player.Stocks >= Match.StartStocks[0];
+		if (untouched && chapter.Boss == "doombot") Achievements.Grant("finale_flawless");
+		if (untouched && chapter.Opponents.Length > 1) Achievements.Grant("two_on_one");
+	}
+
 	public void OnFightOver(Fighter last)
 	{
 		winner = last;
@@ -776,7 +791,9 @@ public partial class StoryDirector : Node
 			return;
 		}
 		// Beat someone still locked: he is unlocked, with his screen, before the story goes on.
+		// Found before the achievements, which unlock him too.
 		FighterData earned = Unlocks.LockedIn(Run.Chapter);
+		StoryFightAchievements();
 		if (earned != null)
 		{
 			GameRoot.Instance.ShowUnlocked(earned);

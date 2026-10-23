@@ -776,6 +776,7 @@ public partial class Fighter : CharacterBody2D
 		jumpBufferFrames = 0;
 		dropThroughFrames = 12;
 		CollisionMask = SolidOnlyMask;
+		if (Achievements.ByPlayer(this)) Achievements.Grant("drop_through");
 
 		// A small nudge downward, so the fighter is clear of the platform on the same frame
 		// rather than resting on it until gravity builds up.
@@ -1182,6 +1183,11 @@ public partial class Fighter : CharacterBody2D
 			attackBufferFrames = specialBufferFrames = 0;
 			int pick = PickTaunt(input.Move);
 			tauntLine = pick < Data.TauntLines.Length ? Data.TauntLines[pick] : "";
+			if (Achievements.ByPlayer(this) && Data.Taunts.Length >= 3)
+			{
+				Achievements.Tick("taunts", StoryScript.IdOf(Data) + pick, int.MaxValue);
+				TauntedAll();
+			}
 			BeginMove(Data.Taunts[pick], MoveSlot.Jab);
 			Velocity = new Vector2(0.0f, Velocity.Y);
 			return;
@@ -2362,6 +2368,7 @@ public partial class Fighter : CharacterBody2D
 			usedThisAirtime.Clear();
 			invulnFrames = Mathf.Max(invulnFrames, LedgeGrabInvulnFrames);
 			State = FighterState.LedgeHang;
+			if (Achievements.ByPlayer(this)) Achievements.Grant("ledge_grab");
 			return true;
 		}
 
@@ -2725,10 +2732,14 @@ public partial class Fighter : CharacterBody2D
 		// throw itself arrives as a hit.
 		ReleaseGrabbed();
 		heldBy = null;
+		LastHitBy = attacker;
+		bool byPlayer = attacker != this && Achievements.ByPlayer(attacker);
+		if (byPlayer && attacker.currentMove == move && move.Chargeable && attacker.chargeFrames >= MaxChargeFrames) Achievements.Grant("full_charge");
 
 		// The eraser: no knockback, no damage. Rubbed out where he stands.
 		if (move.Erases)
 		{
+			if (byPlayer) Achievements.Grant("eraser");
 			BeginErased();
 			return;
 		}
@@ -2751,7 +2762,11 @@ public partial class Fighter : CharacterBody2D
 		// See-through under tracing paper: knocked about all the same, but nothing goes on his percent.
 		Percent += ghostFrames > 0 ? 0.0f : damage;
 
-		if (!blocked && move.BurnFrames > 0) Ignite(move.BurnFrames, move.BurnDamage);
+		if (!blocked && move.BurnFrames > 0)
+		{
+			if (byPlayer && burnFrames <= 0) Achievements.Count("hot_stuff");
+			Ignite(move.BurnFrames, move.BurnDamage);
+		}
 		// Glowing-hot steel: past his heat line, every normal he lands burns a little too.
 		else if (!blocked && attacker != null && attacker.HitsHot(move)) Ignite(Heat.HotBurnFrames, Heat.HotBurnDamage);
 
@@ -2895,6 +2910,7 @@ public partial class Fighter : CharacterBody2D
 		Velocity = new Vector2(0.0f, -620.0f);
 		SfxPlayer.At("shield_break", GlobalPosition);
 		Match?.Shake(40.0f);
+		if (LastHitBy != this && Achievements.ByPlayer(LastHitBy)) Achievements.Grant("shield_break");
 	}
 
 	/// <summary>Mends a little every frame he is not blocking; the cracks close as it does.</summary>
@@ -2910,8 +2926,19 @@ public partial class Fighter : CharacterBody2D
 
 	// --- Stocks --------------------------------------------------------------
 
+	/// <summary>Whoever hit him last - who gets the KO if he goes out (Achievements). Cleared when he does.</summary>
+	public Fighter LastHitBy { get; private set; }
+
+	/// <summary>All three of his taunts done, by the same fighter (Achievements "taunts").</summary>
+	void TauntedAll()
+	{
+		string id = StoryScript.IdOf(Data);
+		if (Achievements.TickedAll("taunts", new[] { id + "0", id + "1", id + "2" })) Achievements.Grant("taunts");
+	}
+
 	public void LoseStock(Vector2 spawnPoint)
 	{
+		LastHitBy = null;
 		Stocks--;
 		Percent = 0.0f;
 		Velocity = Vector2.Zero;
@@ -3169,6 +3196,7 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (bodyShape == null) return;
 		sizeLevel = level;
+		if (level >= SizeLevels.Tall && Achievements.ByPlayer(this)) Achievements.Grant("circy_tall");
 
 		float stretch = SizeLevels.LegStretch(level);
 		float growth = rig != null && rig.Loaded
@@ -3844,6 +3872,7 @@ public partial class Fighter : CharacterBody2D
 		if (pick < 0) pick = 0;
 
 		if (pick == 1) Facing = -Facing;
+		if (Achievements.ByPlayer(this)) Achievements.Tick("all_throws", pick.ToString(), 4);
 		grabKick = Data.Throws[pick];
 		currentMove = grabKick;
 		moveFrame = 0;
@@ -4999,12 +5028,16 @@ public partial class Fighter : CharacterBody2D
 	Node2D heldPoseLayer;
 	bool teamLookDone;
 
-	/// <summary>In a team fight, his team's colours on the puppet and his drawings (TeamLook).</summary>
+	/// <summary>A skin's colour (Skins), worn outside a team fight - in one, the team's wins.</summary>
+	public Color? SkinColour;
+
+	/// <summary>In a team fight, his team's colours on the puppet and his drawings (TeamLook) - or his skin's.</summary>
 	void WearTeamLook()
 	{
 		teamLookDone = true;
-		if (Match == null || !Match.TeamBattle || rig == null) return;
-		ShaderMaterial look = TeamLook.For(Data, Match.TeamOf(this));
+		if (Match == null || rig == null) return;
+		if (!Match.TeamBattle && SkinColour == null) return;
+		ShaderMaterial look = Match.TeamBattle ? TeamLook.For(Data, Match.TeamOf(this)) : TeamLook.ForColour(Data, SkinColour.Value);
 		if (look == null) return;
 		TeamLook.Wear(rig, look);
 		heldPoseLayer.Material = look;
@@ -5058,6 +5091,7 @@ public partial class Fighter : CharacterBody2D
 			&& (State == FighterState.Grounded || State == FighterState.Airborne))
 		{
 			overheatFrames = Heat.OverheatStallFrames;
+			if (Achievements.ByPlayer(this)) Achievements.Grant("overheat");
 			heat = Heat.AfterOverheat;
 			framesAtMaxHeat = 0;
 			IsBlocking = false;

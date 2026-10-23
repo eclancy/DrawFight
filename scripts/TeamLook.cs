@@ -64,9 +64,14 @@ void fragment() {
 	static Shader shader;
 
 	/// <summary>The material that colours <paramref name="data"/> for <paramref name="team"/>, or null when he looks the same on it.</summary>
-	public static ShaderMaterial For(FighterData data, int team)
+	public static ShaderMaterial For(FighterData data, int team) => ForColour(data, MenuTheme.TeamTint(team));
+
+	/// <summary>
+	/// The material that colours <paramref name="data"/> in <paramref name="tint"/> - a team's
+	/// colour, or a skin's (Skins) - or null when he looks the same in it.
+	/// </summary>
+	public static ShaderMaterial ForColour(FighterData data, Color tint)
 	{
-		Color tint = MenuTheme.TeamTint(team);
 		float teamHue = tint.H;
 		float key = data.TeamHue < 0.0f ? -1.0f : Mathf.PosMod(data.TeamHue, 360.0f) / 360.0f;
 		float width = data.TeamHueWidth / 360.0f;

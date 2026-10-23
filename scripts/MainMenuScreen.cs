@@ -29,6 +29,9 @@ public partial class MainMenuScreen : Node2D
 	/// </summary>
 	static readonly Rect2 BugBox = new Rect2(1246.0f, 64.0f, 270.0f, 76.0f);
 
+	/// <summary>Achievements (AchievementsScreen; Eric, 2026-10-23), with how many are done.</summary>
+	static readonly Rect2 AchievementsBox = new Rect2(866.0f, 64.0f, 356.0f, 76.0f);
+
 	/// <summary>A cursor for each controller, shown once it is touched (TouchCursors).</summary>
 	TouchCursors touch;
 	readonly QuitPrompt quitPrompt = new QuitPrompt();
@@ -154,6 +157,13 @@ public partial class MainMenuScreen : Node2D
 			SfxPlayer.Ui("ui_select");
 			return;
 		}
+		if (AchievementsBox.HasPoint(point))
+		{
+			leaving = true;
+			SfxPlayer.Ui("ui_select");
+			GameRoot.Instance.GoAchievements();
+			return;
+		}
 		if (BugBox.HasPoint(point))
 		{
 			leaving = true;
@@ -203,6 +213,7 @@ public partial class MainMenuScreen : Node2D
 
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, Pointed(QuitBox), fontSize: 38);
 		MenuTheme.DrawButton(this, BugBox, "Report a bug", 79, Pointed(BugBox), fontSize: 32);
+		MenuTheme.DrawButton(this, AchievementsBox, $"Achievements {Achievements.EarnedCount}/{Achievements.All.Length}", 80, Pointed(AchievementsBox), fontSize: 30);
 		MenuTheme.DrawButton(this, GearBox, "", 78, Pointed(GearBox));
 		DrawGear(this, GearBox.GetCenter(), 25.0f, MenuTheme.Ink);
 

@@ -186,8 +186,11 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   index, and **`--cpu`** makes every player after the first the computer: a four-way fight to
   watch is `--match --stage=5 --fighters=3,1,4,5 --cpu`. **`--teams`** makes it a team fight,
   seats on red, blue, red, blue. **`--locked`** locks DoomBot and Lugnut again for one run,
-  saving nothing (`Unlocks`), and **`--challenger=lugnut`** / **`--unlocked=lugnut`** show the
-  NEW CHALLENGER and unlocked screens on their own.
+  saving nothing, on an empty save (`Unlocks`, `Achievements`), and **`--challenger=lugnut`** /
+  **`--unlocked=lugnut`** show the NEW CHALLENGER and unlocked screens on their own.
+  **`--achievements`** opens the achievements page, **`--grant=meteor`** earns one for the run
+  (with `--locked`, nothing kept) and **`--skins=blueflame,,mk2`** puts each seat of a `--match`
+  in a skin (`Skins`).
 - **`"$GODOT_BIN" --path . -- --story=edgelord --shots=60,400,900`** — play a fighter's story
   (`--story=edgelord:2` from its third chapter, counting the opening as 0;
   `--story=edgelord:0:after` at the scene after chapter 0's fight; `--storyselect` opens

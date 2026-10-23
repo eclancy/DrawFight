@@ -448,6 +448,7 @@ public partial class SendFighterScreen : Node2D
 		}
 		Doc.Sent.Add(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
 		Doc.Save();
+		Achievements.Grant("draw_send");
 		phase = Phase.Done;
 		SfxPlayer.Ui("ui_select");
 	}

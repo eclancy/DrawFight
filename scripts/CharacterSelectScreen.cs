@@ -58,6 +58,9 @@ public partial class CharacterSelectScreen : Node2D
 		/// <summary>Whoever sits here (ControllerAssignment.Devices), or null for nobody, or the computer.</summary>
 		public Device Device;
 		public bool Locked => Index >= 0;
+
+		/// <summary>The skin picked for his fighter (Skins), "" for none - picked by picking him again.</summary>
+		public string Skin = "";
 		public bool IsCpu;
 		public bool Human => Joined && !IsCpu;
 	}
@@ -177,7 +180,7 @@ public partial class CharacterSelectScreen : Node2D
 
 		for (int i = 0; i < cards.Length; i++)
 		{
-			var box = new Rect2(rowLeft + i * (CardWidth + CardGap), CardTop, CardWidth, CardHeight);
+			var box = new Rect2(rowLeft + Place(i) * (CardWidth + CardGap), CardTop, CardWidth, CardHeight);
 			FighterData data = FighterCatalog.Get(i);
 
 			// The portrait lives in a window the size of the card above its name, and never draws
@@ -923,7 +926,19 @@ public partial class CharacterSelectScreen : Node2D
 			}
 			if (picked >= 0)
 			{
+				// Picked again: his next skin he has earned, round to none (versus only).
+				if (picked == slot.Index && !ForStory)
+				{
+					string next = Skins.Next(FighterCatalog.Get(picked), slot.Skin);
+					if (next != slot.Skin)
+					{
+						slot.Skin = next;
+						SfxPlayer.Ui("ui_select");
+					}
+					continue;
+				}
 				slot.Index = picked;
+				slot.Skin = "";
 				SfxPlayer.Ui("ui_ready");
 			}
 		}
@@ -964,6 +979,7 @@ public partial class CharacterSelectScreen : Node2D
 		for (int i = 0; i < slots.Length; i++)
 		{
 			GameRoot.Instance.SelectedFighters[i] = slots[i].Joined ? slots[i].Index : -1;
+			GameRoot.Instance.SeatSkins[i] = slots[i].Joined ? slots[i].Skin : "";
 			GameRoot.Instance.CpuPlayers[i] = slots[i].Joined && slots[i].IsCpu;
 			GameRoot.Instance.SeatDevices[i] = slots[i].Human ? slots[i].Device?.Key : null;
 			GameRoot.Instance.SeatNames[i] = slots[i].Human ? slots[i].PlayerName : null;
@@ -986,6 +1002,18 @@ public partial class CharacterSelectScreen : Node2D
 
 	/// <summary>Whether a fighter's story can be played yet.</summary>
 	static bool HasStory(int index) => StoryRun.For(StoryScript.IdOf(FighterCatalog.Get(index))).Chapters.Count > 0;
+
+	/// <summary>
+	/// Where a fighter's card sits in the row, by catalog index: in catalog order, but DoomBot always
+	/// last, at the far right - the boss at the end of the row (Eric, 2026-10-23).
+	/// </summary>
+	static int Place(int index)
+	{
+		int last = StoryScript.IndexOf("doombot");
+		if (last < 0) return index;
+		if (index == last) return FighterCatalog.Count - 1;
+		return index > last ? index - 1 : index;
+	}
 
 	/// <summary>A locked fighter's portrait: his shape, in ink, and nothing else of him.</summary>
 	static readonly Color Silhouette = Colors.Black;
@@ -1056,6 +1084,9 @@ public partial class CharacterSelectScreen : Node2D
 			int shown = slot.Locked ? slot.Index : slot.Cursor != null ? CardUnder(slot.Cursor.Position) : -1;
 			ShowFighter(slot, shown);
 			slot.State.Text = slot.Locked ? "READY" : "";
+			Skin skin = Skins.Find(slot.Skin);
+			if (!ForStory && slot.Locked && skin != null) slot.State.Text = $"READY  -  {skin.Name}";
+			else if (!ForStory && slot.Locked && Skins.EarnedFor(FighterCatalog.Get(slot.Index)).Length > 0) slot.State.Text = "READY  -  pick again for a new look";
 			if (ForStory && !slot.Locked && shown >= 0 && !Unlocks.IsLocked(shown) && !HasStory(shown))
 			{
 				slot.State.Text = $"{FighterCatalog.NameOf(shown)}'s own story is coming soon.";

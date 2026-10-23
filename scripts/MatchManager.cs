@@ -21,6 +21,9 @@ public partial class MatchManager : Node2D
 	public int StageIndex;
 	public int[] FighterIndices = { 0, 1 };
 
+	/// <summary>Each seat's skin (Skins), by id - "" for none. A skin that is a fighter of its own was swapped in already.</summary>
+	public string[] SeatSkins;
+
 	/// <summary>Which players the computer plays. Set by GameRoot, like the fighters.</summary>
 	public bool[] CpuPlayers = { false, false };
 
@@ -230,8 +233,11 @@ public partial class MatchManager : Node2D
 		for (int i = 0; i < FighterIndices.Length; i++)
 		{
 			SpawnFighter(FighterCatalog.Get(FighterIndices[i]), i);
+			Skin skin = SeatSkins != null && i < SeatSkins.Length ? Skins.Find(SeatSkins[i]) : null;
+			if (skin != null && skin.Becomes < 0) Fighters[i].SkinColour = skin.Colour;
 		}
 		AssignControllers();
+		Achievements.Tick("vs_all_stages", StageIndex.ToString(), StageCatalog.Count);
 		bool named = false;
 		for (int i = 0; i < Fighters.Count; i++)
 		{
@@ -426,6 +432,9 @@ public partial class MatchManager : Node2D
 
 	bool IsCpu(int player) => player < CpuPlayers.Length && CpuPlayers[player];
 
+	/// <summary>Whether a person is playing this seat, not the computer (Achievements).</summary>
+	public bool IsHuman(int player) => !IsCpu(player);
+
 	public bool AnyPadConnected => Input.GetConnectedJoypads().Count > 0;
 
 	// --- Match flow ----------------------------------------------------------
@@ -550,8 +559,18 @@ public partial class MatchManager : Node2D
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 
 		stage.Cheer(1.0f);
+		Knocked(fighter, at.Y > view.End.Y);
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
+	}
+
+	/// <summary>A KO, credited to whoever hit him last - if a person did (Achievements).</summary>
+	void Knocked(Fighter fighter, bool offTheBottom)
+	{
+		Fighter by = fighter.LastHitBy;
+		if (by == null || by == fighter || !Achievements.ByPlayer(by)) return;
+		Achievements.Count("ko_50");
+		if (offTheBottom) Achievements.Grant("meteor");
 	}
 
 	/// <summary>
@@ -564,6 +583,7 @@ public partial class MatchManager : Node2D
 		SfxPlayer.At("ko_blast", fighter.GlobalPosition, 0.0f);
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 		stage.Cheer(1.0f);
+		Knocked(fighter, false);
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
 	}
@@ -604,6 +624,40 @@ public partial class MatchManager : Node2D
 				}
 			}
 			director?.OnFightOver(last);
+			if (director == null) VersusAchievements(last);
+		}
+	}
+
+	/// <summary>A versus fight over: whatever the people who played it earned by it.</summary>
+	void VersusAchievements(Fighter last)
+	{
+		var humans = Fighters.FindAll(f => IsHuman(f.PlayerIndex));
+		if (humans.Count == 0) return;
+		if (Fighters.Count == 4) Achievements.Grant("vs_four");
+		if (TeamBattle)
+		{
+			var sizes = new Dictionary<int, int>();
+			foreach (Fighter f in Fighters) sizes[TeamOf(f)] = sizes.GetValueOrDefault(TeamOf(f)) + 1;
+			if (sizes.Count == 2 && sizes.ContainsValue(3) && sizes.ContainsValue(1)) Achievements.Grant("vs_3v1");
+		}
+		if (last == null) return;
+		var won = Fighters.FindAll(f => TeamOf(f) == TeamOf(last) && IsHuman(f.PlayerIndex));
+		if (won.Count == 0) return;
+		Achievements.Grant("vs_win");
+		if (TeamBattle) Achievements.Grant("vs_team_win");
+		foreach (Fighter f in won)
+		{
+			// Won as Mk. II is won as DoomBot.
+			int catalog = FighterIndices[f.PlayerIndex] >= FighterCatalog.StoryOnlyFrom
+				? StoryScript.IndexOf("doombot") : FighterIndices[f.PlayerIndex];
+			Achievements.Tick("vs_all_fighters", catalog.ToString(), FighterCatalog.Count);
+			if (f.Stocks == 1 && f.Percent >= 150.0f) Achievements.Grant("vs_clutch");
+		}
+		// A Hard CPU on the losing side.
+		for (int i = 0; i < Fighters.Count; i++)
+		{
+			if (IsCpu(i) && TeamOf(Fighters[i]) != TeamOf(last) && CpuLevels != null && i < CpuLevels.Length
+				&& CpuLevels[i] >= GameRoot.LevelFor(2)) Achievements.Grant("vs_hard_cpu");
 		}
 	}
 
