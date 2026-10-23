@@ -140,6 +140,21 @@ setting (the constants at the top of the class are the knobs).
 More fighters, more stages, whatever he keeps drawing. The point of M3 and M4 is that this
 milestone never really ends and never costs much.
 
+**Unlockable fighters** - **built, 2026-10-23** (Eric's call). DoomBot and Lugnut start locked
+(`FighterData.Unlockable`, `Unlocks`, saved in `user://unlocks.cfg`): a black silhouette and
+"???" on both select screens, not to be picked - in versus or for a story - and never the
+computer's pick. The first time a story fights one, a NEW CHALLENGER screen comes before the
+scene (`ChallengerScreen`): the page gone dark, the words slammed down, his silhouette winding up
+his own forward smash. Beat him and he is unlocked, with a screen in full colour, cheering, before
+the story goes on into the scene after the fight. A save from before had its beaten fighters
+unlocked for it. `--locked` locks them again for one run without saving; `--challenger=lugnut`
+and `--unlocked=lugnut` show either screen on its own.
+
+**Achievements** - *planned* (Eric, 2026-10-23). Some kind of achievements - things done in a
+fight or a story, kept in the save - that may unlock more later: fighters, stages, outfits, items.
+Unlocking a fighter today is beating him in a story; an achievement would be another way to earn
+one, through the same `Unlocks`. Not designed yet.
+
 ---
 
 ## Deliberately deferred

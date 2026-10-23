@@ -38,6 +38,12 @@ A lost fight is retried straight away, its scene skippable the second time. Any 
 skipped by holding a button. Progress is saved per fighter, and a finished story gets a gold
 star (the item) on the story select screen.
 
+**Unlockable fighters** (Eric, 2026-10-23): DoomBot and Lugnut have to be earned, and their own
+stories with them (`Unlocks`; `.ai/roadmap.md`, M8). The first chapter that fights one opens on a
+NEW CHALLENGER screen, his silhouette winding up, before its scene; beating him shows him unlocked,
+in colour, and then the scene after the fight plays (`GameRoot.ShowUnlocked`, which restarts the
+chapter straight into that scene).
+
 A new fighter joins every story without anyone else's being rewritten: their challenger scenes
 are what other stories play when they reach them (`.ai/character-design.md`, "Every fighter
 brings a story").

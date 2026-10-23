@@ -207,6 +207,9 @@ public partial class CharacterSelectScreen : Node2D
 				rig.SetStanding(true);
 				FitPortrait(holder, rig, window.Size);
 			}
+			// Still to be earned: only his shape shows (Unlocks).
+			bool locked = Unlocks.IsLocked(data);
+			if (locked) holder.Modulate = Silhouette;
 
 			// The name in his own letters - as he will see it over his percent in the fight.
 			var name = new NameTag
@@ -217,7 +220,8 @@ public partial class CharacterSelectScreen : Node2D
 				Position = new Vector2(box.Position.X + 4.0f, box.End.Y - 62.0f),
 				Size = new Vector2(CardWidth - 8.0f, 54.0f),
 			};
-			name.SetFighter(data);
+			if (locked) name.SetText(LockedName, NameStyle.Plain(MenuTheme.Soft));
+			else name.SetFighter(data);
 			root.AddChild(name);
 
 			cards[i] = new Card { Box = box, Rig = rig };
@@ -292,6 +296,7 @@ public partial class CharacterSelectScreen : Node2D
 			// Coming back, everyone is still sitting where they were with what they picked: the
 			// computer, and anyone whose controller is still here.
 			int picked = GameRoot.Instance.SelectedFighters[i];
+			if (picked >= 0 && Unlocks.IsLocked(picked)) picked = -1;
 			if (GameRoot.Instance.CpuPlayers[i] && picked >= 0)
 			{
 				slot.Joined = slot.IsCpu = true;
@@ -683,7 +688,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (!seat.Joined && CpuButton(i, 0).HasPoint(point))
 			{
 				seat.Joined = seat.IsCpu = true;
-				seat.Index = (int)(GD.Randi() % (uint)FighterCatalog.Count);
+				seat.Index = NextUnlocked((int)(GD.Randi() % (uint)FighterCatalog.Count));
 				return true;
 			}
 
@@ -698,7 +703,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (CpuButton(i, 1).HasPoint(point))
 			{
-				seat.Index = (seat.Index + 1) % FighterCatalog.Count;
+				seat.Index = NextUnlocked((seat.Index + 1) % FighterCatalog.Count);
 				return true;
 			}
 
@@ -911,7 +916,7 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			int picked = CardUnder(cursor.Position);
-			if (picked >= 0 && ForStory && !HasStory(picked))
+			if (picked >= 0 && (Unlocks.IsLocked(picked) || ForStory && !HasStory(picked)))
 			{
 				SfxPlayer.Ui("ui_back");
 				continue;
@@ -982,6 +987,37 @@ public partial class CharacterSelectScreen : Node2D
 	/// <summary>Whether a fighter's story can be played yet.</summary>
 	static bool HasStory(int index) => StoryRun.For(StoryScript.IdOf(FighterCatalog.Get(index))).Chapters.Count > 0;
 
+	/// <summary>A locked fighter's portrait: his shape, in ink, and nothing else of him.</summary>
+	static readonly Color Silhouette = Colors.Black;
+
+	const string LockedName = "???";
+
+	/// <summary>The first fighter from this one on, round the roster, who is not locked.</summary>
+	static int NextUnlocked(int from)
+	{
+		for (int step = 0; step < FighterCatalog.Count; step++)
+		{
+			int i = (from + step) % FighterCatalog.Count;
+			if (!Unlocks.IsLocked(i)) return i;
+		}
+		return from;
+	}
+
+	/// <summary>Who a panel shows: his name and description, or, still locked, a question mark.</summary>
+	void ShowFighter(Slot slot, int index)
+	{
+		if (index >= 0 && Unlocks.IsLocked(index))
+		{
+			slot.Name.SetText(LockedName, NameStyle.Plain(MenuTheme.Soft));
+			slot.Credit.Text = "";
+			slot.Blurb.Text = "Not yet! Beat this fighter in a story to unlock them.";
+			return;
+		}
+		slot.Name.SetFighter(index >= 0 ? FighterCatalog.Get(index) : null);
+		slot.Credit.Text = index >= 0 ? FighterCatalog.CreditOf(index) : "";
+		slot.Blurb.Text = index >= 0 ? FighterCatalog.BlurbOf(index) : "";
+	}
+
 	void RefreshPanels()
 	{
 		foreach (Slot slot in slots)
@@ -1009,9 +1045,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (slot.IsCpu)
 			{
-				slot.Name.SetFighter(FighterCatalog.Get(slot.Index));
-				slot.Credit.Text = FighterCatalog.CreditOf(slot.Index);
-				slot.Blurb.Text = FighterCatalog.BlurbOf(slot.Index);
+				ShowFighter(slot, slot.Index);
 				// Said in the heading: down here it would sit on the CPU buttons.
 				slot.State.Text = "";
 				continue;
@@ -1020,11 +1054,9 @@ public partial class CharacterSelectScreen : Node2D
 			// Show what the cursor is over until something is picked, so a player can read a
 			// fighter's description before committing to it.
 			int shown = slot.Locked ? slot.Index : slot.Cursor != null ? CardUnder(slot.Cursor.Position) : -1;
-			slot.Name.SetFighter(shown >= 0 ? FighterCatalog.Get(shown) : null);
-			slot.Credit.Text = shown >= 0 ? FighterCatalog.CreditOf(shown) : "";
-			slot.Blurb.Text = shown >= 0 ? FighterCatalog.BlurbOf(shown) : "";
+			ShowFighter(slot, shown);
 			slot.State.Text = slot.Locked ? "READY" : "";
-			if (ForStory && !slot.Locked && shown >= 0 && !HasStory(shown))
+			if (ForStory && !slot.Locked && shown >= 0 && !Unlocks.IsLocked(shown) && !HasStory(shown))
 			{
 				slot.State.Text = $"{FighterCatalog.NameOf(shown)}'s own story is coming soon.";
 			}
@@ -1054,7 +1086,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (!picked) CrayonBrush.InkRect(this, cards[i].Box, MenuTheme.Rule, 3.0f, 31 + i * 7, 2.6f);
 
 			// A story played to the end wears a gold star.
-			if (ForStory && StoryProgress.Finished(StoryScript.IdOf(FighterCatalog.Get(i))))
+			if (ForStory && !Unlocks.IsLocked(i) && StoryProgress.Finished(StoryScript.IdOf(FighterCatalog.Get(i))))
 			{
 				Item.DrawStarOn(this, cards[i].Box.Position + new Vector2(cards[i].Box.Size.X - 26.0f, 26.0f), 30.0f, new Color(1.0f, 0.82f, 0.25f));
 			}

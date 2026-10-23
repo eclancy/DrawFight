@@ -775,6 +775,13 @@ public partial class StoryDirector : Node
 			GameRoot.Instance.StoryRetry();
 			return;
 		}
+		// Beat someone still locked: he is unlocked, with his screen, before the story goes on.
+		FighterData earned = Unlocks.LockedIn(Run.Chapter);
+		if (earned != null)
+		{
+			GameRoot.Instance.ShowUnlocked(earned);
+			return;
+		}
 		MusicPlayer.PlayOnce(MusicPlayer.Victory);
 		string after = Run.Chapter?.After ?? "";
 		if (after == "")

@@ -252,6 +252,12 @@ public partial class FighterData : Resource
 	/// </summary>
 	public bool FrontOn;
 
+	/// <summary>
+	/// Has to be earned before he can be picked: beaten in a story (Unlocks). Until then he is a
+	/// silhouette on the select screens. DoomBot and Lugnut (Eric, 2026-10-23).
+	/// </summary>
+	public bool Unlockable;
+
 	/// <summary>How he celebrates a win, standing still once it is won: a story pose (FighterAnimations.StoryPose).</summary>
 	public string VictoryPose = "cheer";
 
@@ -336,6 +342,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "Lugnut",
+			Unlockable = true,
 			VoicePitch = 0.78f,
 			PlaceholderColor = new Color(0.97f, 0.55f, 0.29f),
 			Weight = WeightClass.Heavy,
@@ -440,6 +447,8 @@ public partial class FighterData : Resource
 		data.DisplayName = "DoomBot Mk. II";
 		data.StoryId = "mk2";
 		data.Outfit = "mk2";
+		// Only ever a story's boss, never on a select screen.
+		data.Unlockable = false;
 		data.VoicePitch = 0.68f;
 		data.PlaceholderColor = new Color(0.36f, 0.62f, 0.92f);
 		// A touch cooler: newer steel. The armour is what tells him apart.
@@ -466,6 +475,7 @@ public partial class FighterData : Resource
 		var data = new FighterData
 		{
 			DisplayName = "DoomBot",
+			Unlockable = true,
 			VoicePitch = 0.6f,
 			// A robot's poker face: his eyes and brows only go part of the way (Eric, 2026-10-21).
 			FaceStrength = 0.55f,

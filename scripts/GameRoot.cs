@@ -151,6 +151,12 @@ public partial class GameRoot : Node2D
 			if (arg.StartsWith("--film=")) paradeFilm = arg.Substring(7);
 			if (arg == "--match") startAt = "match";
 			if (arg == "--select") startAt = "select";
+			// DoomBot and Lugnut locked again for this run, nothing saved: to look at the
+			// silhouettes, NEW CHALLENGER and the unlocking without touching the real save.
+			if (arg == "--locked") Unlocks.ForceLocked = true;
+			// "--challenger=lugnut" / "--unlocked=lugnut": either screen on its own, to look at.
+			if (arg.StartsWith("--challenger=")) { storyMapFor = arg.Substring(13); startAt = "challenger"; }
+			if (arg.StartsWith("--unlocked=")) { storyMapFor = arg.Substring(11); startAt = "unlocked"; }
 			if (arg == "--storyselect") startAt = "storyselect";
 			if (arg.StartsWith("--storydone="))
 			{
@@ -222,6 +228,11 @@ public partial class GameRoot : Node2D
 			case "select": GoCharacterSelect(); break;
 			case "storyselect": GoStorySelect(); break;
 			case "storymap": GoStory(storyMapFor); break;
+			case "challenger":
+			case "unlocked":
+				int shown = StoryScript.IndexOf(storyMapFor);
+				Show(new ChallengerScreen { Fighter = shown >= 0 ? FighterCatalog.Get(shown) : null, Unlocked = startAt == "unlocked", Then = GoMainMenu });
+				break;
 			case "storydone":
 				Story = StoryRun.For(storyMapFor);
 				GoStoryComplete();
@@ -332,6 +343,15 @@ public partial class GameRoot : Node2D
 			return;
 		}
 
+		// Up against someone still locked, for the first time: NEW CHALLENGER, before his scene.
+		FighterData challenger = Unlocks.LockedIn(chapter);
+		if (challenger != null && !Story.StartAfter && !Unlocks.ChallengerSeen(challenger))
+		{
+			Unlocks.SeeChallenger(challenger);
+			Show(new ChallengerScreen { Fighter = challenger, Then = GoStoryChapter });
+			return;
+		}
+
 		// The story's difficulty (on its map): Easy is for someone small, the computer barely
 		// fighting back and you with a life to spare; Hard plays two levels up. A two-on-one is
 		// two lives short of three each, a level down, so it is a fight and not a wall (Elim,
@@ -412,6 +432,22 @@ public partial class GameRoot : Node2D
 	}
 
 	public void GoStoryComplete() => Show(new StoryCompleteScreen { Run = Story });
+
+	/// <summary>
+	/// A locked fighter beaten: unlocked, his screen, and then the story goes on - his chapter's
+	/// scene after the fight, played afresh, or the next chapter if it has none.
+	/// </summary>
+	public void ShowUnlocked(FighterData fighter)
+	{
+		Unlocks.Unlock(fighter);
+		Story.StartAfter = Story.Chapter != null && Story.Chapter.After != "";
+		Show(new ChallengerScreen
+		{
+			Fighter = fighter,
+			Unlocked = true,
+			Then = () => { if (Story.StartAfter) GoStoryChapter(); else StoryNext(); },
+		});
+	}
 
 	/// <summary>Booted straight into a story chapter (--story) to look at it: chapter after chapter, no map.</summary>
 	public bool StoryDirectStart;
