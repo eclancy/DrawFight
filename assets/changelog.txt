@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.13.0 | 2026-10-23
+Achievements: thirty of them on their own page from the main menu, some hard, some fun, and some clues to tricks you might not know. A few unlock skins, like DoomBot Mk. II for beating DoomBot's story on Hard. DoomBot and Lugnut now have to be unlocked in story mode, with a NEW CHALLENGER screen the first time you meet them. DoomBot is always last on the fighter select. You can now send photos of drawings done on paper from the game, and tell us about another look for a fighter.
+
 == 0.12.1 | 2026-10-23
 Triguy now stands the way Elim drew him standing still: a tall body with his triangle face on top, his hat over the point, and short legs. His point attacks bow him forward until his point sticks out in front. Flambe plays his guitar properly in his story, with the guitar at his hip.
 
