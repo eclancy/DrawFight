@@ -166,6 +166,7 @@ public partial class GameRoot : Node2D
 			// silhouettes, NEW CHALLENGER and the unlocking without touching the real save.
 			if (arg == "--locked") Unlocks.ForceLocked = true;
 			if (arg == "--achievements") startAt = "achievements";
+			if (arg == "--photos") startAt = "photos";
 			// "--grant=meteor": earn one, to look at its toast and the page (with --locked, unsaved).
 			if (arg.StartsWith("--grant=")) grants.Add(arg.Substring(8));
 			// "--skins=blueflame,,mk2": each seat's skin, in order, for a --match to look at.
@@ -271,6 +272,7 @@ public partial class GameRoot : Node2D
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
 			case "achievements": GoAchievements(); break;
+			case "photos": GoSendPhotos(); break;
 			case "story": GoStoryChapter(); break;
 			case "drawings": GoDrawings(); break;
 			// The newest saved drawing, or a new one: for looking at the drawing screens.
@@ -318,6 +320,9 @@ public partial class GameRoot : Node2D
 	public void GoDrawings() => Show(new DrawingsScreen());
 	public void OpenDrawing(Drawing drawing) => Show(new DrawScreen { Doc = drawing });
 	public void GoSendFighter(Drawing drawing) => Show(new SendFighterScreen { Doc = drawing });
+
+	/// <summary>Photos of a drawing done on paper, and its sheet - nothing drawn in the game.</summary>
+	public void GoSendPhotos() => Show(new SendFighterScreen { Doc = Drawing.New(), PhotosOnly = true });
 	public void GoCharacterSelect() => Show(new CharacterSelectScreen());
 	public void GoStorySelect() => Show(new CharacterSelectScreen { ForStory = true });
 	public void GoStageSelect() => Show(new StageSelectScreen());

@@ -104,7 +104,14 @@ public static class FighterIntake
 			foreach ((string file, byte[] png) in pictures)
 			{
 				var part = new ByteArrayContent(png);
-				part.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+				// A page drawn in the game is a PNG; a photo of a paper drawing goes as it was taken.
+				string type = System.IO.Path.GetExtension(file).ToLowerInvariant() switch
+				{
+					".jpg" or ".jpeg" => "image/jpeg",
+					".webp" => "image/webp",
+					_ => "image/png",
+				};
+				part.Headers.ContentType = new MediaTypeHeaderValue(type);
 				form.Add(part, "photos", file);
 			}
 

@@ -27,7 +27,7 @@ needed one yet.
 changing Godot scenes: title → main menu, then either versus (character select, two to four
 players → stage select (→ item settings) → match → title), a story ("Whose story?" → each chapter a match that opens
 on its scene → main menu), or draw a fighter (your drawings → the drawing screen → sending it
-in). Selections live in ordinary fields on `GameRoot`, so there is no global for a screen to
+in, or straight to sending photos of a drawing done on paper). Selections live in ordinary fields on `GameRoot`, so there is no global for a screen to
 forget to write.
 `ControllerAssignment` hands out pads for menus and matches alike — a pad that works in a fight
 has to work on the select screen without a second mapping to keep in step.
@@ -190,7 +190,7 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   **`--unlocked=lugnut`** show the NEW CHALLENGER and unlocked screens on their own.
   **`--achievements`** opens the achievements page, **`--grant=meteor`** earns one for the run
   (with `--locked`, nothing kept) and **`--skins=blueflame,,mk2`** puts each seat of a `--match`
-  in a skin (`Skins`).
+  in a skin (`Skins`). **`--photos`** opens sending photos of a paper drawing.
 - **`"$GODOT_BIN" --path . -- --story=edgelord --shots=60,400,900`** — play a fighter's story
   (`--story=edgelord:2` from its third chapter, counting the opening as 0;
   `--story=edgelord:0:after` at the scene after chapter 0's fight; `--storyselect` opens

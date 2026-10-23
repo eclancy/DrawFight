@@ -19,6 +19,11 @@ and the same questions on the ecec.dev/draw form and the game's own send screen.
    on purpose (Eric, 2026-10-11): it is where a kid's imagination goes, and it becomes their
    story in the game (below).
 
+And, after the catchphrase, **another look?** (Eric, 2026-10-23): a skin drawn - another colour,
+a costume, a hat - added to the pictures, or just an idea for one, for their own fighter or one
+already in the game. A skin is earned in the game with an achievement (`Skins`). In the game, the
+sheet can go with photos of a drawing done on paper as well as pages drawn in it ("Add photos",
+or "Photo of a drawing" on the drawings screen).
 Question 4 is the important one and it is doing balance work while disguised as a fun question.
 A kid asked to design a fighter will make it fast *and* strong *and* tough. A kid asked what his
 fighter is terrible at will cheerfully invent a weakness, because weaknesses are characterful

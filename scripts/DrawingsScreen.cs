@@ -47,8 +47,13 @@ public partial class DrawingsScreen : Node2D
 
 	public override void _ExitTree() => OnePointer.Leave();
 
-	/// <summary>The cards before the saved drawings: a new fighter, and a new stage.</summary>
-	const int NewCards = 2;
+	/// <summary>
+	/// The cards before the saved drawings: a new fighter, a new stage, and photos of a drawing done
+	/// on paper (Eric, 2026-10-23), sent straight in.
+	/// </summary>
+	const int NewCards = 3;
+
+	const int PhotosCard = 2;
 
 	int CardCount => saved.Count + NewCards;
 
@@ -156,6 +161,11 @@ public partial class DrawingsScreen : Node2D
 			if (!CardRect(i).HasPoint(point)) continue;
 			leaving = true;
 			SfxPlayer.Ui("ui_select");
+			if (i == PhotosCard)
+			{
+				GameRoot.Instance.GoSendPhotos();
+				return;
+			}
 			Drawing drawing = i < NewCards ? Drawing.New(stage: i == 1) : Drawing.Load(saved[i - NewCards].Id);
 			GameRoot.Instance.OpenDrawing(drawing ?? Drawing.New());
 			return;
@@ -215,8 +225,19 @@ public partial class DrawingsScreen : Node2D
 		{
 			DrawRect(thumb, MenuTheme.Paper);
 			Vector2 c = thumb.GetCenter() + new Vector2(0.0f, i == 1 ? -24.0f : 0.0f);
-			CrayonBrush.InkLine(this, c + new Vector2(-60.0f, 0.0f), c + new Vector2(60.0f, 0.0f), MenuTheme.Ink, 12.0f, 841 + i * 3, 2.0f);
-			CrayonBrush.InkLine(this, c + new Vector2(0.0f, -60.0f), c + new Vector2(0.0f, 60.0f), MenuTheme.Ink, 12.0f, 842 + i * 3, 2.0f);
+			if (i != PhotosCard)
+			{
+				CrayonBrush.InkLine(this, c + new Vector2(-60.0f, 0.0f), c + new Vector2(60.0f, 0.0f), MenuTheme.Ink, 12.0f, 841 + i * 3, 2.0f);
+				CrayonBrush.InkLine(this, c + new Vector2(0.0f, -60.0f), c + new Vector2(0.0f, 60.0f), MenuTheme.Ink, 12.0f, 842 + i * 3, 2.0f);
+			}
+			else
+			{
+				// A camera: a body, a lens, and the bump on top.
+				Vector2 g = thumb.GetCenter() + new Vector2(0.0f, 12.0f);
+				CrayonBrush.InkRect(this, new Rect2(g.X - 70.0f, g.Y - 40.0f, 140.0f, 76.0f), MenuTheme.Ink, 4.0f, 851, 1.0f);
+				CrayonBrush.InkRect(this, new Rect2(g.X - 24.0f, g.Y - 54.0f, 48.0f, 14.0f), MenuTheme.Ink, 3.0f, 852, 1.0f);
+				DrawArc(g + new Vector2(0.0f, -2.0f), 24.0f, 0.0f, Mathf.Tau, 28, MenuTheme.Ink, 4.0f, true);
+			}
 			if (i == 1)
 			{
 				// A little stage under the plus: ground and two dashed platforms.
@@ -225,7 +246,8 @@ public partial class DrawingsScreen : Node2D
 				CrayonBrush.InkRect(this, new Rect2(g.X - 130.0f, g.Y - 50.0f, 70.0f, 10.0f), MenuTheme.Ink, 3.0f, 849, 1.0f, dashed: true);
 				CrayonBrush.InkRect(this, new Rect2(g.X + 60.0f, g.Y - 50.0f, 70.0f, 10.0f), MenuTheme.Ink, 3.0f, 850, 1.0f, dashed: true);
 			}
-			DrawString(font, new Vector2(card.Position.X, card.End.Y - 26.0f), i == 1 ? "New stage" : "New fighter", HorizontalAlignment.Center, card.Size.X, 34, MenuTheme.Text);
+			string title = i == PhotosCard ? "Photo of a drawing" : i == 1 ? "New stage" : "New fighter";
+			DrawString(font, new Vector2(card.Position.X, card.End.Y - 26.0f), title, HorizontalAlignment.Center, card.Size.X, 34, MenuTheme.Text);
 			return;
 		}
 

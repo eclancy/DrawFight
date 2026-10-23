@@ -14,10 +14,34 @@ using Godot;
 /// pictures, so the screen counts them and says when there are too many.
 ///
 /// The answers are kept with the drawing, so nothing has to be typed twice.
+///
+/// Photos of drawings on paper go too (Eric, 2026-10-23): "Add photos" opens the computer's own
+/// file picker, and each photo is sent as it is - a JPG as a JPG - beside the pages drawn in the
+/// game. Opened as "Photos of a drawing" from the drawings screen (<see cref="PhotosOnly"/>),
+/// there is nothing drawn in the game at all: only the photos and the sheet.
 /// </summary>
 public partial class SendFighterScreen : Node2D
 {
 	public Drawing Doc;
+
+	/// <summary>Sending photos of a paper drawing, with nothing drawn in the game: not saved as a drawing.</summary>
+	public bool PhotosOnly;
+
+	sealed class Photo
+	{
+		public string Name = "";
+		public byte[] Data;
+		public Texture2D Thumb;
+	}
+
+	readonly List<Photo> photos = new List<Photo>();
+
+	static readonly Rect2 AddPhotosBox = new Rect2(470.0f, 276.0f, 260.0f, 48.0f);
+
+	/// <summary>The rows down the left take six pictures' worth of room: the pages first, then photos.</summary>
+	const int MaxRows = 6;
+
+	int PhotoRoom => MaxRows - pages.Count;
 
 	static readonly Rect2 BackBox = new Rect2(190.0f, 30.0f, 160.0f, 66.0f);
 	static readonly Rect2 SendBox = new Rect2(190.0f, 962.0f, 540.0f, 92.0f);
@@ -48,6 +72,7 @@ public partial class SendFighterScreen : Node2D
 		("story", "7. What's their story?", "Every drawing in DrawFight is fighting for a place on the fridge. Why is yours? Do they want to stay up there, grab the best spot, or keep the whole fridge to themselves? Who are their friends, and who can't they stand? Make up anything you like. This becomes their story in the game.", 0),
 		("like", "8. What are they like?", "What do they like doing when they aren't fighting? Are they grumpy, shy, silly, a show-off? How do they talk? And should we call them he, she or they?", 0),
 		("catchphrase", "Do they have a catchphrase?", "Something they shout when they show off. Like \"Too hot for you!\"", 80),
+		("skins", "Another look?", "A different colour, a costume, a hat... Draw it and add it to your pictures, or just tell us about it here. Got an idea for a new look for a fighter already in the game? Tell us that too!", 0),
 		("extra", "Anything else?", "A pet or sidekick you drew, what their taunt should be...", 0),
 	};
 
@@ -97,7 +122,7 @@ public partial class SendFighterScreen : Node2D
 	{
 		FighterIntake.Check();
 
-		foreach (DrawingPage page in Doc.Pages)
+		foreach (DrawingPage page in PhotosOnly ? new List<DrawingPage>() : Doc.Pages)
 		{
 			int layers = 0;
 			foreach (DrawingLayer layer in page.Layers) if (layer.Visible && !layer.IsEmpty()) layers++;
@@ -144,7 +169,7 @@ public partial class SendFighterScreen : Node2D
 	{
 		get
 		{
-			int total = 0;
+			int total = photos.Count;
 			foreach (PageChoice choice in pages) total += choice.Count;
 			return total;
 		}
@@ -288,6 +313,18 @@ public partial class SendFighterScreen : Node2D
 			FighterIntake.Check();
 			return;
 		}
+		if (AddPhotosBox.HasPoint(at))
+		{
+			OpenPhotoPicker();
+			return;
+		}
+		for (int j = 0; j < photos.Count; j++)
+		{
+			if (!EachBox(pages.Count + j).HasPoint(at)) continue;
+			photos.RemoveAt(j);
+			SfxPlayer.Ui("ui_back");
+			return;
+		}
 		for (int i = 0; i < pages.Count; i++)
 		{
 			PageChoice choice = pages[i];
@@ -308,9 +345,86 @@ public partial class SendFighterScreen : Node2D
 
 	void Back()
 	{
-		if (Doc.Unsaved) Doc.Save();
 		SfxPlayer.Ui("ui_back");
+		if (PhotosOnly)
+		{
+			GameRoot.Instance.GoDrawings();
+			return;
+		}
+		if (Doc.Unsaved) Doc.Save();
 		GameRoot.Instance.OpenDrawing(Doc);
+	}
+
+	// --- Photos -----------------------------------------------------------------------------------
+
+	/// <summary>The computer's own file picker, for photos of a drawing on paper.</summary>
+	void OpenPhotoPicker()
+	{
+		if (photos.Count >= PhotoRoom)
+		{
+			Say($"That's as many photos as fit ({PhotoRoom}). Remove one to add another.", true);
+			return;
+		}
+		SfxPlayer.Ui("ui_select");
+		var picker = new FileDialog
+		{
+			FileMode = FileDialog.FileModeEnum.OpenFiles,
+			Access = FileDialog.AccessEnum.Filesystem,
+			UseNativeDialog = true,
+			Title = "Photos of your drawing",
+			Filters = new[] { "*.jpg, *.jpeg, *.png, *.webp ; Photos" },
+		};
+		AddChild(picker);
+		picker.FilesSelected += paths =>
+		{
+			AddPhotos(paths);
+			picker.QueueFree();
+		};
+		picker.Canceled += picker.QueueFree;
+		picker.PopupCentered(new Vector2I(1200, 800));
+	}
+
+	void AddPhotos(string[] paths)
+	{
+		foreach (string path in paths)
+		{
+			string name = path.GetFile();
+			if (photos.Count >= PhotoRoom)
+			{
+				Say($"That's as many photos as fit ({PhotoRoom}).", true);
+				return;
+			}
+			byte[] data = FileAccess.GetFileAsBytes(path);
+			if (data == null || data.Length == 0)
+			{
+				Say($"Couldn't open {name}.", true);
+				continue;
+			}
+			if (data.Length > FighterIntake.MaxPictureBytes)
+			{
+				Say($"{name} is too big to send (12 MB at most).", true);
+				continue;
+			}
+			var image = new Image();
+			string ext = path.GetExtension().ToLowerInvariant();
+			Error read = ext switch
+			{
+				"png" => image.LoadPngFromBuffer(data),
+				"webp" => image.LoadWebpFromBuffer(data),
+				_ => image.LoadJpgFromBuffer(data),
+			};
+			if (read != Error.Ok)
+			{
+				Say($"Couldn't read {name} - is it a photo?", true);
+				continue;
+			}
+			// Shrunk to fit the row, as it is - never stretched.
+			float fit = Mathf.Min(128.0f / image.GetWidth(), 96.0f / image.GetHeight());
+			image.Resize(Mathf.Max(1, (int)(image.GetWidth() * fit)), Mathf.Max(1, (int)(image.GetHeight() * fit)), Image.Interpolation.Bilinear);
+			photos.Add(new Photo { Name = name, Data = data, Thumb = ImageTexture.CreateFromImage(image) });
+			SfxPlayer.Ui("ui_ready");
+			Say("", false);
+		}
 	}
 
 	void Say(string text, bool error)
@@ -332,7 +446,7 @@ public partial class SendFighterScreen : Node2D
 		}
 		if (Total == 0)
 		{
-			Say("There's nothing drawn yet!", true);
+			Say(PhotosOnly ? "Add a photo of your drawing first!" : "There's nothing drawn yet!", true);
 			return;
 		}
 		if (Total > FighterIntake.MaxPictures)
@@ -375,6 +489,11 @@ public partial class SendFighterScreen : Node2D
 				lines.Add($"page \"{page.Name}\" ({page.KindWords}), the whole page");
 			}
 		}
+		foreach (Photo photo in photos)
+		{
+			pictures.Add((photo.Name, photo.Data));
+			lines.Add($"a photo of a drawing on paper, \"{photo.Name}\"");
+		}
 		long total = 0;
 		foreach (var (_, png) in pictures)
 		{
@@ -415,8 +534,8 @@ public partial class SendFighterScreen : Node2D
 	static string WithManifest(string extra, List<string> lines)
 	{
 		var manifest = new StringBuilder();
-		manifest.Append($"--- Drawn in the DrawFight game (v{UpdateScreen.CurrentVersion}) ---\n");
-		manifest.Append($"Every picture is a see-through PNG of the whole page ({Drawing.Width}x{Drawing.Height}), so pictures of the same page line up.\n");
+		manifest.Append($"--- Sent from the DrawFight game (v{UpdateScreen.CurrentVersion}) ---\n");
+		manifest.Append($"A page drawn in the game is a see-through PNG of the whole page ({Drawing.Width}x{Drawing.Height}), so pictures of the same page line up; a photo is sent as it was taken.\n");
 		for (int i = 0; i < lines.Count; i++) manifest.Append($"photo-{i + 1}: {lines[i]}\n");
 		string tail = manifest.ToString().TrimEnd();
 		int room = 2000 - tail.Length - 2;
@@ -447,7 +566,7 @@ public partial class SendFighterScreen : Node2D
 			return;
 		}
 		Doc.Sent.Add(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
-		Doc.Save();
+		if (!PhotosOnly) Doc.Save();
 		Achievements.Grant("draw_send");
 		phase = Phase.Done;
 		SfxPlayer.Ui("ui_select");
@@ -478,10 +597,18 @@ public partial class SendFighterScreen : Node2D
 		if (FighterIntake.State == FighterIntake.Link.Offline) MenuTheme.DrawButton(this, RetryBox, "Try again", 902, Hot(RetryBox), fontSize: 24);
 
 		DrawString(font, new Vector2(190.0f, 314.0f), "Pictures", HorizontalAlignment.Left, -1, 34, MenuTheme.Text);
+		MenuTheme.DrawButton(this, AddPhotosBox, "Add photos", 905, Hot(AddPhotosBox), fontSize: 26);
 		for (int i = 0; i < pages.Count; i++) DrawPageRow(font, i);
+		for (int j = 0; j < photos.Count; j++) DrawPhotoRow(font, j);
+		if (PhotosOnly && photos.Count == 0)
+		{
+			DrawMultilineString(font, new Vector2(190.0f, RowTop + 40.0f),
+				"Take a photo of your drawing - in bright light, from straight above - and put it on this computer. Then press Add photos.",
+				HorizontalAlignment.Left, 540.0f, 28, 4, MenuTheme.Soft);
+		}
 
 		int total = Total;
-		float y = RowTop + pages.Count * RowStep + 30.0f;
+		float y = RowTop + Mathf.Max(PhotosOnly && photos.Count == 0 ? 2 : 0, pages.Count + photos.Count) * RowStep + 30.0f;
 		bool over = total > FighterIntake.MaxPictures;
 		string count = total == 1 ? "1 picture" : $"{total} pictures";
 		DrawString(font, new Vector2(190.0f, y), $"{count} ({FighterIntake.MaxPictures} at most)", HorizontalAlignment.Left, -1, 26,
@@ -522,6 +649,21 @@ public partial class SendFighterScreen : Node2D
 		string each = choice.Layers > 1 ? $"Each layer ({choice.Layers})" : "Each layer";
 		MenuTheme.DrawButton(this, EachBox(i), each, 911 + i * 2, Hot(EachBox(i)) && choice.Layers > 1, choice.EachLayer,
 			choice.Layers > 1, 22);
+	}
+
+	void DrawPhotoRow(Font font, int j)
+	{
+		Photo photo = photos[j];
+		int i = pages.Count + j;
+		Rect2 row = Row(i);
+		var frame = new Rect2(row.Position, new Vector2(128.0f, 96.0f));
+		DrawRect(frame, MenuTheme.Paper);
+		Vector2 size = photo.Thumb.GetSize();
+		DrawTextureRect(photo.Thumb, new Rect2(frame.GetCenter() - size * 0.5f, size), false);
+		DrawRect(frame, MenuTheme.Rule, false, 2.0f);
+		DrawString(font, new Vector2(row.Position.X + 140.0f, row.Position.Y + 32.0f), "Photo", HorizontalAlignment.Left, 400.0f, 28, MenuTheme.Text);
+		DrawString(font, new Vector2(row.Position.X + 140.0f, row.Position.Y + 78.0f), photo.Name, HorizontalAlignment.Left, 230.0f, 22, MenuTheme.Soft);
+		MenuTheme.DrawButton(this, EachBox(i), "Remove", 920 + j, Hot(EachBox(i)), fontSize: 22);
 	}
 
 	void DrawDone(Font font)
