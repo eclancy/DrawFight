@@ -1560,18 +1560,18 @@ public static class FighterAnimations
 		(AFU, -44), (AFL, -8), (ABU, -36), (ABL, -8),
 		(LFU, -20), (LFL, 24), (LBU, 16), (LBL, 20));
 
-	// Reared back, point tipped up and away; then the whole body tips forward a quarter turn
-	// and more, until the point that stood up is out in front - Triguy's triangle, stood on end,
-	// laid back over the way Elim drew it (the rig's "tipped", which slides his legs, arms, hat and
-	// face to their places on that drawing as he goes over). The arms are set against the body,
-	// so tipped over they hang down from it, as drawn; the legs stay under him.
+	// Reared back, point tipped up and away; then he bows forward from the hips until the point
+	// is out level in front - Triguy's point attack, as in his drawing of it (the rig's "tipped"
+	// turns his face back level as he goes over). Not quite a quarter turn: his body, as drawn
+	// standing, already leans a little forward. The arms are set against the body, so tipped
+	// over they hang down from it; the legs stay under him.
 	static readonly Pose PointThrustWindup = new Pose(new Vector2(-8, 8),
 		(Torso, 14), (Head, -6),
 		(AFU, 24), (AFL, -16), (ABU, 18), (ABL, -10),
 		(LFU, -16), (LFL, 24), (LBU, 14), (LBL, 18));
 
 	static readonly Pose PointThrustStrike = new Pose(new Vector2(18, 2),
-		(Torso, -90), (Head, -2),
+		(Torso, -72), (Head, -2),
 		(AFU, -64), (AFL, -6), (ABU, -60), (ABL, -4),
 		(LFU, -10), (LFL, 6), (LBU, 6), (LBL, 4));
 

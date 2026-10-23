@@ -11,50 +11,43 @@ masked apart, rotated and trimmed - the same things the rig does to a part every
 on Eric's word, every line widened in place (LINE_BOOST) and the white coloured in (below).
 
 Emits:
-    fighters/triguy/parts/*.png   the body stood on end, the hat, the face's three marks, and the
-                                  four limbs in canonical orientation
+    fighters/triguy/parts/*.png   his body, the hat, the face's three marks, and the four limbs in
+                                  canonical orientation
     fighters/triguy/poses/*.png   the taunts, the crying pose, the effects and the thrown hat
-    fighters/triguy/rig.json      bone tree, offsets, pivots, where each pose stands, and where
-                                  everything goes when he tips over into the drawing ("tipped")
+    fighters/triguy/rig.json      bone tree, offsets, pivots, where each pose stands, and how his
+                                  face turns as he bows into his point attack ("tipped")
 
-HOW THE MAIN DRAWING IS CUT. Triguy is a white triangle with a black top hat and stick limbs, on
-a transparent canvas, drawn side-on facing right:
-  - the BODY is the white fill, grown outward far enough to take in its outline. He has no
-    separate head: the triangle is his head and body both, as Circy's ball is.
-  - the FACE - the marks drawn inside the triangle that do not touch its outline: two eyes, each
-    a brow with the eye hooked down off its end, and the big mouth - is lifted off it, each mark
-    whole, and the paper under them filled in white (rule 1: fill in what is missing). They are
-    hung back on the body as extras the game moves (FighterRig.SetFace) - lifted here, not by
-    faces.py, because they must stay level while the body under them is stood on end.
+HE STANDS AS HE IS DRAWN STANDING (Eric's call, 2026-10-23). Elim drew him standing still -
+idle.png, "the way he looks when nobody is pressing anything" - after "triguys idle is STILL his
+stab" (the rig was his stab drawing, triguy.png, stood on end). In it he is tall: a white triangle
+with his face, point up, and under it the rest of his body, drawn as an outline that comes round
+from the triangle's front corner to meet its back at a point - with a black top hat over the point,
+an arm out of each side, and two short legs out of the bottom point. On a transparent canvas, side
+on, facing right. cut_idle takes it apart:
+  - the BODY is the triangle's white fill grown out over its outline, and the lower body's lines.
+    The paper inside the lower body is filled in white, as the triangle is (rule 1: fill in what is
+    missing). He has no separate head.
+  - the FACE - the two eyes and the smile drawn inside the triangle - is lifted off it, each mark
+    whole, and the paper under them filled in white. They are hung back on the body as extras the
+    game moves (FighterRig.SetFace) - lifted here, not by faces.py, so they can turn back level as
+    he bows over.
   - the HAT - the one big stroke above it - is masked off as its own piece, so he can take it off
     and throw it (his side special, Eric's call 2026-10-10). It is the same pixels, only kept
-    apart and turned; a copy is also saved as poses/hat.png.
-  - every other stroke is a limb. The two that reach lowest are the legs (they end in feet), the
-    other two the arms; the further left of each pair is the back one, since he faces right.
-  - each limb's joint is its top end, where it meets the triangle. It is rotated about that joint
-    until its far end hangs straight down (the canonical orientation), then split at half its
-    length into upper and lower pieces that overlap a little at the knee or elbow - the knee put
-    where the stroke actually crosses halfway, as for Circy.
+    apart; a copy is also saved as poses/hat.png.
+  - the back arm is a stroke on its own. The front arm, the lower body and the legs are one stroke
+    where they meet, and are taken apart along the lines Elim drew: the back line of the body and
+    the back leg are the leftmost line in each row; the front of the body and the front arm come off
+    the bottom corner side by side and part; and where the front of the body comes round to meet
+    the back is his hip, with the legs below it.
+  - each limb's joint is its top end, where it meets the body. It is rotated about that joint until
+    its far end hangs straight down (the canonical orientation), then split at half its length into
+    upper and lower pieces that overlap a little at the knee or elbow - the knee put where the
+    stroke actually crosses halfway, as for Circy.
+Nothing is redrawn: pieces are only masked apart, turned and moved.
 
-HOW HE STANDS (Eric's call, 2026-10-19, from Elim's feedback: "triguys idle is STILL his stab",
-"he's supposed to be tall"). In triguy.png the triangle lies on its side, its point out in front:
-that is his point attack, "he sticks the top of his triangle out". Every drawing of him standing -
-crying.png, taunt_pog.png, taunt_surprised.png - has it on end, point up, the hat on the point and
-long legs under it. So the body is turned a quarter turn and a little more (`tip`, about 98
-degrees) to stand it point up, and the rest is hung on it the way those drawings have it: the legs
-out of the bottom, either side of the middle (LEG_SPREAD); the arms out of the two sides, low down
-(ARM_HEIGHT); the hat turned level (HAT_LEAN) and sat over the point (HAT_GRIP); and the face, each
-mark level as drawn, as high on the body as it fits (fit_face). The stood-up triangle is narrower
-than it was long, and the face drawn along its length does not fit across it full size, so
-standing it is drawn a little closer together and shown smaller (75%) - full size again tipped
-over. Nothing is redrawn: pieces are only turned and moved.
-
-TIPPED OVER, HE IS THE DRAWING. rig.json's "tipped" says where every limb, the body, the hat and
-the face are on triguy.png, measured on the stood-up body. As the body tips forward past TIP_FROM
-degrees the rig slides each piece toward its place there, and at `tip` degrees he is exactly the
-drawing - point forward, hat on the back corner, legs out of the underside, face level. His point
-attacks (AttackAnim.PointThrust: the dash attack, the forward smash, the last jab, a throw) tip
-him that far; nothing else does.
+HIS POINT ATTACK (AttackAnim.PointThrust: the dash attack, the forward smash, the last jab, a
+throw) bows him forward from the hips until his point is out level in front, as triguy.png has it.
+His face turns back level as he goes over (rig.json "tipped", from TIP_FROM degrees to STAB_TIP).
 
 The other drawings are front or three-quarter views shown whole: his three taunt poses, the
 crying pose for his puddle, and three effects - the spike that comes up out of the puddle, the
@@ -88,8 +81,6 @@ REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
 ROOT = os.path.join(REPO, 'fighters', 'triguy')
 SOURCE = os.path.join(ROOT, 'source')
 
-MAIN = 'triguy.png'
-
 # Whole drawings of him, shown as they are while he holds a pose. Each is scaled so the figure
 # stands as tall as the rig does (see FighterRig.PoseScale), whatever size Elim drew it at.
 BODY_POSES = [
@@ -122,8 +113,6 @@ OUTLINE_GROW = 16      # px added around the white fill to take in the triangle'
 STRAY_PIXELS = 400     # a stroke smaller than this is a stray mark, given to the nearest limb
 BODY_CORNER_PIXELS = 3000  # a piece this small touching the body is a corner of its outline
 JOINT_OVERLAP = 10     # px each half of a split limb extends past the joint
-HAT_KEEP_OUTLINE = 12  # rows of ink above the white the body keeps: the triangle's own outline
-HAT_REACH = 18         # px from the hat stroke the brim can reach into what the body took
 
 # How many pixels each side every line of ink is widened by in the generated parts and poses
 # (tools/art/linework.py). He is drawn on a bigger canvas than Circy and shrunk further, so it
@@ -131,45 +120,9 @@ HAT_REACH = 18         # px from the hat stroke the brim can reach into what the
 # gives Elim's line exactly as drawn.
 LINE_BOOST = 12
 
-# How he stands (Eric's call, 2026-10-19, from Elim's feedback - "triguys idle is STILL his
-# stab", "he's supposed to be tall"): the triangle on end, point up, as in every drawing of him
-# standing. The numbers say where things go on it; none of them changes a line.
-LEVEL = 0.5          # 0 stands the point straight up, 1 the bottom level; his triangle is uneven
-LEG_SPREAD = 0.42    # legs out from the middle of the bottom, as a share of the way to its corners
-LEG_TUCK = 24        # px the legs start up inside the bottom's line, so no gap shows at the join
-ARM_HEIGHT = 0.14    # arms out of the sides, this share of the way up from the bottom corners
-ARM_TUCK = 34        # px in from the edge, so the arm comes out of the line, not beside it
-HAT_LEAN = 32.0      # degrees his hat leans back in triguy.png, perched on the back corner; turned upright by this
-HAT_GRIP = 0.34      # sat down over the point until the triangle is this share of the brim's width
-FACE_ROOM = 24       # px of white kept between the face and the body's line
-FACE_GAP = 24        # px kept between one mark of the face and the next
-FACE_DROP = 0        # px the face sits below the highest place it fits
-FACE_SCALES = [1.0 - i / 20.0 for i in range(9)]  # how big the face may be shown standing, largest first
 FACE_MIN = 1000      # px: a mark inside the body at least this big is part of his face
 MOUTH_STRETCH = 0.12  # how far his mouth opens: the drawing has little room under it
-TIP_FROM = 40.0      # degrees forward a tip starts turning him back into the drawing (the rig's "tipped")
-
-
-def turn(v, degrees):
-    """A vector turned `degrees` anticlockwise on the screen (y down), as PIL's rotate turns a picture."""
-    a = math.radians(degrees)
-    c, s = math.cos(a), math.sin(a)
-    return (v[0] * c + v[1] * s, -v[0] * s + v[1] * c)
-
-
-def turned(piece, pivot, degrees):
-    """A piece turned `degrees` anticlockwise about `pivot`, a point on it, and trimmed - only
-    turned, as the rig turns a part every frame. Returns the piece and where `pivot` is on it."""
-    w, h = piece.size
-    reach = max(math.hypot(x - pivot[0], y - pivot[1]) for x in (0, w) for y in (0, h))
-    side = int(reach * 2 + 8)
-    ox, oy = int(round(side / 2.0 - pivot[0])), int(round(side / 2.0 - pivot[1]))
-    canvas = Image.new('RGBA', (side, side), (0, 0, 0, 0))
-    canvas.paste(piece, (ox, oy))
-    at = (pivot[0] + ox, pivot[1] + oy)
-    canvas = canvas.rotate(degrees, resample=Image.BICUBIC, center=at)
-    canvas, box = circy.trim(canvas)
-    return canvas, (at[0] - box[0], at[1] - box[1])
+TIP_FROM = 40.0      # degrees forward his bow starts turning his face back level (the rig's "tipped")
 
 
 def groups(points):
@@ -212,379 +165,289 @@ def white_mask(img):
     return mask
 
 
-def fit_face(body, pivot, face, parts, parts_dir, ceiling):
-    """Sets where each mark of the face goes on the stood-up body (rig offsets, from his hip),
-    and how big it is shown there.
+def limb_parts(img, d, name_upper, name_lower, parts, parts_dir):
+    """One limb stroke, rotated about its joint until its far end hangs straight down, split at half
+    its length into an upper and a lower piece that overlap a little at the knee or elbow - the knee
+    where the stroke actually crosses halfway, as for Circy. Returns its length and where the knee is
+    across from the joint."""
+    piece, origin = circy.extract(img, d['points'])
+    jx, jy = d['joint'][0] - origin[0], d['joint'][1] - origin[1]
+    tx, ty = d['tip'][0] - d['joint'][0], d['tip'][1] - d['joint'][1]
+    length = math.hypot(tx, ty)
 
-    The stood-up triangle is narrower than it was long, and the face drawn along its length does
-    not fit across it as it is. So the marks keep their places to each other as drawn as nearly
-    as they can - a little drawn in toward each other across the face, the front eye and the mouth
-    let down a step - and, only as far as that is not enough, the face is shown smaller while he
-    stands (FACE_SCALES; the rig shows it full size again as he tips over into the drawing). It
-    takes the least of that which leaves every mark inside the body's line with FACE_ROOM to
-    spare, below the hat's brim (`ceiling`), and FACE_GAP clear of each other, and goes as high
-    as it fits, in the middle of the room there. Worked on a copy a quarter the size."""
-    room = body.split()[3].point(lambda v: 255 if v > 128 else 0)
-    white = body.convert('L').point(lambda v: 255 if v > 200 else 0)
-    room = ImageChops.multiply(room, white)
-    rw, rh = body.size[0] // SMALL, body.size[1] // SMALL
-    room = room.resize((rw, rh), Image.NEAREST)
-    room = room.filter(ImageFilter.MinFilter(2 * (FACE_ROOM // SMALL) + 1)).load()
-    # The room in each row, from side to side (the body is one run across in every row).
-    span = {}
-    for y in range(rh):
-        xs = [x for x in range(rw) if room[x, y]]
-        if xs and y * SMALL - pivot[1] >= ceiling + FACE_ROOM:
-            span[y] = (xs[0], xs[-1])
-    middle = (sum(f['drawn'][0] for f in face) / len(face), sum(f['drawn'][1] for f in face) / len(face))
-    gap = FACE_GAP // SMALL
-    ink = []
-    for f in face:
-        img = Image.open(os.path.join(parts_dir, f['name'] + '.png'))
-        alpha = img.split()[3].load()
-        pv = parts[f['name']]['pivot']
-        ink.append([(x - pv[0], y - pv[1]) for y in range(0, img.size[1], 2) for x in range(0, img.size[0], 2) if alpha[x, y] > 128])
+    side = int(length * 2 + 60)
+    canvas = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    canvas.paste(piece, (int(side / 2 - jx), int(side / 2 - jy)))
+    angle = math.degrees(math.atan2(ty, tx))
+    canvas = canvas.rotate(angle - 90.0, resample=Image.BICUBIC, center=(side / 2, side / 2))
 
-    for scale in FACE_SCALES:
-        cells, rows, grown = [], [], []
-        for marks in ink:
-            mine = set((int(round(x * scale / SMALL)), int(round(y * scale / SMALL))) for (x, y) in marks)
-            cells.append(mine)
-            by_row = {}
-            for (x, y) in mine:
-                lo, hi = by_row.get(y, (x, x))
-                by_row[y] = (min(lo, x), max(hi, x))
-            rows.append(by_row)
-            grown.append(set((x + dx, y + dy) for (x, y) in mine for dx in range(-gap, gap + 1) for dy in range(-gap, gap + 1)))
+    mid = side / 2 + length / 2.0
+    upper = canvas.crop((0, 0, side, int(mid + JOINT_OVERLAP)))
+    lower = canvas.crop((0, int(mid - JOINT_OVERLAP), side, side))
+    knee_x = circy.knee_on_stroke(canvas, int(mid), side / 2)
 
-        def placed(closer, drops):
-            return [(int(round((f['drawn'][0] - middle[0]) * scale * (1.0 - closer) / SMALL)),
-                     int(round(((f['drawn'][1] - middle[1]) * scale + drop) / SMALL))) for f, drop in zip(face, drops)]
+    upper, ubox = circy.trim(upper)
+    lower, lbox = circy.trim(lower)
+    upper, upad = linework.thicken(upper, LINE_BOOST)
+    lower, lpad = linework.thicken(lower, LINE_BOOST)
+    upper.save(os.path.join(parts_dir, name_upper + '.png'))
+    lower.save(os.path.join(parts_dir, name_lower + '.png'))
 
-        def clear_of_each_other(rel):
-            for i in range(len(face)):
-                for j in range(i + 1, len(face)):
-                    dx, dy = rel[j][0] - rel[i][0], rel[j][1] - rel[i][1]
-                    if any((x + dx, y + dy) in grown[i] for (x, y) in cells[j]):
-                        return False
-            return True
-
-        def room_at(rel, ay):
-            """The range of places across the face can go with its middle at row `ay`, or None."""
-            lo, hi = -10 ** 6, 10 ** 6
-            for i in range(len(face)):
-                for y, (x0, x1) in rows[i].items():
-                    row = int(ay + rel[i][1] + y + pivot[1] / SMALL)
-                    if row not in span:
-                        return None
-                    left, right = span[row]
-                    lo = max(lo, left - (rel[i][0] + x0 + pivot[0] / SMALL))
-                    hi = min(hi, right - (rel[i][0] + x1 + pivot[0] / SMALL))
-                    if lo > hi:
-                        return None
-            return lo, hi
-
-        # Least changed first: a tenth drawn in costs as much as a 60px step down.
-        tries = [(c / 20.0, (0, b * 20, m * 20)) for c in range(0, 8) for b in range(0, 9) for m in range(0, 9)]
-        tries.sort(key=lambda t: t[0] * 10 + (t[1][1] + t[1][2]) / 60.0)
-        for closer, drops in tries:
-            rel = placed(closer, drops)
-            if not clear_of_each_other(rel):
-                continue
-            for ay in range(int(ceiling // SMALL), 0):
-                found = room_at(rel, ay)
-                if found:
-                    ax = (found[0] + found[1]) / 2.0
-                    for f, r in zip(face, rel):
-                        f['at'] = [round((ax + r[0]) * SMALL, 1), round((ay + r[1]) * SMALL + FACE_DROP, 1)]
-                        f['scale'] = scale
-                    print('face: shown at %d%%, drawn in %d%%, front eye down %dpx, mouth down %dpx' % (
-                        scale * 100, closer * 100, drops[1], drops[2]))
-                    return
-    raise SystemExit('his face does not fit on his body')
+    parts[name_upper] = {'texture': 'parts/%s.png' % name_upper,
+                         'pivot': [round(side / 2 - ubox[0] + upad, 2), round(side / 2 - ubox[1] + upad, 2)]}
+    lower_top = int(mid - JOINT_OVERLAP)
+    parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
+                         'pivot': [round(knee_x - lbox[0] + lpad, 2), round(mid - lower_top - lbox[1] + lpad, 2)]}
+    return length, knee_x - side / 2
 
 
-def cut_main(parts_dir):
-    img = Image.open(os.path.join(SOURCE, MAIN)).convert('RGBA')
+# --- Standing, from his drawing of himself standing ------------------------------------------------
+# Elim drew him standing still (idle.png, 2026-10-22, sent for "the way he looks when nobody is
+# pressing anything"): point up, the hat over the point, the face in the triangle, the back arm out
+# of its side and hanging, the front arm and the front leg out of the bottom corner, and two very
+# long legs. Standing, he is cut from that - every piece where Elim drew it - rather than stood up
+# from the stab (Eric, 2026-10-23). The stab is still triguy.png: tipped over, the pieces slide to
+# their places there (cut_main measures them), scaled to this triangle.
+
+IDLE = 'idle.png'
+IDLE_BASE_CUT = 16   # px below the white the bottom's line runs: ink above it is the body's, below it a limb's
+IDLE_LEG_WIDTH = 24  # px: the straight back leg's line, taken from the left of each row where the bent leg meets it
+IDLE_FOOT_ROWS = 30  # px up from the bottom of the back leg that are its foot, taken whole
+IDLE_PART_ROWS = 140  # px down from the bottom corner the front arm and the front of his body run side by side
+STAB_TIP = 79.2      # degrees he bows over in his point attack (FighterAnimations.PointThrustStrike, as played)
+
+
+def cut_idle(parts_dir):
+    """The standing rig, from idle.png: body, face, hat and limbs where he drew them."""
+    img = Image.open(os.path.join(SOURCE, IDLE)).convert('RGBA')
     mask = white_mask(img)
     mpx = mask.load()
     px = img.load()
     w, h = img.size
 
-    def in_body(x, y):
-        return mpx[x, y] > 0
-
-    body_pts = [(x, y) for y in range(h) for x in range(w) if px[x, y][3] > 0 and in_body(x, y)]
-
-    strokes = circy.components(img, lambda x, y, p: p[3] > 0 and not in_body(x, y))
+    body_pts = [(x, y) for y in range(h) for x in range(w) if px[x, y][3] > 0 and mpx[x, y] > 0]
+    base_y = max(p[1] for p in body_pts)
+    strokes = circy.components(img, lambda x, y, p: p[3] > 0 and not mpx[x, y] > 0)
     strokes.sort(key=len, reverse=True)
 
-    # The sharp corners of the triangle - its point, and the corner at the bottom left - stick
-    # out past the grown white fill as small separate pieces. Anything small touching the body
-    # is the body's own outline, not a stray from a limb.
+    # Bits of the triangle's own outline outside the grown white - its point, slivers of its side -
+    # are the body's.
     near = mask.filter(ImageFilter.MaxFilter(9)).load()
     corners = [s for s in strokes if len(s) < BODY_CORNER_PIXELS and any(near[x, y] > 0 for (x, y) in s[::5])]
     for corner in corners:
         body_pts.extend(corner)
     strokes = [s for s in strokes if not any(s is c for c in corners)]
-
     big = [s for s in strokes if len(s) >= STRAY_PIXELS]
     strays = [s for s in strokes if len(s) < STRAY_PIXELS]
 
-    # The hat is the big stroke highest up; the rest are limbs.
     hat = min(big, key=lambda s: circy.bbox(s)[1])
-    limbs = [s for s in big if s is not hat]
-    if len(limbs) != 4:
-        raise SystemExit('expected 4 limbs in %s, found %d' % (MAIN, len(limbs)))
-    # Where the brim sits on the triangle, the grown body took in the bottom of it; those pixels
-    # are the hat's. Ink in the body right by the hat and above the triangle's own outline, joined
-    # to the hat, goes with the hat - and nothing further along the triangle's edge.
-    hat_set = set(hat)
-    body_set = set(body_pts)
-    near_hat = Image.new('L', img.size, 0)
-    nh = near_hat.load()
-    for (x, y) in hat:
-        nh[x, y] = 255
-    near_hat = near_hat.filter(ImageFilter.MaxFilter(HAT_REACH * 2 + 1)).load()
-    white_top = {}
-    for (x, y) in body_pts:
-        if is_white(px[x, y]):
-            white_top[x] = min(white_top.get(x, h), y)
-    frontier = list(hat)
-    while frontier:
-        x, y = frontier.pop()
-        for q in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-            if q in body_set and q not in hat_set and not is_white(px[q[0], q[1]])                     and near_hat[q[0], q[1]] > 0                     and q[1] < white_top.get(q[0], h) - HAT_KEEP_OUTLINE:
-                hat_set.add(q)
-                frontier.append(q)
-    hat = sorted(hat_set)
-    body_pts = [p for p in body_pts if p not in hat_set]
+    rest = [s for s in big if s is not hat]
+    # The back arm is on its own. The legs and the front arm are one stroke where they meet: the
+    # front leg comes down off the bottom corner beside the front arm, and its knee lands on the
+    # back leg. Taken apart along those lines, every pixel as drawn.
+    rest.sort(key=len, reverse=True)
+    joined, back_arm_pts = rest[0], rest[1]
+    if len(rest) != 2:
+        raise SystemExit('expected the back arm and one joined stroke in %s, found %d' % (IDLE, len(rest)))
 
+    cut_line = base_y + IDLE_BASE_CUT
+    rows = {}
+    for (x, y) in joined:
+        if y < cut_line:
+            body_pts.append((x, y))
+        else:
+            rows.setdefault(y, []).append(x)
+    bottom = max(rows)
+    back_line, others = [], []
+    widths = {}
+    for y, xs in rows.items():
+        xs.sort()
+        left = xs[0]
+        # The leftmost run of ink in each row is the back of his body and then his back leg - its
+        # top where it leaves the bottom line, and its foot, whole - except where the front of his
+        # body comes round to meet it: there it is one line wide.
+        run_end = left
+        while run_end + 1 in xs:
+            run_end += 1
+        widths[y] = run_end - left
+        knee_zone = cut_line + IDLE_PART_ROWS < y < bottom - IDLE_FOOT_ROWS
+        reach = min(run_end, left + IDLE_LEG_WIDTH) if knee_zone else run_end
+        for x in xs:
+            (back_line if x <= reach else others).append((x, y))
+    # Where the front of his body comes round and meets the back: the first row, well down, where
+    # the leftmost run is wider than a line. Above it the back line is his body; below, his leg.
+    join_y = min(y for y in widths if y > cut_line + IDLE_PART_ROWS and widths[y] > IDLE_LEG_WIDTH + 8)
+    # The knot where they meet is the body's, a line's width of it, so its bottom is closed.
+    join_y += IDLE_LEG_WIDTH
+    # The rest is the front of his body, the front arm beside it, and below where the front meets
+    # the back, his front leg. Down from the bottom corner the arm (outside) and the front of the
+    # body (inside) are one band, split down its middle, and where they are still one line it is
+    # the body's: the arm starts where they part. Below that the front of his body is the leftmost
+    # line in every row, and the arm lies outside it - except where his hand curls back and
+    # touches it, and there the body's line is one line wide.
+    others_rows = {}
+    for (x, y) in others:
+        others_rows.setdefault(y, []).append(x)
+    front, arm = [], []
+    for y, xs in others_rows.items():
+        xs.sort()
+        if y > join_y:
+            front.extend((x, y) for x in xs)
+            continue
+        if y < cut_line + IDLE_PART_ROWS:
+            middle = (xs[0] + xs[-1]) / 2.0
+            wide = xs[-1] - xs[0] > IDLE_LEG_WIDTH * 1.4
+            for x in xs:
+                (front if x < middle or not wide else arm).append((x, y))
+            continue
+        run_end = xs[0]
+        while run_end + 1 in xs:
+            run_end += 1
+        if run_end - xs[0] > IDLE_LEG_WIDTH * 1.6:
+            run_end = xs[0] + int(IDLE_LEG_WIDTH * 1.3)
+        for x in xs:
+            (front if x <= run_end else arm).append((x, y))
+    # Anything of the arm's not joined to it is a crumb of the body's line.
+    arm_groups = groups(arm)
+    arm_groups.sort(key=len, reverse=True)
+    front_arm_pts = arm_groups[0]
+    for crumb in arm_groups[1:]:
+        front.extend(crumb)
+    body_pts.extend(p for p in front + back_line if p[1] <= join_y)
+    front_leg_pts = [p for p in front if p[1] > join_y]
+    back_leg_pts = [p for p in back_line if p[1] > join_y]
+
+    limbs = [back_arm_pts, front_arm_pts, back_leg_pts, front_leg_pts]
     for stray in strays:
         sx, sy = stray[0]
         nearest = min(limbs, key=lambda l: min((p[0] - sx) ** 2 + (p[1] - sy) ** 2 for p in l[::25]))
         nearest.extend(stray)
 
-    # His face: the marks drawn inside the triangle that do not touch its outline - two eyes, each
-    # a brow with the eye hooked down off its end, and the big mouth. In the drawing all three
-    # stand clear of the outline, so they come away whole, without a line cut; they have to, to
-    # stay level while the triangle under them is stood on end.
-    ink = groups([p for p in body_pts if not is_white(px[p[0], p[1]])])
+    # The face: two eyes - two upright strokes - and the smile, the lowest mark, all inside the
+    # triangle.
+    ink = groups([p for p in body_pts if px[p[0], p[1]][3] > 0 and not is_white(px[p[0], p[1]])])
     ink.sort(key=len, reverse=True)
-    marks = [g for g in ink[1:] if len(g) >= FACE_MIN]
+    marks = [g for g in ink[1:] if len(g) >= FACE_MIN and circy.bbox(g)[3] < base_y]
     if len(marks) != 3:
-        raise SystemExit('expected 2 eyes and a mouth in %s, found %d marks' % (MAIN, len(marks)))
-    mouth_mark = marks[0]
-    back_eye_mark, front_eye_mark = sorted(marks[1:], key=lambda g: circy.bbox(g)[0])
+        raise SystemExit('expected 2 eyes and a mouth in %s, found %d marks' % (IDLE, len(marks)))
+    mouth_mark = max(marks, key=lambda g: circy.bbox(g)[3])
+    back_eye_mark, front_eye_mark = sorted([g for g in marks if g is not mouth_mark], key=lambda g: circy.bbox(g)[0])
     face_set = set(mouth_mark) | set(back_eye_mark) | set(front_eye_mark)
     body_pts = [p for p in body_pts if p not in face_set]
 
-    described = []
-    for limb in limbs:
-        joint = min(limb, key=lambda p: (p[1], p[0]))
-        tip = max(limb, key=lambda p: (p[0] - joint[0]) ** 2 + (p[1] - joint[1]) ** 2)
-        lowest = max(p[1] for p in limb)
-        described.append({'points': limb, 'joint': joint, 'tip': tip, 'lowest': lowest})
+    # His hip: the bottom point of his body, where both legs come out.
+    leg_tops = [min(pts, key=lambda p: (p[1], p[0])) for pts in (back_leg_pts, front_leg_pts)]
+    hip = ((leg_tops[0][0] + leg_tops[1][0]) / 2.0, float(join_y))
 
-    # Legs reach the floor; arms stop short of it.
-    described.sort(key=lambda d: d['lowest'])
-    arms, legs = described[:2], described[2:]
-    arms.sort(key=lambda d: d['joint'][0])
-    legs.sort(key=lambda d: d['joint'][0])
-    back_arm, front_arm = arms
-    back_leg, front_leg = legs
-
-    # Where the legs leave the body on the drawing: the hip, tipped over.
-    hip = ((back_leg['joint'][0] + front_leg['joint'][0]) / 2.0,
-           (back_leg['joint'][1] + front_leg['joint'][1]) / 2.0)
+    def from_hip(point):
+        return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
 
     parts = {}
 
-    def canonical_limb(d, name_upper, name_lower):
-        piece, origin = circy.extract(img, d['points'])
-        jx, jy = d['joint'][0] - origin[0], d['joint'][1] - origin[1]
-        tx, ty = d['tip'][0] - d['joint'][0], d['tip'][1] - d['joint'][1]
-        length = math.hypot(tx, ty)
+    def described(points):
+        joint = min(points, key=lambda p: (p[1], p[0]))
+        tip = max(points, key=lambda p: (p[0] - joint[0]) ** 2 + (p[1] - joint[1]) ** 2)
+        return {'points': points, 'joint': joint, 'tip': tip}
 
-        side = int(length * 2 + 60)
-        canvas = Image.new('RGBA', (side, side), (0, 0, 0, 0))
-        canvas.paste(piece, (int(side / 2 - jx), int(side / 2 - jy)))
-        angle = math.degrees(math.atan2(ty, tx))
-        canvas = canvas.rotate(angle - 90.0, resample=Image.BICUBIC, center=(side / 2, side / 2))
+    limb_names = [(back_arm_pts, 'ArmBack'), (front_arm_pts, 'ArmFront'), (back_leg_pts, 'LegBack'), (front_leg_pts, 'LegFront')]
+    cut = {}
+    for points, name in limb_names:
+        d = described(points)
+        length, knee = limb_parts(img, d, name + '_Upper', name + '_Lower', parts, parts_dir)
+        cut[name] = (d, length, knee)
 
-        mid = side / 2 + length / 2.0
-        upper = canvas.crop((0, 0, side, int(mid + JOINT_OVERLAP)))
-        lower = canvas.crop((0, int(mid - JOINT_OVERLAP), side, side))
-        knee_x = circy.knee_on_stroke(canvas, int(mid), side / 2)
-
-        upper, ubox = circy.trim(upper)
-        lower, lbox = circy.trim(lower)
-        upper, upad = linework.thicken(upper, LINE_BOOST)
-        lower, lpad = linework.thicken(lower, LINE_BOOST)
-        upper.save(os.path.join(parts_dir, name_upper + '.png'))
-        lower.save(os.path.join(parts_dir, name_lower + '.png'))
-
-        parts[name_upper] = {'texture': 'parts/%s.png' % name_upper,
-                             'pivot': [round(side / 2 - ubox[0] + upad, 2), round(side / 2 - ubox[1] + upad, 2)]}
-        lower_top = int(mid - JOINT_OVERLAP)
-        parts[name_lower] = {'texture': 'parts/%s.png' % name_lower,
-                             'pivot': [round(knee_x - lbox[0] + lpad, 2), round(mid - lower_top - lbox[1] + lpad, 2)]}
-        return length, knee_x - side / 2
-
-    arms_cut = [canonical_limb(back_arm, 'ArmBack_Upper', 'ArmBack_Lower'),
-                canonical_limb(front_arm, 'ArmFront_Upper', 'ArmFront_Lower')]
-    legs_cut = [canonical_limb(back_leg, 'LegBack_Upper', 'LegBack_Lower'),
-                canonical_limb(front_leg, 'LegFront_Upper', 'LegFront_Lower')]
-    arm_len = [c[0] for c in arms_cut]
-    leg_len = [c[0] for c in legs_cut]
-    elbow_dx = [c[1] for c in arms_cut]
-    knee_dx = [c[1] for c in legs_cut]
-
-    # --- Stood up -------------------------------------------------------------------------------
-    # The triangle in the drawing lies on its side, its point out in front: that is his point
-    # attack. Standing, it is on end - point up, hat on the point, legs out of the bottom - as
-    # every other drawing of him has it. The body is turned by `tip` to stand it up; turned
-    # forward by the same again in a match, it is back exactly as drawn (the rig's "tipped").
-    apex = max(body_pts, key=lambda p: (p[0], -p[1]))
-    top_back = min(body_pts, key=lambda p: (p[1], p[0]))
-    bottom_back = max(body_pts, key=lambda p: p[1] - p[0])
-    base = ((top_back[0] + bottom_back[0]) / 2.0, (top_back[1] + bottom_back[1]) / 2.0)
-    # Point straight up, or bottom level: his triangle is not even, so it cannot be both.
-    point_up = 90.0 + math.degrees(math.atan2(apex[1] - base[1], apex[0] - base[0]))
-    base_level = math.degrees(math.atan2(bottom_back[1] - top_back[1], bottom_back[0] - top_back[0]))
-    tip = point_up + LEVEL * (base_level - point_up)
-
-    def up(point):
-        """A point on the drawing, on the stood-up body: from the middle of its bottom, his hip."""
-        v = turn((point[0] - base[0], point[1] - base[1]), tip)
-        return (round(v[0], 1), round(v[1], 1))
-
-    # The body, with the face's marks lifted off it and the paper under them filled in white -
-    # which the colouring in then takes as body, like the rest of the white.
-    body, body_origin = circy.extract(img, body_pts)
+    # The body, with the face's marks lifted off it and the paper under them filled in white.
+    body, origin = circy.extract(img, body_pts)
     bpx = body.load()
-    for (x, y) in face_set:
-        bpx[x - body_origin[0], y - body_origin[1]] = (255, 255, 255, 255)
-    # And the faint grey at the very edge of each mark, which would show as a ghost of it.
     bw, bh = body.size
     for (x, y) in face_set:
         for dx in range(-2, 3):
             for dy in range(-2, 3):
-                q = (x - body_origin[0] + dx, y - body_origin[1] + dy)
-                if 0 <= q[0] < bw and 0 <= q[1] < bh and is_white(bpx[q]):
+                q = (x - origin[0] + dx, y - origin[1] + dy)
+                if 0 <= q[0] < bw and 0 <= q[1] < bh and ((x + dx, y + dy) in face_set or is_white(bpx[q])):
                     bpx[q] = (255, 255, 255, 255)
-    body, bpivot = turned(body, (base[0] - body_origin[0], base[1] - body_origin[1]), tip)
+    # Below the triangle his body is drawn as an outline only: the paper inside it is filled in white,
+    # as the triangle is, so it reads as body and not a hole (rule 1: fill in what is missing).
+    seed = (int(hip[0] - origin[0]) + 3 * IDLE_LEG_WIDTH, int((cut_line + join_y) / 2.0 - origin[1]))
+    # Filled up to his lines thickened a little, so a hairline gap in them does not let it out;
+    # then out to the lines themselves.
+    lines = body.split()[3].point(lambda v: 255 if v > 128 else 0).filter(ImageFilter.MaxFilter(7))
+    inside = lines.point(lambda v: 0 if v else 255)
+    ImageDraw.floodfill(inside, seed, 128)
+    ipx = inside.load()
+    if any(ipx[x, y] == 128 for x in (0, bw - 1) for y in range(bh)) or any(ipx[x, y] == 128 for y in (0, bh - 1) for x in range(bw)):
+        body.save(os.path.join(ROOT, 'leak_body.png'))
+        inside.save(os.path.join(ROOT, 'leak_inside.png'))
+        raise SystemExit('the inside of his lower body is not closed in %s (seed %s)' % (IDLE, seed))
+    filled = inside.point(lambda v: 255 if v == 128 else 0).filter(ImageFilter.MaxFilter(7))
+    filled = ImageChops.multiply(filled, body.split()[3].point(lambda v: 0 if v > 128 else 255))
+    body.paste((255, 255, 255, 255), (0, 0) + body.size, filled)
     body, bpad = linework.thicken(body, LINE_BOOST)
     body.save(os.path.join(parts_dir, 'Torso.png'))
-    parts['Torso'] = {'texture': 'parts/Torso.png', 'pivot': [round(bpivot[0] + bpad, 2), round(bpivot[1] + bpad, 2)]}
+    parts['Torso'] = {'texture': 'parts/Torso.png',
+                      'pivot': [round(hip[0] - origin[0] + bpad, 2), round(hip[1] - origin[1] + bpad, 2)]}
 
-    corner_back, corner_front, top = up(top_back), up(bottom_back), up(apex)
-    height = -top[1]
-    print('stood up %.1f degrees: %d tall, %d across the bottom' % (
-        tip, height, corner_front[0] - corner_back[0]))
-
-    def along(a, b, t):
-        return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
-
-    # Legs out of the bottom, either side of the middle, starting a little up inside its line.
-    leg_roots = []
-    for corner in (corner_back, corner_front):
-        x, y = along((0.0, 0.0), corner, LEG_SPREAD)
-        leg_roots.append([round(x, 1), round(y - LEG_TUCK, 1)])
-    # Arms out of the two sides, as his front-on drawings have them, a little in from the edge.
-    arm_roots = []
-    for corner, inward in ((corner_back, 1), (corner_front, -1)):
-        x, y = along(corner, top, ARM_HEIGHT)
-        arm_roots.append([round(x + inward * ARM_TUCK, 1), round(y, 1)])
-
-    # The hat, apart, turned level and sat on the point - how every drawing of him standing wears
-    # it. Its pixels are the drawing's; it is only turned.
-    hat_raw, hat_origin = circy.extract(img, hat)
-    hat_centre = (hat_raw.size[0] / 2.0, hat_raw.size[1] / 2.0)
-    hat_level, hat_turn_at = turned(hat_raw, hat_centre, -HAT_LEAN)
-    hpx = hat_level.split()[3].load()
-    hw, hh = hat_level.size
-    brim_rows = [y for y in range(hh) if any(hpx[x, y] > 128 for x in range(0, hw, 2))]
-    brim_y = brim_rows[-1]
+    # The hat, where he drew it over the point, hung from the middle of its brim.
+    hat_img, hat_origin = circy.extract(img, hat)
+    hpx = hat_img.split()[3].load()
+    hw, hh = hat_img.size
+    brim_y = max(y for y in range(hh) if any(hpx[x, y] > 128 for x in range(0, hw, 2)))
     brim_xs = [x for y in range(brim_y - hh // 6, brim_y + 1) for x in range(hw) if hpx[x, y] > 128]
-    brim_w = max(brim_xs) - min(brim_xs)
     brim = ((max(brim_xs) + min(brim_xs)) / 2.0, float(brim_y))
-    # Where that brim is on the drawing: his hat in its place there, as the stab wears it.
-    back = turn((brim[0] - hat_turn_at[0], brim[1] - hat_turn_at[1]), HAT_LEAN)
-    brim_drawn = (hat_origin[0] + hat_centre[0] + back[0], hat_origin[1] + hat_centre[1] + back[1])
-    hat_img, hpad = linework.thicken(hat_level, LINE_BOOST)
+    hat_img, hpad = linework.thicken(hat_img, LINE_BOOST)
     hat_img.save(os.path.join(parts_dir, 'Hat.png'))
     parts['Hat'] = {'texture': 'parts/Hat.png', 'pivot': [round(brim[0] + hpad, 2), round(brim[1] + hpad, 2)]}
-    # Sat down over the point until the triangle under the brim is HAT_GRIP of its width.
-    across = corner_front[0] - corner_back[0]
-    sink = min(0.9, HAT_GRIP * brim_w / across)
-    on = along(top, along(corner_back, corner_front, 0.5), sink)
-    hat_at = [round(on[0], 1), round(on[1], 1)]
-    crown = -(hat_at[1] - brim[1])
+    hat_at = from_hip((hat_origin[0] + brim[0], hat_origin[1] + brim[1]))
+    crown = hip[1] - circy.bbox(hat)[1]
 
-    # The face, each mark on its own, level as drawn. Standing, they are set on the body as they
-    # sit to each other on the drawing as nearly as fits (fit_face); tipped over into the stab,
-    # they go back exactly where they are on the drawing.
     face = []
     for mark, name, kind, tilt in ((back_eye_mark, 'FaceEye', 'eye', 1),
                                    (front_eye_mark, 'FaceEyeFront', 'eye', -1),
                                    (mouth_mark, 'FaceMouth', 'mouth', 1)):
-        piece, origin = circy.extract(img, mark)
+        piece, porigin = circy.extract(img, mark)
         x0, y0, x1, y1 = circy.bbox(mark)
-        # Eyes turn about their middles; a mouth opens down from its top.
         pin = ((x0 + x1) / 2.0, y0 if kind == 'mouth' else (y0 + y1) / 2.0)
         piece, fpad = linework.thicken(piece, LINE_BOOST)
         piece.save(os.path.join(parts_dir, name + '.png'))
         parts[name] = {'texture': 'parts/%s.png' % name,
-                       'pivot': [round(pin[0] - origin[0] + fpad, 1), round(pin[1] - origin[1] + fpad, 1)]}
-        face.append({'name': name, 'kind': kind, 'tilt': tilt, 'drawn': pin})
-    fit_face(body, (bpivot[0] + bpad, bpivot[1] + bpad), face, parts, parts_dir, hat_at[1])
+                       'pivot': [round(pin[0] - porigin[0] + fpad, 1), round(pin[1] - porigin[1] + fpad, 1)]}
+        face.append({'name': name, 'kind': kind, 'tilt': tilt, 'at': from_hip(pin)})
+
+    def root(name):
+        return from_hip(cut[name][0]['joint'])
+
+    def lower(name):
+        return [round(cut[name][2], 1), round(cut[name][1] / 2, 1)]
 
     bones = [
         {'name': 'Hip', 'parent': None, 'offset': [0, 0], 'part': None},
-        {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': leg_roots[0], 'part': 'LegBack_Upper'},
-        {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': [round(knee_dx[0], 1), round(leg_len[0] / 2, 1)], 'part': 'LegBack_Lower'},
-        {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': leg_roots[1], 'part': 'LegFront_Upper'},
-        {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': [round(knee_dx[1], 1), round(leg_len[1] / 2, 1)], 'part': 'LegFront_Lower'},
+        {'name': 'LegBack_Upper', 'parent': 'Hip', 'offset': root('LegBack'), 'part': 'LegBack_Upper'},
+        {'name': 'LegBack_Lower', 'parent': 'LegBack_Upper', 'offset': lower('LegBack'), 'part': 'LegBack_Lower'},
+        {'name': 'LegFront_Upper', 'parent': 'Hip', 'offset': root('LegFront'), 'part': 'LegFront_Upper'},
+        {'name': 'LegFront_Lower', 'parent': 'LegFront_Upper', 'offset': lower('LegFront'), 'part': 'LegFront_Lower'},
         {'name': 'Torso', 'parent': 'Hip', 'offset': [0, 0], 'part': 'Torso'},
-        {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': arm_roots[0], 'part': 'ArmBack_Upper'},
-        {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': [round(elbow_dx[0], 1), round(arm_len[0] / 2, 1)], 'part': 'ArmBack_Lower'},
+        {'name': 'ArmBack_Upper', 'parent': 'Torso', 'offset': root('ArmBack'), 'part': 'ArmBack_Upper'},
+        {'name': 'ArmBack_Lower', 'parent': 'ArmBack_Upper', 'offset': lower('ArmBack'), 'part': 'ArmBack_Lower'},
         {'name': 'Head', 'parent': 'Torso', 'offset': [0, round(-crown, 1)], 'part': None},
-        {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': arm_roots[1], 'part': 'ArmFront_Upper'},
-        {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': [round(elbow_dx[1], 1), round(arm_len[1] / 2, 1)], 'part': 'ArmFront_Lower'},
+        {'name': 'ArmFront_Upper', 'parent': 'Torso', 'offset': root('ArmFront'), 'part': 'ArmFront_Upper'},
+        {'name': 'ArmFront_Lower', 'parent': 'ArmFront_Upper', 'offset': lower('ArmFront'), 'part': 'ArmFront_Lower'},
     ]
-    extras = [{'name': 'hat', 'bone': 'Torso', 'part': 'Hat', 'offset': hat_at, 'always': True,
-               # On the body's drawing, not just its bone, so it turns round with it.
-               'onPart': True}]
+    extras = [{'name': 'hat', 'bone': 'Torso', 'part': 'Hat', 'offset': hat_at, 'always': True, 'onPart': True}]
     for f in face:
         extras.append({'name': 'face' + f['name'][4:], 'bone': 'Torso', 'part': f['name'], 'offset': f['at'],
                        'always': True, 'onPart': True, 'face': f['kind'], 'tilt': f['tilt'],
-                       'stretch': MOUTH_STRETCH if f['kind'] == 'mouth' else 1.1, 'scale': f['scale']})
+                       'stretch': MOUTH_STRETCH if f['kind'] == 'mouth' else 1.1, 'scale': 1.0})
 
-    # Tipped forward by `tip` - his point attack - he is the drawing again: every limb and the hat
-    # back where they are on it, the face too, level as drawn. The rig slides each one there as
-    # the body tips (FighterRig "tipped"). Legs and body are placed from the hip, as the legs
-    # hang from it; arms, hat and face on the body, as they hang from that.
-    def drawn_from_hip(point):
-        return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
-    tipped = {
-        'angle': round(tip, 2),
-        'from': TIP_FROM,
-        'bones': {
-            'Torso': drawn_from_hip(base),
-            'LegBack_Upper': drawn_from_hip(back_leg['joint']),
-            'LegFront_Upper': drawn_from_hip(front_leg['joint']),
-            'ArmBack_Upper': list(up(back_arm['joint'])),
-            'ArmFront_Upper': list(up(front_arm['joint'])),
-        },
-        'extras': {'hat': {'offset': list(up(brim_drawn)), 'rotation': round(-HAT_LEAN - tip, 2)}},
-    }
+    # His point attack bows him forward from the hips until the point is out in front, as far over
+    # as the triangle lies in the stab drawing. His legs stay under him, his arms go with his body,
+    # and his face turns back level, as drawn there.
+    tipped = {'angle': STAB_TIP, 'from': TIP_FROM, 'extras': {}}
     for f in face:
-        tipped['extras']['face' + f['name'][4:]] = {'offset': list(up(f['drawn'])), 'rotation': round(-tip, 2), 'scale': 1.0}
+        tipped['extras']['face' + f['name'][4:]] = {'offset': f['at'], 'rotation': -STAB_TIP, 'scale': 1.0}
 
-    leg_length = sum(leg_len) / 2.0 - LEG_TUCK
-    print('arms %d/%d  legs %d/%d  hip to crown %d  figure %d tall' % (
-        arm_len[0], arm_len[1], leg_len[0], leg_len[1], crown, crown + leg_length))
+    leg_length = (cut['LegBack'][1] + cut['LegFront'][1]) / 2.0
+    print('standing from %s: hip to crown %d, legs %d/%d, arms %d/%d' % (
+        IDLE, crown, cut['LegBack'][1], cut['LegFront'][1], cut['ArmBack'][1], cut['ArmFront'][1]))
     return bones, parts, extras, hat_img, tipped, {'canonicalHeight': round(crown, 1),
                                                    'legLength': round(leg_length, 1),
                                                    'figureHeight': round(crown + leg_length)}
@@ -645,12 +508,12 @@ def _full(small, mask):
     return ImageChops.multiply(big, mask)
 
 
-def _largest(small):
-    """The largest 4-connected region of a (small) mask."""
+def _largest(small, count=1):
+    """The largest 4-connected region of a (small) mask - or the `count` largest, together."""
     w, h = small.size
     sp = small.load()
     seen = bytearray(w * h)
-    best = []
+    found = []
     for start in range(w * h):
         if seen[start] or sp[start % w, start // w] < 128:
             continue
@@ -665,22 +528,24 @@ def _largest(small):
                 if 0 <= j < w * h and not seen[j] and sp[j % w, j // w] >= 128:
                     seen[j] = 1
                     stack.append(j)
-        if len(comp) > len(best):
-            best = comp
+        found.append(comp)
+    found.sort(key=len, reverse=True)
     region = Image.new('L', small.size, 0)
     rp = region.load()
-    for i in best:
-        rp[i % w, i // w] = 255
+    for comp in found[:count]:
+        for i in comp:
+            rp[i % w, i // w] = 255
     return region
 
 
-def colour_body(img, seed):
-    """The one big white shape - his body - coloured in white pencil, deeper toward its edge.
+def colour_body(img, seed, shapes=1):
+    """The one big white shape - his body - coloured in white pencil, deeper toward its edge (or
+    the `shapes` biggest: standing, his triangle and the body under it, with a line between).
     Smaller whites (an eye, the gaps in a mouth) stay white; nothing that is not white changes."""
     r, g, b, a = img.split()
     white = ImageChops.darker(ImageChops.darker(r, g), b).point(lambda v: 255 if v > 200 else 0)
     white = ImageChops.multiply(white, a.point(lambda v: 255 if v > 128 else 0))
-    small = _largest(_small(white))
+    small = _largest(_small(white), shapes)
     body = _full(small, white)
     depth = small.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MinFilter(7))
     depth = depth.filter(ImageFilter.GaussianBlur(26 // SMALL)).resize(img.size, Image.BILINEAR)
@@ -738,7 +603,7 @@ def colour_in(parts_dir, poses_dir):
         for step in steps:
             img = step(img)
         img.save(path)
-    redo(os.path.join(parts_dir, 'Torso.png'), lambda img: colour_body(img, 'triguy-torso'))
+    redo(os.path.join(parts_dir, 'Torso.png'), lambda img: colour_body(img, 'triguy-torso', 2))
     redo(os.path.join(parts_dir, 'FaceMouth.png'), fill_teeth)
     redo(os.path.join(parts_dir, 'Hat.png'), hat_sheen)
     redo(os.path.join(poses_dir, 'hat.png'), hat_sheen)
@@ -754,7 +619,7 @@ def main():
         if not os.path.isdir(d):
             os.makedirs(d)
 
-    bones, parts, extras, hat_img, tipped, dims = cut_main(parts_dir)
+    bones, parts, extras, hat_img, tipped, dims = cut_idle(parts_dir)
     poses = cut_poses(poses_dir)
     # The hat on its own, for when it is thrown: spinning about its middle.
     hat_img.save(os.path.join(poses_dir, 'hat.png'))

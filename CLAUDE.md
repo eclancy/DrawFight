@@ -129,7 +129,8 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`python tools/art/cut_circy.py`** — re-cut Circy's parts and poses from Elim's drawings in
   `fighters/circy/source/`. Takes about 20 seconds; Python 2.7 without numpy is slow per pixel.
 - **`python tools/art/cut_triguy.py`** — re-cut Triguy's parts, poses and effects from Elim's
-  drawings in `fighters/triguy/source/`, and colours him in. About two minutes.
+  drawings in `fighters/triguy/source/` (his rig from `idle.png`, Elim's drawing of him standing
+  still), and colours him in. About half a minute.
 - **`python tools/art/cut_edgelord.py`** — rebuild EdgeLord's rig: colours his
   drawing, cuts it, and draws the swords and turning frames. About a minute.
 - **`python tools/art/cut_doombot.py`** — re-cut DoomBot from the photo of his drawing,
@@ -143,7 +144,7 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - Every cut script ends by lifting the fighter's eyes and mouth out of the drawing so they can
   move (`tools/art/faces.py`, the boxes in `tools/art/face_specs.py`); Flambé's and Lugnut's are
   drawn as separate parts in their own scripts (`FACE`), and Triguy's are lifted in
-  `cut_triguy.py` itself, so they stay level when his body turns upright. See "Faces" in `.ai/art-pipeline.md`.
+  `cut_triguy.py` itself, so they can turn back level as he bows into his point attack. See "Faces" in `.ai/art-pipeline.md`.
 - **`bash tools/intake/pull_submissions.sh`** — "check for new fighters". Copies new
   submissions from the ecec.dev/draw form into `fighters/incoming/<id>/` (photos, `answers.json`,
   `sheet.md`), and stages drawn in the game and suggestions typed in it into `incoming/stages/`

@@ -14,8 +14,8 @@
     {
       "name": "LegBack_Upper", 
       "offset": [
-        -177.8, 
-        -37.7
+        -12.5, 
+        1.0
       ], 
       "parent": "Hip", 
       "part": "LegBack_Upper"
@@ -23,8 +23,8 @@
     {
       "name": "LegBack_Lower", 
       "offset": [
-        30.5, 
-        448.7
+        -33.5, 
+        163.4
       ], 
       "parent": "LegBack_Upper", 
       "part": "LegBack_Lower"
@@ -32,8 +32,8 @@
     {
       "name": "LegFront_Upper", 
       "offset": [
-        177.8, 
-        -10.3
+        12.5, 
+        1.0
       ], 
       "parent": "Hip", 
       "part": "LegFront_Upper"
@@ -41,8 +41,8 @@
     {
       "name": "LegFront_Lower", 
       "offset": [
-        -89.5, 
-        510.2
+        14.5, 
+        114.1
       ], 
       "parent": "LegFront_Upper", 
       "part": "LegFront_Lower"
@@ -59,8 +59,8 @@
     {
       "name": "ArmBack_Upper", 
       "offset": [
-        -347.0, 
-        -248.8
+        39.5, 
+        -835.0
       ], 
       "parent": "Torso", 
       "part": "ArmBack_Upper"
@@ -68,8 +68,8 @@
     {
       "name": "ArmBack_Lower", 
       "offset": [
-        0.5, 
-        338.9
+        -66.0, 
+        340.0
       ], 
       "parent": "ArmBack_Upper", 
       "part": "ArmBack_Lower"
@@ -78,7 +78,7 @@
       "name": "Head", 
       "offset": [
         0, 
-        -1575.2
+        -1489.0
       ], 
       "parent": "Torso", 
       "part": null
@@ -86,8 +86,8 @@
     {
       "name": "ArmFront_Upper", 
       "offset": [
-        313.0, 
-        -192.8
+        452.5, 
+        -619.0
       ], 
       "parent": "Torso", 
       "part": "ArmFront_Upper"
@@ -95,22 +95,22 @@
     {
       "name": "ArmFront_Lower", 
       "offset": [
-        19.5, 
-        399.4
+        63.5, 
+        217.2
       ], 
       "parent": "ArmFront_Upper", 
       "part": "ArmFront_Lower"
     }
   ], 
-  "canonicalHeight": 1575.2, 
+  "canonicalHeight": 1489.0, 
   "extras": [
     {
       "always": true, 
       "bone": "Torso", 
       "name": "hat", 
       "offset": [
-        -93.1, 
-        -1209.2
+        368.0, 
+        -1185.0
       ], 
       "onPart": true, 
       "part": "Hat"
@@ -121,12 +121,12 @@
       "face": "eye", 
       "name": "faceEye", 
       "offset": [
-        -93.0, 
-        -508.0
+        240.5, 
+        -996.5
       ], 
       "onPart": true, 
       "part": "FaceEye", 
-      "scale": 0.75, 
+      "scale": 1.0, 
       "stretch": 1.1, 
       "tilt": 1
     }, 
@@ -136,12 +136,12 @@
       "face": "eye", 
       "name": "faceEyeFront", 
       "offset": [
-        91.0, 
-        -328.0
+        323.0, 
+        -976.0
       ], 
       "onPart": true, 
       "part": "FaceEyeFront", 
-      "scale": 0.75, 
+      "scale": 1.0, 
       "stretch": 1.1, 
       "tilt": -1
     }, 
@@ -151,109 +151,109 @@
       "face": "mouth", 
       "name": "faceMouth", 
       "offset": [
-        -61.0, 
-        -304.0
+        263.5, 
+        -918.0
       ], 
       "onPart": true, 
       "part": "FaceMouth", 
-      "scale": 0.75, 
+      "scale": 1.0, 
       "stretch": 0.12, 
       "tilt": 1
     }
   ], 
-  "figureHeight": 2510.0, 
-  "legLength": 934.9, 
+  "figureHeight": 1767.0, 
+  "legLength": 277.5, 
   "legsOnBody": true, 
   "name": "Triguy", 
   "parts": {
     "ArmBack_Lower": {
       "pivot": [
-        48.0, 
-        24.39
+        27.5, 
+        24.45
       ], 
       "texture": "parts/ArmBack_Lower.png"
     }, 
     "ArmBack_Upper": {
       "pivot": [
-        29.5, 
+        125.5, 
         15.5
       ], 
       "texture": "parts/ArmBack_Upper.png"
     }, 
     "ArmFront_Lower": {
       "pivot": [
-        52.0, 
-        24.86
+        150.5, 
+        24.2
       ], 
       "texture": "parts/ArmFront_Lower.png"
     }, 
     "ArmFront_Upper": {
       "pivot": [
-        32.5, 
-        17.5
+        14.0, 
+        18.0
       ], 
       "texture": "parts/ArmFront_Upper.png"
     }, 
     "FaceEye": {
       "pivot": [
-        136.5, 
-        116.0
+        26.0, 
+        82.5
       ], 
       "texture": "parts/FaceEye.png"
     }, 
     "FaceEyeFront": {
       "pivot": [
-        169.0, 
-        76.0
+        26.5, 
+        92.0
       ], 
       "texture": "parts/FaceEyeFront.png"
     }, 
     "FaceMouth": {
       "pivot": [
-        236.0, 
+        75.0, 
         14.0
       ], 
       "texture": "parts/FaceMouth.png"
     }, 
     "Hat": {
       "pivot": [
-        358.5, 
-        380.0
+        137.5, 
+        318.0
       ], 
       "texture": "parts/Hat.png"
     }, 
     "LegBack_Lower": {
       "pivot": [
-        69.5, 
-        24.7
+        68.0, 
+        24.91
       ], 
       "texture": "parts/LegBack_Lower.png"
     }, 
     "LegBack_Upper": {
       "pivot": [
-        25.0, 
-        17.0
+        62.5, 
+        14.5
       ], 
       "texture": "parts/LegBack_Upper.png"
     }, 
     "LegFront_Lower": {
       "pivot": [
-        93.5, 
-        24.19
+        31.5, 
+        24.13
       ], 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        117.0, 
-        17.0
+        16.0, 
+        14.0
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
     "Torso": {
       "pivot": [
-        441.0, 
-        1593.0
+        38.5, 
+        1205.0
       ], 
       "texture": "parts/Torso.png"
     }
@@ -269,8 +269,8 @@
     }, 
     "hat": {
       "anchor": [
-        478.5, 
-        198.0
+        241.5, 
+        168.5
       ], 
       "texture": "poses/hat.png"
     }, 
@@ -321,60 +321,31 @@
     }
   }, 
   "tipped": {
-    "angle": 98.39, 
-    "bones": {
-      "ArmBack_Upper": [
-        376.0, 
-        -61.5
-      ], 
-      "ArmFront_Upper": [
-        -19.6, 
-        -1291.0
-      ], 
-      "LegBack_Upper": [
-        -288.0, 
-        42.5
-      ], 
-      "LegFront_Upper": [
-        288.0, 
-        -42.5
-      ], 
-      "Torso": [
-        -450.0, 
-        -302.5
-      ]
-    }, 
+    "angle": 79.2, 
     "extras": {
       "faceEye": {
         "offset": [
-          -181.5, 
-          -243.6
+          240.5, 
+          -996.5
         ], 
-        "rotation": -98.39, 
+        "rotation": -79.2, 
         "scale": 1.0
       }, 
       "faceEyeFront": {
         "offset": [
-          -150.1, 
-          -579.3
+          323.0, 
+          -976.0
         ], 
-        "rotation": -98.39, 
+        "rotation": -79.2, 
         "scale": 1.0
       }, 
       "faceMouth": {
         "offset": [
-          -78.6, 
-          -313.9
+          263.5, 
+          -918.0
         ], 
-        "rotation": -98.39, 
+        "rotation": -79.2, 
         "scale": 1.0
-      }, 
-      "hat": {
-        "offset": [
-          -416.5, 
-          -77.0
-        ], 
-        "rotation": -130.39
       }
     }, 
     "from": 40.0

@@ -1428,14 +1428,13 @@ public partial class FighterRig : Node2D
 	// --- Tipped over into the drawing -----------------------------------------------------------
 
 	/// <summary>
-	/// A rig stood up from a drawing of the fighter tipped over (rig.json "tipped"): Triguy's
-	/// triangle is drawn lying on its side, point forward - his point attack - and stands on end,
-	/// point up. As the body tips forward past <see cref="tippedFrom"/> degrees, each limb, the body
-	/// and every extra named slides from where it hangs standing toward where it is on the
-	/// drawing, and is there at <see cref="tippedAngle"/>: a body tipped right over is the drawing
-	/// again - his legs out of the side that is now underneath, his hat on the corner now on top,
-	/// his face level and full size, as drawn. Nothing is redrawn; each piece is only moved and
-	/// turned. Eric's call, 2026-10-19, from Elim: "triguys idle is STILL his stab".
+	/// What happens to a rig as its body tips right over (rig.json "tipped"): as the body tips forward
+	/// past <see cref="tippedFrom"/> degrees, each limb root, the body and every extra named slides
+	/// from where it hangs standing toward the place given for it, turning as given, and is there at
+	/// <see cref="tippedAngle"/>. Triguy's names only his face, turned back level as he bows into his
+	/// point attack (Eric, 2026-10-23; it once slid every piece of him onto his stab drawing, when
+	/// his rig was that drawing stood on end). Nothing is redrawn; each piece is only moved and
+	/// turned.
 	/// </summary>
 	float tippedAngle, tippedFrom;
 

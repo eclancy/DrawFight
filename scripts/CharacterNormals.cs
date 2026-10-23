@@ -755,7 +755,9 @@ public static class CharacterNormals
 		MoveData finish = jab.ComboNext.ComboNext;
 		finish.MoveName = "Tip";
 		finish.Anim = AttackAnim.PointThrust;
-		finish.HitboxOffset = new Vector2(72.0f, 14.0f);
+		// On the point of his triangle, bowed out level in front (Eric, 2026-10-23: he stands as
+		// drawn standing now, a tall body under the triangle, so the point goes further out).
+		finish.HitboxOffset = new Vector2(134.0f, 30.0f);
 		return jab;
 	}
 
@@ -791,12 +793,12 @@ public static class CharacterNormals
 		m.MoveName = "Nose Charge"; m.Anim = AttackAnim.PointThrust;
 		m.StartupFrames = 4; m.ActiveFrames = 12; m.EndlagFrames = 18;
 		m.Damage = 10.0f; m.LaunchAngleDegrees = 38.0f;
-		m.HitboxOffset = new Vector2(82.0f, 8.0f);
+		m.HitboxOffset = new Vector2(150.0f, 30.0f);
 		m.Special = SpecialKind.Dash; m.SpecialSpeed = 1450.0f;
 
 		m = M(moves, MoveSlot.ForwardSmash);
 		m.MoveName = "Big Point"; m.Anim = AttackAnim.PointThrust;
-		m.HitboxOffset = new Vector2(82.0f, 8.0f); m.HitboxRadius = 50.0f;
+		m.HitboxOffset = new Vector2(150.0f, 30.0f); m.HitboxRadius = 50.0f;
 
 		// Hat Trick: the top hat spins up off his head - two bonks that carry them up with it, and
 		// a third that pops them off the top.
