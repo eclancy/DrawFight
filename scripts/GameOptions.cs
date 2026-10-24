@@ -119,6 +119,18 @@ public static class PlayerNames
 		config.Save(Path);
 	}
 
+	/// <summary>
+	/// A letter typed onto a name being spelled: a capital at the start of each word, small after,
+	/// no double spaces, and no longer than MaxLength.
+	/// </summary>
+	public static string Typed(string draft, char c)
+	{
+		if (draft.Length >= MaxLength) return draft;
+		bool startOfWord = draft.Length == 0 || draft.EndsWith(" ");
+		if (c == ' ' && startOfWord) return draft;
+		return draft + (startOfWord ? char.ToUpper(c) : char.ToLower(c));
+	}
+
 	/// <summary>A name used: to the top of the list, added if it is new.</summary>
 	public static void Use(string name)
 	{

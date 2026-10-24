@@ -9,7 +9,7 @@ using Godot;
 /// </summary>
 public partial class DrawingsScreen : Node2D
 {
-	static readonly Rect2 BackBox = new Rect2(190.0f, 40.0f, 160.0f, 66.0f);
+	static Rect2 BackBox => MenuTheme.BackBox;
 	const float CardWidth = 360.0f;
 	const float CardHeight = 330.0f;
 	const float Gap = 32.0f;

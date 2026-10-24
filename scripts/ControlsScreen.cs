@@ -9,7 +9,7 @@ public partial class ControlsScreen : Node2D
 {
 	public string OpenedBy;
 
-	static readonly Rect2 BackBox = new Rect2(190.0f, 950.0f, 240.0f, 76.0f);
+	static Rect2 BackBox => MenuTheme.BackBox;
 
 	TouchCursors touch;
 	Node2D cursorLayer;
@@ -106,7 +106,7 @@ public partial class ControlsScreen : Node2D
 	{
 		MenuTheme.DrawPage(this, GetViewportRect().Size);
 		Font font = ThemeDB.FallbackFont;
-		DrawString(font, new Vector2(190.0f, 170.0f), "Controls", HorizontalAlignment.Left, -1, 96, MenuTheme.Text);
+		DrawString(font, new Vector2(190.0f, 190.0f), "Controls", HorizontalAlignment.Left, -1, 88, MenuTheme.Text);
 
 		DrawColumn(190.0f, "Keyboard and mouse", KeyboardControls);
 		DrawColumn(1000.0f, "Controller", PadControls());
@@ -118,6 +118,6 @@ public partial class ControlsScreen : Node2D
 
 		bool hot = false;
 		foreach (MenuCursor cursor in touch.Shown) hot |= BackBox.HasPoint(cursor.Position);
-		MenuTheme.DrawButton(this, BackBox, "Back", 390, hot, fontSize: 38);
+		MenuTheme.DrawButton(this, BackBox, "Back", 390, hot, fontSize: 32);
 	}
 }

@@ -12,7 +12,7 @@ public partial class ChangelogScreen : Node2D
 	public string OpenedBy;
 
 	const string Path = "res://assets/changelog.txt";
-	static readonly Rect2 BackBox = new Rect2(190.0f, 950.0f, 240.0f, 76.0f);
+	static Rect2 BackBox => MenuTheme.BackBox;
 
 	TouchCursors touch;
 	Node2D cursorLayer;
@@ -101,9 +101,9 @@ public partial class ChangelogScreen : Node2D
 	public override void _Draw()
 	{
 		MenuTheme.DrawPage(this, GetViewportRect().Size);
-		DrawString(ThemeDB.FallbackFont, new Vector2(190.0f, 170.0f), "What's new", HorizontalAlignment.Left, -1, 96, MenuTheme.Text);
+		DrawString(ThemeDB.FallbackFont, new Vector2(190.0f, 190.0f), "What's new", HorizontalAlignment.Left, -1, 88, MenuTheme.Text);
 		bool hot = false;
 		foreach (MenuCursor cursor in touch.Shown) hot |= BackBox.HasPoint(cursor.Position);
-		MenuTheme.DrawButton(this, BackBox, "Back", 390, hot, fontSize: 38);
+		MenuTheme.DrawButton(this, BackBox, "Back", 390, hot, fontSize: 32);
 	}
 }

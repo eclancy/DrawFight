@@ -168,6 +168,10 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
 - **`--items=off|low|medium|high`** sets how often items drop for one run (not saved);
   **`--item=ID`** drops only that one (`--item=glitter_bomb`), every couple of seconds, to look
   at it; **`--itemsettings`** boots to the item settings screen.
+- **`python tools/art/gallery.py`** - copy every drawing sent in, made smaller, into
+  `assets/gallery/` for the gallery: `fighters/*/source/` is left out of the downloadable game.
+  `for_my_nephew.webp` there is Eric's own picture, kept as it is. Rerun after adding a fighter's
+  drawings (and add them to its `DRAWINGS`), then `--import`.
 - **`python tools/art/app_icon.py`** — rebuild `icon.png` and `icon.ico` (the installer's) as a
   crop of a real frame of the game: Circy, Elim's drawing, standing idle on the lined notepad page
   (`IconFrame`; shoot it first with `--icon --shot=40`). The icon is never drawn separately; if Circy is re-cut, re-shoot
@@ -190,7 +194,9 @@ read drifts from the version we maintain. Kid-facing pages stay short, picture-l
   **`--unlocked=lugnut`** show the NEW CHALLENGER and unlocked screens on their own.
   **`--achievements`** opens the achievements page, **`--grant=meteor`** earns one for the run
   (with `--locked`, nothing kept) and **`--skins=blueflame,,mk2`** puts each seat of a `--match`
-  in a skin (`Skins`). **`--photos`** opens sending photos of a paper drawing.
+  in a skin (`Skins`). **`--photos`** opens sending photos of a paper drawing. **`--gallery`**
+  opens the gallery (from Options) and **`--nephew`** the "for my nephew..." picture that follows
+  DoomBot's story the first time it is finished.
 - **`"$GODOT_BIN" --path . -- --story=edgelord --shots=60,400,900`** — play a fighter's story
   (`--story=edgelord:2` from its third chapter, counting the opening as 0;
   `--story=edgelord:0:after` at the scene after chapter 0's fight; `--storyselect` opens

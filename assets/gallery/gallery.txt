@@ -1,0 +1,23 @@
+# Written by tools/art/gallery.py: one picture a line, "file|fighter" (story id; none for the last).
+circy_circytcircle.png|circy
+circy_circytcirclesmall.png|circy
+circy_circytcircletall.png|circy
+circy_circytcircleshoulderbash.png|circy
+circy_grapplinghook.png|circy
+circy_lasorbeam.png|circy
+circy_circytcirclebombframe1.png|circy
+circy_circytcirclebombframe3.png|circy
+circy_circytcirclebombframe4boom.png|circy
+circy_bombpart2shrinking.png|circy
+triguy_triguy.png|triguy
+triguy_idle.png|triguy
+triguy_taunt_pose.png|triguy
+triguy_taunt_pog.png|triguy
+triguy_taunt_surprised.png|triguy
+triguy_crying.png|triguy
+triguy_spike.png|triguy
+triguy_trampoline.png|triguy
+triguy_outline.png|triguy
+edgelord_edgelord.jpg|edgelord
+doombot_doombot.jpg|doombot
+for_my_nephew.webp|

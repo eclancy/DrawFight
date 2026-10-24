@@ -43,7 +43,7 @@ public partial class SendFighterScreen : Node2D
 
 	int PhotoRoom => MaxRows - pages.Count;
 
-	static readonly Rect2 BackBox = new Rect2(190.0f, 30.0f, 160.0f, 66.0f);
+	static Rect2 BackBox => MenuTheme.BackBox;
 	static readonly Rect2 SendBox = new Rect2(190.0f, 962.0f, 540.0f, 92.0f);
 	static readonly Rect2 RetryBox = new Rect2(560.0f, 262.0f, 170.0f, 50.0f);
 	static readonly Rect2 DoneDrawingsBox = new Rect2(560.0f, 640.0f, 380.0f, 84.0f);

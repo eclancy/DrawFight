@@ -8,6 +8,13 @@ using Godot;
 public static class MenuTheme
 {
 	public static readonly Color Paper = new Color(0.965f, 0.960f, 0.940f);
+
+	/// <summary>
+	/// Every screen's Back button, in the one place - the top left, above its title - so it is
+	/// never mistaken for one of the screen's own choices (Eric, 2026-10-24: on the options it sat
+	/// at the bottom, among them).
+	/// </summary>
+	public static readonly Rect2 BackBox = new Rect2(190.0f, 30.0f, 160.0f, 66.0f);
 	public static readonly Color PaperEdge = new Color(0.925f, 0.930f, 0.920f);
 	public static readonly Color Rule = new Color(0.78f, 0.855f, 0.90f);
 	public static readonly Color Margin = new Color(0.91f, 0.66f, 0.72f);

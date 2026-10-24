@@ -12,7 +12,7 @@ using Godot;
 /// </summary>
 public partial class SuggestScreen : Node2D
 {
-	static readonly Rect2 BackBox = new Rect2(190.0f, 30.0f, 160.0f, 66.0f);
+	static Rect2 BackBox => MenuTheme.BackBox;
 	static readonly Rect2 SendBox = new Rect2(190.0f, 900.0f, 460.0f, 92.0f);
 	static readonly Rect2 DoneMenuBox = new Rect2(770.0f, 640.0f, 380.0f, 84.0f);
 

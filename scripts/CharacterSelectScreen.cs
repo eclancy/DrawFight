@@ -670,13 +670,7 @@ public partial class CharacterSelectScreen : Node2D
 	}
 
 	/// <summary>A letter onto the name: capital at the start of each word, small after.</summary>
-	static void Type(Slot slot, char c)
-	{
-		if (slot.Draft.Length >= PlayerNames.MaxLength) return;
-		if (c == ' ' && (slot.Draft.Length == 0 || slot.Draft.EndsWith(" "))) return;
-		bool startOfWord = slot.Draft.Length == 0 || slot.Draft.EndsWith(" ");
-		slot.Draft += startOfWord ? char.ToUpper(c) : char.ToLower(c);
-	}
+	static void Type(Slot slot, char c) => slot.Draft = PlayerNames.Typed(slot.Draft, c);
 
 	void CloseNaming(Slot slot, bool keep)
 	{

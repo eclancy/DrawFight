@@ -196,6 +196,8 @@ public partial class GameRoot : Node2D
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--options") startAt = "options";
 			if (arg == "--changelog") startAt = "changelog";
+			if (arg == "--gallery") startAt = "gallery";
+			if (arg == "--nephew") startAt = "nephew";
 			if (arg == "--controls") startAt = "controls";
 			if (arg == "--icon") startAt = "icon";
 			if (arg == "--names") startAt = "names";
@@ -263,6 +265,8 @@ public partial class GameRoot : Node2D
 			case "items": GoItemSettings(); break;
 			case "options": GoOptions(null); break;
 			case "changelog": GoChangelog(null); break;
+			case "gallery": GoGallery(null); break;
+			case "nephew": GoNephew(null); break;
 			case "controls": GoControls(null); break;
 			// The frame the application icon is cropped from (tools/art/app_icon.py).
 			case "icon": Show(new IconFrame()); break;
@@ -339,6 +343,12 @@ public partial class GameRoot : Node2D
 
 	/// <summary>Every version's changes (from Options).</summary>
 	public void GoChangelog(string key) => Show(new ChangelogScreen { OpenedBy = key });
+
+	/// <summary>Every drawing sent in, and who drew it, ending on the picture for Eric's nephew (from Options).</summary>
+	public void GoGallery(string key) => Show(new GalleryScreen { OpenedBy = key });
+
+	/// <summary>"for my nephew..." - after DoomBot's story, the first time it is finished.</summary>
+	public void GoNephew(System.Action then) => Show(new NephewScreen { Then = then });
 
 	/// <summary>Every key, click and button, from the options.</summary>
 	public void GoControls(string key) => Show(new ControlsScreen { OpenedBy = key });
@@ -441,6 +451,7 @@ public partial class GameRoot : Node2D
 		if (Story == null) { GoMainMenu(); return; }
 		Story.At++;
 		Story.Tries = 0;
+		bool firstFinish = Story.Done && !StoryProgress.Finished(Story.PlayerId);
 		if (Story.At > StoryProgress.ChapterReached(Story.PlayerId) || Story.Done)
 		{
 			StoryProgress.Save(Story.PlayerId, Story.At, Story.Chapters.Count);
@@ -456,7 +467,10 @@ public partial class GameRoot : Node2D
 			// Finished: it starts again from the top next time, gold star and all - after its
 			// moment, and then the main menu (Eric, 2026-10-22).
 			Story.At = 0;
-			GoStoryComplete();
+			// DoomBot's own story, finished for the first time: Eric's picture for his nephew, and
+			// then the story's moment (Eric, 2026-10-24).
+			if (firstFinish && Story.PlayerId == "doombot") GoNephew(GoStoryComplete);
+			else GoStoryComplete();
 			return;
 		}
 		GoStoryMap();
