@@ -35,7 +35,7 @@ public sealed class QuitPrompt
 	public void Draw(CanvasItem canvas, IEnumerable<Vector2> pointers)
 	{
 		if (!Open) return;
-		canvas.DrawRect(new Rect2(0.0f, 0.0f, 1920.0f, 1080.0f), new Color(0.9f, 0.92f, 0.95f, 0.75f));
+		canvas.DrawRect(canvas.GetViewportRect(), new Color(0.9f, 0.92f, 0.95f, 0.75f));
 		canvas.DrawRect(new Rect2(Box.Position + new Vector2(8.0f, 10.0f), Box.Size), new Color(0.0f, 0.0f, 0.0f, 0.08f));
 		canvas.DrawRect(Box, MenuTheme.Paper);
 		CrayonBrush.InkRect(canvas, Box, MenuTheme.Ink, 5.0f, 880, 2.4f);

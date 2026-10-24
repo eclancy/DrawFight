@@ -126,6 +126,13 @@ public partial class StoryDirector : Node
 
 		humans = EveryController();
 		inputs.Clear();
+		// No items on the stage through a scene: whatever the fight left lying about, or in a hand,
+		// is cleared away (Eric, 2026-10-24). A scene's own props come after, with "hold".
+		foreach (Node child in Match.GetChildren())
+		{
+			if (child is Item item) item.Vanish();
+		}
+		foreach (Fighter fighter in Match.Fighters) fighter.SettleForScene();
 		foreach (Fighter fighter in Match.Fighters)
 		{
 			// The scene says what they do now, not the win before it.

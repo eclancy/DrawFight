@@ -110,7 +110,9 @@ public partial class PauseMenu : CanvasLayer
 	/// <summary>The match dimmed behind, and a sheet of paper in front with the choices on it.</summary>
 	void DrawPage()
 	{
-		page.DrawRect(new Rect2(0.0f, 0.0f, 1920.0f, 1080.0f), new Color(0.93f, 0.92f, 0.89f, 0.55f));
+		// The whole screen, whatever its shape: drawn 1920x1080, a screen taller than 16:9 (the page
+		// stretches to fit it) was left with a strip along the bottom undimmed.
+		page.DrawRect(page.GetViewportRect(), new Color(0.93f, 0.92f, 0.89f, 0.55f));
 
 		var sheet = new Rect2(640.0f, 250.0f, 640.0f, 120.0f + options.Length * 100.0f + 100.0f);
 		page.DrawRect(sheet, MenuTheme.Paper);

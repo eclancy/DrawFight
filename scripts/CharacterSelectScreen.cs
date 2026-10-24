@@ -61,6 +61,10 @@ public partial class CharacterSelectScreen : Node2D
 
 		/// <summary>The skin picked for his fighter (Skins), "" for none - picked by picking him again.</summary>
 		public string Skin = "";
+		/// <summary>His fighter picked, close up and mid-swing, wearing his skin (BuildPortrait) - or null.</summary>
+		public SubViewport Portrait;
+		/// <summary>Which fighter and skin the portrait shows, "" for none.</summary>
+		public string PortraitOf = "";
 		public bool IsCpu;
 		public bool Human => Joined && !IsCpu;
 	}
@@ -387,6 +391,89 @@ public partial class CharacterSelectScreen : Node2D
 		holder.Position = new Vector2(window.X * 0.5f - body.GetCenter().X * scale, window.Y - 4.0f - body.End.Y * scale);
 	}
 
+	/// <summary>
+	/// Where a seat's portrait shows: the whole of its box, the fighter toward the right of it with
+	/// his name and READY over the left - or, in a story's wide panel, its right-hand end.
+	/// </summary>
+	Rect2 PortraitRect(int player)
+	{
+		Rect2 panel = PanelRect(player, GetViewportRect().Size);
+		if (ForStory) return new Rect2(panel.End.X - 330.0f, panel.Position.Y + 6.0f, 324.0f, panel.Size.Y - 12.0f);
+		return panel.Grow(-6.0f);
+	}
+
+	/// <summary>
+	/// The fighter a seat picked, zoomed in on and caught mid-swing - his own forward smash, as it
+	/// lands - in the skin picked for him, in his box (Eric, 2026-10-24). Drawn into a little
+	/// viewport of its own, so it sits in the box under its buttons and words.
+	/// </summary>
+	void BuildPortrait(Slot slot, string of)
+	{
+		slot.PortraitOf = of;
+		slot.Portrait?.QueueFree();
+		slot.Portrait = null;
+		if (of == "") return;
+
+		FighterData data = FighterCatalog.Get(slot.Index);
+		Skin skin = Skins.Find(slot.Skin);
+		if (skin != null && skin.Becomes >= 0) data = FighterCatalog.Get(skin.Becomes);
+		Rect2 window = PortraitRect(slot.Seat);
+		var view = new SubViewport
+		{
+			Size = new Vector2I(Mathf.RoundToInt(window.Size.X), Mathf.RoundToInt(window.Size.Y)),
+			TransparentBg = true,
+			Disable3D = true,
+			RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
+		};
+		AddChild(view);
+		var holder = new Node2D();
+		view.AddChild(holder);
+		var rig = new FighterRig();
+		holder.AddChild(rig);
+		if (!rig.Load(data))
+		{
+			view.QueueFree();
+			return;
+		}
+		rig.Normalise(230.0f, 115.0f, data.VisualScale);
+		rig.ArmBackLimit = data.ArmReachBack;
+		rig.CarryOnShoulder = false;
+		rig.HandOnHip = false;
+		rig.SetPlanted(true);
+		rig.SetStanding(true);
+		// Facing in across the box, toward his name.
+		rig.SetFacing(-1);
+		rig.SetFace(FaceState.Toned(FaceState.Named("angry"), data.FaceStrength));
+		MoveData swing = data.Move(MoveSlot.ForwardSmash);
+		var pose = new Pose();
+		for (int i = 0; i < 12; i++)
+		{
+			if (swing != null) FighterAnimations.SampleAttack(swing, swing.StartupFrames, pose, lunging: true);
+			else pose.CopyFrom(FighterAnimations.StoryPose("fist"));
+			rig.ApplyDirect(pose, 1.0f);
+		}
+		if (skin != null && skin.Becomes < 0 && TeamLook.ForColour(data, skin.Colour) is ShaderMaterial look) TeamLook.Wear(rig, look);
+
+		// Close up: the whole of him about one and a half times the box's height, the top of him -
+		// head, shoulders, the swing - in the box, toward its right.
+		Rect2 body = rig.BodyBounds(holder);
+		if (body.Size.Y >= 1.0f)
+		{
+			float scale = window.Size.Y * 1.5f / body.Size.Y;
+			holder.Scale = Vector2.One * scale;
+			holder.Position = new Vector2(window.Size.X * 0.74f - body.GetCenter().X * scale, window.Size.Y * 0.06f - body.Position.Y * scale);
+		}
+		slot.Portrait = view;
+	}
+
+	void DrawFadeOver(Rect2 shot)
+	{
+		Color paper = new Color(MenuTheme.Paper, 0.94f), clear = new Color(MenuTheme.Paper, 0.0f);
+		float fade = shot.Size.X * 0.72f;
+		DrawPolygon(new[] { shot.Position, shot.Position + new Vector2(fade, 0.0f), shot.Position + new Vector2(fade, shot.Size.Y), shot.Position + new Vector2(0.0f, shot.Size.Y) },
+			new[] { paper, clear, clear, paper });
+	}
+
 	Rect2 PanelRect(int player, Vector2 viewport)
 	{
 		if (ForStory) return new Rect2(RowLeft, PanelTop, PanelWidth, PanelHeight);
@@ -648,7 +735,7 @@ public partial class CharacterSelectScreen : Node2D
 		for (int i = 0; i < slots.Length; i++)
 		{
 			Slot slot = slots[i];
-			state.Append('|').Append(slot.Joined).Append(slot.Human).Append(slot.IsCpu).Append(slot.Index).Append(slot.Naming)
+			state.Append('|').Append(slot.Joined).Append(slot.Human).Append(slot.IsCpu).Append(slot.Index).Append(slot.Skin).Append(slot.Naming)
 				.Append(slot.PlayerName).Append(Teams[i]).Append(GameRoot.Instance.CpuDifficulty[i]);
 			if (slot.Human && slot.Cursor != null) state.Append(':').Append(ButtonUnder(slot.Cursor.Position));
 		}
@@ -1017,6 +1104,11 @@ public partial class CharacterSelectScreen : Node2D
 		}
 
 		RefreshPanels();
+		foreach (Slot slot in slots)
+		{
+			string of = slot.Locked && !Unlocks.IsLocked(slot.Index) && (!ForStory || slot == slots[0]) ? $"{slot.Index}/{slot.Skin}" : "";
+			if (of != slot.PortraitOf) BuildPortrait(slot, of);
+		}
 
 		foreach (Card card in cards)
 		{
@@ -1123,6 +1215,14 @@ public partial class CharacterSelectScreen : Node2D
 	/// <summary>Who a panel shows: his name and description, or, still locked, a question mark.</summary>
 	void ShowFighter(Slot slot, int index)
 	{
+		ShowAbout(slot, index);
+		// Picked, four to a row, his portrait takes the box where his description was: it was
+		// read while choosing (BuildPortrait).
+		if (!ForStory && slot.Locked && index == slot.Index) slot.Blurb.Text = "";
+	}
+
+	void ShowAbout(Slot slot, int index)
+	{
 		if (index >= 0 && Unlocks.IsLocked(index))
 		{
 			slot.Name.SetText(LockedName, NameStyle.Plain(MenuTheme.Soft));
@@ -1223,6 +1323,14 @@ public partial class CharacterSelectScreen : Node2D
 			DrawRect(panel, teamed ? new Color(MenuTheme.TeamTint(Teams[i]), 0.16f) : new Color(1.0f, 1.0f, 1.0f, slot.Joined ? 0.55f : 0.3f));
 			CrayonBrush.InkRect(this, panel, slot.Locked ? edge : MenuTheme.Rule,
 				slot.Locked ? 6.0f : 3.0f, 51 + i * 7, 2.6f);
+			if (slot.Portrait != null)
+			{
+				Rect2 shot = PortraitRect(i);
+				DrawTextureRect(slot.Portrait.GetTexture(), shot, false);
+				// The page shows through again toward the left, so his name and READY read over it. A
+				// story's wide panel has its words clear of him already.
+				if (!ForStory) DrawFadeOver(shot);
+			}
 			if (teamed) DrawTeamButton(TeamButton(i), Teams[i], 97 + i);
 		}
 

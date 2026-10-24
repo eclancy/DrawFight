@@ -313,6 +313,17 @@ public partial class Fighter
 	/// <summary>Turns to face a way - as a turn round, the paper turn and all, not a snap.</summary>
 	public void TurnTo(int direction) => Facing = direction < 0 ? -1 : 1;
 
+	/// <summary>
+	/// A scene starts clean: nothing in his hand, and none of the fight's heat left in him - DoomBot
+	/// does not stand glowing red through a conversation (Eric, 2026-10-24). A scene that wants him
+	/// hot says so ("heat").
+	/// </summary>
+	public void SettleForScene()
+	{
+		DropHeldItem(remove: true);
+		SetHeat(0.0f);
+	}
+
 	/// <summary>Sets his heat outright: DoomBot, mocked, starts the fight at full heat.</summary>
 	public void SetHeat(float amount)
 	{

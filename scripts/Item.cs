@@ -306,6 +306,13 @@ public partial class Item : CharacterBody2D
 	public bool CanBeErased(Fighter by) => (State == Phase.Thrown || State == Phase.Effect) && OwnerFighter != by;
 
 	/// <summary>Gone in a little puff of paper dust.</summary>
+	/// <summary>Gone without a puff: cleared away as a story scene starts.</summary>
+	public void Vanish()
+	{
+		State = Phase.Gone;
+		QueueFree();
+	}
+
 	public void Poof()
 	{
 		if (State == Phase.Gone) return;
