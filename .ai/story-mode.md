@@ -280,7 +280,11 @@ gets the fridge: "Bro. That joke was mid.")
 His own story is the villain's side:
 
 - **Opening.** A factory hum. A red eye flickers on beside the fridge. "SCANNING." His Eye Laser
-  sweeps the door. "TARGET: FRIDGE. STATUS: COVERED IN... DRAWINGS. UNACCEPTABLE."
+  sweeps the door. "TARGET: FRIDGE. STATUS: COVERED IN... DRAWINGS. UNACCEPTABLE." Then his
+  reasoning (Eric, 2026-10-24): "ANALYSIS." The fridge hums, is cold, has a light that knows when
+  the door opens: a machine. On it, paper. "ONLY A MECHANICAL BEING MAY BELONG ON A MACHINE. I AM
+  A MECHANICAL BEING." He burns PROTOCOL: CLEAN FRIDGE - REMOVE DRAWINGS. ONE. BY. ONE. onto the
+  door, and starts with the smallest.
 - **Fights:** Triguy, Circy, EdgeLord, Lugnut - then Flambé arrives to help his friend, and it
   is the two of them - then the finale.
 - **After every win:** "YOU HAVE BEEN... PROCESSED." Beat. "YOU ARE ON THE FLOOR NOW."
