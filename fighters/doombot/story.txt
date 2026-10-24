@@ -119,6 +119,35 @@ player pose stomp
 player (shout): UNACCEPTABLE.
 player pose none
 player mark none
+# Why the drawings have to go, and how: one by one, because only a machine belongs on a machine
+# (Eric, 2026-10-24: the opening ended before he said what he was going to do).
+wait 20
+player look normal
+player pose present
+player: ANALYSIS.
+player: IT HUMS. IT IS COLD. IT HAS A LIGHT THAT KNOWS WHEN THE DOOR OPENS.
+player: CONCLUSION: THE FRIDGE IS A MACHINE.
+player pose none
+player look squint
+player: AND ON THIS MACHINE... PAPER.
+player: CRAYON. MARKER. ONE SMALL TRIANGLE IN A HAT.
+player look normal
+player pose fist
+player: ONLY A MECHANICAL BEING MAY BELONG ON A MACHINE.
+player: I AM A MECHANICAL BEING.
+player pose none
+board at -720 -640
+camera at -320 -420 zoom 0.85
+wait 40
+player writes: PROTOCOL: CLEAN FRIDGE.
+player writes: REMOVE DRAWINGS. ONE. BY. ONE.
+wait 40
+camera on player zoom 1.1
+player look smug
+player pose crossarms
+player: BEGINNING WITH THE SMALLEST.
+player pose none
+player (slam): INITIATING.
 end
 
 == won

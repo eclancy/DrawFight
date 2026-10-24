@@ -140,12 +140,17 @@ public partial class CharacterSelectScreen : Node2D
 	const float CardGap = 26.0f;
 	/// <summary>Cards shrink as the roster grows, so the row always fits between the margins.</summary>
 	static readonly float CardWidth = Mathf.Min(320.0f, (RowRight - RowLeft - (FighterCatalog.Count - 1) * CardGap) / FighterCatalog.Count);
-	const float CardHeight = 410.0f;
+	/// <summary>
+	/// A story has one panel, not four, so the page below the cards is free: the cards stand
+	/// taller, and the one panel runs the width of the row under them, so the fighters are bigger
+	/// and the description reads on a line or two (Eric, 2026-10-24: both were squished).
+	/// </summary>
+	float CardHeight => ForStory ? 548.0f : 410.0f;
 
-	const float PanelTop = 626.0f;
-	/// <summary>A story's one panel is wide; four seats share the row.</summary>
-	float PanelWidth => ForStory ? 640.0f : 410.0f;
-	const float PanelHeight = 350.0f;
+	float PanelTop => ForStory ? 764.0f : 626.0f;
+	/// <summary>A story's one panel is the width of the row; four seats share it.</summary>
+	float PanelWidth => ForStory ? RowRight - RowLeft : 410.0f;
+	float PanelHeight => ForStory ? 206.0f : 350.0f;
 	const float PanelGap = 16.0f;
 
 	/// <summary>"Press Start to fight", shown once everyone has picked.</summary>
@@ -249,11 +254,13 @@ public partial class CharacterSelectScreen : Node2D
 
 			slot.Seat = i;
 			slot.Heading = MenuTheme.MakeLabel($"Player {i + 1}", panel.Position + new Vector2(36.0f, 22.0f), 34, tint);
-			if (!ForStory || i == 0) root.AddChild(slot.Heading);
+			// A story is one player's, so the panel is all about the fighter, not whose seat it is.
+			root.AddChild(slot.Heading);
+			slot.Heading.Visible = !ForStory;
 
 			var column = new VBoxContainer
 			{
-				Position = panel.Position + new Vector2(36.0f, ForStory ? 76.0f : 68.0f),
+				Position = panel.Position + new Vector2(36.0f, ForStory ? 18.0f : 68.0f),
 				Size = new Vector2(PanelWidth - 72.0f, 0.0f),
 			};
 			column.AddThemeConstantOverride("separation", ForStory ? 6 : 2);
@@ -261,7 +268,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			slot.Name = new NameTag { FontSize = ForStory ? 52 : 44, FitWidth = !ForStory };
 			slot.Credit = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 28 : 24, MenuTheme.Soft);
-			slot.Blurb = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 25 : 20, MenuTheme.Soft);
+			slot.Blurb = MenuTheme.MakeLabel("", Vector2.Zero, ForStory ? 30 : 20, MenuTheme.Soft);
 			slot.State = MenuTheme.MakeLabel("", Vector2.Zero, 30, tint);
 
 			// Who drew it sits on the name's own line, so crediting the artist costs no room the
@@ -376,7 +383,7 @@ public partial class CharacterSelectScreen : Node2D
 
 	Rect2 PanelRect(int player, Vector2 viewport)
 	{
-		if (ForStory) return new Rect2((viewport.X - PanelWidth) * 0.5f, PanelTop, PanelWidth, PanelHeight);
+		if (ForStory) return new Rect2(RowLeft, PanelTop, PanelWidth, PanelHeight);
 		// Four across, inside the page's margin rule.
 		const float Margin = 170.0f;
 		float left = Margin + (viewport.X - Margin - 20.0f - (PanelWidth * slots.Length + PanelGap * (slots.Length - 1))) * 0.5f;
