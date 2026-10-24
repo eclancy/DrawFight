@@ -93,7 +93,7 @@ circy: Bro. Ever tried walking? Walking is elite.
 circy pose none
 player show none
 player face circy
-narrator: But Triguy had his eye on the oldest page on the fridge.
+narrator: But Triguy had his eye on Circy's spot on the fridge.
 circy look squint
 circy: Wait. Why are you staring at my page?
 player show taunt_pog

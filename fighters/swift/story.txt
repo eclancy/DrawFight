@@ -240,10 +240,10 @@ cast circy at 400 facing left
 music story
 camera two player circy
 circy pose point
-circy (shout): Duuuuuuuuuude! First on the fridge, coming through!
+circy (shout): Duuuuuuuuuude! Coming through!
 circy pose none
 player pose shrug
-player: I know, I know. You were here first. Everybody knows.
+player: Whoa, easy. What's got you so fired up?
 player pose none
 circy look angry
 circy (shout): Touch my page and GET READY FOR EVIL STUNTS!

@@ -68,10 +68,9 @@ cast player at -300
 cast edgelord at 300 facing left
 music story
 edgelord pose crossarms
-edgelord: I let you win.
-wait 30
 edgelord look sad
-edgelord: ...Okay. I didn't. Point taken.
+edgelord: ...That wasn't luck.
+edgelord: Fine. You're good. Don't let it go to your head.
 edgelord pose none
 end
 

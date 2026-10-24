@@ -20,22 +20,34 @@ cast player at 0 facing right
 music story
 camera on player zoom 1.2 cut
 narrator: Circy was the first drawing ever put on this fridge.
-narrator: His page is the oldest. Its corners curl.
+narrator: But the fridge kept filling up.
 sound magnet_clink
 shake 10
-narrator: And somebody had just pinned a new page halfway over his.
+narrator: Clink. A new page went up, right over the corner of his.
 player look shocked
 player mark !
-wait 20
+player: Bro. That's covering my leg.
 player mark none
+sound magnet_clink
+shake 10
+narrator: Clink. Another one, over his arm.
 player look angry
+player: Duuude. I can't even see my arms anymore.
+sound magnet_clink
+shake 16
+narrator: Clink.
 player pose stomp
-player (shout): DUUUUUUUUUUDE. That's MY spot!
+player (shout): STOP. COVERING. ME. UP!
 player pose none
-player: Oldest page on the fridge. Not moving. Not even a little bit.
+player look sad
+player: Keep this up and nobody's gonna see me at all.
+wait 20
+player look angry
+player pose fist
+player: Okay. New plan. Evil stunts, till everybody can see me again.
+player pose none
 player special
 wait 40
-narrator: He wasn't going anywhere.
 end
 
 # --- How he meets someone, in their stories ------------------------------------------------
@@ -46,10 +58,10 @@ cast circy at 400 facing left
 music story
 camera two player circy
 circy pose point
-circy (shout): Duuuuuuuuuude! First on the fridge, coming through!
+circy (shout): Duuuuuuuuuude! Coming through!
 circy pose none
 player pose shrug
-player: I know, I know. You were here first. Everybody knows.
+player: Whoa, easy. What's got you so fired up?
 player pose none
 circy look angry
 circy (shout): Touch my page and GET READY FOR EVIL STUNTS!
@@ -69,7 +81,7 @@ music story
 circy look sad
 circy: Bro... do I still get to stay on the fridge?
 player pose nod
-player: Course you're staying. You were here first.
+player: Course you're staying, little dude.
 player pose none
 circy look happy
 circy (happy): Okaly dokaly!
@@ -87,11 +99,11 @@ player pose shrug
 player: Duuude, slow down! Ever tried walking? Walking is elite.
 player pose none
 triguy show taunt_surprised
-narrator: But Triguy had his eye on the oldest page on the fridge.
+narrator: But Triguy had his eye on Circy's spot on the fridge.
 triguy: that's, really kewl.
 player look happy
 player pose present
-player: Right?! Oldest page on the fridge. And it's MINE.
+player: Right?! Best spot on the fridge. And it's MINE.
 player pose none
 triguy show taunt_pose
 triguy (shout): THAT'S, REALLY KEWL.
@@ -133,12 +145,29 @@ edgelord: It IS a flex. Edges are sharp. You're just... round.
 edgelord pose none
 player look angry
 player (shout): Round means I can ROLL, bro. GET READY FOR EVIL STUNTS!
-edgelord look shocked
-edgelord pose shrug
-edgelord: ...Evil stunts. Okay, that's a little bit cool.
-edgelord pose none
 camera wide
 fight
+
+# After: he rolled right through the edges, and EdgeLord owns it (Eric, 2026-10-24).
+== beat edgelord
+cast player at -300 facing right
+cast edgelord at 300 facing left
+music story
+edgelord look shocked
+edgelord: You rolled right through my edges.
+player look smug
+player pose present
+player: Told you, bro. Round means I can roll.
+player pose none
+edgelord look sad
+edgelord pose crossarms
+edgelord: ...Fine. You won that one. Fair and square.
+edgelord pose none
+player look happy
+player pose cheer
+player (shout): GG, bro!
+player pose none
+end
 
 == vs flambe
 cast player at -400 facing right
@@ -276,22 +305,37 @@ wait 30
 player pose none
 edgelord drop at -560
 edgelord face player
+lugnut drop at 290
+lugnut face player
+triguy drop at 520
+triguy face player
 camera wide
 edgelord: Hey. Ball. ...Can we stay up here too? Fighting you was actually fun.
-lugnut drop at 430
-lugnut face player
-lugnut: A fridge is no fun with one drawing on it, pal.
-triguy drop at 680
-triguy face player
+player look sad
+player: ...Yeah. You can stay. Just, um.
+player: Can I tell you guys something?
+player: It was never about being first. Not really.
+player: It's just... page after page goes up over mine. Until nobody can see me.
+player (whisper): I don't wanna be forgotten.
+wait 30
+lugnut pose present
+lugnut: Pal. Nobody's forgetting you.
+lugnut: You get the big red magnet. Right at eye level. Where everybody looks.
+lugnut pose none
+edgelord pose crossarms
+edgelord: You? Forgettable? You told me to get ready for evil stunts.
+edgelord: I'm never forgetting that.
+edgelord pose none
 triguy show taunt_pog
 triguy: that's, really kewl.
 triguy show none
+player look shocked
+player: ...You'd remember me too?
+triguy (shout): THAT'S, REALLY KEWL.
 player look happy
 player pose cheer
-player (shout): Duuude. OBVIOUSLY. More drawings, more evil stunts!
+player (shout): Duuude. Okaly dokaly!
 player pose none
-narrator: First on the fridge. Still on the fridge. And never on it alone.
-wait 30
-player: Okaly dokaly. Round two - after my walk.
+narrator: First on the fridge. Still on the fridge. And never, ever forgotten.
 wait 60
 end

@@ -235,20 +235,28 @@ THE PICTURE to get there.
 Elim's. Talks in memes, very loudly. Grows tall, shrinks small, falls slowly, can't jump, falls over
 easily, fires a laser and drops a bomb.
 
-**Wants** (ours until Elim says): to stay. He was the first drawing ever put on this fridge -
-his page is the oldest, its corners curled - and a new page has just been pinned half over him.
+**Wants** (ours until Elim says): not to be covered up and forgotten. He was the first drawing
+ever put on this fridge, and it keeps filling up - page after page going up over his. Being the
+oldest is said once, in the opening, and after that only where the story turns on it (DoomBot
+takes the oldest first); it is not his catchphrase (Eric, 2026-10-24).
 
-- **Opening.** The camera finds the oldest page. Narrator: "Circy was the first drawing ever
-  put on this fridge." A page slides over his. "DUUUUUUUUUUDE. That's MY spot!" He stretches
-  tall (his Stretch). Narrator: "He wasn't going anywhere."
+- **Opening.** Narrator: "Circy was the first drawing ever put on this fridge. But the fridge
+  kept filling up." *Clink* - a page over his leg; *clink* - over his arm. "STOP. COVERING. ME.
+  UP!" Then, quieter: "Keep this up and nobody's gonna see me at all." Evil stunts, till everybody
+  can see him again (his Stretch).
 - **Fights:** Triguy, EdgeLord, Flambé, Lugnut, then Flambé and Lugnut together, then DoomBot.
+  Beating EdgeLord: "You rolled right through my edges." - "Told you, bro. Round means I can
+  roll." - "...Fine. You won that one. Fair and square."
 - **The running gag:** every fight starts with "GET READY FOR EVIL STUNTS!", and everyone takes
   it seriously. He tells Triguy to slow down, because walking is elite. Flambé, told "no fire
   near the fridge, not after last time": "...That's fair. That's actually very fair." Lugnut,
   asked for a magnet so strong he never comes down again: "Pal, I've got just the one."
 - **Ending.** A Gold Star Sticker drifts down and sticks to his page. "DUUUUUUUUUUDE. A GOLD
-  STAR!" Narrator: "First on the fridge. Still on the fridge." Circy: "Okaly dokaly. Going for a
-  walk."
+  STAR!" The others want to stay up too, and he tells them what it was really about: "page after
+  page goes up over mine. Until nobody can see me. ...I don't wanna be forgotten." Lugnut gives him
+  the big red magnet, at eye level; EdgeLord is never forgetting the evil stunts; Triguy, asked if
+  he'd remember him too: "THAT'S, REALLY KEWL." Narrator: "First on the fridge. Still on the
+  fridge. And never, ever forgotten."
 
 ### Triguy - Can't Stand Still
 
