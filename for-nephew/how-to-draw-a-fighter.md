@@ -23,7 +23,8 @@ A head, a body, 2 arms, 2 legs. It can be anything you want, as long as it has t
 1. **Outline in black marker.** Not pencil. Colour it in however you like after.
 2. **Three-quarter view, facing right.** Turn it a little toward you, but facing right: both
    eyes, nose pointing right. The game turns it around for you.
-3. **Spread out the arms and legs.** Like a big step. Bend the elbows and knees.
+3. **Spread out the arms and legs.** Like a big step. Bend the elbows and knees. Don't let them
+   cross or touch each other or the body.
 4. **Draw it big.** Fill the whole page.
 
 ## 4 quick checks

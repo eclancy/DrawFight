@@ -962,7 +962,12 @@ public partial class DrawScreen : Node2D
 		CrayonBrush.InkLine(canvas, new Vector2(end, tip.Y), tip, HintInk, 4.0f, 7, 1.0f);
 		CrayonBrush.InkLine(canvas, tip, tip + new Vector2(-16.0f, -12.0f), HintInk, 4.0f, 8, 0.5f);
 		CrayonBrush.InkLine(canvas, tip, tip + new Vector2(-16.0f, 12.0f), HintInk, 4.0f, 9, 0.5f);
-		if (Page.Kind == PageKind.Fighter) DrawThreeQuarterHead(tip + new Vector2(60.0f, 0.0f), 34.0f);
+		if (Page.Kind != PageKind.Fighter) return;
+		DrawThreeQuarterHead(tip + new Vector2(60.0f, 0.0f), 34.0f);
+		// The guide's rule 3. Crossed limbs are one stroke where they cross, and have to be taken
+		// apart before the game can move them (Triguy's legs; Eric, 2026-10-23).
+		canvas.DrawString(font, at + new Vector2(0.0f, 46.0f), "Arms and legs spread out - not crossing or touching",
+			HorizontalAlignment.Left, -1, 30, HintInk);
 	}
 
 	/// <summary>
