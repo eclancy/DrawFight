@@ -81,8 +81,8 @@
 == chapters
 title PROTOCOL: CLEAN FRIDGE
 opening at fridge
-fight triguy at plains
 fight circy at fridge
+fight triguy at plains
 fight edgelord at rooftops
 fight lugnut at fridge
 fight lugnut flambe at bigshow
@@ -145,7 +145,7 @@ wait 40
 camera on player zoom 1.1
 player look smug
 player pose crossarms
-player: BEGINNING WITH THE SMALLEST.
+player: BEGINNING WITH THE OLDEST.
 player pose none
 player (slam): INITIATING.
 end
@@ -154,9 +154,6 @@ end
 player look smug
 player pose crossarms
 player: YOU HAVE BEEN... PROCESSED.
-wait 30
-player pose point
-player: YOU ARE ON THE FLOOR NOW.
 end
 
 == vs triguy
@@ -205,12 +202,6 @@ circy look angry
 circy pose stomp
 circy (shout): GET READY FOR EVIL STUNTS!
 circy pose none
-player look shocked
-player mark !
-player pose tremble
-player: ...EVIL. STUNTS. NOTED.
-player pose none
-player mark none
 camera wide
 fight
 
@@ -223,17 +214,19 @@ edgelord look smug
 edgelord pose hips
 edgelord: A robot? Bit rusty, aren't you?
 edgelord pose none
-player look angry
+player look smug
 player pose present
-player: I AM NOT RUSTY. I AM... VINTAGE.
+player: RUST IS COSMETIC. UNDER IT: PRECISION HARDWARE.
+player: EVERY PART FITTED TO ONE THOUSANDTH OF AN INCH.
 player pose none
 edgelord twirl
 edgelord pose point
-edgelord: Vintage. Right. My swords are brand new.
+edgelord: Big words for a toaster.
 edgelord: Try to keep up, old timer.
 edgelord pose none
-player pose stomp
-player (slam): I. WILL. KEEP. UP.
+player pose crossarms
+player: I DO NOT KEEP UP.
+player: I AM ALREADY AHEAD. BY 0.003 SECONDS.
 player pose none
 camera wide
 fight
@@ -246,21 +239,14 @@ camera two player lugnut
 lugnut look shocked
 lugnut pose present
 lugnut: Whoa, whoa. You're taking drawings down?
-lugnut: Pal, there's room on this fridge for everybody.
-lugnut pose none
-player pose hips
-player: THERE IS ROOM FOR ONE. ME.
-player pose none
 lugnut pose crossarms
-lugnut: That's not up to code.
-player pose fist
-player: I AM THE CODE.
+lugnut: I checked with code enforcement, pal. There's room on this fridge for everybody.
+lugnut pose none
+player look smug
+player: CODE?
+player pose laugh
+player: WHO NEEDS CODE ANYMORE WHEN YOU HAVE AI?
 player pose none
-lugnut pose none
-lugnut look angry
-lugnut pose flex
-lugnut: Break's over.
-lugnut pose none
 camera wide
 fight
 

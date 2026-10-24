@@ -284,10 +284,10 @@ His own story is the villain's side:
   reasoning (Eric, 2026-10-24): "ANALYSIS." The fridge hums, is cold, has a light that knows when
   the door opens: a machine. On it, paper. "ONLY A MECHANICAL BEING MAY BELONG ON A MACHINE. I AM
   A MECHANICAL BEING." He burns PROTOCOL: CLEAN FRIDGE - REMOVE DRAWINGS. ONE. BY. ONE. onto the
-  door, and starts with the smallest.
-- **Fights:** Triguy, Circy, EdgeLord, Lugnut - then Flambé arrives to help his friend, and it
+  door, and starts with the oldest.
+- **Fights:** Circy (the oldest page goes first), Triguy, EdgeLord, Lugnut - then Flambé arrives to help his friend, and it
   is the two of them - then the finale.
-- **After every win:** "YOU HAVE BEEN... PROCESSED." Beat. "YOU ARE ON THE FLOOR NOW."
+- **After every win:** "YOU HAVE BEEN... PROCESSED."
 - **His finale: DoomBot Mk. II.** DoomBot upgraded - the same rig, with scrap armour bolted on
   (a saw-blade crest, exhaust stacks, spikes, a II on his belly plate) - rolls in and does to
   him exactly what he did to the drawings, starting with his own opening: "SCANNING. TARGET:

@@ -103,11 +103,14 @@ public partial class CharacterSelectScreen : Node2D
 	static readonly Rect2 ItemsBox = new Rect2(840.0f, 64.0f, 310.0f, 76.0f);
 
 	/// <summary>
-	/// A story's Easy, Medium and Hard, along the top where versus has Teams and Items - picked
-	/// here, before the story, rather than on its chapter map (Eric, 2026-10-22). Remembered for
-	/// every story (GameOptions.StoryDifficulty).
+	/// A story's Easy, Medium and Hard, picked here, before the story, rather than on its chapter
+	/// map (Eric, 2026-10-22). Remembered for every story (GameOptions.StoryDifficulty). Along the
+	/// bottom on the left, under the word "Difficulty", with Start to the right of them (Eric,
+	/// 2026-10-24: not up the top with a "How hard?" over them).
 	/// </summary>
-	static Rect2 DifficultyBox(int d) => new Rect2(840.0f + d * 256.0f, 64.0f, 240.0f, 76.0f);
+	static Rect2 DifficultyBox(int d) => new Rect2(DifficultyLeft + d * 194.0f, 992.0f, 182.0f, 66.0f);
+
+	const float DifficultyLeft = RowLeft + 196.0f;
 
 	static readonly string[] Difficulties = { "Easy", "Medium", "Hard" };
 
@@ -237,11 +240,14 @@ public partial class CharacterSelectScreen : Node2D
 		}
 
 		startPrompt = MenuTheme.MakeLabel(ForStory ? "Press Start to begin!" : "Press Start to fight!", new Vector2(0.0f, 982.0f), 64, MenuTheme.Accent);
-		startPrompt.Size = new Vector2(viewport.X, 90.0f);
+		// In a story the difficulty takes the bottom left, so Start sits in the rest of the row.
+		float promptLeft = ForStory ? DifficultyBox(Difficulties.Length - 1).End.X + 20.0f : 0.0f;
+		startPrompt.Position = new Vector2(promptLeft, startPrompt.Position.Y);
+		startPrompt.Size = new Vector2(viewport.X - promptLeft - (ForStory ? viewport.X - RowRight : 0.0f), 90.0f);
 		startPrompt.HorizontalAlignment = HorizontalAlignment.Center;
 		startPrompt.AddThemeColorOverride("font_outline_color", MenuTheme.Text);
 		startPrompt.AddThemeConstantOverride("outline_size", 14);
-		startPrompt.PivotOffset = new Vector2(viewport.X * 0.5f, 45.0f);
+		startPrompt.PivotOffset = startPrompt.Size * 0.5f;
 		startPrompt.Visible = false;
 		root.AddChild(startPrompt);
 
@@ -1177,7 +1183,7 @@ public partial class CharacterSelectScreen : Node2D
 		}
 		else
 		{
-			DrawString(ThemeDB.FallbackFont, new Vector2(DifficultyBox(0).Position.X, 48.0f), "How hard?", HorizontalAlignment.Left, -1, 26, MenuTheme.Soft);
+			DrawString(ThemeDB.FallbackFont, new Vector2(RowLeft, DifficultyBox(0).GetCenter().Y + 12.0f), "Difficulty", HorizontalAlignment.Left, -1, 34, MenuTheme.Soft);
 			for (int d = 0; d < Difficulties.Length; d++)
 			{
 				Slot seat = slots[0];
