@@ -75,6 +75,28 @@ public static class MenuTheme
 		DrawCentredText(canvas, rect, text, fontSize, enabled ? Text : Soft);
 	}
 
+	/// <summary>One button of a set drawn together (<see cref="DrawButtons"/>).</summary>
+	public readonly record struct ButtonSpec(Rect2 Rect, string Text, int Seed, bool Hot, bool Chosen, int FontSize, Color? HotTint);
+
+	/// <summary>
+	/// Many buttons at once, looking exactly as <see cref="DrawButton"/> draws each: every fill,
+	/// then every outline, then every label. Drawn one button at a time, fill, ink and text took
+	/// turns, so none of them could be batched - the name picker's thirty-odd keys took the menu
+	/// down to a few frames a second (Eric, 2026-10-24: "seems to lag the screen").
+	/// </summary>
+	public static void DrawButtons(CanvasItem canvas, System.Collections.Generic.IReadOnlyList<ButtonSpec> buttons)
+	{
+		foreach (ButtonSpec b in buttons)
+			canvas.DrawRect(b.Rect, b.Chosen ? AccentTwo.Lightened(0.55f) : new Color(1.0f, 1.0f, 1.0f, 0.94f));
+		foreach (ButtonSpec b in buttons)
+		{
+			CrayonBrush.InkRect(canvas, b.Rect, b.Chosen ? AccentTwo.Darkened(0.25f) : Ink, b.Chosen ? 5.0f : 3.5f, b.Seed, 2.0f);
+			if (b.Hot) CrayonBrush.InkRect(canvas, b.Rect.Grow(6.0f), b.HotTint ?? Accent, 5.0f, b.Seed + 50, 2.4f);
+		}
+		foreach (ButtonSpec b in buttons)
+			if (!string.IsNullOrEmpty(b.Text)) DrawCentredText(canvas, b.Rect, b.Text, b.FontSize, Text);
+	}
+
 	/// <summary>Text centred in a box, both ways.</summary>
 	public static void DrawCentredText(CanvasItem canvas, Rect2 rect, string text, int fontSize, Color colour)
 	{

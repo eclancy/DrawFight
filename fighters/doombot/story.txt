@@ -87,7 +87,7 @@ fight edgelord at rooftops
 fight lugnut at fridge
 fight lugnut flambe at bigshow
 fight mk2 at fridge boss
-ending with circy edgelord at fridge
+ending with circy triguy edgelord lugnut flambe at fridge
 
 == opening
 cast player offstage
@@ -375,9 +375,16 @@ player (whisper): ...I KNOW.
 end
 
 == ending
+# Alone on an empty fridge, it is quiet. He puts Circy's drawing back up to ask if he wants to play
+# more, Circy says that means everybody, and he puts them back up one by one - each drops in as he
+# does - and agrees it is more fun this way (Eric, 2026-10-24: no drawing of him going up, no
+# notes appearing on the door).
 cast player at -150
 cast circy offstage
+cast triguy offstage
 cast edgelord offstage
+cast lugnut offstage
+cast flambe offstage
 music stop
 stage bare
 camera on player zoom 1.0 cut
@@ -387,49 +394,63 @@ player: ...VICTORY.
 sound fridge_hum
 wait 60
 player look sad
-player: ...IT IS VERY QUIET.
+player: ...IT IS QUIET.
 wait 50
-page at 360 -520
-narrator: Clink. Someone had put up a new drawing.
-camera at 360 -520 zoom 1.0
-wait 60
-camera at 120 -360 zoom 0.8
-player face right
+player look normal
+player pose think
+wait 40
+player pose present
+sound magnet_clink
+circy drop at 140
+circy face player
+camera two player circy
+player pose none
+player: ROUND DRAWING.
+player: QUERY: DO YOU WANT TO... PLAY MORE?
+circy look happy
+circy (shout): Duuude! YES!
+circy look normal
+circy: But not just us two. That's no fun.
+circy: You gotta put EVERYBODY back up, bro.
 player look shocked
 player mark !
-player pose point
-player: ...SOMEONE. DREW. ME?
-player pose none
+player: ...ALL OF THEM?
 player mark none
-player heat 100
-player look happy
-player pose facepalm
-player: WARNING. CORE TEMPERATURE RISING. FROM AN UNKNOWN CAUSE.
-player pose none
+circy pose present
+circy: All of them. That's what a fridge is for!
+circy pose none
 music story
-narrator: One by one, he put the others back up.
-camera at 0 -900 zoom 0.62 slow
-wait 50
-stage full
+player look normal
+player: ...AFFIRMATIVE.
+camera wide
+player pose present
 sound magnet_clink
-wait 15
+triguy drop at 320
+triguy face player
+triguy: that's, really kewl.
 sound magnet_clink
-wait 15
-sound magnet_clink
-wait 50
-circy drop at -520
-circy face player
-circy (shout): Duuude! You put us back up!
-circy: Can we stay? For real? We wanna keep playing!
-edgelord drop at 560
+edgelord drop at -410
 edgelord face player
-edgelord: Admit it, robot. It's more fun with all of us up here.
+edgelord: Took you long enough, robot.
+sound magnet_clink
+lugnut drop at -590
+lugnut face player
+lugnut: Now that's a fridge.
+sound magnet_clink
+flambe drop at 500
+flambe face player
+flambe pose wave
+flambe: Bonjour again, mon ami.
+flambe pose none
+player pose none
+wait 30
 camera on player zoom 1.0
 player look happy
-player: ...AFFIRMATIVE. YOU MAY STAY.
-player: IT IS... MORE FUN. WITH ALL OF YOU.
+player: ...IT IS LOUD NOW.
 player pose hips
-player: THE FRIDGE IS... A LITTLE BIT MINE.
+player: AND IT IS... MORE FUN. THIS WAY.
+player pose none
+circy (shout): OKALY DOKALY!
 wait 60
 end
 

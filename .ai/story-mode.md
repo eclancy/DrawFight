@@ -299,10 +299,12 @@ His own story is the villain's side:
   reason for Mk. II to be there and gives DoomBot the feeling his ending turns on (Eric asked for
   that, 2026-10-15, over a first draft whose "the fridge belongs to the newest machine" came from
   nowhere).
-- **Ending.** DoomBot alone on an empty fridge. "...VICTORY." The fridge hums. "...IT IS VERY
-  QUIET." *Clink* - a magnet. Someone has put up a new drawing: a crayon drawing of DoomBot. "...
-  SOMEONE. DREW. ME?" He glows (that is a blush). "WARNING. CORE TEMPERATURE RISING. FROM AN
-  UNKNOWN CAUSE." One by one, he puts the others back up. "THE FRIDGE IS... A LITTLE BIT MINE."
+- **Ending.** DoomBot alone on an empty fridge. "...VICTORY." The fridge hums. "...IT IS
+  QUIET." He puts Circy's drawing back up, to ask: "QUERY: DO YOU WANT TO... PLAY MORE?" Circy:
+  not just the two of them - "You gotta put EVERYBODY back up, bro." "...ALL OF THEM?" So one by
+  one he does, and each drops in as he puts them up: Triguy, EdgeLord, Lugnut, Flambe. "...IT IS
+  LOUD NOW. AND IT IS... MORE FUN. THIS WAY." (Eric, 2026-10-24: no drawing of DoomBot going up,
+  and nothing appearing on the door - the others just join the scene.)
 
 ### Flambé and Lugnut, on everyone else's road
 

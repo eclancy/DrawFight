@@ -488,24 +488,29 @@ public partial class CharacterSelectScreen : Node2D
 	const int KeyColumns = 6;
 	const int SavedShown = 4;
 
-	/// <summary>The picker, over the seat's own column - so four can name themselves at once.</summary>
+	/// <summary>
+	/// The picker, in the seat's own selection box - over it and down to the foot of the page - so
+	/// four can name themselves at once and the cards stay in sight (Eric, 2026-10-24: it used to
+	/// open up over the cards).
+	/// </summary>
 	Rect2 PickerRect(int player)
 	{
-		Rect2 panel = PanelRect(player, GetViewportRect().Size);
-		return new Rect2(panel.Position.X, 36.0f, panel.Size.X, 528.0f);
+		Vector2 viewport = GetViewportRect().Size;
+		Rect2 panel = PanelRect(player, viewport);
+		return new Rect2(panel.Position, new Vector2(panel.Size.X, viewport.Y - 12.0f - panel.Position.Y));
 	}
 
 	Rect2 FieldRect(int player)
 	{
 		Rect2 p = PickerRect(player);
-		return new Rect2(p.Position.X + 16.0f, p.Position.Y + 16.0f, p.Size.X - 32.0f, 64.0f);
+		return new Rect2(p.Position.X + 16.0f, p.Position.Y + 14.0f, p.Size.X - 32.0f, 54.0f);
 	}
 
 	Rect2 SavedRect(int player, int i)
 	{
 		Rect2 p = PickerRect(player);
 		float w = (p.Size.X - 32.0f - 10.0f) * 0.5f;
-		return new Rect2(p.Position.X + 16.0f + i % 2 * (w + 10.0f), p.Position.Y + 94.0f + i / 2 * 54.0f, w, 46.0f);
+		return new Rect2(p.Position.X + 16.0f + i % 2 * (w + 10.0f), p.Position.Y + 80.0f + i / 2 * 46.0f, w, 40.0f);
 	}
 
 	Rect2 KeyRect(int player, int i)
@@ -513,8 +518,8 @@ public partial class CharacterSelectScreen : Node2D
 		Rect2 p = PickerRect(player);
 		const float Gap = 6.0f;
 		float w = (p.Size.X - 32.0f - Gap * (KeyColumns - 1)) / KeyColumns;
-		const float H = 56.0f;
-		return new Rect2(p.Position.X + 16.0f + i % KeyColumns * (w + Gap), p.Position.Y + 212.0f + i / KeyColumns * (H + Gap), w, H);
+		const float H = 42.0f;
+		return new Rect2(p.Position.X + 16.0f + i % KeyColumns * (w + Gap), p.Position.Y + 180.0f + i / KeyColumns * (H + Gap), w, H);
 	}
 
 	/// <summary>The names saved here to offer a seat: the most recent ones nobody else is using right now.</summary>
@@ -631,6 +636,58 @@ public partial class CharacterSelectScreen : Node2D
 		if (char.IsLetterOrDigit(c) || c == ' ' || c == '-') Type(typingSlot, c);
 	}
 
+	readonly List<MenuTheme.ButtonSpec> pickerButtons = new List<MenuTheme.ButtonSpec>();
+
+	string lastMainState, lastPickerState;
+
+	/// <summary>Everything the page's own drawing shows, as text: when it changes, it is drawn again.</summary>
+	string MainDrawState()
+	{
+		var state = new System.Text.StringBuilder();
+		state.Append(TeamBattle).Append(GameRoot.Instance.Items.Frequency).Append(GameOptions.StoryDifficulty).Append(quitPrompt.Open);
+		for (int i = 0; i < slots.Length; i++)
+		{
+			Slot slot = slots[i];
+			state.Append('|').Append(slot.Joined).Append(slot.Human).Append(slot.IsCpu).Append(slot.Index).Append(slot.Naming)
+				.Append(slot.PlayerName).Append(Teams[i]).Append(GameRoot.Instance.CpuDifficulty[i]);
+			if (slot.Human && slot.Cursor != null) state.Append(':').Append(ButtonUnder(slot.Cursor.Position));
+		}
+		return state.ToString();
+	}
+
+	/// <summary>Which of the page's buttons a point is on, if any - each lights up under a cursor.</summary>
+	string ButtonUnder(Vector2 at)
+	{
+		if (QuitBox.HasPoint(at)) return "quit";
+		if (!ForStory && TeamsBox.HasPoint(at)) return "teams";
+		if (!ForStory && ItemsBox.HasPoint(at)) return "items";
+		for (int d = 0; d < Difficulties.Length; d++) if (ForStory && DifficultyBox(d).HasPoint(at)) return "d" + d;
+		for (int i = 0; i < slots.Length && !ForStory; i++)
+		{
+			for (int k = 0; k < 3; k++) if (CpuButton(i, k).HasPoint(at)) return $"c{i}{k}";
+			if (TeamButton(i).HasPoint(at)) return "t" + i;
+		}
+		return "";
+	}
+
+	/// <summary>Everything the name pickers show: the name so far, the blinking caret, and the key under each cursor.</summary>
+	string PickerDrawState()
+	{
+		var state = new System.Text.StringBuilder();
+		foreach (Slot slot in slots)
+		{
+			if (!slot.Naming) continue;
+			state.Append('|').Append(slot.Seat).Append(slot.Draft).Append(slot == typingSlot).Append((Engine.GetPhysicsFrames() / 30) % 2);
+			if (slot.Cursor == null) continue;
+			Vector2 at = slot.Cursor.Position;
+			int over = -1;
+			for (int i = 0; i < Keys.Length && over < 0; i++) if (KeyRect(slot.Seat, i).HasPoint(at)) over = i;
+			for (int i = 0; i < SavedShown && over < 0; i++) if (SavedRect(slot.Seat, i).HasPoint(at)) over = 100 + i;
+			state.Append(':').Append(over);
+		}
+		return state.ToString();
+	}
+
 	void DrawPickers(CanvasItem canvas)
 	{
 		Font font = ThemeDB.FallbackFont;
@@ -655,15 +712,16 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			List<string> offered = Offered(slot);
+			pickerButtons.Clear();
 			for (int i = 0; i < offered.Count; i++)
 			{
 				Rect2 r = SavedRect(seat, i);
-				MenuTheme.DrawButton(canvas, r, offered[i], 890 + seat * 9 + i, slot.Cursor != null && r.HasPoint(slot.Cursor.Position),
-					chosen: true, fontSize: 26, hotTint: slot.Tint);
+				pickerButtons.Add(new MenuTheme.ButtonSpec(r, offered[i], 890 + seat * 9 + i,
+					slot.Cursor != null && r.HasPoint(slot.Cursor.Position), true, 24, slot.Tint));
 			}
 			if (offered.Count == 0)
 			{
-				canvas.DrawString(font, new Vector2(box.Position.X + 20.0f, box.Position.Y + 150.0f),
+				canvas.DrawString(font, new Vector2(box.Position.X + 20.0f, box.Position.Y + 128.0f),
 					slot == typingSlot ? "Type it, then Enter." : "Spell it out below.", HorizontalAlignment.Left, box.Size.X - 40.0f, 26, MenuTheme.Soft);
 			}
 
@@ -671,9 +729,10 @@ public partial class CharacterSelectScreen : Node2D
 			{
 				Rect2 r = KeyRect(seat, i);
 				bool hot = slot != typingSlot && slot.Cursor != null && r.HasPoint(slot.Cursor.Position);
-				MenuTheme.DrawButton(canvas, r, Keys[i], 900 + seat * 31 + i, hot, chosen: Keys[i] == "OK",
-					fontSize: Keys[i].Length > 2 ? 17 : 28, hotTint: slot.Tint);
+				pickerButtons.Add(new MenuTheme.ButtonSpec(r, Keys[i], 900 + seat * 31 + i, hot, Keys[i] == "OK",
+					Keys[i].Length > 2 ? 17 : 26, slot.Tint));
 			}
+			MenuTheme.DrawButtons(canvas, pickerButtons);
 			if (slot == typingSlot)
 			{
 				canvas.DrawString(font, new Vector2(box.Position.X + 16.0f, box.End.Y - 6.0f), "Typing: Enter keeps it, Tab for saved",
@@ -966,7 +1025,23 @@ public partial class CharacterSelectScreen : Node2D
 			card.Rig.Advance();
 		}
 
-		QueueRedraw();
+		// Drawn again only when what it shows has changed: the page, the cards and a picker are
+		// dozens of crayon strokes, and redrawn every frame they took a slow computer down to a few
+		// frames a second as soon as a name picker opened (Eric, 2026-10-24). Godot keeps what was
+		// last drawn. Twice a second it is drawn regardless, in case something here is missed.
+		bool refresh = Engine.GetPhysicsFrames() % 30 == 0;
+		string shown = MainDrawState();
+		if (refresh || shown != lastMainState)
+		{
+			lastMainState = shown;
+			QueueRedraw();
+		}
+		string picking = PickerDrawState();
+		if (refresh || picking != lastPickerState)
+		{
+			lastPickerState = picking;
+			namingLayer.QueueRedraw();
+		}
 		cursorLayer.QueueRedraw();
 
 		bool everyoneReady = EveryoneReady();
@@ -1200,7 +1275,6 @@ public partial class CharacterSelectScreen : Node2D
 			MenuTheme.DrawButton(this, NameButton(i), string.IsNullOrEmpty(seat.PlayerName) ? "Name" : "Rename", 85 + i, hot,
 				fontSize: 26, hotTint: seat.Tint);
 		}
-		namingLayer.QueueRedraw();
 
 		bool quitHovered = false;
 		Color quitInk = MenuTheme.Rule;
