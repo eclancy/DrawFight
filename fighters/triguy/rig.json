@@ -14,8 +14,8 @@
     {
       "name": "LegBack_Upper", 
       "offset": [
-        -12.5, 
-        1.0
+        -218.0, 
+        0.0
       ], 
       "parent": "Hip", 
       "part": "LegBack_Upper"
@@ -23,8 +23,8 @@
     {
       "name": "LegBack_Lower", 
       "offset": [
-        -33.5, 
-        163.4
+        -43.0, 
+        496.9
       ], 
       "parent": "LegBack_Upper", 
       "part": "LegBack_Lower"
@@ -32,8 +32,8 @@
     {
       "name": "LegFront_Upper", 
       "offset": [
-        12.5, 
-        1.0
+        218.0, 
+        0.0
       ], 
       "parent": "Hip", 
       "part": "LegFront_Upper"
@@ -41,8 +41,8 @@
     {
       "name": "LegFront_Lower", 
       "offset": [
-        14.5, 
-        114.1
+        157.5, 
+        483.7
       ], 
       "parent": "LegFront_Upper", 
       "part": "LegFront_Lower"
@@ -59,8 +59,8 @@
     {
       "name": "ArmBack_Upper", 
       "offset": [
-        39.5, 
-        -835.0
+        -179.0, 
+        -152.0
       ], 
       "parent": "Torso", 
       "part": "ArmBack_Upper"
@@ -78,7 +78,7 @@
       "name": "Head", 
       "offset": [
         0, 
-        -1489.0
+        -806.0
       ], 
       "parent": "Torso", 
       "part": null
@@ -86,8 +86,8 @@
     {
       "name": "ArmFront_Upper", 
       "offset": [
-        452.5, 
-        -619.0
+        234.0, 
+        64.0
       ], 
       "parent": "Torso", 
       "part": "ArmFront_Upper"
@@ -102,15 +102,16 @@
       "part": "ArmFront_Lower"
     }
   ], 
-  "canonicalHeight": 1489.0, 
+  "canonicalHeight": 806.0, 
+  "evenLegs": true, 
   "extras": [
     {
       "always": true, 
       "bone": "Torso", 
       "name": "hat", 
       "offset": [
-        368.0, 
-        -1185.0
+        149.5, 
+        -502.0
       ], 
       "onPart": true, 
       "part": "Hat"
@@ -121,8 +122,8 @@
       "face": "eye", 
       "name": "faceEye", 
       "offset": [
-        240.5, 
-        -996.5
+        22.0, 
+        -313.5
       ], 
       "onPart": true, 
       "part": "FaceEye", 
@@ -136,8 +137,8 @@
       "face": "eye", 
       "name": "faceEyeFront", 
       "offset": [
-        323.0, 
-        -976.0
+        104.5, 
+        -293.0
       ], 
       "onPart": true, 
       "part": "FaceEyeFront", 
@@ -151,8 +152,8 @@
       "face": "mouth", 
       "name": "faceMouth", 
       "offset": [
-        263.5, 
-        -918.0
+        45.0, 
+        -235.0
       ], 
       "onPart": true, 
       "part": "FaceMouth", 
@@ -161,8 +162,8 @@
       "tilt": 1
     }
   ], 
-  "figureHeight": 1767.0, 
-  "legLength": 277.5, 
+  "figureHeight": 1787.0, 
+  "legLength": 980.6, 
   "legsOnBody": true, 
   "name": "Triguy", 
   "parts": {
@@ -182,7 +183,7 @@
     }, 
     "ArmFront_Lower": {
       "pivot": [
-        150.5, 
+        133.5, 
         24.2
       ], 
       "texture": "parts/ArmFront_Lower.png"
@@ -224,36 +225,37 @@
     }, 
     "LegBack_Lower": {
       "pivot": [
-        68.0, 
-        24.91
+        64.5, 
+        24.39
       ], 
       "texture": "parts/LegBack_Lower.png"
     }, 
     "LegBack_Upper": {
       "pivot": [
-        62.5, 
+        68.5, 
         14.5
       ], 
       "texture": "parts/LegBack_Upper.png"
     }, 
     "LegFront_Lower": {
       "pivot": [
-        31.5, 
-        24.13
+        180.5, 
+        24.7
       ], 
+      "soleSlope": 0.0, 
       "texture": "parts/LegFront_Lower.png"
     }, 
     "LegFront_Upper": {
       "pivot": [
-        16.0, 
-        14.0
+        14.0, 
+        27.0
       ], 
       "texture": "parts/LegFront_Upper.png"
     }, 
     "Torso": {
       "pivot": [
-        38.5, 
-        1205.0
+        257.0, 
+        522.0
       ], 
       "texture": "parts/Torso.png"
     }
@@ -325,24 +327,24 @@
     "extras": {
       "faceEye": {
         "offset": [
-          240.5, 
-          -996.5
+          22.0, 
+          -313.5
         ], 
         "rotation": -79.2, 
         "scale": 1.0
       }, 
       "faceEyeFront": {
         "offset": [
-          323.0, 
-          -976.0
+          104.5, 
+          -293.0
         ], 
         "rotation": -79.2, 
         "scale": 1.0
       }, 
       "faceMouth": {
         "offset": [
-          263.5, 
-          -918.0
+          45.0, 
+          -235.0
         ], 
         "rotation": -79.2, 
         "scale": 1.0

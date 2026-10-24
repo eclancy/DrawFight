@@ -20,13 +20,11 @@ Emits:
 HE STANDS AS HE IS DRAWN STANDING (Eric's call, 2026-10-23). Elim drew him standing still -
 idle.png, "the way he looks when nobody is pressing anything" - after "triguys idle is STILL his
 stab" (the rig was his stab drawing, triguy.png, stood on end). In it he is tall: a white triangle
-with his face, point up, and under it the rest of his body, drawn as an outline that comes round
-from the triangle's front corner to meet its back at a point - with a black top hat over the point,
-an arm out of each side, and two short legs out of the bottom point. On a transparent canvas, side
-on, facing right. cut_idle takes it apart:
-  - the BODY is the triangle's white fill grown out over its outline, and the lower body's lines.
-    The paper inside the lower body is filled in white, as the triangle is (rule 1: fill in what is
-    missing). He has no separate head.
+with his face, point up - with a black top hat over the point, an arm out of each side, and two
+very long stick legs out of the bottom corners, the front one crossing over to the back one near
+the floor. On a transparent canvas, side on, facing right. cut_idle takes it apart:
+  - the BODY is the triangle's white fill grown out over its outline: only the triangle (Eric,
+    2026-10-23). He has no separate head.
   - the FACE - the two eyes and the smile drawn inside the triangle - is lifted off it, each mark
     whole, and the paper under them filled in white. They are hung back on the body as extras the
     game moves (FighterRig.SetFace) - lifted here, not by faces.py, so they can turn back level as
@@ -34,11 +32,12 @@ on, facing right. cut_idle takes it apart:
   - the HAT - the one big stroke above it - is masked off as its own piece, so he can take it off
     and throw it (his side special, Eric's call 2026-10-10). It is the same pixels, only kept
     apart; a copy is also saved as poses/hat.png.
-  - the back arm is a stroke on its own. The front arm, the lower body and the legs are one stroke
-    where they meet, and are taken apart along the lines Elim drew: the back line of the body and
-    the back leg are the leftmost line in each row; the front of the body and the front arm come off
-    the bottom corner side by side and part; and where the front of the body comes round to meet
-    the back is his hip, with the legs below it.
+  - the back arm is a stroke on its own. The front arm and the legs are one stroke where they
+    meet, and are taken apart along the lines Elim drew: the back leg is the leftmost line in each
+    row, down from the back corner; the front leg and the front arm come off the front corner side
+    by side and part; and the front leg's knee lands on the back leg, where the ink under both is
+    given to both. Apart, the legs hang straight down from their corners and the game stands him
+    on them.
   - each limb's joint is its top end, where it meets the body. It is rotated about that joint until
     its far end hangs straight down (the canonical orientation), then split at half its length into
     upper and lower pieces that overlap a little at the knee or elbow - the knee put where the
@@ -213,7 +212,9 @@ IDLE = 'idle.png'
 IDLE_BASE_CUT = 16   # px below the white the bottom's line runs: ink above it is the body's, below it a limb's
 IDLE_LEG_WIDTH = 24  # px: the straight back leg's line, taken from the left of each row where the bent leg meets it
 IDLE_FOOT_ROWS = 30  # px up from the bottom of the back leg that are its foot, taken whole
-IDLE_PART_ROWS = 140  # px down from the bottom corner the front arm and the front of his body run side by side
+IDLE_PART_ROWS = 140  # px down from the bottom corner the front arm and the front leg run side by side
+IDLE_KNEE_ROWS = 120  # px: how far down from landing on the back leg the front leg's knee is looked for, and
+                      # how far up the thigh its line is taken from to straighten the knee
 STAB_TIP = 79.2      # degrees he bows over in his point attack (FighterAnimations.PointThrustStrike, as played)
 
 
@@ -250,6 +251,9 @@ def cut_idle(parts_dir):
     if len(rest) != 2:
         raise SystemExit('expected the back arm and one joined stroke in %s, found %d' % (IDLE, len(rest)))
 
+    # Everything below the bottom of the triangle is legs and the front arm: his body is the
+    # triangle, and nothing else (Eric, 2026-10-23 - for a day the space between his legs was
+    # filled in white as more of his body).
     cut_line = base_y + IDLE_BASE_CUT
     rows = {}
     for (x, y) in joined:
@@ -258,40 +262,67 @@ def cut_idle(parts_dir):
         else:
             rows.setdefault(y, []).append(x)
     bottom = max(rows)
-    back_line, others = [], []
-    widths = {}
+    foot_from = bottom - IDLE_FOOT_ROWS
+
+    # The back leg is the straight line down the left from the triangle's back corner, and its
+    # foot, whole: the leftmost run of ink in each row, a line wide. Where the front leg's knee lands
+    # on it, near the floor, that run is wider than a line, or is the knee itself poking out to the
+    # left of it - there the back leg runs where it runs in the rows above and below.
+    runs = {}
     for y, xs in rows.items():
         xs.sort()
-        left = xs[0]
-        # The leftmost run of ink in each row is the back of his body and then his back leg - its
-        # top where it leaves the bottom line, and its foot, whole - except where the front of his
-        # body comes round to meet it: there it is one line wide.
-        run_end = left
+        run_end = xs[0]
         while run_end + 1 in xs:
             run_end += 1
-        widths[y] = run_end - left
-        knee_zone = cut_line + IDLE_PART_ROWS < y < bottom - IDLE_FOOT_ROWS
-        reach = min(run_end, left + IDLE_LEG_WIDTH) if knee_zone else run_end
+        runs[y] = (xs[0], run_end)
+    clean = {}
+    last = None
+    for y in sorted(runs):
+        a, b = runs[y]
+        if y >= foot_from or b - a > IDLE_LEG_WIDTH:
+            continue
+        middle = (a + b) / 2.0
+        if last is not None and abs(middle - last) > IDLE_LEG_WIDTH / 3.0:
+            continue
+        clean[y] = (a, b)
+        last = middle
+    clean_rows = sorted(clean)
+
+    def band(y):
+        if y >= foot_from or y in clean:
+            return runs[y]
+        above = [r for r in clean_rows if r < y]
+        below = [r for r in clean_rows if r > y]
+        if not above or not below:
+            return clean[above[-1] if above else below[0]]
+        r0, r1 = above[-1], below[0]
+        t = (y - r0) / float(r1 - r0)
+        (a0, b0), (a1, b1) = clean[r0], clean[r1]
+        return (a0 + (a1 - a0) * t - 2, b0 + (b1 - b0) * t + 2)
+
+    back_leg_pts, others = [], []
+    bands = {}
+    for y, xs in rows.items():
+        a, b = bands[y] = band(y)
         for x in xs:
-            (back_line if x <= reach else others).append((x, y))
-    # Where the front of his body comes round and meets the back: the first row, well down, where
-    # the leftmost run is wider than a line. Above it the back line is his body; below, his leg.
-    join_y = min(y for y in widths if y > cut_line + IDLE_PART_ROWS and widths[y] > IDLE_LEG_WIDTH + 8)
-    # The knot where they meet is the body's, a line's width of it, so its bottom is closed.
-    join_y += IDLE_LEG_WIDTH
-    # The rest is the front of his body, the front arm beside it, and below where the front meets
-    # the back, his front leg. Down from the bottom corner the arm (outside) and the front of the
-    # body (inside) are one band, split down its middle, and where they are still one line it is
-    # the body's: the arm starts where they part. Below that the front of his body is the leftmost
-    # line in every row, and the arm lies outside it - except where his hand curls back and
-    # touches it, and there the body's line is one line wide.
+            (back_leg_pts if a <= x <= b else others).append((x, y))
+
+    # Where the front leg comes down onto the back one: the first row, well down, with its ink
+    # beside the back leg's.
+    crossing = min(y for (x, y) in others
+                   if y > cut_line + IDLE_PART_ROWS and bands[y][0] - 3 <= x <= bands[y][1] + 3)
+
+    # The rest is the front arm and the front leg. Down from the bottom corner they are one band,
+    # split down its middle; below that the front leg is the leftmost line in every row and the
+    # arm lies outside it - except where his hand curls back and touches the leg, and there the
+    # leg's line is one line wide. From where the leg reaches the back leg down, it is all leg.
     others_rows = {}
     for (x, y) in others:
         others_rows.setdefault(y, []).append(x)
     front, arm = [], []
     for y, xs in others_rows.items():
         xs.sort()
-        if y > join_y:
+        if y >= crossing:
             front.extend((x, y) for x in xs)
             continue
         if y < cut_line + IDLE_PART_ROWS:
@@ -307,15 +338,64 @@ def cut_idle(parts_dir):
             run_end = xs[0] + int(IDLE_LEG_WIDTH * 1.3)
         for x in xs:
             (front if x <= run_end else arm).append((x, y))
-    # Anything of the arm's not joined to it is a crumb of the body's line.
+    # Anything of the arm's not joined to it is a crumb of the leg's line.
     arm_groups = groups(arm)
     arm_groups.sort(key=len, reverse=True)
     front_arm_pts = arm_groups[0]
     for crumb in arm_groups[1:]:
         front.extend(crumb)
-    body_pts.extend(p for p in front + back_line if p[1] <= join_y)
-    front_leg_pts = [p for p in front if p[1] > join_y]
-    back_leg_pts = [p for p in back_line if p[1] > join_y]
+
+    # Across the back leg, the front leg's line is under the back leg's: the same ink is both legs'.
+    # The front leg comes down to its knee - the corner that pokes out past the back leg - and
+    # turns back down to its end; the back leg's ink along those two lines is the front leg's too,
+    # so that taken apart, neither leg has a gap in it (rule 1: fill in what is missing).
+    def mean_x(y):
+        xs = [x for (x, yy) in front if yy == y]
+        return sum(xs) / float(len(xs)) if xs else None
+    thigh_y = crossing - 2
+    while mean_x(thigh_y) is None:
+        thigh_y -= 1
+    thigh_at = (mean_x(thigh_y), thigh_y)
+    knee_zone = [pt for pt in front if crossing - 4 <= pt[1] <= crossing + IDLE_KNEE_ROWS]
+    knee = min(knee_zone, key=lambda pt: (pt[0], pt[1]))
+    shin_rows = sorted(set(y for (x, y) in front if y > knee[1] + IDLE_LEG_WIDTH and x > bands[y][1] + 2))
+    shin_at = (mean_x(shin_rows[0]), shin_rows[0]) if shin_rows else None
+
+    def near(pt, a, b, reach):
+        ax, ay = a
+        bx, by = b
+        dx, dy = bx - ax, by - ay
+        t = ((pt[0] - ax) * dx + (pt[1] - ay) * dy) / float(dx * dx + dy * dy or 1)
+        t = max(0.0, min(1.0, t))
+        return math.hypot(pt[0] - ax - t * dx, pt[1] - ay - t * dy) <= reach
+    reach = IDLE_LEG_WIDTH / 2.0
+    under = [pt for pt in back_leg_pts
+             if crossing - IDLE_LEG_WIDTH <= pt[1] <= (shin_at[1] if shin_at else knee[1]) + IDLE_LEG_WIDTH
+             and (near(pt, thigh_at, knee, reach) or (shin_at and near(pt, knee, shin_at, reach)))]
+    front_leg_pts = front + under
+
+    # Then the front leg is straightened at that knee, as the game straightens a knee: its short
+    # lower leg, below the knee, turned about it until it carries straight on down the line of the
+    # thigh. Bent as drawn - most of the way down, crossed over the back leg - the knee comes too
+    # low for the rig to stand him on it (Eric, 2026-10-23: "split the legs and give him a proper
+    # standing pose"). Every pixel is his; only that piece is turned.
+    above_x = mean_x(knee[1] - IDLE_KNEE_ROWS)
+    thigh_way = math.atan2(-(knee[1] - (knee[1] - IDLE_KNEE_ROWS)), knee[0] - above_x)
+    shin_pts = [pt for pt in front_leg_pts if pt[1] > knee[1] + 4]
+    end = max(shin_pts, key=lambda pt: (pt[0] - knee[0]) ** 2 + (pt[1] - knee[1]) ** 2)
+    shin_way = math.atan2(-(end[1] - knee[1]), end[0] - knee[0])
+    shin_set = set(shin_pts)
+    leg_img = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    shin_img = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    lpx, spx = leg_img.load(), shin_img.load()
+    for pt in front_leg_pts:
+        (spx if pt in shin_set else lpx)[pt] = px[pt]
+    shin_img = shin_img.rotate(math.degrees(thigh_way - shin_way), resample=Image.BICUBIC, center=knee)
+    leg_img = Image.alpha_composite(leg_img, shin_img)
+    x0, y0, x1, y1 = leg_img.getbbox()
+    lpx = leg_img.load()
+    front_leg_pts = [(x, y) for y in range(y0, y1) for x in range(x0, x1) if lpx[x, y][3] > 128]
+    print('front leg straightened at its knee %s by %.1f degrees' % (knee, math.degrees(thigh_way - shin_way)))
 
     limbs = [back_arm_pts, front_arm_pts, back_leg_pts, front_leg_pts]
     for stray in strays:
@@ -335,9 +415,9 @@ def cut_idle(parts_dir):
     face_set = set(mouth_mark) | set(back_eye_mark) | set(front_eye_mark)
     body_pts = [p for p in body_pts if p not in face_set]
 
-    # His hip: the bottom point of his body, where both legs come out.
+    # His hip: the middle of the bottom of the triangle, where both legs come out of its corners.
     leg_tops = [min(pts, key=lambda p: (p[1], p[0])) for pts in (back_leg_pts, front_leg_pts)]
-    hip = ((leg_tops[0][0] + leg_tops[1][0]) / 2.0, float(join_y))
+    hip = ((leg_tops[0][0] + leg_tops[1][0]) / 2.0, float(cut_line))
 
     def from_hip(point):
         return [round(point[0] - hip[0], 1), round(point[1] - hip[1], 1)]
@@ -353,8 +433,12 @@ def cut_idle(parts_dir):
     cut = {}
     for points, name in limb_names:
         d = described(points)
-        length, knee = limb_parts(img, d, name + '_Upper', name + '_Lower', parts, parts_dir)
+        length, knee = limb_parts(leg_img if name == 'LegFront' else img, d, name + '_Upper', name + '_Lower', parts, parts_dir)
         cut[name] = (d, length, knee)
+    # His front leg has no foot: it ends where Elim's line ends, and the slant that end comes down
+    # at is not a sole to lay flat - turned to lay it flat, the shin swung out and the leg came up
+    # short, and the back leg bent across to meet it.
+    parts['LegFront_Lower']['soleSlope'] = 0.0
 
     # The body, with the face's marks lifted off it and the paper under them filled in white.
     body, origin = circy.extract(img, body_pts)
@@ -366,22 +450,6 @@ def cut_idle(parts_dir):
                 q = (x - origin[0] + dx, y - origin[1] + dy)
                 if 0 <= q[0] < bw and 0 <= q[1] < bh and ((x + dx, y + dy) in face_set or is_white(bpx[q])):
                     bpx[q] = (255, 255, 255, 255)
-    # Below the triangle his body is drawn as an outline only: the paper inside it is filled in white,
-    # as the triangle is, so it reads as body and not a hole (rule 1: fill in what is missing).
-    seed = (int(hip[0] - origin[0]) + 3 * IDLE_LEG_WIDTH, int((cut_line + join_y) / 2.0 - origin[1]))
-    # Filled up to his lines thickened a little, so a hairline gap in them does not let it out;
-    # then out to the lines themselves.
-    lines = body.split()[3].point(lambda v: 255 if v > 128 else 0).filter(ImageFilter.MaxFilter(7))
-    inside = lines.point(lambda v: 0 if v else 255)
-    ImageDraw.floodfill(inside, seed, 128)
-    ipx = inside.load()
-    if any(ipx[x, y] == 128 for x in (0, bw - 1) for y in range(bh)) or any(ipx[x, y] == 128 for y in (0, bh - 1) for x in range(bw)):
-        body.save(os.path.join(ROOT, 'leak_body.png'))
-        inside.save(os.path.join(ROOT, 'leak_inside.png'))
-        raise SystemExit('the inside of his lower body is not closed in %s (seed %s)' % (IDLE, seed))
-    filled = inside.point(lambda v: 255 if v == 128 else 0).filter(ImageFilter.MaxFilter(7))
-    filled = ImageChops.multiply(filled, body.split()[3].point(lambda v: 0 if v > 128 else 255))
-    body.paste((255, 255, 255, 255), (0, 0) + body.size, filled)
     body, bpad = linework.thicken(body, LINE_BOOST)
     body.save(os.path.join(parts_dir, 'Torso.png'))
     parts['Torso'] = {'texture': 'parts/Torso.png',
@@ -540,7 +608,7 @@ def _largest(small, count=1):
 
 def colour_body(img, seed, shapes=1):
     """The one big white shape - his body - coloured in white pencil, deeper toward its edge (or
-    the `shapes` biggest: standing, his triangle and the body under it, with a line between).
+    the `shapes` biggest).
     Smaller whites (an eye, the gaps in a mouth) stay white; nothing that is not white changes."""
     r, g, b, a = img.split()
     white = ImageChops.darker(ImageChops.darker(r, g), b).point(lambda v: 255 if v > 200 else 0)
@@ -603,7 +671,7 @@ def colour_in(parts_dir, poses_dir):
         for step in steps:
             img = step(img)
         img.save(path)
-    redo(os.path.join(parts_dir, 'Torso.png'), lambda img: colour_body(img, 'triguy-torso', 2))
+    redo(os.path.join(parts_dir, 'Torso.png'), lambda img: colour_body(img, 'triguy-torso'))
     redo(os.path.join(parts_dir, 'FaceMouth.png'), fill_teeth)
     redo(os.path.join(parts_dir, 'Hat.png'), hat_sheen)
     redo(os.path.join(poses_dir, 'hat.png'), hat_sheen)
@@ -638,6 +706,9 @@ def main():
         # the triangle tips, they go with it, or the triangle swings away from them (Eric,
         # 2026-10-09: his limbs came off when he attacked).
         'legsOnBody': True,
+        # His front leg, curved, reaches less far down than his straight back one: each is
+        # lengthened as drawn until both stand straight on the floor, as Circy's are.
+        'evenLegs': True,
         # Tipped forward into his point attack, he turns back into the drawing (see cut_main).
         'tipped': tipped,
         'bones': bones,

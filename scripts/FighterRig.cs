@@ -1921,11 +1921,38 @@ public partial class FighterRig : Node2D
 		float front = evenFrontRoot + s * evenFrontLength;
 		if (back < front) backLegEven = (front - evenBackRoot) / (s * evenBackLength);
 		else frontLegEven = (back - evenFrontRoot) / (s * evenFrontLength);
+
+		// A leg does not reach down quite in step with its stretch - a knee drawn well out to one
+		// side stays out there (Triguy's curved front leg) - so the guess is measured and put right.
+		for (int pass = 0; pass < 4; pass++)
+		{
+			ApplyLegScales();
+			float? backReach = Reach(RigBone.LegBackUpper, RigBone.LegBackLower);
+			float? frontReach = Reach(RigBone.LegFrontUpper, RigBone.LegFrontLower);
+			if (backReach == null || frontReach == null) return;
+			float b = backReach.Value - evenBackRoot, f = frontReach.Value - evenFrontRoot;
+			if (Mathf.Abs(backReach.Value - frontReach.Value) < 0.5f || b < 1.0f || f < 1.0f) return;
+			if (backReach.Value < frontReach.Value)
+			{
+				if (frontLegEven > 1.0f) frontLegEven = Mathf.Max(1.0f, frontLegEven * (backReach.Value - evenFrontRoot) / f);
+				else backLegEven *= (frontReach.Value - evenBackRoot) / b;
+			}
+			else
+			{
+				if (backLegEven > 1.0f) backLegEven = Mathf.Max(1.0f, backLegEven * (frontReach.Value - evenBackRoot) / b);
+				else frontLegEven *= (backReach.Value - evenFrontRoot) / f;
+			}
+		}
 	}
 
 	void ApplyLegLengths()
 	{
 		EvenAtStretch();
+		ApplyLegScales();
+	}
+
+	void ApplyLegScales()
+	{
 		foreach (RigBone bone in LegParts)
 		{
 			int i = (int)bone;

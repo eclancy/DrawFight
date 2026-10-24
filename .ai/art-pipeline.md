@@ -517,8 +517,8 @@ small path rather than bending the rig.
   it leans with it - Flambe's.
 - **Legs out of the body** (`"legsOnBody": true`): legs that come out of the body's edge well
   away from the hip have their roots carried round as the body tips, or the body swings away from
-  them. Triguy's are set this way, though since he stands as drawn standing his legs come out of
-  his hip, the bottom point of his body. Their swings are untouched; only where
+  them. Triguy's are set this way: his legs come out of the two bottom corners of his triangle.
+  Their swings are untouched; only where
   they start moves. A body turned round to look back (a back air) takes every limb's root round
   with it.
 - **Tipped over** (`"tipped"`): as the body tips forward past `"from"` degrees, `FighterRig`
@@ -530,10 +530,15 @@ small path rather than bending the rig.
   (`triguy.png`, the triangle on its side, point forward) stood on end, with every piece slid back
   to its place on that drawing as he tipped into the stab (Eric's call, 2026-10-19). Elim kept
   saying "triguys idle is STILL his stab", "he's supposed to be tall", and drew him standing still
-  (`idle.png`): a tall body - the white triangle with his face on top, the rest drawn as an outline
-  coming round to a point - the hat over the triangle's point, an arm out of each side and two
-  short legs out of the bottom point. `cut_triguy.py` now cuts every piece from that, where he
-  drew it (Eric, 2026-10-23), filling the paper inside the lower body in white; the stab is a bow
+  (`idle.png`): the white triangle with his face, the hat over its point, an arm out of each side
+  and two very long stick legs out of its bottom corners, the front one crossing over to land its
+  knee on the back one near the floor. `cut_triguy.py` now cuts every piece from that, where he
+  drew it (Eric, 2026-10-23). His body is the triangle and nothing else - for a day the space
+  between his legs was taken for more body and filled in white, and Eric caught it. The legs are
+  taken apart where they cross, the ink under both given to both, and the front leg's drawn knee
+  is straightened - its short lower leg turned about the knee to carry on down the thigh's line -
+  so the rig can stand him on two legs; its end is no foot (`"soleSlope": 0`), and `"evenLegs"`
+  makes the curved front leg reach the floor with the straight back one. The stab is a bow
   forward from the hips until the point is out level, as `triguy.png` has it. If a kid's only
   drawing is of an attack, ask for one of them standing still before standing the attack on end.
 - **A shin with no flat sole**: a leg whose bottom is not a foot laid flat - a diagonal with a
