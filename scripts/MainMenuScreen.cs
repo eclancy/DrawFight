@@ -79,6 +79,8 @@ public partial class MainMenuScreen : Node2D
 		rig.SetPlanted(true);
 		rig.SetStanding(true);
 		rig.HandOnHip = data.HandOnHip;
+		rig.BackArmForward = data.IdleBackArmForward;
+		rig.Robotic = data.Robotic;
 		rig.CarryOnShoulder = data.ShouldersProp;
 		rig.Play(FighterAnimations.Idle);
 		return rig;

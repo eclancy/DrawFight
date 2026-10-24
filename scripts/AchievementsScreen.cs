@@ -44,6 +44,7 @@ public partial class AchievementsScreen : Node2D
 			rig.SetPlanted(true);
 			rig.SetStanding(true);
 			rig.CarryOnShoulder = earns.ShouldersProp;
+			rig.BackArmForward = earns.IdleBackArmForward;
 			rig.Play(FighterAnimations.Idle);
 			rig.Advance();
 			if (!Achievements.Earned(a.Id)) holder.Modulate = Colors.Black;

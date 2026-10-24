@@ -243,20 +243,22 @@ public static class FighterAnimations
 	/// (FighterRig.StandOnFeet), which works the legs out itself so each sole lies flat on the
 	/// floor - so the legs below are only what the fighter falls back to off the ground, and the
 	/// hip's height is a percentage of leg length (played 40% bigger, like every hip offset): the
-	/// bob lowers him by about 5%.
+	/// bob lowers him by about 5%. Each arm swings at least a robot's step (FighterRig.RobotAngle),
+	/// so DoomBot's click too: the back arm's old 7 degrees fell inside one step, and it never
+	/// moved (Eric, 2026-10-24).
 	/// </summary>
 	public static readonly AnimationClip Idle = new AnimationClip("idle", true,
 		(0, new Pose(new Vector2(0, 1),
 			(Torso, -2), (Head, 2),
-			(AFU, -14), (AFL, -24), (ABU, 14), (ABL, -18),
+			(AFU, -14), (AFL, -24), (ABU, 14), (ABL, -16),
 			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))),
 		(46, new Pose(new Vector2(0, 4),
 			(Torso, 5), (Head, -4),
-			(AFU, -5), (AFL, -32), (ABU, 7), (ABL, -26),
+			(AFU, -5), (AFL, -32), (ABU, 4), (ABL, -31),
 			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))),
 		(92, new Pose(new Vector2(0, 1),
 			(Torso, -2), (Head, 2),
-			(AFU, -14), (AFL, -24), (ABU, 14), (ABL, -18),
+			(AFU, -14), (AFL, -24), (ABU, 14), (ABL, -16),
 			(LFU, -10), (LFL, 10), (LBU, 6), (LBL, -6))));
 
 	/// <summary>

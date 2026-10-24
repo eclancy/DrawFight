@@ -206,6 +206,7 @@ public partial class CharacterSelectScreen : Node2D
 				rig.ArmBackLimit = data.ArmReachBack;
 				rig.CarryOnShoulder = data.ShouldersProp;
 				rig.HandOnHip = data.HandOnHip;
+				rig.BackArmForward = data.IdleBackArmForward;
 				rig.SetPlanted(true);
 				rig.SetStanding(true);
 				FitPortrait(holder, rig, window.Size);

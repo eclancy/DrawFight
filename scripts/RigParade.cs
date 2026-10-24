@@ -509,6 +509,12 @@ public partial class RigParade : Node2D
 			rig.Inertia = data.Inertia;
 			rig.ArmBackLimit = data.ArmReachBack;
 			if (Size != 0 && Stretches(data)) rig.SetLegStretch(SizeLevels.LegStretch(Size), 150.0f);
+			// Standing about, as a match stands him (Fighter: the grounded idle).
+			if (Film == "idle")
+			{
+				rig.HandOnHip = data.HandOnHip;
+				rig.BackArmForward = data.IdleBackArmForward;
+			}
 			if (FilmItem(Film) is ItemData filmed) HoldFilmItem(rig, data, filmed);
 			var trail = new SmearTrail();
 			for (int f = 0; f <= frame; f++)
