@@ -321,6 +321,7 @@ public partial class RigParade : Node2D
 				rig.Robotic = data.Robotic;
 				rig.Inertia = data.Inertia;
 				rig.ArmBackLimit = data.ArmReachBack;
+				if (Size != 0 && Stretches(data)) rig.SetLegStretch(SizeLevels.LegStretch(Size), 150.0f);
 				int last = FilmLeadIn + frames[c];
 				var trail = new SmearTrail();
 				for (int f = 0; f <= last; f++)
@@ -507,6 +508,7 @@ public partial class RigParade : Node2D
 			rig.Robotic = data.Robotic;
 			rig.Inertia = data.Inertia;
 			rig.ArmBackLimit = data.ArmReachBack;
+			if (Size != 0 && Stretches(data)) rig.SetLegStretch(SizeLevels.LegStretch(Size), 150.0f);
 			if (FilmItem(Film) is ItemData filmed) HoldFilmItem(rig, data, filmed);
 			var trail = new SmearTrail();
 			for (int f = 0; f <= frame; f++)

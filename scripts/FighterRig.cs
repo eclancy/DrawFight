@@ -719,7 +719,12 @@ public partial class FighterRig : Node2D
 		int hip = (int)RigBone.Hip;
 		if (!present[hip]) return;
 		Vector2 at = bones[hip].Position;
-		at.Y = current.HipOffset.Y * 0.01f * LegLength * legStretch + kneelDrop;
+		// Stretched tall, he stands tall: the longer the legs, the less the hips dip. A knee bent by
+		// the same angle on a long leg throws the foot far out ahead of the hips, and he stood
+		// leaning back off his feet; dipped less, the knees come forward about as far as at his
+		// drawn height, and he stays over his feet (Circy tall; Eric, 2026-10-23).
+		float dip = legStretch > 1.0f ? 1.0f / legStretch : legStretch;
+		at.Y = current.HipOffset.Y * 0.01f * LegLength * dip + kneelDrop;
 
 		if (HasFeet)
 		{
@@ -1048,13 +1053,15 @@ public partial class FighterRig : Node2D
 		if (!present[(int)lower] || sprite == null || sprite.Texture == null) return null;
 		(Vector2 point, float slope, bool foot) = SoleOf(sprite.Texture);
 		if (soleSlopes[(int)lower] is float drawn) slope = drawn;
+		if (shownSlopes[(int)lower] is float shown) slope = shown;
 		Transform2D t = sprite.Transform;
 		Vector2 sole = t * (point + sprite.Offset);
 		// Levelled as drawn, not as stretched: a leg stretched long is scaled along its length,
 		// which tips its foot steeper - and turning the shin far enough to level that laid it on the
 		// floor (Circy standing tall; Eric, 2026-10-08). So the shin turns as far as the foot needs
 		// at its drawn size, and a stretched foot sits a little off level instead.
-		Vector2 along = new Vector2(1.0f, slope).Rotated(sprite.Rotation);
+		// The way the leg itself points: a sheared shin's rotation is taken back out by its skew.
+		Vector2 along = new Vector2(1.0f, slope).Rotated(sprite.Rotation + sprite.Skew);
 		float shin = -Mathf.Atan2(along.Y, along.X);
 		return (shin, sole.Rotated(shin), sole, foot);
 	}
@@ -1875,28 +1882,57 @@ public partial class FighterRig : Node2D
 
 	static readonly RigBone[] LegParts = { RigBone.LegBackUpper, RigBone.LegBackLower, RigBone.LegFrontUpper, RigBone.LegFrontLower };
 
-	/// <summary>The shorter leg lengthened until, standing straight, its sole comes as low as the other's.</summary>
+	/// <summary>
+	/// The shorter leg lengthened until, standing straight, its sole comes as low as the other's -
+	/// at whatever stretch the legs are at. Each leg's drawn length below its hip is kept, and the
+	/// evening is worked out afresh for every stretch (<see cref="EvenAtStretch"/>): legs whose hips
+	/// sit at different heights, evened once at their drawn length, came apart again stretched,
+	/// until the longer one was stood straight and leaning, its foot tipped (Circy tall; Eric,
+	/// 2026-10-23).
+	/// </summary>
 	void EvenUpLegs()
 	{
+		// Measured as drawn: nothing evened yet, and any stretch taken back out below.
+		evening = false;
+		backLegEven = frontLegEven = 1.0f;
+		ApplyLegLengths();
 		float? back = Reach(RigBone.LegBackUpper, RigBone.LegBackLower);
 		float? front = Reach(RigBone.LegFrontUpper, RigBone.LegFrontLower);
 		if (back == null || front == null) return;
-		float backRoot = bones[(int)RigBone.LegBackUpper].Position.Y;
-		float frontRoot = bones[(int)RigBone.LegFrontUpper].Position.Y;
-		if (back.Value < front.Value) backLegEven = (front.Value - backRoot) / Mathf.Max(1.0f, back.Value - backRoot);
-		else frontLegEven = (back.Value - frontRoot) / Mathf.Max(1.0f, front.Value - frontRoot);
+		evenBackRoot = bones[(int)RigBone.LegBackUpper].Position.Y;
+		evenFrontRoot = bones[(int)RigBone.LegFrontUpper].Position.Y;
+		float stretch = Mathf.Max(0.1f, legStretch);
+		evenBackLength = Mathf.Max(1.0f, (back.Value - evenBackRoot) / stretch);
+		evenFrontLength = Mathf.Max(1.0f, (front.Value - evenFrontRoot) / stretch);
+		evening = true;
 		ApplyLegLengths();
+	}
+
+	bool evening;
+	float evenBackRoot, evenFrontRoot, evenBackLength, evenFrontLength;
+
+	/// <summary>The shorter leg's stretch on top of both legs', so their soles meet at this stretch.</summary>
+	void EvenAtStretch()
+	{
+		if (!evening) return;
+		float s = Mathf.Max(0.1f, legStretch);
+		backLegEven = frontLegEven = 1.0f;
+		float back = evenBackRoot + s * evenBackLength;
+		float front = evenFrontRoot + s * evenFrontLength;
+		if (back < front) backLegEven = (front - evenBackRoot) / (s * evenBackLength);
+		else frontLegEven = (back - evenFrontRoot) / (s * evenFrontLength);
 	}
 
 	void ApplyLegLengths()
 	{
+		EvenAtStretch();
 		foreach (RigBone bone in LegParts)
 		{
 			int i = (int)bone;
 			bool front = bone == RigBone.LegFrontUpper || bone == RigBone.LegFrontLower;
 			float k = legStretch * (front ? frontLegReach * frontLegEven : backLegEven);
 			float side = TurnSign(bone);
-			if (sprites[i] != null) sprites[i].Scale = new Vector2(side, k);
+			if (sprites[i] != null) StretchSprite(bone, side, k);
 			// The knees move with it - down the leg only: a knee drawn off to one side (a bowed
 			// leg) stays on its side.
 			if ((bone == RigBone.LegBackLower || bone == RigBone.LegFrontLower) && present[i])
@@ -1905,6 +1941,40 @@ public partial class FighterRig : Node2D
 			}
 		}
 	}
+
+	/// <summary>
+	/// Stretches one leg part <paramref name="k"/> times its drawn length. A shin is stretched along
+	/// the leg but not across the foot: scaled straight, the foot's slope was stretched with it, so
+	/// a tall leg's foot tipped off the floor, and turning the long shin far enough to level it threw
+	/// the foot out ahead of him. Sheared instead, the foot keeps its own slope - less of it the
+	/// longer the leg, so the long shin turns less - and lies flat (Circy tall; Eric, 2026-10-23).
+	/// A turned leg is never standing, so it is only scaled.
+	/// </summary>
+	void StretchSprite(RigBone bone, float side, float k)
+	{
+		int i = (int)bone;
+		Sprite2D sprite = sprites[i];
+		shownSlopes[i] = null;
+		bool shin = bone == RigBone.LegBackLower || bone == RigBone.LegFrontLower;
+		if (!shin || side < 0.0f || sprite.Texture == null || Mathf.IsEqualApprox(k, 1.0f))
+		{
+			sprite.Rotation = 0.0f;
+			sprite.Skew = 0.0f;
+			sprite.Scale = new Vector2(side, k);
+			return;
+		}
+		float slope = soleSlopes[i] ?? SoleOf(sprite.Texture).slope;
+		float shown = Mathf.Tan(Mathf.Atan(slope) / Mathf.Max(1.0f, k));
+		// Across the leg, x moves y by `shear`, so a foot drawn at `slope` shows at `shown`.
+		float shear = Mathf.Atan(shown - k * slope);
+		sprite.Rotation = shear;
+		sprite.Skew = -shear;
+		sprite.Scale = new Vector2(1.0f / Mathf.Cos(shear), k);
+		shownSlopes[i] = shown;
+	}
+
+	/// <summary>The slope a stretched shin's foot shows at (StretchSprite), when not as drawn.</summary>
+	readonly float?[] shownSlopes = new float?[(int)RigBone.Count];
 
 	float roll;
 	bool rollingOnFloor;
@@ -2468,7 +2538,7 @@ public partial class FighterRig : Node2D
 			foreach (RigBone bone in new[] { upper, lower })
 			{
 				Sprite2D sprite = sprites[(int)bone];
-				if (sprite != null) sprite.Scale = new Vector2(side, sprite.Scale.Y);
+				if (sprite != null) StretchSprite(bone, side, sprite.Scale.Y);
 			}
 			int i = (int)lower;
 			if (present[i]) bones[i].Position = new Vector2(restOffsets[i].X * side, bones[i].Position.Y);

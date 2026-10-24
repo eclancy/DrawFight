@@ -307,7 +307,7 @@ edgelord: Exactly. Stick with me.
 edgelord pose none
 triguy show none
 triguy face edgelord
-triguy walk to 520
+triguy walk to 600
 triguy mark sparkle
 triguy: that's, really kewl.
 edgelord look angry
