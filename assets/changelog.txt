@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.14.1 | 2026-10-24
+Less flicker when the camera moves left and right: the camera now lines up with the screen's pixels, and the fridge door's metal grain is drawn broader so it doesn't shimmer when zoomed out. Screen shake no longer shows past the edge of the stage.
+
 == 0.14.0 | 2026-10-24
 A new picture after DoomBot's story the first time you finish it, and a Gallery in the options with every drawing sent in and who drew it. Picking a fighter shows them up close in your box, in the skin you chose. Circy's story is now about not wanting to be covered up and forgotten. DoomBot's story is reworked: he explains his plan, fights Circy first, has sharper lines for EdgeLord and Lugnut, and his ending has him putting everyone back up. Triguy stands on two separate legs, Circy stands flat-footed when tall, and DoomBot's back arm moves. You can add names in the options, and the Back button is in the same place on every screen. The pause screen covers the whole screen, the name picker no longer slows the game, and story scenes start with no items lying around.
 
