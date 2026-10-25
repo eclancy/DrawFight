@@ -253,9 +253,11 @@ public static class Specials
 
 	/// <summary>
 	/// Neutral: "an eye laser". His round grille eye glows for a long windup, then a thin red
-	/// laser shoots out of it and down at an angle across the stage, to the floor - from up at his
-	/// head it went over everyone shorter, level (Eric, 2026-10-16) - and stays on his eye as his
-	/// head moves. Long reach and light damage - a poke that stops people keeping away from him.
+	/// laser shoots out of it down at the floor right in front of him and scans out across the stage,
+	/// near to far, until the attack is over - from up at his head a level one went over everyone
+	/// shorter (Eric, 2026-10-16). He holds his head still the whole time it is on (Eric, 2026-10-25:
+	/// it jumped halfway through as he snapped back). Long reach and light damage - a poke that stops
+	/// people keeping away from him.
 	/// </summary>
 	static MoveData EyeLaser() => new MoveData
 	{
@@ -266,8 +268,8 @@ public static class Specials
 		LaunchAngleDegrees = 25.0f,
 		HitboxOffset = new Vector2(30.0f, -80.0f), HitboxRadius = 0.0f,
 		Special = SpecialKind.Projectile,
-		SpecialSpeed = 3200.0f, SpecialGravity = 0.0f, SpecialLifetime = 26,
-		Beam = true, Reach = 820.0f, BeamFrom = "eye", BeamDegrees = 18.0f,
+		SpecialSpeed = 3200.0f, SpecialGravity = 0.0f, SpecialLifetime = 25,
+		Beam = true, Reach = 820.0f, BeamFrom = "eye", BeamSweepFrom = 60.0f, BeamDegrees = 16.0f,
 		FxColor = new Color(0.95f, 0.24f, 0.26f), FxRadius = 14.0f,
 	};
 

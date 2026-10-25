@@ -2234,8 +2234,10 @@ public static class FighterAnimations
 			int step = (frame - startup - 1) / 3;
 			return (Mathf.Min(activeEnd, startup + 1 + (step + 1) * 3), 2 + step);
 		}
-		// The strike, fully out by the first active frame, held through the follow-through.
-		int held = activeEnd + Mathf.CeilToInt(move.EndlagFrames * FollowThroughHold);
+		// The strike, fully out by the first active frame, held through the follow-through - or, for
+		// a beam, until the beam is gone: it comes out of him, and a snap back mid-beam jerked it
+		// off where it was pointing (DoomBot's eye laser).
+		int held = move.Beam ? move.TotalFrames - RobotAttackSnap : activeEnd + Mathf.CeilToInt(move.EndlagFrames * FollowThroughHold);
 		if (frame <= held) return (startup + 1, 1);
 		// And back, in one snap.
 		return (move.TotalFrames, 1000);

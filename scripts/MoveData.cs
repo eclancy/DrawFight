@@ -333,6 +333,14 @@ public partial class MoveData : Resource
 	[Export] public float BeamDegrees { get; set; } = 0.0f;
 
 	/// <summary>
+	/// A beam that scans: it starts this many degrees below level - steep, on the floor close in
+	/// front of him - and lifts to <see cref="BeamDegrees"/> over its life, so where it meets the
+	/// floor runs out from near to far. It does not stop on whoever it hits; it carries on. Zero is a
+	/// beam held at one angle. DoomBot's eye laser (Eric, 2026-10-25).
+	/// </summary>
+	[Export] public float BeamSweepFrom { get; set; } = 0.0f;
+
+	/// <summary>
 	/// A projectile fired as a burst: this many shots, <see cref="BurstInterval"/> frames apart,
 	/// starting on the first active frame. Each shot hits on its own - a nail gun.
 	/// </summary>

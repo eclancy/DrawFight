@@ -48,12 +48,16 @@ public partial class Hazard : Node2D
 	int beamDir = 1;
 	bool beamStopped;
 
-	/// <summary>Which way a beam points: the way it was fired, tipped down by its move's angle.</summary>
+	/// <summary>How far below level a beam points now: its move's angle, or partway through its sweep.</summary>
+	float BeamAngle => move.BeamSweepFrom == 0.0f ? move.BeamDegrees
+		: Mathf.Lerp(move.BeamSweepFrom, move.BeamDegrees, Mathf.Clamp(ageFrames / (float)Mathf.Max(1, lifeFrames), 0.0f, 1.0f));
+
+	/// <summary>Which way a beam points: the way it was fired, tipped down by its angle.</summary>
 	Vector2 BeamDirection
 	{
 		get
 		{
-			float a = Mathf.DegToRad(move.BeamDegrees);
+			float a = Mathf.DegToRad(BeamAngle);
 			return new Vector2(beamDir * Mathf.Cos(a), Mathf.Sin(a));
 		}
 	}
@@ -61,7 +65,7 @@ public partial class Hazard : Node2D
 	/// <summary>How far a beam can reach from where it starts before it meets solid ground.</summary>
 	float BeamRoom()
 	{
-		if (move.BeamDegrees == 0.0f) return move.Reach;
+		if (BeamAngle == 0.0f) return move.Reach;
 		var space = GetWorld2D().DirectSpaceState;
 		var ray = PhysicsRayQueryParameters2D.Create(GlobalPosition, GlobalPosition + BeamDirection * move.Reach, 0b01);
 		var hit = space.IntersectRay(ray);
@@ -783,6 +787,8 @@ public partial class Hazard : Node2D
 				return;
 			}
 
+			// A scanning beam carries on across the floor; it hits each of them once.
+			if (move.Beam && move.BeamSweepFrom != 0.0f) return;
 			if (move.Beam)
 			{
 				// A beam stops where it hits and hangs there a moment rather than vanishing.
@@ -926,7 +932,7 @@ public partial class Hazard : Node2D
 		float length = beamLength / s;
 
 		// Texture x runs from the tip back toward the hands, tipped down by the beam's angle.
-		DrawSetTransformMatrix(new Transform2D(beamDir * Mathf.DegToRad(move.BeamDegrees), new Vector2(-beamDir * s, s), 0.0f,
+		DrawSetTransformMatrix(new Transform2D(beamDir * Mathf.DegToRad(BeamAngle), new Vector2(-beamDir * s, s), 0.0f,
 			BeamDirection * beamLength));
 
 		if (length <= burst)
@@ -1130,7 +1136,7 @@ public partial class Hazard : Node2D
 			DrawLine(Vector2.Zero, tip, body, radius * 2.0f);
 			DrawCircle(tip, radius, body);
 			DrawLine(Vector2.Zero, tip, new Color(1.0f, 0.95f, 0.85f, 0.9f), radius * 0.7f);
-			if (move.BeamDegrees != 0.0f && beamLength < move.Reach - 1.0f)
+			if (BeamAngle != 0.0f && beamLength < move.Reach - 1.0f)
 			{
 				float flicker = 1.0f + 0.25f * Mathf.Sin(ageFrames * 1.3f);
 				DrawCircle(tip, radius * 2.2f * flicker, new Color(body, 0.35f));
