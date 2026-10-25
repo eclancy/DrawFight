@@ -120,8 +120,16 @@ public partial class GameCamera : Camera2D
 
 		z = Mathf.Max(z, FittingZoom());
 		Zoom = new Vector2(z, z);
-		GlobalPosition = InsideLimits(smoothed, z) + shakeOffset;
+		GlobalPosition = Snapped(InsideLimits(smoothed + shakeOffset, z), z);
 	}
+
+	/// <summary>
+	/// On a whole screen pixel. Between pixels, every fine line on the stage - the fridge door's
+	/// grain and pencil hatching, a page's margin - lands on a different mix of pixels each frame,
+	/// and panning across them shimmered (Eric, 2026-10-24: flickering up in the corner as the
+	/// camera moved). On a whole pixel, a pan only moves them.
+	/// </summary>
+	Vector2 Snapped(Vector2 centre, float zoom) => (centre * zoom).Round() / zoom;
 
 	/// <summary>
 	/// The furthest out the camera can go and still have nothing but art on screen: the painted
@@ -138,10 +146,14 @@ public partial class GameCamera : Camera2D
 			Mathf.Max((viewport.Y - HudBand) / Mathf.Max(1.0f, toFloor), viewport.Y / Mathf.Max(1.0f, toEnd)));
 	}
 
-	/// <summary>A centre moved in until the whole screen round it is inside Limits.</summary>
+	/// <summary>
+	/// A centre moved in until the whole screen round it is inside Limits - a few pixels inside, so
+	/// rounding it onto a whole pixel (Snapped) never shows a sliver past the painting. Shake is
+	/// moved in with it: shaken past the edge, the bare page flashed along it.
+	/// </summary>
 	Vector2 InsideLimits(Vector2 centre, float zoom)
 	{
-		Vector2 half = GetViewportRect().Size / (2.0f * zoom);
+		Vector2 half = GetViewportRect().Size / (2.0f * zoom) + Vector2.One * (2.0f / zoom);
 		float Axis(float c, float low, float high, float h) =>
 			high - low <= h * 2.0f ? (low + high) * 0.5f : Mathf.Clamp(c, low + h, high - h);
 		float y = Axis(centre.Y, Limits.Position.Y, Limits.End.Y, half.Y);
@@ -153,6 +165,6 @@ public partial class GameCamera : Camera2D
 	{
 		zoom = Mathf.Max(zoom, FittingZoom());
 		Zoom = new Vector2(zoom, zoom);
-		GlobalPosition = InsideLimits(centre, zoom) + shakeOffset;
+		GlobalPosition = Snapped(InsideLimits(centre + shakeOffset, zoom), zoom);
 	}
 }

@@ -224,17 +224,20 @@ public partial class Stage : Node2D
 	{
 		Rect2 door = Backdrop;
 
-		for (float x = door.Position.X; x < door.End.X; x += 13.0f)
+		// Broad enough to stay a line on screen when the camera is pulled right out: at 2 pixels
+		// every 13, the grain and the hatch went finer than a pixel and shimmered as it panned
+		// (Eric, 2026-10-24).
+		for (float x = door.Position.X; x < door.End.X; x += 24.0f)
 		{
 			int i = Mathf.RoundToInt(x);
 			float shade = CrayonBrush.Noise(41, i);
 			Color grain = shade > 0.0f
-				? new Color(1.0f, 1.0f, 1.0f, 0.10f + 0.12f * shade)
-				: new Color(0.58f, 0.62f, 0.68f, 0.06f - 0.10f * shade);
-			CrayonBrush.InkLine(this, new Vector2(x, door.Position.Y), new Vector2(x, door.End.Y), grain, 2.0f, i, 1.4f);
+				? new Color(1.0f, 1.0f, 1.0f, 0.08f + 0.10f * shade)
+				: new Color(0.58f, 0.62f, 0.68f, 0.05f - 0.08f * shade);
+			CrayonBrush.InkLine(this, new Vector2(x, door.Position.Y), new Vector2(x, door.End.Y), grain, 4.5f, i, 1.4f);
 		}
 
-		CrayonBrush.PencilFill(this, door, new Color(0.64f, 0.68f, 0.74f, 0.22f), 57, 10.0f, 2.0f);
+		CrayonBrush.PencilFill(this, door, new Color(0.64f, 0.68f, 0.74f, 0.16f), 57, 20.0f, 4.5f);
 
 		foreach (float centre in new[] { -520.0f, 360.0f })
 		{
