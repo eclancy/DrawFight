@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.14.2 | 2026-10-25
+DoomBot's eye laser now holds steady instead of jumping halfway through: his head stays still while it's on, and the laser sweeps out across the floor from right in front of him to far away.
+
 == 0.14.1 | 2026-10-24
 Less flicker when the camera moves left and right: the camera now lines up with the screen's pixels, and the fridge door's metal grain is drawn broader so it doesn't shimmer when zoomed out. Screen shake no longer shows past the edge of the stage.
 
