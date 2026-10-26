@@ -38,7 +38,38 @@ release**.
   when the game changes and Godot does not. The rest of the full zip is the Godot engine and the
   .NET runtime.
 - **`version.json`**: the version, the Godot version it was built with, and the URLs of both
-  zips and of the installer (`installer`, which the updater ignores).
+  zips and of the installer (`installer`, which the updater ignores) - and, under `linux`, the
+  Linux pair below.
+
+## Linux
+
+Added 2026-10-25, on Eric's call, for every game on ecec.dev. `release.sh` exports the `Linux`
+preset to `build/linux/` too, and `package.py` makes two more files from it:
+
+- **`DrawFight-linux.tar.gz`** (about 73 MB): the game in a `DrawFight/` folder - the
+  `DrawFight.x86_64` binary, the `.pck`, and `data_DrawFight_linuxbsd_x86_64/` with the .NET
+  runtime, so nothing has to be installed first - plus `install.sh`, `icon.png` and
+  `How to play.txt`. A tarball rather than a zip, because a tarball carries the "can be run"
+  permission on the binary and the script; `package.py` sets it, which it can do from Windows.
+- **`DrawFight-linux-patch.zip`**: the Linux export's `.pck` and the game's DLL - the same idea
+  as the Windows patch, from the Linux export.
+
+**`install.sh`** (`tools/release/install.sh`) is the Linux installer. It copies the game to
+`~/.local/share/DrawFight` and puts a `drawfight.desktop` in `~/.local/share/applications`, so it
+is on the app menu. No sudo and nothing outside the home folder - for the same reason the Windows
+installer installs per user: the game updates itself, so its folder has to stay writable by the
+player. `./install.sh --uninstall` takes it out again; saves (in
+`~/.local/share/godot/app_userdata/DrawFight`) are never touched. Running `./DrawFight.x86_64`
+straight from the unpacked folder works too.
+
+**Updating** works as on Windows, from `version.json`'s `linux` pair: the patch on the same engine,
+the tarball otherwise (unpacked with `System.Formats.Tar`, so the binary stays runnable). The
+game writes `apply.sh`, starts it with `/bin/sh` and quits; it waits for the game to close, copies
+the new files over, `chmod +x`es the binary and starts it again. A release from before Linux has
+no `linux` pair, and a Linux copy just goes on to the title.
+
+**Tested so far:** the export, the packaging and the permissions in the tarball, on Windows. It
+has not yet been run on Linux - Eric is testing it on a Linux machine.
 
 ## The installer
 
@@ -99,9 +130,10 @@ Version numbers: bump the last number for fixes and balance changes, and the mid
 fighter or stage.
 
 **One-time setup on a new machine:** install Godot's export templates for the exact editor
-version. They come from the `godotengine/godot-builds` GitHub release, file
-`Godot_v<version>-stable_mono_export_templates.tpz`, about 1.2 GB. Only the `windows_*` files are
-needed, unpacked into `%APPDATA%\Godot\export_templates\<version>.stable.mono\`. The export
+version. They come from the `godotengine/godot` GitHub release, file
+`Godot_v<version>-stable_mono_export_templates.tpz`, about 1.2 GB. Only the `windows_*` files and
+`linux_release.x86_64` / `linux_debug.x86_64` are needed, unpacked into
+`%APPDATA%\Godot\export_templates\<version>.stable.mono\`. The export
 fails with "No export template found" until they are there. Also install **Inno Setup 6**
 (`winget install JRSoftware.InnoSetup`), which compiles the installer. The script looks for
 `ISCC.exe` in `%LOCALAPPDATA%\Programs\Inno Setup 6\` (where its per-user install goes) and
@@ -127,4 +159,4 @@ pointing at your `version.json`. Run a build with `--no-update` to skip the chec
   itself and silently stays on its version. The installer always puts it somewhere writable; for
   the portable zip, `How to play.txt` says to keep it in Documents or on the Desktop.
 - **SmartScreen applies to the installer too**, for the same reason: it is not signed either.
-- **Only Windows is exported.** A Mac build needs Apple notarization to open without a fight.
+- **Windows and Linux are exported.** A Mac build needs Apple notarization to open without a fight.

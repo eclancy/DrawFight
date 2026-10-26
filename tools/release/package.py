@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Turn an export in build/windows/ into the three files a GitHub Release carries.
+"""Turn the exports in build/windows/ and build/linux/ into the files a GitHub Release carries.
 
     python tools/release/package.py 0.2.0
 
@@ -11,6 +11,9 @@ Writes build/release/:
   DrawFight-patch.zip     just the game: the .pck and the game's own assembly. About 5 MB,
                           against about 70 MB for the full zip, because the engine and the .NET
                           runtime only change when Godot is upgraded.
+  DrawFight-linux.tar.gz  the Linux version, in a DrawFight/ folder with install.sh (which puts
+                          it in ~/.local/share and on the app menu) - from build/linux/
+  DrawFight-linux-patch.zip  the Linux patch: its .pck and the game's assembly
   version.json            what the game's update check reads (see scripts/UpdateScreen.cs)
 
 Normally run by tools/release/release.sh rather than by hand. See .ai/releasing.md.
@@ -21,10 +24,14 @@ import io
 import json
 import os
 import sys
+import tarfile
+import time
 import zipfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 EXPORT = os.path.join(ROOT, "build", "windows")
+LINUX = os.path.join(ROOT, "build", "linux")
+LINUX_DATA = "data_DrawFight_linuxbsd_x86_64"
 OUT = os.path.join(ROOT, "build", "release")
 REPO = "eclancy/DrawFight"
 DATA = "data_DrawFight_windows_x86_64"
@@ -54,6 +61,57 @@ Keep this folder somewhere you can write to, like Documents or the Desktop, so i
 
 Made at https://ecec.dev - draw your own fighter at https://ecec.dev/drawfight
 """
+
+
+HOW_TO_PLAY_LINUX = u"""DrawFight
+=========
+
+1. Open a terminal in this folder and run:  ./install.sh
+   That puts the game in ~/.local/share/DrawFight and adds it to your app menu.
+   (Or just run ./DrawFight.x86_64 from here - keep the folder somewhere you can write to.)
+
+2. Plug in a controller or two (Xbox pads work best), or use the keyboard.
+
+The game updates itself: every time it starts, it checks for a new version and installs it.
+To remove it: ~/.local/share/DrawFight/install.sh --uninstall  (your saves are kept)
+
+Made at https://ecec.dev - draw your own fighter at https://ecec.dev/drawfight
+"""
+
+
+def add_tar_file(t, data, name, executable=False):
+    info = tarfile.TarInfo(name)
+    info.size = len(data)
+    info.mode = 0o755 if executable else 0o644
+    info.mtime = int(time.time())
+    t.addfile(info, io.BytesIO(data))
+
+
+def linux_package(version):
+    """The Linux download and patch. Every file gets its permissions set here, on Windows: the
+    game binary and install.sh executable, the rest readable."""
+    tar_path = os.path.join(OUT, "DrawFight-linux.tar.gz")
+    t = tarfile.open(tar_path, "w:gz")
+    for dirpath, _dirs, files in os.walk(LINUX):
+        for f in sorted(files):
+            full = os.path.join(dirpath, f)
+            rel = os.path.relpath(full, LINUX).replace(os.sep, "/")
+            with open(full, "rb") as fh:
+                data = fh.read()
+            add_tar_file(t, data, "DrawFight/" + rel, executable=rel == "DrawFight.x86_64")
+    with open(os.path.join(ROOT, "tools", "release", "install.sh"), "rb") as fh:
+        add_tar_file(t, fh.read().replace(b"\r\n", b"\n"), "DrawFight/install.sh", executable=True)
+    with open(os.path.join(ROOT, "icon.png"), "rb") as fh:
+        add_tar_file(t, fh.read(), "DrawFight/icon.png")
+    add_tar_file(t, HOW_TO_PLAY_LINUX.encode("utf-8"), "DrawFight/How to play.txt")
+    t.close()
+
+    patch = os.path.join(OUT, "DrawFight-linux-patch.zip")
+    z = zipfile.ZipFile(patch, "w", zipfile.ZIP_DEFLATED)
+    for rel in ["DrawFight.pck", LINUX_DATA + "/DrawFight.dll", LINUX_DATA + "/DrawFight.deps.json",
+                LINUX_DATA + "/DrawFight.runtimeconfig.json"]:
+        z.write(os.path.join(LINUX, rel.replace("/", os.sep)), rel)
+    z.close()
 
 
 def engine_version():
@@ -94,6 +152,10 @@ def main(argv):
         z.write(os.path.join(EXPORT, rel.replace("/", os.sep)), rel)
     z.close()
 
+    linux = os.path.isfile(os.path.join(LINUX, "DrawFight.pck"))
+    if linux:
+        linux_package(version)
+
     base = "https://github.com/%s/releases/download/v%s/" % (REPO, version)
     info = {
         "version": version,
@@ -104,11 +166,17 @@ def main(argv):
         # installer. release.sh builds it right after this script.
         "installer": base + "DrawFight-Setup.exe",
     }
+    # A Linux copy reads its own pair; Windows copies never look at it.
+    if linux:
+        info["linux"] = {"patch": base + "DrawFight-linux-patch.zip", "full": base + "DrawFight-linux.tar.gz"}
     with io.open(os.path.join(OUT, "version.json"), "w", encoding="utf-8") as f:
         f.write(unicode(json.dumps(info, indent=2, sort_keys=True)) + u"\n")
 
-    for name in ("DrawFight-windows.zip", "DrawFight-patch.zip", "version.json"):
-        print("%-24s %6.1f MB" % (name, os.path.getsize(os.path.join(OUT, name)) / 1048576.0))
+    names = ["DrawFight-windows.zip", "DrawFight-patch.zip", "version.json"]
+    if linux:
+        names += ["DrawFight-linux.tar.gz", "DrawFight-linux-patch.zip"]
+    for name in names:
+        print("%-26s %6.1f MB" % (name, os.path.getsize(os.path.join(OUT, name)) / 1048576.0))
     return 0
 
 

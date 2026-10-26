@@ -6,16 +6,17 @@
 # The optional second argument heads the release notes, and ecec.dev/games/drawfight shows it
 # under "What's new". The download instructions are always appended below it.
 #
-# Commits the version bump, tags it, exports the Windows build, and makes a GitHub Release with
-# the installer (DrawFight-Setup.exe, built by Inno Setup from tools/release/installer.iss), the
-# full zip (the portable version), the small patch zip and version.json. ecec.dev/drawfight/version.json redirects
+# Commits the version bump, tags it, exports the Windows and Linux builds, and makes a GitHub
+# Release with the installer (DrawFight-Setup.exe, built by Inno Setup from
+# tools/release/installer.iss), the full zip (the portable version), the small patch zip, the
+# Linux download (DrawFight-linux.tar.gz, with an install.sh) and its patch, and version.json. ecec.dev/drawfight/version.json redirects
 # to the newest release's version.json, so nothing on ecec.dev needs deploying. See
 # .ai/releasing.md.
 set -euo pipefail
 
 VERSION="${1:-}"
 CHANGES="${2:-}"
-HOW_TO="Download **DrawFight-Setup.exe** and run it, then play from the Start menu or the desktop. It keeps itself up to date from then on. No installer wanted? **DrawFight-windows.zip** is the portable version: unzip it somewhere you can write to, like Documents, and run DrawFight.exe. Download page: https://ecec.dev/drawfight/download"
+HOW_TO="Download **DrawFight-Setup.exe** and run it, then play from the Start menu or the desktop. It keeps itself up to date from then on. No installer wanted? **DrawFight-windows.zip** is the portable version: unzip it somewhere you can write to, like Documents, and run DrawFight.exe. On Linux, download **DrawFight-linux.tar.gz**, unpack it and run **./install.sh** - it adds DrawFight to your app menu and keeps itself up to date too. Download page: https://ecec.dev/drawfight/download"
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 	echo "usage: bash tools/release/release.sh X.Y.Z [\"what changed\"]" >&2
 	exit 1
@@ -48,13 +49,17 @@ sed -i "s/^config\/version=\".*\"$/config\/version=\"$VERSION\"/" project.godot
 if [ -n "$CHANGES" ]; then python tools/release/changelog.py "$VERSION" "$CHANGES"; fi
 
 dotnet build DrawFight.sln -nologo -v q
-rm -rf build/windows build/release
-mkdir -p build/windows
+rm -rf build/windows build/linux build/release
+mkdir -p build/windows build/linux
 # Godot does not create the export folder itself, and on an export error it can sit there
 # instead of exiting - hence the timeout.
 timeout 900 "$GODOT_BIN" --headless --path . --export-release "Windows Desktop" build/windows/DrawFight.exe \
 	> build/export.log 2>&1 || { tail -20 build/export.log; echo "export failed - see build/export.log" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
 [ -f build/windows/DrawFight.pck ] || { echo "export produced no .pck - see build/export.log" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
+# The same game for Linux. Needs the linux_* export templates (see .ai/releasing.md).
+timeout 900 "$GODOT_BIN" --headless --path . --export-release "Linux" build/linux/DrawFight.x86_64 \
+	> build/export-linux.log 2>&1 || { tail -20 build/export-linux.log; echo "Linux export failed - see build/export-linux.log" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
+[ -f build/linux/DrawFight.pck ] || { echo "Linux export produced no .pck - see build/export-linux.log" >&2; git checkout project.godot assets/changelog.txt; exit 1; }
 
 python tools/release/package.py "$VERSION"
 # Git Bash turns an argument starting with / into a path; ISCC's /Q and /D switches must not be.
@@ -69,6 +74,7 @@ git push -q origin HEAD "v$VERSION"
 gh release create "v$VERSION" \
 	build/release/DrawFight-Setup.exe build/release/DrawFight-windows.zip \
 	build/release/DrawFight-patch.zip build/release/version.json \
+	build/release/DrawFight-linux.tar.gz build/release/DrawFight-linux-patch.zip \
 	--title "DrawFight $VERSION" \
 	--notes "${CHANGES:+$CHANGES
 
