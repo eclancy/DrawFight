@@ -860,7 +860,7 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (CpuButton(i, 1).HasPoint(point))
 			{
-				seat.Index = NextUnlocked((seat.Index + 1) % FighterCatalog.Count);
+				seat.Index = NextAlongRow(seat.Index);
 				return true;
 			}
 
@@ -1202,6 +1202,21 @@ public partial class CharacterSelectScreen : Node2D
 		{
 			int i = (from + step) % FighterCatalog.Count;
 			if (!Unlocks.IsLocked(i)) return i;
+		}
+		return from;
+	}
+
+	/// <summary>
+	/// The next fighter after this one along the row, as the cards stand, who is not locked - not
+	/// round the catalog, or CHANGE on a CPU went EdgeLord, DoomBot, Triguy (Elim, 2026-10-26).
+	/// </summary>
+	static int NextAlongRow(int from)
+	{
+		for (int step = 1; step <= FighterCatalog.Count; step++)
+		{
+			int place = (Place(from) + step) % FighterCatalog.Count;
+			for (int i = 0; i < FighterCatalog.Count; i++)
+				if (Place(i) == place && !Unlocks.IsLocked(i)) return i;
 		}
 		return from;
 	}

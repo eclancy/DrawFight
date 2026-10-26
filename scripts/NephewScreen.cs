@@ -27,7 +27,7 @@ public partial class NephewScreen : Node2D
 
 	public override void _Ready()
 	{
-		foreach (IInputSource source in ControllerAssignment.ForPlayers(2)) navs.Add(new MenuNav(source));
+		foreach (IInputSource source in ControllerAssignment.Everyone()) navs.Add(new MenuNav(source));
 		picture = GD.Load<Texture2D>(Picture);
 		// Its own paper, round it, so the picture has no edge.
 		Image image = picture?.GetImage();
@@ -40,14 +40,25 @@ public partial class NephewScreen : Node2D
 		foreach (MenuNav nav in navs)
 		{
 			nav.Poll();
-			if (leaving || frames < HoldFrames || !nav.AnyPress) continue;
-			leaving = true;
-			SfxPlayer.Ui("ui_select");
-			if (Then != null) Then();
-			else GameRoot.Instance.GoMainMenu();
+			if (!nav.AnyPress) continue;
+			Leave();
 			return;
 		}
 		QueueRedraw();
+	}
+
+	public override void _Input(InputEvent e)
+	{
+		if (ControllerAssignment.IsAnyPress(e)) Leave();
+	}
+
+	void Leave()
+	{
+		if (leaving || frames < HoldFrames) return;
+		leaving = true;
+		SfxPlayer.Ui("ui_select");
+		if (Then != null) Then();
+		else GameRoot.Instance.GoMainMenu();
 	}
 
 	public override void _Draw()

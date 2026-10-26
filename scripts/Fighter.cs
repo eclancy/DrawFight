@@ -481,14 +481,18 @@ public partial class Fighter : CharacterBody2D
 		footWidth = rig != null ? rig.StanceWidth() : bodySize.X * 0.5f;
 		ShapeBody();
 
-		// One of his own whole drawings held in place of the puppet (DrawHeldPose), on its own
-		// layer so it can wear his team's colours like the puppet does.
+		// One of his own whole drawings held in place of the puppet (DrawHeldPose), or his body
+		// curled into a ball, on its own layer so it can wear his team's colours like the puppet
+		// does. Drawn on the fighter himself, Circy went back to yellow when he was knocked over.
 		heldPoseLayer = new Node2D();
 		AddChild(heldPoseLayer);
 		heldPoseLayer.Draw += () =>
 		{
-			string held = rig != null && rig.Loaded && !IsDrawnAsBall && State != FighterState.Eliminated ? HeldPoseName() : null;
+			if (rig == null || !rig.Loaded || State == FighterState.Eliminated) return;
+			if (IsDrawnAsBall) { DrawBall(heldPoseLayer, 1.0f, rollAngle); return; }
+			string held = HeldPoseName();
 			if (held != null) DrawHeldPose(heldPoseLayer, held);
+			else if (IsBombArmed) DrawBall(heldPoseLayer, BombShrink, 0.0f);
 		};
 
 		// Added after the rig, so it draws over it.
@@ -4920,7 +4924,7 @@ public partial class Fighter : CharacterBody2D
 	/// Draws his body part on its own, turned about its centre and resting on the floor. The part
 	/// is his own drawing, only moved and rotated - exactly what the rig does to it anyway.
 	/// </summary>
-	void DrawBall(float scale, float angle)
+	void DrawBall(CanvasItem canvas, float scale, float angle)
 	{
 		Texture2D body = rig?.PartTexture(RigBone.Torso);
 		if (body == null) return;
@@ -4932,10 +4936,10 @@ public partial class Fighter : CharacterBody2D
 		float q = 0.28f * ballSquashFrames / BallSquashFrames;
 		Vector2 centre = new Vector2(0.0f, bodySize.Y * 0.5f - size.Y * 0.5f * s * (1.0f - q));
 
-		DrawSetTransformMatrix(new Transform2D(0.0f, new Vector2(1.0f + q, 1.0f - q), 0.0f, centre)
+		canvas.DrawSetTransformMatrix(new Transform2D(0.0f, new Vector2(1.0f + q, 1.0f - q), 0.0f, centre)
 			* new Transform2D(angle, new Vector2(s * Facing, s), 0.0f, Vector2.Zero));
-		DrawTexture(body, -size * 0.5f, rig.Modulate);
-		DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+		canvas.DrawTexture(body, -size * 0.5f, rig.Modulate);
+		canvas.DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
 	}
 
 	/// <summary>
@@ -4959,13 +4963,13 @@ public partial class Fighter : CharacterBody2D
 	}
 
 	/// <summary>Shrunk down with a lit fuse. The spark blinks faster as the fuse runs out.</summary>
+	const float BombShrink = 0.62f;
+
+	/// <summary>The fuse on him while he is a bomb; his body is on heldPoseLayer.</summary>
 	void DrawBomb()
 	{
-		const float Shrink = 0.62f;
-		DrawBall(Shrink, 0.0f);
-
 		Texture2D body = rig?.PartTexture(RigBone.Torso);
-		float radius = body != null ? body.GetSize().Y * 0.5f * rig.PuppetScale * Shrink : 30.0f;
+		float radius = body != null ? body.GetSize().Y * 0.5f * rig.PuppetScale * BombShrink : 30.0f;
 		Vector2 top = new Vector2(0.0f, bodySize.Y * 0.5f - radius * 2.0f);
 		Vector2 fuseEnd = top + new Vector2(Facing * 14.0f, -24.0f);
 
@@ -5889,7 +5893,7 @@ public partial class Fighter : CharacterBody2D
 			DrawAura();
 			DrawResizeHint();
 			if (IsDrawnAsBall && State == FighterState.Attacking && currentMove != null && currentMove.FxFlame) DrawFireball();
-			if (IsDrawnAsBall) DrawBall(1.0f, rollAngle);
+			if (IsDrawnAsBall) { /* on heldPoseLayer */ }
 			else if (pose != null) { /* on heldPoseLayer */ }
 			else if (IsBombArmed) DrawBomb();
 			DrawDiveGlow();

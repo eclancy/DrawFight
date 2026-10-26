@@ -33,7 +33,8 @@ public partial class TitleScreen : Node2D
 
 	public override void _Ready()
 	{
-		foreach (IInputSource source in ControllerAssignment.ForPlayers(2))
+		// Every controller: the first two only, and with two pads in, the keyboard had no way in.
+		foreach (IInputSource source in ControllerAssignment.Everyone())
 		{
 			navs.Add(new MenuNav(source));
 		}
@@ -112,6 +113,11 @@ public partial class TitleScreen : Node2D
 			Leave();
 			return;
 		}
+	}
+
+	public override void _Input(InputEvent e)
+	{
+		if (!leaving && ControllerAssignment.IsAnyPress(e)) Leave();
 	}
 
 	void Leave()

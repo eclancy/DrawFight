@@ -28,6 +28,18 @@ public static class ControllerAssignment
 		return list;
 	}
 
+	/// <summary>Every controller that can play, opened: each pad plugged in, and the keyboard.</summary>
+	public static IInputSource[] Everyone() => Devices().ConvertAll(Open).ToArray();
+
+	/// <summary>
+	/// Any key or mouse button going down, for a screen that waits for "press anything": a
+	/// keyboard and mouse player who reached for the mouse on the title got nowhere (Elim,
+	/// 2026-10-26). Not the F keys, which toggle fullscreen and take screenshots.
+	/// </summary>
+	public static bool IsAnyPress(InputEvent e) =>
+		e is InputEventMouseButton { Pressed: true }
+		|| e is InputEventKey { Pressed: true, Echo: false } key && key.Keycode is not (>= Key.F1 and <= Key.F12);
+
 	/// <summary>A controller by its name (Devices), or null for none.</summary>
 	public static IInputSource Open(string key)
 	{

@@ -191,8 +191,7 @@ public partial class StoryDirector : Node
 	}
 
 	/// <summary>Anyone can hurry a line on or skip a scene: every pad, and the keyboard.</summary>
-	static IInputSource[] EveryController() =>
-		ControllerAssignment.Devices().ConvertAll(ControllerAssignment.Open).ToArray();
+	static IInputSource[] EveryController() => ControllerAssignment.Everyone();
 
 	// --- Running ----------------------------------------------------------------------
 
