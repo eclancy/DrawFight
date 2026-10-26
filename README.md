@@ -228,8 +228,8 @@ for-nephew/     written for a 10-12 year old, not for developers
 ## For the kids
 
 [`for-nephew/`](for-nephew/) is written for a 10–12 year old: how to draw a fighter so it can
-actually be rigged, and a character sheet to fill in. There is a nicer illustrated version of
-the guide [here](https://claude.ai/artifact/DmdTZS491FFJs28Cj8g5qL).
+actually be rigged, and a character sheet to fill in. The illustrated version kids are sent is
+at [ecec.dev/draw/guide](https://ecec.dev/draw/guide).
 
 The most important question on the character sheet is **"what is your fighter TERRIBLE at?"** —
 asked before anything is built. A kid designing a fighter will make it fast *and* strong *and*

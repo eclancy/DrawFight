@@ -63,10 +63,11 @@ talk down. Those two documents are on the critical path: nothing past M2 can be 
 drawing exists.
 
 The drawing guide is hosted at **<https://ecec.dev/draw/guide>** — the copy actually sent to
-kids — from `public/draw/guide/` in the EricClancyEngineeringAndCrafts repo. It is also a
-published Artifact (<https://claude.ai/artifact/DmdTZS491FFJs28Cj8g5qL>) and
-`for-nephew/how-to-draw-a-fighter.md`. **Change one and change all three**, or the version they
-read drifts from the version we maintain. Kid-facing pages stay short, picture-led and paper only.
+kids — from `public/draw/guide/` in the EricClancyEngineeringAndCrafts repo - and is mirrored
+in `for-nephew/how-to-draw-a-fighter.md`, and in short by the hints pencilled on the drawing
+screen in the game (`DrawScreen.DrawPageHint`). **Change one and change them all**, or the version
+they read drifts from the version we maintain. (It was also a published Artifact until Eric
+retired it, 2026-10-25: the website and the game are enough.) Kid-facing pages stay short, picture-led and paper only.
 
 ## The three rules that are not negotiable
 

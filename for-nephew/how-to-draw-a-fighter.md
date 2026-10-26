@@ -4,8 +4,8 @@ Draw a character on paper. We put it in a fighting game, where it runs, jumps an
 
 The copy kids actually see is the page on the site, with a picture for every rule:
 <https://ecec.dev/draw/guide> (`public/draw/guide/` in the EricClancyEngineeringAndCrafts repo).
-It is mirrored as a Claude artifact (<https://claude.ai/artifact/DmdTZS491FFJs28Cj8g5qL>). This
-file is the same words without the pictures. **Change one and change all three.** Keep it short and picture-led - the long version
+This file is the same words without the pictures, and the drawing screen in the game pencils the
+short version on the page. **Change one and change them all.** Keep it short and picture-led - the long version
 was too wordy for kids, and the reasons behind each rule live in `.ai/art-pipeline.md`, not here.
 Paper only: there are no tablet instructions on purpose.
 
