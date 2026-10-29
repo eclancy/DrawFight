@@ -67,7 +67,8 @@ public partial class Item : CharacterBody2D
 	static readonly Color Ink = new Color(0.19f, 0.31f, 0.61f);
 	static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
 
-	float Radius => Data.Size * 0.3f;
+	/// <summary>How near a thrown item has to come to hit - a fighter, or a target (TargetsRun).</summary>
+	public float Radius => Data.Size * 0.3f;
 	float ArtScale => Art != null ? Data.Size * (State == Phase.Held ? Extension : 1.0f) / Mathf.Max(Art.Size.X, Art.Size.Y) : 1.0f;
 
 	// --- The metre stick measuring him up ------------------------------------------------

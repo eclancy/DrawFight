@@ -102,6 +102,9 @@ public partial class GameRoot : Node2D
 	}
 	public int SelectedStage;
 
+	/// <summary>The targets course picked (TargetCourses), for Targets mode.</summary>
+	public int SelectedCourse;
+
 	/// <summary>The item settings, saved between games (ItemSettings.Save).</summary>
 	public readonly ItemSettings Items = new ItemSettings();
 
@@ -152,6 +155,9 @@ public partial class GameRoot : Node2D
 				shotAfter = ShotFrames[^1] + 2;
 			}
 			if (arg.StartsWith("--stage=")) SelectedStage = arg.Substring(8).ToInt();
+			// "--course=2": the targets course a --mode=targets --match plays (0 Easy, 1 Medium, 2 Hard).
+			if (arg.StartsWith("--course=")) SelectedCourse = Mathf.Clamp(arg.Substring(9).ToInt(), 0, TargetCourses.Count - 1);
+			if (arg == "--courses") startAt = "courses";
 			if (arg.StartsWith("--fighters="))
 			{
 				// "--fighters=2,0": player one is fighter 2, player two is fighter 0. Up to four.
@@ -299,6 +305,10 @@ public partial class GameRoot : Node2D
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
 			case "modes": GoModes(null); break;
+			case "courses":
+				Mode = GameMode.Targets;
+				GoTargetCourses();
+				break;
 			case "achievements": GoAchievements(); break;
 			case "photos": GoSendPhotos(); break;
 			case "story": GoStoryChapter(); break;
@@ -337,7 +347,7 @@ public partial class GameRoot : Node2D
 		if (currentScreen is MatchManager match) match.ReassignControllers();
 		else if (currentScreen is CharacterSelectScreen select)
 		{
-			if (select.ForStory) GoStorySelect();
+			if (select.ForStory && !select.ForTargets) GoStorySelect();
 			else GoCharacterSelect();
 		}
 		else if (currentScreen is TitleScreen) GoTitle();
@@ -380,6 +390,25 @@ public partial class GameRoot : Node2D
 		GoCharacterSelect();
 	}
 
+	/// <summary>Targets: which course, for the fighter just picked.</summary>
+	public void GoTargetCourses() => Show(new TargetCourseScreen());
+
+	/// <summary>
+	/// A targets run: player one's fighter on the course picked, on their controller - no CPU, no
+	/// items. Every try is a fresh one, from the 3-2-1.
+	/// </summary>
+	public void GoTargetRun()
+	{
+		int fighter = SelectedFighters[0] >= 0 && SelectedFighters[0] < FighterCatalog.Count ? SelectedFighters[0] : 0;
+		Show(new MatchManager
+		{
+			Course = TargetCourses.Get(SelectedCourse),
+			FighterIndices = new[] { fighter },
+			CpuPlayers = new[] { false },
+			Seats = new[] { 0 },
+		});
+	}
+
 	/// <summary>A versus fight whose items are drawn by the players first.</summary>
 	public void GoDoodleBrawl()
 	{
@@ -392,7 +421,9 @@ public partial class GameRoot : Node2D
 
 	/// <summary>Photos of a drawing done on paper, and its sheet - nothing drawn in the game.</summary>
 	public void GoSendPhotos() => Show(new SendFighterScreen { Doc = Drawing.New(), PhotosOnly = true });
-	public void GoCharacterSelect() => Show(new CharacterSelectScreen());
+	public void GoCharacterSelect() => Show(Mode == GameMode.Targets
+		? new CharacterSelectScreen { ForStory = true, ForTargets = true }
+		: new CharacterSelectScreen());
 	public void GoStorySelect() => Show(new CharacterSelectScreen { ForStory = true });
 	public void GoStageSelect() => Show(new StageSelectScreen());
 	public void GoItemSettings() => Show(new ItemSettingsScreen());
@@ -588,6 +619,11 @@ public partial class GameRoot : Node2D
 
 	public void GoMatch()
 	{
+		if (Mode == GameMode.Targets)
+		{
+			GoTargetRun();
+			return;
+		}
 		// The seats somebody sat in, in seat order: P1 and P3 fighting are fighters 0 and 1, and
 		// keep seats 0 and 2 - their numbers, colours and controllers.
 		var fighters = new System.Collections.Generic.List<int>();

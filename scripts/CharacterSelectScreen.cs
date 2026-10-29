@@ -92,6 +92,13 @@ public partial class CharacterSelectScreen : Node2D
 	/// </summary>
 	public bool ForStory;
 
+	/// <summary>
+	/// Picking a fighter for Targets (GameMode.Targets): the story's one-player page, but any
+	/// fighter who is unlocked can be picked, there is no difficulty, and Start goes on to the
+	/// courses (TargetCourseScreen). Set with ForStory.
+	/// </summary>
+	public bool ForTargets;
+
 	readonly Slot[] slots = new Slot[GameRoot.MaxPlayers];
 	readonly Card[] cards = new Card[FighterCatalog.Count];
 
@@ -178,7 +185,7 @@ public partial class CharacterSelectScreen : Node2D
 		var root = new Control { AnchorsPreset = (int)Control.LayoutPreset.FullRect };
 		layer.AddChild(root);
 
-		root.AddChild(MenuTheme.MakeLabel(ForStory ? "Whose story?" : "Pick your fighter", new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
+		root.AddChild(MenuTheme.MakeLabel(ForStory && !ForTargets ? "Whose story?" : "Pick your fighter", new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
 
 		float rowWidth = cards.Length * CardWidth + (cards.Length - 1) * CardGap;
 		float rowLeft = RowLeft + (RowRight - RowLeft - rowWidth) * 0.5f;
@@ -245,7 +252,7 @@ public partial class CharacterSelectScreen : Node2D
 
 		startPrompt = MenuTheme.MakeLabel(ForStory ? "Press Start to begin!" : "Press Start to fight!", new Vector2(0.0f, 982.0f), 64, MenuTheme.Accent);
 		// In a story the difficulty takes the bottom left, so Start sits in the rest of the row.
-		float promptLeft = ForStory ? DifficultyBox(Difficulties.Length - 1).End.X + 20.0f : 0.0f;
+		float promptLeft = ForStory && !ForTargets ? DifficultyBox(Difficulties.Length - 1).End.X + 20.0f : 0.0f;
 		startPrompt.Position = new Vector2(promptLeft, startPrompt.Position.Y);
 		startPrompt.Size = new Vector2(viewport.X - promptLeft - (ForStory ? viewport.X - RowRight : 0.0f), 90.0f);
 		startPrompt.HorizontalAlignment = HorizontalAlignment.Center;
@@ -1026,7 +1033,8 @@ public partial class CharacterSelectScreen : Node2D
 					if (!ForStory) Stand(slot);
 					if (ForStory || !System.Array.Exists(slots, s => s.Human))
 					{
-						GameRoot.Instance.GoMainMenu();
+						if (ForTargets) GameRoot.Instance.GoModes(slot.Device?.Key);
+						else GameRoot.Instance.GoMainMenu();
 						return;
 					}
 					continue;
@@ -1042,7 +1050,7 @@ public partial class CharacterSelectScreen : Node2D
 				continue;
 			}
 
-			if (ForStory && TryDifficulty(cursor.Position))
+			if (ForStory && !ForTargets && TryDifficulty(cursor.Position))
 			{
 				SfxPlayer.Ui("ui_select");
 				continue;
@@ -1073,7 +1081,7 @@ public partial class CharacterSelectScreen : Node2D
 			}
 
 			int picked = CardUnder(cursor.Position);
-			if (picked >= 0 && (Unlocks.IsLocked(picked) || ForStory && !HasStory(picked)))
+			if (picked >= 0 && (Unlocks.IsLocked(picked) || ForStory && !ForTargets && !HasStory(picked)))
 			{
 				SfxPlayer.Ui("ui_back");
 				continue;
@@ -1143,6 +1151,14 @@ public partial class CharacterSelectScreen : Node2D
 		if (!startFight || !everyoneReady) return;
 
 		SfxPlayer.Ui("ui_select");
+
+		if (ForTargets)
+		{
+			GameRoot.Instance.SelectedFighters[0] = slots[0].Index;
+			GameRoot.Instance.SeatDevices[0] = slots[0].Device?.Key;
+			GameRoot.Instance.GoTargetCourses();
+			return;
+		}
 
 		if (ForStory)
 		{
@@ -1285,7 +1301,7 @@ public partial class CharacterSelectScreen : Node2D
 			Skin skin = Skins.Find(slot.Skin);
 			if (!ForStory && slot.Locked && skin != null) slot.State.Text = $"READY  -  {skin.Name}";
 			else if (!ForStory && slot.Locked && Skins.EarnedFor(FighterCatalog.Get(slot.Index)).Length > 0) slot.State.Text = "READY  -  pick again for a new look";
-			if (ForStory && !slot.Locked && shown >= 0 && !Unlocks.IsLocked(shown) && !HasStory(shown))
+			if (ForStory && !ForTargets && !slot.Locked && shown >= 0 && !Unlocks.IsLocked(shown) && !HasStory(shown))
 			{
 				slot.State.Text = $"{FighterCatalog.NameOf(shown)}'s own story is coming soon.";
 			}
@@ -1315,7 +1331,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (!picked) CrayonBrush.InkRect(this, cards[i].Box, MenuTheme.Rule, 3.0f, 31 + i * 7, 2.6f);
 
 			// A story played to the end wears a gold star.
-			if (ForStory && !Unlocks.IsLocked(i) && StoryProgress.Finished(StoryScript.IdOf(FighterCatalog.Get(i))))
+			if (ForStory && !ForTargets && !Unlocks.IsLocked(i) && StoryProgress.Finished(StoryScript.IdOf(FighterCatalog.Get(i))))
 			{
 				Item.DrawStarOn(this, cards[i].Box.Position + new Vector2(cards[i].Box.Size.X - 26.0f, 26.0f), 30.0f, new Color(1.0f, 0.82f, 0.25f));
 			}
@@ -1373,7 +1389,7 @@ public partial class CharacterSelectScreen : Node2D
 			MenuTheme.DrawButton(this, ItemsBox, "Items: " + ItemSettings.Describe(frequency), 81, itemsHot,
 				frequency != ItemFrequency.Off, fontSize: 34);
 		}
-		else
+		else if (!ForTargets)
 		{
 			DrawString(ThemeDB.FallbackFont, new Vector2(RowLeft, DifficultyBox(0).GetCenter().Y + 12.0f), "Difficulty", HorizontalAlignment.Left, -1, 34, MenuTheme.Soft);
 			for (int d = 0; d < Difficulties.Length; d++)

@@ -88,6 +88,11 @@ magnet snapping onto the fridge - short, so three can go up a quarter second apa
 and `steam_whistle` (DoomBot's meltdown: a shriek climbing out of a hiss). A page put up on the
 fridge clinks like a magnet; a whip pan borrows `item_gust`.
 
+Targets mode (`.ai/modes.md`) has one of its own: `target_break`, a crack of card, a few bright
+chips and the countdown's little bell on E then A, so ten in a run sound like getting somewhere,
+not like getting hurt. Its countdown ends on the usual `count_go`, a finished run gets `game_set`
+and a fall the usual `ko_blast`.
+
 The whoosh starts 4 frames early on purpose. A whoosh is loudest about a third of the way through,
 so starting early puts the rush of air on the hit, not after it.
 

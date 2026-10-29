@@ -72,6 +72,13 @@ public partial class MatchManager : Node2D
 	/// <summary>The stage, for a story scene to strip the drawings off (Stage.Bare).</summary>
 	public Stage Stage => stage;
 
+	/// <summary>
+	/// A targets run (GameMode.Targets): one fighter, this course instead of a versus stage, and
+	/// TargetsRun keeping the clock - no winner to find and no lives. Null for any other match.
+	/// </summary>
+	public TargetCourse Course;
+	TargetsRun targets;
+
 	public int TeamOf(Fighter f) => Teams != null && f.PlayerIndex < Teams.Length ? Teams[f.PlayerIndex] : f.PlayerIndex;
 
 	/// <summary>Two different fighters on the same side.</summary>
@@ -226,7 +233,7 @@ public partial class MatchManager : Node2D
 	{
 		stage = new Stage();
 		AddChild(stage);
-		stage.Build(StageCatalog.Get(StageIndex));
+		stage.Build(Course?.Stage ?? StageCatalog.Get(StageIndex));
 		if (stage.Traffic != null) stage.Traffic.Match = this;
 		if (stage.Speakers != null) stage.Speakers.Match = this;
 
@@ -237,7 +244,7 @@ public partial class MatchManager : Node2D
 			if (skin != null && skin.Becomes < 0) Fighters[i].SkinColour = skin.Colour;
 		}
 		AssignControllers();
-		Achievements.Tick("vs_all_stages", StageIndex.ToString(), StageCatalog.Count);
+		if (Course == null) Achievements.Tick("vs_all_stages", StageIndex.ToString(), StageCatalog.Count);
 		bool named = false;
 		for (int i = 0; i < Fighters.Count; i++)
 		{
@@ -247,8 +254,8 @@ public partial class MatchManager : Node2D
 				if (StartStocks != null && i < StartStocks.Length && StartStocks[i] > 0) Fighters[i].Stocks = StartStocks[i];
 				continue;
 			}
-			// A versus fight starts with the lives the options say.
-			Fighters[i].Stocks = GameOptions.Stocks;
+			// A versus fight starts with the lives the options say; a targets run has one go.
+			Fighters[i].Stocks = Course != null ? 1 : GameOptions.Stocks;
 			if (Names != null && i < Names.Length && !string.IsNullOrEmpty(Names[i]))
 			{
 				Fighters[i].PlayerName = Names[i];
@@ -257,7 +264,7 @@ public partial class MatchManager : Node2D
 		}
 		// Every versus fighter wears their tag over their head, wherever they go (Eric, 2026-10-18) -
 		// named or "P1", "CPU". A story's scenes have their own names in their speech bubbles.
-		ShowPlayerTags = Story == null;
+		ShowPlayerTags = Story == null && Course == null;
 
 		fx = new HitFx();
 		AddChild(fx);
@@ -277,9 +284,17 @@ public partial class MatchManager : Node2D
 
 		hud = new MatchHud();
 		AddChild(hud);
-		hud.Build(Fighters, seats: Story == null);
+		hud.Build(Fighters, seats: Story == null && Course == null);
 
 		countdownFrames = CountdownStepFrames * 3 + FightBannerFrames;
+
+		if (Course != null)
+		{
+			targets = new TargetsRun { Match = this, Course = Course, Player = Fighters[0] };
+			AddChild(targets);
+			// Behind the fighter, over the course: a target is on the page, not in front of him.
+			MoveChild(targets, stage.GetIndex() + 1);
+		}
 
 		if (Story?.Chapter != null)
 		{
@@ -532,13 +547,15 @@ public partial class MatchManager : Node2D
 			// just meets the edge of the world (Fighter.StayInsideBlastZone). Eric's call,
 			// 2026-10-04.
 			if (stage.IsOutOfBounds(fighter.GlobalPosition)
-				&& (fighter.IsLaunched || stage.IsBelowBottom(fighter.GlobalPosition)))
+				&& (fighter.IsLaunched || stage.IsBelowBottom(fighter.GlobalPosition))
+				&& (targets == null || !targets.Over))
 			{
 				KillOffStage(fighter);
 			}
 		}
 
-		if (!matchOver) CheckForWinner();
+		// A targets run is never won or lost by lives: TargetsRun ends it.
+		if (!matchOver && targets == null) CheckForWinner();
 	}
 
 	void KillOffStage(Fighter fighter)
@@ -676,6 +693,7 @@ public partial class MatchManager : Node2D
 		}
 
 		if (director != null && director.DrivesCamera) director.DriveCamera((float)delta);
+		else if (targets != null) targets.Frame(camera, (float)delta);
 		else if (director == null && victor != null && endFrames > EndSlowFrames && victor.State != FighterState.Eliminated)
 		{
 			// Won: in on the winner, celebrating, with the banner over his head - or on the whole
@@ -727,7 +745,7 @@ public partial class MatchManager : Node2D
 		{
 			float left = countdownFrames / (float)FightBannerFrames;
 			// Holds solid, then fades over its last third as the players take over.
-			hud.SetCountdown("FIGHT!", CountdownColours[0], left, 0.0f, Mathf.Min(1.0f, left * 3.0f));
+			hud.SetCountdown(targets != null ? "GO!" : "FIGHT!", CountdownColours[0], left, 0.0f, Mathf.Min(1.0f, left * 3.0f));
 			return;
 		}
 
@@ -885,7 +903,14 @@ public partial class MatchManager : Node2D
 			go();
 		}
 		// A story has no fighters to pick: its map is where it goes back to instead.
-		if (director != null)
+		if (targets != null)
+		{
+			pauseMenu.Open(humans, Resume,
+				("Try again", () => Leave(GameRoot.Instance.GoTargetRun)),
+				("Pick fighter", () => Leave(GameRoot.Instance.GoCharacterSelect)),
+				("Main menu", () => Leave(GameRoot.Instance.GoMainMenu)));
+		}
+		else if (director != null)
 		{
 			pauseMenu.Open(humans, Resume,
 				("Story map", () => Leave(GameRoot.Instance.GoStoryMap)),
