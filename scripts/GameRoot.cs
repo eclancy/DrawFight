@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using Godot;
 
+/// <summary>What fighter select and the match are for (GameRoot.Mode).</summary>
+public enum GameMode { Versus, Training, Boss, Targets, Doodle }
+
 /// <summary>
 /// Owns the screen flow and the choices made along it: title, main menu, then either character
 /// select, stage select and a match, or the drawings - and back to the title.
@@ -63,6 +66,12 @@ public partial class GameRoot : Node2D
 
 	/// <summary>A team fight rather than everyone for themselves, chosen on the fighter select screen.</summary>
 	public bool TeamBattle;
+
+	/// <summary>
+	/// What fighter select is picking for: a versus fight, or one of the modes behind More modes on
+	/// the main menu (ModesScreen). Back to Versus on the main menu.
+	/// </summary>
+	public GameMode Mode = GameMode.Versus;
 
 	/// <summary>Each seat's team in a team fight: 0 red, 1 blue, 2 green. Two against two to start with.</summary>
 	public int[] SeatTeams = { 0, 1, 0, 1 };
@@ -194,6 +203,20 @@ public partial class GameRoot : Node2D
 			if (arg == "--stages") startAt = "stages";
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
+			if (arg == "--modes") startAt = "modes";
+			// "--mode=training": fighter select and the match are for that mode (training, boss,
+			// targets, doodle) - with --match, straight into it.
+			if (arg.StartsWith("--mode="))
+			{
+				Mode = arg.Substring(7) switch
+				{
+					"training" => GameMode.Training,
+					"boss" => GameMode.Boss,
+					"targets" => GameMode.Targets,
+					"doodle" => GameMode.Doodle,
+					_ => GameMode.Versus,
+				};
+			}
 			if (arg == "--options") startAt = "options";
 			if (arg == "--changelog") startAt = "changelog";
 			if (arg == "--gallery") startAt = "gallery";
@@ -275,6 +298,7 @@ public partial class GameRoot : Node2D
 			case "suggest": GoSuggest(); break;
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
+			case "modes": GoModes(null); break;
 			case "achievements": GoAchievements(); break;
 			case "photos": GoSendPhotos(); break;
 			case "story": GoStoryChapter(); break;
@@ -301,6 +325,9 @@ public partial class GameRoot : Node2D
 		Input.Singleton.JoyConnectionChanged -= OnJoyConnectionChanged;
 	}
 
+	/// <summary>Whether --flag was passed for this run.</summary>
+	public static bool HasFlag(string flag) => System.Array.IndexOf(OS.GetCmdlineUserArgs(), flag) >= 0;
+
 	void OnJoyConnectionChanged(long device, bool connected)
 	{
 		GD.Print($"GameRoot: pad {device} {(connected ? "connected" : "disconnected")}");
@@ -320,7 +347,45 @@ public partial class GameRoot : Node2D
 	// --- Flow ----------------------------------------------------------------
 
 	public void GoTitle() => Show(new TitleScreen());
-	public void GoMainMenu() => Show(new MainMenuScreen());
+
+	public void GoMainMenu()
+	{
+		Mode = GameMode.Versus;
+		Show(new MainMenuScreen());
+	}
+
+	/// <summary>Training, the boss fight, targets and doodle brawl (from the main menu).</summary>
+	public void GoModes(string key) => Show(new ModesScreen { OpenedBy = key });
+
+	// --- More modes ------------------------------------------------------------------
+
+	/// <summary>Training: one fighter, a dummy to hit, every hit shown.</summary>
+	public void GoTraining()
+	{
+		Mode = GameMode.Training;
+		GoCharacterSelect();
+	}
+
+	/// <summary>Everyone on one side, against a giant DoomBot.</summary>
+	public void GoBossFight()
+	{
+		Mode = GameMode.Boss;
+		GoCharacterSelect();
+	}
+
+	/// <summary>Break the targets: one fighter, ten targets, the clock running.</summary>
+	public void GoTargets()
+	{
+		Mode = GameMode.Targets;
+		GoCharacterSelect();
+	}
+
+	/// <summary>A versus fight whose items are drawn by the players first.</summary>
+	public void GoDoodleBrawl()
+	{
+		Mode = GameMode.Doodle;
+		GoCharacterSelect();
+	}
 	public void GoDrawings() => Show(new DrawingsScreen());
 	public void OpenDrawing(Drawing drawing) => Show(new DrawScreen { Doc = drawing });
 	public void GoSendFighter(Drawing drawing) => Show(new SendFighterScreen { Doc = drawing });
@@ -564,7 +629,7 @@ public partial class GameRoot : Node2D
 		Show(match);
 	}
 
-	void Show(Node screen)
+	public void Show(Node screen)
 	{
 		if (currentScreen != null)
 		{

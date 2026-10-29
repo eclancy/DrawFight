@@ -104,6 +104,14 @@ public static class MenuTheme
 			if (!string.IsNullOrEmpty(b.Text)) DrawCentredText(canvas, b.Rect, b.Text, b.FontSize, Text);
 	}
 
+	/// <summary>The biggest size up to <paramref name="size"/> at which <paramref name="text"/> fits in <paramref name="width"/>.</summary>
+	public static int FitFontSize(string text, float width, int size)
+	{
+		Font font = ThemeDB.FallbackFont;
+		while (size > 12 && font.GetStringSize(text, HorizontalAlignment.Left, -1, size).X > width) size -= 2;
+		return size;
+	}
+
 	/// <summary>Text centred in a box, both ways.</summary>
 	public static void DrawCentredText(CanvasItem canvas, Rect2 rect, string text, int fontSize, Color colour)
 	{

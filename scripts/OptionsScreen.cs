@@ -17,7 +17,7 @@ public partial class OptionsScreen : Node2D
 
 	enum Row { Screen, Music, Sound, Buttons, Shake, Stocks }
 
-	static readonly string[] RowNames = { "Screen", "Music", "Sounds", "Pad buttons", "Screen shake", "Lives (versus)" };
+	static readonly string[] RowNames = { "Screen", "Music", "Sounds", "Pad buttons", "Screen shake", "Versus rules" };
 
 	static Rect2 BackBox => MenuTheme.BackBox;
 
@@ -223,9 +223,8 @@ public partial class OptionsScreen : Node2D
 			case Row.Sound: GameOptions.SoundVolume = (GameOptions.SoundVolume + 1) % 4; break;
 			case Row.Buttons: GameOptions.SmashLayout = !GameOptions.SmashLayout; break;
 			case Row.Shake: GameOptions.Shake = (GameOptions.Shake + 2) % 3; break;
-			case Row.Stocks:
-				GameOptions.Stocks = GameOptions.Stocks >= GameOptions.MaxStocks ? GameOptions.MinStocks : GameOptions.Stocks + 1;
-				break;
+			// Lives, a time limit or health (GameOptions.StepRules): one button for the lot.
+			case Row.Stocks: GameOptions.StepRules(); break;
 		}
 	}
 
@@ -236,7 +235,7 @@ public partial class OptionsScreen : Node2D
 		Row.Sound => GameOptions.DescribeVolume(GameOptions.SoundVolume),
 		Row.Buttons => GameOptions.SmashLayout ? "Smash" : "Standard",
 		Row.Shake => GameOptions.DescribeShake(GameOptions.Shake),
-		_ => GameOptions.Stocks.ToString(),
+		_ => GameOptions.DescribeRules(),
 	};
 
 	void Leave(MenuCursor cursor)

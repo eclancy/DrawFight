@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using Godot;
 
 /// <summary>
-/// After PRESS START: what to do. Fight (versus), play a story, or draw a fighter
-/// and send it in. Three big cards and a cursor, like every other menu. The mouse is for the
+/// After PRESS START: what to do. Fight (versus), play a story, one of the other modes (ModesScreen),
+/// or draw a fighter and send it in. Four big cards and a cursor, like every other menu. The mouse is for the
 /// drawing screens only (Eric, 2026-10-16). Nobody is a player number yet: that is decided on
 /// fighter select, by who presses a button first.
 ///
@@ -12,12 +12,13 @@ using Godot;
 /// </summary>
 public partial class MainMenuScreen : Node2D
 {
-	enum Choice { Versus, Story, Draw }
+	enum Choice { Versus, Story, Modes, Draw }
+	const int Choices = 4;
 
 	static readonly Rect2 QuitBox = new Rect2(1640.0f, 64.0f, 200.0f, 76.0f);
-	const float CardWidth = 470.0f;
+	const float CardWidth = 362.0f;
 	const float CardHeight = 600.0f;
-	const float CardGap = 45.0f;
+	const float CardGap = 30.0f;
 	const float CardTop = 250.0f;
 
 	/// <summary>The options: a small gear beside QUIT (Eric, 2026-10-17).</summary>
@@ -56,8 +57,8 @@ public partial class MainMenuScreen : Node2D
 
 		// Circy and Triguy: Elim's drawings, facing off on the versus card.
 		Rect2 versus = CardRect(Choice.Versus);
-		rigs.Add(AddRig(FighterCatalog.Get(2), versus.Position + new Vector2(160.0f, 244.0f), 1));
-		rigs.Add(AddRig(FighterCatalog.Get(5), versus.Position + new Vector2(320.0f, 244.0f), -1));
+		rigs.Add(AddRig(FighterCatalog.Get(2), versus.Position + new Vector2(110.0f, 244.0f), 1));
+		rigs.Add(AddRig(FighterCatalog.Get(5), versus.Position + new Vector2(250.0f, 244.0f), -1));
 
 		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
 		{
@@ -88,13 +89,13 @@ public partial class MainMenuScreen : Node2D
 
 	static Rect2 CardRect(Choice choice)
 	{
-		float left = (1920.0f - (CardWidth * 3.0f + CardGap * 2.0f)) * 0.5f;
+		float left = (1920.0f - (CardWidth * Choices + CardGap * (Choices - 1))) * 0.5f;
 		return new Rect2(left + (int)choice * (CardWidth + CardGap), CardTop, CardWidth, CardHeight);
 	}
 
 	static int CardUnder(Vector2 point)
 	{
-		for (int i = 0; i < 3; i++) if (CardRect((Choice)i).HasPoint(point)) return i;
+		for (int i = 0; i < Choices; i++) if (CardRect((Choice)i).HasPoint(point)) return i;
 		return -1;
 	}
 
@@ -199,6 +200,12 @@ public partial class MainMenuScreen : Node2D
 				SfxPlayer.Ui("ui_select");
 				GameRoot.Instance.GoStorySelect();
 				break;
+			case Choice.Modes:
+				leaving = true;
+				SfxPlayer.Ui("ui_select");
+				GameRoot.Instance.VersusStarter = key;
+				GameRoot.Instance.GoModes(key);
+				break;
 		}
 	}
 
@@ -211,6 +218,7 @@ public partial class MainMenuScreen : Node2D
 
 		DrawCard(Choice.Versus, "Versus", "Fight a friend, or the computer.");
 		DrawCard(Choice.Story, "Story", "Fight for a place on the fridge.");
+		DrawCard(Choice.Modes, "More modes", "Training, targets, a boss, and more.");
 		DrawCard(Choice.Draw, "Draw your own", "A fighter or a stage, sent in.");
 
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, Pointed(QuitBox), fontSize: 38);
@@ -264,20 +272,26 @@ public partial class MainMenuScreen : Node2D
 			case Choice.Story:
 				DrawItem("popup_book_open", art.GetCenter() + new Vector2(0.0f, 10.0f), 300.0f, 0.0f, 1.0f);
 				break;
+			case Choice.Modes:
+				DrawItem("paper_airplane", art.GetCenter() + new Vector2(-40.0f, -60.0f), 230.0f, -0.2f, 1.0f);
+				DrawItem("gold_star", art.GetCenter() + new Vector2(80.0f, 60.0f), 150.0f, 0.15f, 1.0f);
+				DrawItem("crayon_red", art.GetCenter() + new Vector2(-60.0f, 110.0f), 170.0f, 0.4f, 1.0f);
+				break;
 			case Choice.Draw:
-				DrawItem("canvas", art.GetCenter() + new Vector2(-50.0f, 0.0f), 300.0f, 0.0f, 1.0f);
-				DrawItem("pencil", art.GetCenter() + new Vector2(120.0f, 40.0f), 250.0f, 0.35f, 1.0f);
-				DrawItem("paint_bucket", art.GetCenter() + new Vector2(110.0f, 110.0f), 110.0f, 0.0f, 1.0f);
+				DrawItem("canvas", art.GetCenter() + new Vector2(-40.0f, 0.0f), 260.0f, 0.0f, 1.0f);
+				DrawItem("pencil", art.GetCenter() + new Vector2(90.0f, 40.0f), 220.0f, 0.35f, 1.0f);
+				DrawItem("paint_bucket", art.GetCenter() + new Vector2(85.0f, 110.0f), 100.0f, 0.0f, 1.0f);
 				break;
 		}
 
 		Color text = MenuTheme.Text;
 		DrawString(ThemeDB.FallbackFont, new Vector2(card.Position.X, card.Position.Y + 440.0f), title,
-			HorizontalAlignment.Center, card.Size.X, 60, text);
+			HorizontalAlignment.Center, card.Size.X, MenuTheme.FitFontSize(title, card.Size.X - 24.0f, 54), text);
 		if (blurb != "")
 		{
-			DrawString(ThemeDB.FallbackFont, new Vector2(card.Position.X, card.Position.Y + 500.0f), blurb,
-				HorizontalAlignment.Center, card.Size.X, 28, MenuTheme.Soft);
+			// Four cards across leaves room for a blurb on two lines, not one.
+			DrawMultilineString(ThemeDB.FallbackFont, new Vector2(card.Position.X + 20.0f, card.Position.Y + 495.0f), blurb,
+				HorizontalAlignment.Center, card.Size.X - 40.0f, 28, 2, MenuTheme.Soft);
 		}
 	}
 

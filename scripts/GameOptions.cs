@@ -33,6 +33,57 @@ public static class GameOptions
 	public static int StoryDifficulty = 1;
 	public const int MaxStocks = 5;
 
+	/// <summary>
+	/// How a versus fight is won (Eric, 2026-10-29): last one standing on lives, the most KOs when
+	/// the time runs out, or last one standing on health - see "Rules of a match" in
+	/// .ai/fighting-design.md. A story, training and the other modes set their own.
+	/// </summary>
+	public static VersusRule Rule = VersusRule.Stock;
+
+	/// <summary>A timed fight's length, in minutes.</summary>
+	public static int Minutes = 3;
+
+	/// <summary>A stamina fight's health.</summary>
+	public static int StaminaHealth = 150;
+
+	public static readonly int[] MinuteChoices = { 2, 3, 5 };
+	public static readonly int[] HealthChoices = { 100, 150, 200 };
+
+	/// <summary>
+	/// The rules, one step on round every choice: lives 1 to 5, then each time limit, then each
+	/// stamina health - one button in the options, rather than three that only half apply.
+	/// </summary>
+	public static void StepRules()
+	{
+		switch (Rule)
+		{
+			case VersusRule.Stock:
+				if (Stocks < MaxStocks) { Stocks++; return; }
+				Rule = VersusRule.Time;
+				Minutes = MinuteChoices[0];
+				return;
+			case VersusRule.Time:
+				int m = System.Array.IndexOf(MinuteChoices, Minutes);
+				if (m >= 0 && m < MinuteChoices.Length - 1) { Minutes = MinuteChoices[m + 1]; return; }
+				Rule = VersusRule.Stamina;
+				StaminaHealth = HealthChoices[0];
+				return;
+			default:
+				int h = System.Array.IndexOf(HealthChoices, StaminaHealth);
+				if (h >= 0 && h < HealthChoices.Length - 1) { StaminaHealth = HealthChoices[h + 1]; return; }
+				Rule = VersusRule.Stock;
+				Stocks = MinStocks;
+				return;
+		}
+	}
+
+	public static string DescribeRules() => Rule switch
+	{
+		VersusRule.Time => $"Time: {Minutes} min",
+		VersusRule.Stamina => $"Health: {StaminaHealth}",
+		_ => Stocks == 1 ? "1 life" : $"{Stocks} lives",
+	};
+
 	/// <summary>How much of a hit's screen shake is shown.</summary>
 	public static float ShakeScale => Shake switch { 0 => 0.0f, 1 => 0.45f, _ => 1.0f };
 
@@ -50,6 +101,11 @@ public static class GameOptions
 		Shake = Mathf.Clamp((int)config.GetValue(Section, "shake", Shake), 0, 2);
 		Stocks = Mathf.Clamp((int)config.GetValue(Section, "stocks", Stocks), MinStocks, MaxStocks);
 		StoryDifficulty = Mathf.Clamp((int)config.GetValue(Section, "story_difficulty", StoryDifficulty), 0, 2);
+		Rule = (VersusRule)Mathf.Clamp((int)config.GetValue(Section, "rule", (int)Rule), 0, 2);
+		Minutes = (int)config.GetValue(Section, "minutes", Minutes);
+		if (System.Array.IndexOf(MinuteChoices, Minutes) < 0) Minutes = 3;
+		StaminaHealth = (int)config.GetValue(Section, "stamina", StaminaHealth);
+		if (System.Array.IndexOf(HealthChoices, StaminaHealth) < 0) StaminaHealth = 150;
 	}
 
 	public static void Save()
@@ -63,6 +119,9 @@ public static class GameOptions
 		config.SetValue(Section, "shake", Shake);
 		config.SetValue(Section, "stocks", Stocks);
 		config.SetValue(Section, "story_difficulty", StoryDifficulty);
+		config.SetValue(Section, "rule", (int)Rule);
+		config.SetValue(Section, "minutes", Minutes);
+		config.SetValue(Section, "stamina", StaminaHealth);
 		config.Save(Path);
 	}
 
@@ -86,6 +145,9 @@ public static class GameOptions
 		AudioServer.SetBusVolumeDb(index, level switch { 1 => -10.0f, 3 => 4.0f, _ => 0.0f });
 	}
 }
+
+/// <summary>How a versus fight is won (GameOptions.Rule).</summary>
+public enum VersusRule { Stock, Time, Stamina }
 
 /// <summary>
 /// The names people have given themselves on this computer (fighter select), most recent first,
