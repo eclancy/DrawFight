@@ -13,26 +13,49 @@ using Godot;
 ///
 /// The match pauses through the scene tree, so fighters, hazards and platforms all freeze
 /// without any of them having to know about pausing. This node alone keeps running.
+///
+/// Training puts its settings here too (TrainingMode): a setting says what it is set to, and
+/// changing it leaves the menu open, so it can be stepped round to the one wanted.
 /// </summary>
 public partial class PauseMenu : CanvasLayer
 {
+	/// <summary>
+	/// One line of the menu. Its label is read again after every press, so a setting shows what it
+	/// is set to now; one that stays keeps the menu open after it, and left and right change it too.
+	/// </summary>
+	public readonly record struct Option(System.Func<string> Label, System.Action Act, bool Stays = false);
+
 	readonly List<MenuNav> navs = new List<MenuNav>();
 	System.Action onResume;
 
 	/// <summary>What it offers: Resume first, then wherever the match can be left for.</summary>
-	(string label, System.Action act)[] options;
+	Option[] options;
 	int selected;
+
+	/// <summary>Seven lines do not fit at the usual spacing, so a longer menu packs them closer.</summary>
+	float RowStep => options.Length > 4 ? 76.0f : 100.0f;
 
 	Label[] optionLabels;
 	Node2D page;
 
 	public void Open(IEnumerable<IInputSource> humans, System.Action resume, params (string label, System.Action act)[] leave)
 	{
+		var lines = new Option[leave.Length];
+		for (int i = 0; i < leave.Length; i++)
+		{
+			string label = leave[i].label;
+			lines[i] = new Option(() => label, leave[i].act);
+		}
+		Open(humans, resume, lines);
+	}
+
+	public void Open(IEnumerable<IInputSource> humans, System.Action resume, params Option[] lines)
+	{
 		foreach (IInputSource source in humans) navs.Add(new MenuNav(source));
 		onResume = resume;
-		options = new (string, System.Action)[leave.Length + 1];
-		options[0] = ("Resume", resume);
-		for (int i = 0; i < leave.Length; i++) options[i + 1] = leave[i];
+		options = new Option[lines.Length + 1];
+		options[0] = new Option(() => "Resume", resume);
+		for (int i = 0; i < lines.Length; i++) options[i + 1] = lines[i];
 	}
 
 	public override void _Ready()
@@ -59,7 +82,7 @@ public partial class PauseMenu : CanvasLayer
 		optionLabels = new Label[options.Length];
 		for (int i = 0; i < options.Length; i++)
 		{
-			Label label = MenuTheme.MakeLabel(options[i].label, new Vector2(0.0f, 440.0f + i * 100.0f), 60, MenuTheme.Text);
+			Label label = MenuTheme.MakeLabel(options[i].Label(), new Vector2(0.0f, 440.0f + i * RowStep), options.Length > 4 ? 50 : 60, MenuTheme.Text);
 			label.Size = new Vector2(1920.0f, 90.0f);
 			label.HorizontalAlignment = HorizontalAlignment.Center;
 			root.AddChild(label);
@@ -89,11 +112,12 @@ public partial class PauseMenu : CanvasLayer
 				return;
 			}
 
-			if (nav.Confirm)
+			if (nav.Confirm || nav.StepX != 0 && options[selected].Stays)
 			{
-				SfxPlayer.Ui("ui_select");
-				options[selected].act?.Invoke();
-				return;
+				SfxPlayer.Ui(nav.Confirm ? "ui_select" : "ui_move");
+				options[selected].Act?.Invoke();
+				if (!options[selected].Stays) return;
+				Refresh();
 			}
 		}
 	}
@@ -103,7 +127,8 @@ public partial class PauseMenu : CanvasLayer
 		for (int i = 0; i < optionLabels.Length; i++)
 		{
 			optionLabels[i].AddThemeColorOverride("font_color", i == selected ? MenuTheme.Accent : MenuTheme.Soft);
-			optionLabels[i].Text = i == selected ? $"> {options[i].label} <" : options[i].label;
+			string label = options[i].Label();
+			optionLabels[i].Text = i == selected ? $"> {label} <" : label;
 		}
 	}
 
@@ -114,7 +139,7 @@ public partial class PauseMenu : CanvasLayer
 		// stretches to fit it) was left with a strip along the bottom undimmed.
 		page.DrawRect(page.GetViewportRect(), new Color(0.93f, 0.92f, 0.89f, 0.55f));
 
-		var sheet = new Rect2(640.0f, 250.0f, 640.0f, 120.0f + options.Length * 100.0f + 100.0f);
+		var sheet = new Rect2(640.0f, 250.0f, 640.0f, 120.0f + options.Length * RowStep + 100.0f);
 		page.DrawRect(sheet, MenuTheme.Paper);
 		for (float y = sheet.Position.Y + 60.0f; y < sheet.End.Y - 10.0f; y += 54.0f)
 		{

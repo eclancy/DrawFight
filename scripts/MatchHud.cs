@@ -37,10 +37,14 @@ public partial class MatchHud : CanvasLayer
 	Label countdownLabel;
 	Label debugLabel;
 
-	static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
-	static readonly Color Ink = new Color(0.14f, 0.14f, 0.18f);
+	/// <summary>Training: lives are not lost, so none are shown.</summary>
+	public bool NoStocks;
 
-	static Label MakeLabel(Control root, int size, Color colour, int outline)
+	public static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
+	public static readonly Color Ink = new Color(0.14f, 0.14f, 0.18f);
+
+	/// <summary>A HUD label: thick paper outline, no box. Training's readouts are made with it too.</summary>
+	public static Label MakeLabel(Control root, int size, Color colour, int outline)
 	{
 		var label = new Label
 		{
@@ -280,9 +284,10 @@ public partial class MatchHud : CanvasLayer
 			percentLabels[i].AddThemeColorOverride("font_color",
 				new Color(0.14f + danger * 0.72f, 0.14f, 0.18f));
 
-			// One dot per stock left - or, on time, the score, since nobody runs out of lives.
-			// (Sudden death is one life each: its dot, not the score.)
-			if (Rule == VersusRule.Time && Match != null && f.Stocks > 1)
+			// One dot per stock left - or, on time, the score, since nobody runs out of lives; in
+			// training, nothing, since nobody loses one. (Sudden death is one life each: its dot.)
+			if (NoStocks) stockLabels[i].Text = "";
+			else if (Rule == VersusRule.Time && Match != null && f.Stocks > 1)
 			{
 				int score = Match.ScoreOf(f);
 				stockLabels[i].Text = score > 0 ? $"+{score}" : score.ToString();

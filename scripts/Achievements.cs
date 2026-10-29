@@ -35,7 +35,8 @@ public class Achievement
 /// fighter or a skin still to be earned shows as a silhouette. A few unlock things: beating Lugnut
 /// and DoomBot in a story unlocks them (Unlocks), and some unlock a skin (Skins).
 ///
-/// Only a person playing earns one - never the computer, never a story scene acting for them.
+/// Only a person playing earns one - never the computer, never a story scene acting for them, and
+/// never in training.
 /// Saved in user://achievements.cfg; --locked plays this run on an empty save, and saves nothing.
 /// </summary>
 public static class Achievements
@@ -106,11 +107,18 @@ public static class Achievements
 
 	public static int EarnedCount => System.Array.FindAll(All, a => Earned(a.Id)).Length;
 
+	/// <summary>
+	/// Training earns nothing - no KO, taunt, throw or stage counts toward anything (Eric's call,
+	/// 2026-10-29). Its dummy stands still if asked to, so anything earned there was handed over.
+	/// Checked here, where everything is earned, rather than at each place that earns one.
+	/// </summary>
+	static bool Practising => GameRoot.Instance != null && GameRoot.Instance.Mode == GameMode.Training;
+
 	/// <summary>Done: saved, its fighter unlocked, and a note on screen to say so. Once.</summary>
 	public static void Grant(string id)
 	{
 		Achievement a = Find(id);
-		if (a == null || Earned(id)) return;
+		if (a == null || Earned(id) || Practising) return;
 		Config().SetValue("earned", id, true);
 		Save();
 		if (a.Fighter != "")
@@ -125,7 +133,7 @@ public static class Achievements
 	public static void Count(string id, int by = 1)
 	{
 		Achievement a = Find(id);
-		if (a == null || Earned(id)) return;
+		if (a == null || Earned(id) || Practising) return;
 		int now = (int)Config().GetValue("count", a.Counter, 0) + by;
 		Config().SetValue("count", a.Counter, now);
 		Save();
@@ -139,7 +147,7 @@ public static class Achievements
 	public static void Tick(string id, string item, int goal)
 	{
 		Achievement a = Find(id);
-		if (a == null || Earned(id)) return;
+		if (a == null || Earned(id) || Practising) return;
 		var set = new HashSet<string>(((string)Config().GetValue("sets", a.Counter, "")).Split(',', System.StringSplitOptions.RemoveEmptyEntries));
 		if (set.Add(item))
 		{
