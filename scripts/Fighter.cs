@@ -49,6 +49,9 @@ public partial class Fighter : CharacterBody2D
 
 	public float Percent { get; private set; }
 	public int Stocks { get; set; }
+
+	/// <summary>Sudden death starts everyone left at 300% (MatchManager.SuddenDeath): one hit and gone.</summary>
+	public void SetPercent(float percent) => Percent = percent;
 	public FighterState State { get; private set; } = FighterState.Airborne;
 	public int Facing { get; private set; } = 1;
 	public bool IsBlocking { get; private set; }

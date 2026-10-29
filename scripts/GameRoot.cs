@@ -73,6 +73,9 @@ public partial class GameRoot : Node2D
 	/// </summary>
 	public GameMode Mode = GameMode.Versus;
 
+	/// <summary>A timed fight's clock in seconds for this run (--rule=time:20), or 0 for the options' minutes.</summary>
+	public int ClockSeconds;
+
 	/// <summary>Each seat's team in a team fight: 0 red, 1 blue, 2 green. Two against two to start with.</summary>
 	public int[] SeatTeams = { 0, 1, 0, 1 };
 
@@ -204,6 +207,15 @@ public partial class GameRoot : Node2D
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--modes") startAt = "modes";
+			// "--rule=time", "--rule=time:20" (a 20-second clock, to watch it run out), "--rule=stamina",
+			// "--rule=stamina:100", "--rule=stock": versus rules for this run only - not saved.
+			if (arg.StartsWith("--rule="))
+			{
+				string[] rule = arg.Substring(7).Split(':');
+				GameOptions.Rule = rule[0] == "time" ? VersusRule.Time : rule[0] == "stamina" ? VersusRule.Stamina : VersusRule.Stock;
+				if (rule.Length > 1 && GameOptions.Rule == VersusRule.Time) ClockSeconds = rule[1].ToInt();
+				if (rule.Length > 1 && GameOptions.Rule == VersusRule.Stamina) GameOptions.StaminaHealth = rule[1].ToInt();
+			}
 			// "--mode=training": fighter select and the match are for that mode (training, boss,
 			// targets, doodle) - with --match, straight into it.
 			if (arg.StartsWith("--mode="))
@@ -625,6 +637,8 @@ public partial class GameRoot : Node2D
 			Names = names.ToArray(),
 			CpuLevels = levels.ToArray(),
 			SeatSkins = skins.ToArray(),
+			// The options' rules are for versus (and a doodle brawl, which is versus with drawn items).
+			Rule = Mode is GameMode.Versus or GameMode.Doodle ? GameOptions.Rule : VersusRule.Stock,
 		};
 		Show(match);
 	}

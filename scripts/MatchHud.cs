@@ -16,6 +16,14 @@ public partial class MatchHud : CanvasLayer
 	readonly List<Label> percentLabels = new List<Label>();
 	readonly List<Label> stockLabels = new List<Label>();
 
+	/// <summary>
+	/// The fight's rules: on time, each player's score where the lives go and a clock up top; on
+	/// health, the health left where the percent goes (MatchManager.Rule).
+	/// </summary>
+	public VersusRule Rule = VersusRule.Stock;
+	public MatchManager Match;
+	Label clockLabel;
+
 	/// <summary>A heat gauge per player, or null for a fighter without heat.</summary>
 	readonly List<Control> heatGauges = new List<Control>();
 
@@ -136,6 +144,11 @@ public partial class MatchHud : CanvasLayer
 		subBannerLabel.Position = new Vector2(0.0f, 540.0f);
 		subBannerLabel.Size = new Vector2(Width, 60.0f);
 
+		// A timed fight's clock, top middle, out of the way of the fight.
+		clockLabel = MakeLabel(root, 64, Ink, 16);
+		clockLabel.Position = new Vector2(0.0f, 16.0f);
+		clockLabel.Size = new Vector2(Width, 80.0f);
+
 		// The knockback readout, only while hitboxes are shown with F1. A tuning aid, not HUD.
 		debugLabel = MakeLabel(root, 26, Ink, 8);
 		debugLabel.HorizontalAlignment = HorizontalAlignment.Left;
@@ -214,6 +227,14 @@ public partial class MatchHud : CanvasLayer
 		countdownLabel.Modulate = new Color(1.0f, 1.0f, 1.0f, fade);
 	}
 
+	/// <summary>The clock, "2:59" - red over the last ten seconds. Empty hides it.</summary>
+	public void SetClock(string text, bool hurry)
+	{
+		if (clockLabel == null) return;
+		clockLabel.Text = text;
+		clockLabel.AddThemeColorOverride("font_color", hurry ? new Color(0.86f, 0.20f, 0.20f) : Ink);
+	}
+
 	/// <summary>
 	/// A thermometer beside the percent for a fighter with heat: paper-backed with an ink edge,
 	/// like every HUD readout, filling from orange to red. It flashes at full heat and goes
@@ -248,18 +269,30 @@ public partial class MatchHud : CanvasLayer
 		for (int i = 0; i < fighters.Count && i < percentLabels.Count; i++)
 		{
 			Fighter f = fighters[i];
-			percentLabels[i].Text = $"{Mathf.FloorToInt(f.Percent)}%";
+			bool health = Rule == VersusRule.Stamina && Match != null;
+			// Knocked out, his damage is back to nothing - but his health is gone, not full again.
+			percentLabels[i].Text = health ? $"{(f.Stocks > 0 ? Match.HealthOf(f) : 0)}" : $"{Mathf.FloorToInt(f.Percent)}%";
 
 			// Percent colour ramps toward red as a fighter approaches kill range, which is the
-			// fastest way to read "this one is about to die" from across the couch.
-			float danger = Mathf.Clamp(f.Percent / 150.0f, 0.0f, 1.0f);
+			// fastest way to read "this one is about to die" from across the couch - and health
+			// toward red as it runs out.
+			float danger = health ? 1.0f - Match.HealthOf(f) / (float)GameOptions.StaminaHealth : Mathf.Clamp(f.Percent / 150.0f, 0.0f, 1.0f);
 			percentLabels[i].AddThemeColorOverride("font_color",
 				new Color(0.14f + danger * 0.72f, 0.14f, 0.18f));
 
-			// One dot per stock left.
-			stockLabels[i].Text = f.Stocks > 0
-				? string.Join(" ", new string('●', f.Stocks).ToCharArray())
-				: "OUT";
+			// One dot per stock left - or, on time, the score, since nobody runs out of lives.
+			// (Sudden death is one life each: its dot, not the score.)
+			if (Rule == VersusRule.Time && Match != null && f.Stocks > 1)
+			{
+				int score = Match.ScoreOf(f);
+				stockLabels[i].Text = score > 0 ? $"+{score}" : score.ToString();
+			}
+			else
+			{
+				stockLabels[i].Text = f.Stocks > 0
+					? string.Join(" ", new string('●', f.Stocks).ToCharArray())
+					: "OUT";
+			}
 
 			heatGauges[i]?.QueueRedraw();
 		}

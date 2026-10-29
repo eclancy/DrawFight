@@ -112,6 +112,34 @@ public partial class MatchManager : Node2D
 	/// <summary>Each fighter's lives in a story fight, by seat; a versus fight uses GameOptions.Stocks.</summary>
 	public int[] StartStocks;
 
+	// --- Rules -------------------------------------------------------------------------
+	// How a versus fight is won (GameOptions.Rule; "Versus rules" in .ai/modes.md): last one
+	// standing on lives, the most KOs when the clock runs out, or last one standing on health.
+
+	public VersusRule Rule = VersusRule.Stock;
+
+	/// <summary>
+	/// Lives in a timed fight: more than anyone can lose in five minutes, so nobody is ever out -
+	/// a KO is only a point lost.
+	/// </summary>
+	const int TimedLives = 99;
+
+	/// <summary>Frames left on a timed fight's clock; counts from FIGHT!.</summary>
+	int clockFrames;
+
+	/// <summary>A timed fight's score: +1 for a KO, -1 for being KO'd, by fighter.</summary>
+	readonly Dictionary<Fighter, int> scores = new Dictionary<Fighter, int>();
+
+	/// <summary>Sudden death after a tie on time: one life each at 300%, and the banner says so for a moment.</summary>
+	bool suddenDeath;
+	int suddenDeathBannerFrames;
+	const int SuddenDeathBannerFrames = 120;
+
+	public int ScoreOf(Fighter f) => scores.GetValueOrDefault(f);
+
+	/// <summary>Health left in a stamina fight: the fight's health less the damage taken.</summary>
+	public int HealthOf(Fighter f) => Mathf.Max(0, Mathf.CeilToInt(GameOptions.StaminaHealth - f.Percent));
+
 	/// <summary>Only this item drops (--item=ID), for looking at one item at a time.</summary>
 	public string OnlyItem = "";
 
@@ -247,8 +275,9 @@ public partial class MatchManager : Node2D
 				if (StartStocks != null && i < StartStocks.Length && StartStocks[i] > 0) Fighters[i].Stocks = StartStocks[i];
 				continue;
 			}
-			// A versus fight starts with the lives the options say.
-			Fighters[i].Stocks = GameOptions.Stocks;
+			// A versus fight starts with the lives the options say - or, on time, too many to lose,
+			// and on health, one.
+			Fighters[i].Stocks = Rule switch { VersusRule.Time => TimedLives, VersusRule.Stamina => 1, _ => GameOptions.Stocks };
 			if (Names != null && i < Names.Length && !string.IsNullOrEmpty(Names[i]))
 			{
 				Fighters[i].PlayerName = Names[i];
@@ -275,9 +304,14 @@ public partial class MatchManager : Node2D
 		AddChild(camera);
 		fx.Camera = camera;
 
-		hud = new MatchHud();
+		hud = new MatchHud { Rule = Story == null ? Rule : VersusRule.Stock, Match = this };
 		AddChild(hud);
 		hud.Build(Fighters, seats: Story == null);
+		int seconds = GameRoot.Instance != null && GameRoot.Instance.ClockSeconds > 0 ? GameRoot.Instance.ClockSeconds : GameOptions.Minutes * 60;
+		clockFrames = seconds * 60;
+		scores.Clear();
+		suddenDeath = false;
+		suddenDeathBannerFrames = 0;
 
 		countdownFrames = CountdownStepFrames * 3 + FightBannerFrames;
 
@@ -536,9 +570,90 @@ public partial class MatchManager : Node2D
 			{
 				KillOffStage(fighter);
 			}
+			// Out of health: knocked out where he stands.
+			else if (Rule == VersusRule.Stamina && Story == null && !matchOver && fighter.Percent >= GameOptions.StaminaHealth)
+			{
+				KnockedOutOfHealth(fighter);
+			}
 		}
 
+		if (!matchOver) TickClock();
+		if (suddenDeathBannerFrames > 0) suddenDeathBannerFrames--;
 		if (!matchOver) CheckForWinner();
+	}
+
+	/// <summary>
+	/// A timed fight's clock, from FIGHT! to zero, ticking out loud over the last five seconds.
+	/// At zero the best score wins - a team's is its fighters' together - and a tie is sudden death.
+	/// </summary>
+	void TickClock()
+	{
+		if (Rule != VersusRule.Time || Story != null || suddenDeath || InputLocked) return;
+		clockFrames--;
+		if (clockFrames > 0 && clockFrames <= 5 * 60 && clockFrames % 60 == 0) SfxPlayer.Ui("count_tick");
+		if (clockFrames > 0) return;
+
+		var sideScores = new Dictionary<int, int>();
+		foreach (Fighter f in Fighters) sideScores[TeamOf(f)] = sideScores.GetValueOrDefault(TeamOf(f)) + ScoreOf(f);
+		int best = int.MinValue;
+		foreach (int score in sideScores.Values) best = Mathf.Max(best, score);
+		var leaders = new HashSet<int>();
+		foreach (var side in sideScores) if (side.Value == best) leaders.Add(side.Key);
+
+		if (leaders.Count == 1)
+		{
+			// Whoever is ahead wins: everyone else has no lives left, so CheckForWinner says so the
+			// usual way - but they stay standing, beaten on points rather than knocked out.
+			foreach (Fighter f in Fighters) if (!leaders.Contains(TeamOf(f))) f.Stocks = 0;
+			return;
+		}
+		SuddenDeath(leaders);
+	}
+
+	/// <summary>
+	/// A tie on time: everyone tied comes back for one life at 300%, everyone else is out, and it
+	/// is last one standing from there - one clean hit decides it, as in Smash.
+	/// </summary>
+	void SuddenDeath(HashSet<int> leaders)
+	{
+		suddenDeath = true;
+		suddenDeathBannerFrames = SuddenDeathBannerFrames;
+		SfxPlayer.Ui("count_go");
+		foreach (Fighter f in Fighters)
+		{
+			if (!leaders.Contains(TeamOf(f)))
+			{
+				Withdraw(f);
+				continue;
+			}
+			f.Stocks = 1;
+			f.SetPercent(300.0f);
+		}
+	}
+
+	/// <summary>Out of the fight without a KO - beaten on time.</summary>
+	void Withdraw(Fighter f)
+	{
+		if (f.State == FighterState.Eliminated) return;
+		f.Stocks = 1;
+		f.LoseStock(stage.RespawnPoint);
+	}
+
+	/// <summary>
+	/// Out of health in a stamina fight: the KO blast goes off where he stands, up and out, and
+	/// that is his life gone - nobody has to be knocked off the stage to finish it.
+	/// </summary>
+	void KnockedOutOfHealth(Fighter fighter)
+	{
+		Vector2 at = fighter.GlobalPosition;
+		fx.SpawnKoBlast(at, Vector2.Up, fighter.Data.PlaceholderColor);
+		camera.AddShake(140.0f);
+		SfxPlayer.At("ko_blast", at, 0.0f);
+		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
+		stage.Cheer(1.0f);
+		Knocked(fighter, false);
+		fighter.LoseStock(stage.RespawnPoint);
+		FaceInward(fighter);
 	}
 
 	void KillOffStage(Fighter fighter)
@@ -568,6 +683,13 @@ public partial class MatchManager : Node2D
 	void Knocked(Fighter fighter, bool offTheBottom)
 	{
 		Fighter by = fighter.LastHitBy;
+		// On time, a KO is a point to whoever did it and a point off whoever went - falling off on
+		// your own costs the point too, with nobody to give it to.
+		if (Rule == VersusRule.Time && Story == null && !suddenDeath)
+		{
+			scores[fighter] = ScoreOf(fighter) - 1;
+			if (by != null && by != fighter && !Allies(by, fighter)) scores[by] = ScoreOf(by) + 1;
+		}
 		if (by == null || by == fighter || !Achievements.ByPlayer(by)) return;
 		Achievements.Count("ko_50");
 		if (offTheBottom) Achievements.Grant("meteor");
@@ -651,7 +773,8 @@ public partial class MatchManager : Node2D
 			int catalog = FighterIndices[f.PlayerIndex] >= FighterCatalog.StoryOnlyFrom
 				? StoryScript.IndexOf("doombot") : FighterIndices[f.PlayerIndex];
 			Achievements.Tick("vs_all_fighters", catalog.ToString(), FighterCatalog.Count);
-			if (f.Stocks == 1 && f.Percent >= 150.0f) Achievements.Grant("vs_clutch");
+			// On your last life, as the achievement says - not health or time, where everyone is on one.
+			if (Rule == VersusRule.Stock && f.Stocks == 1 && f.Percent >= 150.0f) Achievements.Grant("vs_clutch");
 		}
 		// A Hard CPU on the losing side.
 		for (int i = 0; i < Fighters.Count; i++)
@@ -702,6 +825,7 @@ public partial class MatchManager : Node2D
 		if (matchOver)
 		{
 			hud.SetCountdown("", Colors.White, 0.0f, 0.0f);
+			hud.SetClock("", false);
 			// In a story the next scene says who won. In versus the banner goes up top, out of the
 			// way of the winner celebrating under it.
 			if (director != null) hud.SetBanner("");
@@ -716,6 +840,20 @@ public partial class MatchManager : Node2D
 		}
 
 		hud.SetBanner("");
+		if (Rule == VersusRule.Time && Story == null)
+		{
+			hud.SetClock(suddenDeath ? "" : $"{Mathf.CeilToInt(clockFrames / 60.0f) / 60}:{Mathf.CeilToInt(clockFrames / 60.0f) % 60:00}",
+				clockFrames <= 10 * 60);
+		}
+
+		if (suddenDeathBannerFrames > 0)
+		{
+			// The banner's size, not the countdown's: at that size it ran off both sides of the screen.
+			hud.SetCountdown("", Colors.White, 0.0f, 0.0f);
+			float t = suddenDeathBannerFrames / (float)SuddenDeathBannerFrames;
+			hud.SetBanner("SUDDEN DEATH!", "", Mathf.Max(0.0f, t * 4.0f - 3.0f));
+			return;
+		}
 
 		if (countdownFrames <= 0)
 		{
