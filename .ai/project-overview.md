@@ -50,10 +50,13 @@ of stages, a character-select screen, the in-editor import tool, as many fighter
 and a drawing screen in the game itself, so a fighter can be drawn and sent in without paper,
 a camera or a tablet app (Eric, 2026-10-11).
 
+**Came in later, on Eric's calls:** story mode (`.ai/story-mode.md`), unlockable fighters,
+achievements and skins (`.ai/roadmap.md`, M8), items, and more modes - training, a boss fight,
+targets, a doodle brawl, and timed and health rules for versus (`.ai/modes.md`).
+
 **Out, and staying out unless something changes:** online play (fighting-game netcode is a
-project of its own), story mode (the main menu has a "coming soon" card for it, on Eric's
-call of 2026-10-11, but nothing about it is designed), unlockables and progression, mobile, controller remapping UI
-beyond a basic screen, anything resembling monetisation.
+project of its own), mobile, controller remapping UI beyond a basic screen, anything resembling
+monetisation.
 
 **The name.** This started as `DuskFight`, after the kid's own online handle `Dusk`, and was
 renamed to **DrawFight** because the drawings are the point and the name should say so. Do not
