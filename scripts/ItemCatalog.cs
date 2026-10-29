@@ -48,7 +48,21 @@ public static class ItemCatalog
 		int i = IndexOf(id);
 		if (i >= 0) return All[i];
 		foreach (ItemData prop in StoryProps) if (prop.Id == id) return prop;
-		return null;
+		return id != null && drawn.TryGetValue(id, out ItemData doodle) ? doodle : null;
+	}
+
+	static readonly Dictionary<string, ItemData> drawn = new Dictionary<string, ItemData>();
+
+	/// <summary>
+	/// An item a player drew for a doodle brawl (DoodleSet), with its drawing: found by id like
+	/// any other, but never in All - so never on the item settings screen, never dropped in an
+	/// ordinary fight, and gone when the game closes. Drawn again, it replaces the one before.
+	/// </summary>
+	public static void AddDrawn(ItemData data, ItemArt art)
+	{
+		arts ??= LoadArt();
+		drawn[data.Id] = data;
+		arts[data.Id] = art;
 	}
 
 	/// <summary>An item's drawing, or a piece of one ("crayon_red", "pencil_stub"); null if missing.</summary>

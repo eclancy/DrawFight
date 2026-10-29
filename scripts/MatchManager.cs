@@ -115,6 +115,9 @@ public partial class MatchManager : Node2D
 	/// <summary>Only this item drops (--item=ID), for looking at one item at a time.</summary>
 	public string OnlyItem = "";
 
+	/// <summary>A doodle brawl's items, drawn by the players (DoodleSet); null for the catalog's.</summary>
+	public DoodleItems Doodles;
+
 	int itemTimer = -1;
 	readonly System.Random itemRng = new System.Random();
 
@@ -124,6 +127,8 @@ public partial class MatchManager : Node2D
 	/// </summary>
 	public ItemData RandomItem(int salt, bool fromCase)
 	{
+		// A doodle brawl drops only what the players drew, each in turn.
+		if (Doodles != null && !fromCase) return Doodles.Next();
 		bool only = !string.IsNullOrEmpty(OnlyItem) && !fromCase;
 		var choices = new List<ItemData>();
 		float total = 0.0f;

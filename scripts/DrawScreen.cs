@@ -66,8 +66,8 @@ public partial class DrawScreen : Node2D
 		"Drag to move everything on this layer.",
 	};
 
-	/// <summary>Brush sizes, in pixels across, for the marker, pencil and eraser.</summary>
-	static readonly float[][] Sizes =
+	/// <summary>Brush sizes, in pixels across, for the marker, pencil and eraser. Shared with the doodle screen.</summary>
+	public static readonly float[][] Sizes =
 	{
 		new[] { 4.0f, 8.0f, 14.0f, 22.0f, 34.0f, 50.0f },
 		new[] { 8.0f, 14.0f, 22.0f, 34.0f, 50.0f, 76.0f },
@@ -75,8 +75,8 @@ public partial class DrawScreen : Node2D
 		new[] { 8.0f, 16.0f, 28.0f, 44.0f, 64.0f, 96.0f },
 	};
 
-	/// <summary>A big box of colours: greys, skin tones, and a rainbow, light and dark.</summary>
-	static readonly Color[] Palette =
+	/// <summary>A big box of colours: greys, skin tones, and a rainbow, light and dark. Shared with the doodle screen.</summary>
+	public static readonly Color[] Palette =
 	{
 		new Color(0.08f, 0.08f, 0.10f), new Color(0.30f, 0.30f, 0.33f), new Color(0.58f, 0.58f, 0.62f),
 		new Color(0.82f, 0.82f, 0.85f), new Color(1.00f, 1.00f, 1.00f), new Color(0.36f, 0.22f, 0.12f),
@@ -907,8 +907,8 @@ public partial class DrawScreen : Node2D
 
 	// --- Drawing the page ---------------------------------------------------------------------------
 
-	static readonly Color Desk = new Color(0.84f, 0.86f, 0.89f);
-	static readonly Color HintInk = new Color(0.55f, 0.66f, 0.80f);
+	public static readonly Color Desk = new Color(0.84f, 0.86f, 0.89f);
+	public static readonly Color HintInk = new Color(0.55f, 0.66f, 0.80f);
 
 	void DrawCanvas()
 	{
@@ -920,13 +920,7 @@ public partial class DrawScreen : Node2D
 		canvas.DrawRect(new Rect2(o + new Vector2(10.0f, 12.0f), new Vector2(W, H) * s), new Color(0.0f, 0.0f, 0.0f, 0.10f));
 		canvas.DrawSetTransform(o, 0.0f, new Vector2(s, s));
 
-		// Lined paper. It is only the page: none of it is ever sent with the drawing.
-		canvas.DrawRect(new Rect2(0.0f, 0.0f, W, H), MenuTheme.Paper);
-		for (float y = 120.0f; y < H; y += 56.0f)
-		{
-			CrayonBrush.InkLine(canvas, new Vector2(0.0f, y), new Vector2(W, y), MenuTheme.Rule, 2.5f, Mathf.RoundToInt(y), 1.4f);
-		}
-		CrayonBrush.InkLine(canvas, new Vector2(120.0f, 0.0f), new Vector2(120.0f, H), MenuTheme.Margin, 3.5f, 991, 2.0f);
+		DrawLinedPage(canvas);
 		DrawPageHint();
 
 		foreach (DrawingLayer layer in Page.Layers)
@@ -936,6 +930,20 @@ public partial class DrawScreen : Node2D
 			layer.DrawOn(canvas, offset, Colors.White);
 		}
 		canvas.DrawSetTransform(Vector2.Zero, 0.0f, Vector2.One);
+	}
+
+	/// <summary>
+	/// Lined paper, in page pixels. It is only the page: none of it is ever sent with the drawing.
+	/// The doodle screen's page is the same paper.
+	/// </summary>
+	public static void DrawLinedPage(CanvasItem canvas)
+	{
+		canvas.DrawRect(new Rect2(0.0f, 0.0f, W, H), MenuTheme.Paper);
+		for (float y = 120.0f; y < H; y += 56.0f)
+		{
+			CrayonBrush.InkLine(canvas, new Vector2(0.0f, y), new Vector2(W, y), MenuTheme.Rule, 2.5f, Mathf.RoundToInt(y), 1.4f);
+		}
+		CrayonBrush.InkLine(canvas, new Vector2(120.0f, 0.0f), new Vector2(120.0f, H), MenuTheme.Margin, 3.5f, 991, 2.0f);
 	}
 
 	/// <summary>A reminder pencilled on the page, the same advice the drawing guide gives.</summary>
@@ -1122,7 +1130,7 @@ public partial class DrawScreen : Node2D
 			Rect2 box = ToolRect(i);
 			bool chosen = i == toolIndex;
 			MenuTheme.DrawButton(this, box, "", 750 + i, Hot(box), chosen);
-			DrawToolIcon(i, new Rect2(box.Position + new Vector2(6.0f, 6.0f), new Vector2(64.0f, 66.0f)));
+			DrawToolIcon(this, Tools[i], new Rect2(box.Position + new Vector2(6.0f, 6.0f), new Vector2(64.0f, 66.0f)), colour);
 			DrawString(font, new Vector2(box.Position.X + 74.0f, box.GetCenter().Y + 9.0f), ToolNames[i],
 				HorizontalAlignment.Left, box.Size.X - 78.0f, 24, MenuTheme.Text);
 		}
@@ -1136,27 +1144,28 @@ public partial class DrawScreen : Node2D
 		DrawMultilineString(font, new Vector2(14.0f, 810.0f), ToolHints[toolIndex], HorizontalAlignment.Left, 160.0f, 22, 8, MenuTheme.Soft);
 	}
 
-	void DrawToolIcon(int i, Rect2 box)
+	/// <summary>A tool's picture on its button: the item it is, or a dropper, or arrows. Shared with the doodle screen.</summary>
+	public static void DrawToolIcon(CanvasItem canvas, PaintTool tool, Rect2 box, Color colour)
 	{
-		if (ToolArt[i] is string id && ItemCatalog.Art(id) is ItemArt art)
+		if (ToolArt[System.Array.IndexOf(Tools, tool)] is string id && ItemCatalog.Art(id) is ItemArt art)
 		{
 			float s = Mathf.Min(box.Size.X / art.Size.X, box.Size.Y / art.Size.Y) * 0.95f;
 			float angle = id is "marker" or "pencil" ? 0.6f : 0.0f;
 			if (angle != 0.0f) s = box.Size.Y * 1.05f / art.Size.Y;
-			DrawSetTransformMatrix(new Transform2D(angle, new Vector2(s, s), 0.0f, box.GetCenter()));
-			DrawTexture(art.Texture, -art.Size * 0.5f);
-			DrawSetTransformMatrix(Transform2D.Identity);
+			canvas.DrawSetTransformMatrix(new Transform2D(angle, new Vector2(s, s), 0.0f, box.GetCenter()));
+			canvas.DrawTexture(art.Texture, -art.Size * 0.5f);
+			canvas.DrawSetTransformMatrix(Transform2D.Identity);
 			return;
 		}
 		Vector2 c = box.GetCenter();
-		if (Tools[i] == PaintTool.Picker)
+		if (tool == PaintTool.Picker)
 		{
 			// A dropper: a bulb, a glass tube, a drop of the colour at its tip.
 			var tip = c + new Vector2(-18.0f, 20.0f);
-			DrawLine(tip, c + new Vector2(10.0f, -8.0f), MenuTheme.Ink, 9.0f, true);
-			DrawLine(tip, c + new Vector2(10.0f, -8.0f), Colors.White, 5.0f, true);
-			DrawCircle(c + new Vector2(16.0f, -14.0f), 10.0f, new Color(0.86f, 0.36f, 0.36f));
-			DrawCircle(tip + new Vector2(-4.0f, 8.0f), 6.0f, colour);
+			canvas.DrawLine(tip, c + new Vector2(10.0f, -8.0f), MenuTheme.Ink, 9.0f, true);
+			canvas.DrawLine(tip, c + new Vector2(10.0f, -8.0f), Colors.White, 5.0f, true);
+			canvas.DrawCircle(c + new Vector2(16.0f, -14.0f), 10.0f, new Color(0.86f, 0.36f, 0.36f));
+			canvas.DrawCircle(tip + new Vector2(-4.0f, 8.0f), 6.0f, colour);
 			return;
 		}
 		// Move: four arrows out from the middle.
@@ -1164,9 +1173,9 @@ public partial class DrawScreen : Node2D
 		{
 			Vector2 way = Vector2.Right.Rotated(k * Mathf.Pi * 0.5f);
 			Vector2 end = c + way * 24.0f;
-			DrawLine(c, end, MenuTheme.Ink, 4.0f, true);
-			DrawLine(end, end - way.Rotated(0.6f) * 10.0f, MenuTheme.Ink, 4.0f, true);
-			DrawLine(end, end - way.Rotated(-0.6f) * 10.0f, MenuTheme.Ink, 4.0f, true);
+			canvas.DrawLine(c, end, MenuTheme.Ink, 4.0f, true);
+			canvas.DrawLine(end, end - way.Rotated(0.6f) * 10.0f, MenuTheme.Ink, 4.0f, true);
+			canvas.DrawLine(end, end - way.Rotated(-0.6f) * 10.0f, MenuTheme.Ink, 4.0f, true);
 		}
 	}
 

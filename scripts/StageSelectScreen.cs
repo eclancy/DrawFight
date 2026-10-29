@@ -154,7 +154,7 @@ public partial class StageSelectScreen : Node2D
 				SfxPlayer.Ui("ui_move");
 			}
 
-			if (cursor.Confirm && ItemsButton.HasPoint(cursor.Position))
+			if (cursor.Confirm && ItemsButton.HasPoint(cursor.Position) && !Doodling)
 			{
 				SfxPlayer.Ui("ui_select");
 				GameRoot.Instance.GoItemSettings();
@@ -165,7 +165,8 @@ public partial class StageSelectScreen : Node2D
 			{
 				GameRoot.Instance.SelectedStage = under;
 				SfxPlayer.Ui("ui_ready");
-				GameRoot.Instance.GoMatch();
+				if (Doodling) GameRoot.Instance.GoDoodle();
+				else GameRoot.Instance.GoMatch();
 				return;
 			}
 		}
@@ -196,11 +197,20 @@ public partial class StageSelectScreen : Node2D
 				: "The ground runs the whole way. You can only be knocked off the sides or the top.");
 	}
 
+	/// <summary>A doodle brawl's items are the ones about to be drawn, so there are no item settings to go to.</summary>
+	static bool Doodling => GameRoot.Instance.Mode == GameMode.Doodle;
+
 	public override void _Draw()
 	{
 		Vector2 size = GetViewportRect().Size;
 		MenuTheme.DrawPage(this, size);
 
+		if (!Doodling) DrawItemsButton();
+		DrawStages();
+	}
+
+	void DrawItemsButton()
+	{
 		DrawRect(ItemsButton, MenuTheme.Paper);
 		CrayonBrush.InkRect(this, ItemsButton, MenuTheme.Ink, 4.0f, 91, 2.2f);
 		foreach (MenuCursor cursor in cursors)
@@ -214,7 +224,10 @@ public partial class StageSelectScreen : Node2D
 		if (items.Frequency != ItemFrequency.Off && items.EnabledCount < ItemCatalog.Count) label += $"  ({items.EnabledCount} on)";
 		DrawString(ThemeDB.FallbackFont, ItemsButton.Position + new Vector2(28.0f, 62.0f), label,
 			HorizontalAlignment.Left, ItemsButton.Size.X - 40.0f, 36, MenuTheme.Text);
+	}
 
+	void DrawStages()
+	{
 		for (int i = 0; i < stages.Length; i++)
 		{
 			DrawTextureRect(previews[i].GetTexture(), cards[i], false);

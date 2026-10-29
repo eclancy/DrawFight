@@ -108,6 +108,9 @@ public partial class GameRoot : Node2D
 	/// <summary>Only this item drops in a match (--item=ID), for looking at one at a time.</summary>
 	public string OnlyItem = "";
 
+	/// <summary>The items each seat drew for doodle brawl, kept for the session - never saved or sent.</summary>
+	public readonly DoodleSet Doodles = new DoodleSet();
+
 	/// <summary>The story being played, or null.</summary>
 	public StoryRun Story;
 	string storyMapFor = "";
@@ -217,6 +220,14 @@ public partial class GameRoot : Node2D
 					_ => GameMode.Versus,
 				};
 			}
+			// "--doodle": doodle brawl's drawing page ("--doodle=choice": with Throw it / Swing it up).
+			// "--doodletest" paints a test item on every seat's page, since a screenshot run cannot
+			// draw ("--doodletest=1" turns them round the seats: Player 1 gets the ball to throw);
+			// "--doodlehold" hands one to every fighter as the fight starts. Both are tests.
+			if (arg == "--doodle" || arg == "--doodle=choice") startAt = arg.Substring(2);
+			if (arg == "--doodletest") Doodles.FillForTest();
+			if (arg.StartsWith("--doodletest=")) Doodles.FillForTest(arg.Substring(13).ToInt());
+			if (arg == "--doodlehold") Doodles.TestHold = true;
 			if (arg == "--options") startAt = "options";
 			if (arg == "--changelog") startAt = "changelog";
 			if (arg == "--gallery") startAt = "gallery";
@@ -299,6 +310,8 @@ public partial class GameRoot : Node2D
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
 			case "modes": GoModes(null); break;
+			case "doodle": GoDoodle(); break;
+			case "doodle=choice": Show(new DoodleScreen { OpenOnChoice = true }); break;
 			case "achievements": GoAchievements(); break;
 			case "photos": GoSendPhotos(); break;
 			case "story": GoStoryChapter(); break;
@@ -386,6 +399,9 @@ public partial class GameRoot : Node2D
 		Mode = GameMode.Doodle;
 		GoCharacterSelect();
 	}
+
+	/// <summary>Doodle brawl, after stage select: each person playing draws an item, then the fight.</summary>
+	public void GoDoodle() => Show(new DoodleScreen());
 	public void GoDrawings() => Show(new DrawingsScreen());
 	public void OpenDrawing(Drawing drawing) => Show(new DrawScreen { Doc = drawing });
 	public void GoSendFighter(Drawing drawing) => Show(new SendFighterScreen { Doc = drawing });
@@ -626,6 +642,7 @@ public partial class GameRoot : Node2D
 			CpuLevels = levels.ToArray(),
 			SeatSkins = skins.ToArray(),
 		};
+		if (Mode == GameMode.Doodle) Doodles.Arm(match);
 		Show(match);
 	}
 
@@ -666,7 +683,8 @@ public partial class GameRoot : Node2D
 		framesElapsed++;
 		// No mouse pointer anywhere but the drawing screens, whatever turned it on - a window
 		// regaining focus, a screen that forgot to put it away (Eric, 2026-10-16).
-		if (!(currentScreen is DrawScreen || currentScreen is DrawingsScreen || currentScreen is SendFighterScreen || currentScreen is SuggestScreen)
+		if (!(currentScreen is DrawScreen || currentScreen is DrawingsScreen || currentScreen is SendFighterScreen || currentScreen is SuggestScreen
+			|| currentScreen is DoodleScreen)
 			&& Input.MouseMode != Input.MouseModeEnum.Hidden)
 		{
 			Input.MouseMode = Input.MouseModeEnum.Hidden;
