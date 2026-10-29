@@ -29,10 +29,14 @@ public partial class MatchHud : CanvasLayer
 	Label countdownLabel;
 	Label debugLabel;
 
-	static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
-	static readonly Color Ink = new Color(0.14f, 0.14f, 0.18f);
+	/// <summary>Training: lives are not lost, so none are shown.</summary>
+	public bool NoStocks;
 
-	static Label MakeLabel(Control root, int size, Color colour, int outline)
+	public static readonly Color Paper = new Color(0.98f, 0.97f, 0.94f);
+	public static readonly Color Ink = new Color(0.14f, 0.14f, 0.18f);
+
+	/// <summary>A HUD label: thick paper outline, no box. Training's readouts are made with it too.</summary>
+	public static Label MakeLabel(Control root, int size, Color colour, int outline)
 	{
 		var label = new Label
 		{
@@ -257,7 +261,7 @@ public partial class MatchHud : CanvasLayer
 				new Color(0.14f + danger * 0.72f, 0.14f, 0.18f));
 
 			// One dot per stock left.
-			stockLabels[i].Text = f.Stocks > 0
+			stockLabels[i].Text = NoStocks ? "" : f.Stocks > 0
 				? string.Join(" ", new string('●', f.Stocks).ToCharArray())
 				: "OUT";
 

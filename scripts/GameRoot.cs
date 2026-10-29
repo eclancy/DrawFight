@@ -271,7 +271,11 @@ public partial class GameRoot : Node2D
 					Film = paradeFilm,
 				});
 				break;
-			case "match": GoMatch(); break;
+			case "match":
+				// Training straight in: --fighters=3,1 is you as fighter 3 against a dummy as fighter 1.
+				if (Mode == GameMode.Training) for (int i = 1; i < CpuPlayers.Length; i++) CpuPlayers[i] = true;
+				GoMatch();
+				break;
 			case "select": GoCharacterSelect(); break;
 			case "storyselect": GoStorySelect(); break;
 			case "storymap": GoStory(storyMapFor); break;
@@ -588,6 +592,8 @@ public partial class GameRoot : Node2D
 
 	public void GoMatch()
 	{
+		bool training = Mode == GameMode.Training;
+		if (training) TrainingMode.SeatDummy(SelectedFighters, CpuPlayers);
 		// The seats somebody sat in, in seat order: P1 and P3 fighting are fighters 0 and 1, and
 		// keep seats 0 and 2 - their numbers, colours and controllers.
 		var fighters = new System.Collections.Generic.List<int>();
@@ -611,7 +617,7 @@ public partial class GameRoot : Node2D
 			names.Add(CpuPlayers[seat] ? null : SeatNames[seat]);
 		}
 		// A team fight needs two teams in it; everyone on one is everyone for themselves.
-		bool teamBattle = TeamBattle && new System.Collections.Generic.HashSet<int>(teams).Count >= 2;
+		bool teamBattle = TeamBattle && !training && new System.Collections.Generic.HashSet<int>(teams).Count >= 2;
 		var match = new MatchManager
 		{
 			StageIndex = SelectedStage,
@@ -620,7 +626,9 @@ public partial class GameRoot : Node2D
 			Seats = seats.ToArray(),
 			Teams = teamBattle ? teams.ToArray() : null,
 			TeamBattle = teamBattle,
-			Items = Items,
+			Training = training,
+			// Training drops no items: nothing turns up that was not asked for.
+			Items = training ? null : Items,
 			OnlyItem = OnlyItem,
 			Names = names.ToArray(),
 			CpuLevels = levels.ToArray(),

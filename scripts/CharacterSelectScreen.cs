@@ -130,9 +130,17 @@ public partial class CharacterSelectScreen : Node2D
 		return false;
 	}
 
+	/// <summary>
+	/// Picking for training: a person on their own can start (a dummy is sat down for them if no
+	/// CPU is - TrainingMode.SeatDummy), and there are no teams or items to set.
+	/// </summary>
+	bool Training => !ForStory && GameRoot.Instance.Mode == GameMode.Training;
+
+	string StartText => ForStory ? "Press Start to begin!" : Training ? "Press Start to train!" : "Press Start to fight!";
+
 	bool TeamBattle
 	{
-		get => GameRoot.Instance.TeamBattle;
+		get => GameRoot.Instance.TeamBattle && !Training;
 		set => GameRoot.Instance.TeamBattle = value;
 	}
 
@@ -178,7 +186,8 @@ public partial class CharacterSelectScreen : Node2D
 		var root = new Control { AnchorsPreset = (int)Control.LayoutPreset.FullRect };
 		layer.AddChild(root);
 
-		root.AddChild(MenuTheme.MakeLabel(ForStory ? "Whose story?" : "Pick your fighter", new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
+		root.AddChild(MenuTheme.MakeLabel(ForStory ? "Whose story?" : Training ? "Training: pick your fighter" : "Pick your fighter",
+			new Vector2(190.0f, 74.0f), 76, MenuTheme.Text));
 
 		float rowWidth = cards.Length * CardWidth + (cards.Length - 1) * CardGap;
 		float rowLeft = RowLeft + (RowRight - RowLeft - rowWidth) * 0.5f;
@@ -243,7 +252,7 @@ public partial class CharacterSelectScreen : Node2D
 			cards[i] = new Card { Box = box, Rig = rig };
 		}
 
-		startPrompt = MenuTheme.MakeLabel(ForStory ? "Press Start to begin!" : "Press Start to fight!", new Vector2(0.0f, 982.0f), 64, MenuTheme.Accent);
+		startPrompt = MenuTheme.MakeLabel(StartText, new Vector2(0.0f, 982.0f), 64, MenuTheme.Accent);
 		// In a story the difficulty takes the bottom left, so Start sits in the rest of the row.
 		float promptLeft = ForStory ? DifficultyBox(Difficulties.Length - 1).End.X + 20.0f : 0.0f;
 		startPrompt.Position = new Vector2(promptLeft, startPrompt.Position.Y);
@@ -740,8 +749,8 @@ public partial class CharacterSelectScreen : Node2D
 	string ButtonUnder(Vector2 at)
 	{
 		if (QuitBox.HasPoint(at)) return "quit";
-		if (!ForStory && TeamsBox.HasPoint(at)) return "teams";
-		if (!ForStory && ItemsBox.HasPoint(at)) return "items";
+		if (!ForStory && !Training && TeamsBox.HasPoint(at)) return "teams";
+		if (!ForStory && !Training && ItemsBox.HasPoint(at)) return "items";
 		for (int d = 0; d < Difficulties.Length; d++) if (ForStory && DifficultyBox(d).HasPoint(at)) return "d" + d;
 		for (int i = 0; i < slots.Length && !ForStory; i++)
 		{
@@ -887,6 +896,7 @@ public partial class CharacterSelectScreen : Node2D
 	/// </summary>
 	bool TryTeamButtons(Vector2 point, Slot by)
 	{
+		if (Training) return false;
 		if (TeamsBox.HasPoint(point))
 		{
 			TeamBattle = !TeamBattle;
@@ -966,7 +976,7 @@ public partial class CharacterSelectScreen : Node2D
 			seated++;
 			anyHuman |= slot.Human;
 		}
-		return seated >= 2 && anyHuman && (!TeamBattle || TeamsSeated() >= 2);
+		return (seated >= 2 || Training) && anyHuman && (!TeamBattle || TeamsSeated() >= 2);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -1048,7 +1058,7 @@ public partial class CharacterSelectScreen : Node2D
 				continue;
 			}
 
-			if (!ForStory && ItemsBox.HasPoint(cursor.Position))
+			if (!ForStory && !Training && ItemsBox.HasPoint(cursor.Position))
 			{
 				ItemSettings items = GameRoot.Instance.Items;
 				items.Frequency = (ItemFrequency)(((int)items.Frequency + 1) % 4);
@@ -1136,7 +1146,7 @@ public partial class CharacterSelectScreen : Node2D
 		// on one team, it says what is missing instead.
 		promptFrames = everyoneReady ? promptFrames + 1 : 0;
 		bool oneTeam = !ForStory && TeamBattle && !everyoneReady && TeamsSeated() < 2 && EveryonePicked();
-		startPrompt.Text = oneTeam ? "Everyone's on one team!" : ForStory ? "Press Start to begin!" : "Press Start to fight!";
+		startPrompt.Text = oneTeam ? "Everyone's on one team!" : StartText;
 		startPrompt.Visible = everyoneReady || oneTeam;
 		startPrompt.Scale = Vector2.One * (1.0f + 0.05f * Mathf.Sin(promptFrames * 0.12f));
 
@@ -1360,7 +1370,7 @@ public partial class CharacterSelectScreen : Node2D
 			}
 		}
 
-		if (!ForStory)
+		if (!ForStory && !Training)
 		{
 			bool teamsHot = false;
 			foreach (Slot slot in slots) teamsHot |= slot.Human && slot.Cursor != null && TeamsBox.HasPoint(slot.Cursor.Position);
@@ -1373,7 +1383,7 @@ public partial class CharacterSelectScreen : Node2D
 			MenuTheme.DrawButton(this, ItemsBox, "Items: " + ItemSettings.Describe(frequency), 81, itemsHot,
 				frequency != ItemFrequency.Off, fontSize: 34);
 		}
-		else
+		else if (ForStory)
 		{
 			DrawString(ThemeDB.FallbackFont, new Vector2(RowLeft, DifficultyBox(0).GetCenter().Y + 12.0f), "Difficulty", HorizontalAlignment.Left, -1, 34, MenuTheme.Soft);
 			for (int d = 0; d < Difficulties.Length; d++)

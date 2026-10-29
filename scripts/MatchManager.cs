@@ -14,6 +14,13 @@ public partial class MatchManager : Node2D
 	public bool ShowHitboxes { get; private set; } = false;
 
 	/// <summary>
+	/// Training (GameRoot.Mode): a KO only respawns, nobody wins, hitboxes are on, and the CPU is a
+	/// dummy whose behaviour is picked on the pause menu. The mode itself is TrainingMode.
+	/// </summary>
+	public bool Training;
+	TrainingMode training;
+
+	/// <summary>
 	/// Which pad layout every gamepad uses. One knob for now; M5 makes it per-player on the
 	/// controls screen.
 	/// </summary>
@@ -219,11 +226,15 @@ public partial class MatchManager : Node2D
 	public override void _Ready()
 	{
 		KeyboardInputSource.MouseInMatch = true;
+		// Set here rather than in BuildMatch, so a reset keeps whatever the player switched them to.
+		if (Training) ShowHitboxes = true;
 		BuildMatch();
 	}
 
 	void BuildMatch()
 	{
+		// Made first, so the controllers can hand the CPU's seat to its dummy.
+		training = Training ? new TrainingMode { Match = this } : null;
 		stage = new Stage();
 		AddChild(stage);
 		stage.Build(StageCatalog.Get(StageIndex));
@@ -275,11 +286,17 @@ public partial class MatchManager : Node2D
 		AddChild(camera);
 		fx.Camera = camera;
 
-		hud = new MatchHud();
+		hud = new MatchHud { NoStocks = Training };
 		AddChild(hud);
 		hud.Build(Fighters, seats: Story == null);
 
 		countdownFrames = CountdownStepFrames * 3 + FightBannerFrames;
+		// Training is straight in: there is nobody to be fair to.
+		if (training != null)
+		{
+			countdownFrames = 0;
+			AddChild(training);
+		}
 
 		if (Story?.Chapter != null)
 		{
@@ -418,7 +435,7 @@ public partial class MatchManager : Node2D
 					cpus[i] = new CpuInputSource(this, i) { Level = CpuLevels != null && i < CpuLevels.Length ? CpuLevels[i] : 4 };
 					cpus[i].Drive(Fighters[i]);
 				}
-				Fighters[i].Controller = cpus[i];
+				Fighters[i].Controller = training != null ? training.DummyFor(Fighters[i], cpus[i]) : cpus[i];
 			}
 			else
 			{
@@ -538,7 +555,7 @@ public partial class MatchManager : Node2D
 			}
 		}
 
-		if (!matchOver) CheckForWinner();
+		if (!matchOver && !Training) CheckForWinner();
 	}
 
 	void KillOffStage(Fighter fighter)
@@ -560,6 +577,8 @@ public partial class MatchManager : Node2D
 
 		stage.Cheer(1.0f);
 		Knocked(fighter, at.Y > view.End.Y);
+		// Training loses no lives: the KO is all there, and he comes straight back.
+		if (Training) fighter.Stocks++;
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
 	}
@@ -584,6 +603,7 @@ public partial class MatchManager : Node2D
 		if (fighter.Controller is IHapticInputSource haptic) haptic.Rumble(1.0f, 0.45f);
 		stage.Cheer(1.0f);
 		Knocked(fighter, false);
+		if (Training) fighter.Stocks++;
 		fighter.LoseStock(stage.RespawnPoint);
 		FaceInward(fighter);
 	}
@@ -692,7 +712,8 @@ public partial class MatchManager : Node2D
 			CallDeferred(nameof(CaptureAndQuit));
 		}
 
-		status = ShowHitboxes ? $"last KB {lastKnockback:0}" : "";
+		// Training shows the last hit in words of its own (TrainingMode).
+		status = ShowHitboxes && !Training ? $"last KB {lastKnockback:0}" : "";
 		hud.Refresh(Fighters, status);
 		UpdateBanner();
 	}
@@ -783,6 +804,7 @@ public partial class MatchManager : Node2D
 		float knockback, float damage, bool blocked)
 	{
 		lastKnockback = knockback;
+		training?.OnHit(victim, knockback, damage, blocked);
 		fx.SpawnHitSpark(contactPoint, damage, blocked);
 		SfxPlayer.Hit(contactPoint, knockback, blocked, attacker != null && attacker.Data.SlicesOnHit);
 		camera.AddShake(blocked ? knockback * 0.25f : knockback);
@@ -820,8 +842,7 @@ public partial class MatchManager : Node2D
 		switch (key.PhysicalKeycode)
 		{
 			case Key.F1:
-				ShowHitboxes = !ShowHitboxes;
-				debugDraw.QueueRedraw();
+				ToggleHitboxes();
 				break;
 
 			case Key.F2:
@@ -851,6 +872,13 @@ public partial class MatchManager : Node2D
 				Restart();
 				break;
 		}
+	}
+
+	/// <summary>Hitboxes and hurtboxes drawn over the fight, or not: F1, and training's pause menu.</summary>
+	public void ToggleHitboxes()
+	{
+		ShowHitboxes = !ShowHitboxes;
+		debugDraw.QueueRedraw();
 	}
 
 	// --- Pause ---------------------------------------------------------------
@@ -884,8 +912,10 @@ public partial class MatchManager : Node2D
 			MusicPlayer.SetPaused(false);
 			go();
 		}
+		// Training's pause is where its settings are: the dummy, a reset, hitboxes, the speed.
+		if (training != null) pauseMenu.Open(humans, Resume, training.PauseOptions(Leave));
 		// A story has no fighters to pick: its map is where it goes back to instead.
-		if (director != null)
+		else if (director != null)
 		{
 			pauseMenu.Open(humans, Resume,
 				("Story map", () => Leave(GameRoot.Instance.GoStoryMap)),
@@ -928,7 +958,8 @@ public partial class MatchManager : Node2D
 		GD.Print($"MatchManager: wrote {path}");
 	}
 
-	void Restart()
+	/// <summary>The match from the top, on the same stage with the same fighters: R, F4, and training's Reset.</summary>
+	public void Restart()
 	{
 		foreach (Node child in GetChildren())
 		{
@@ -950,8 +981,9 @@ public partial class MatchManager : Node2D
 		lastKnockback = 0.0f;
 		Engine.TimeScale = 1.0f;
 		endFrames = 0;
-		// The battle music comes back in on FIGHT!, like the first time.
-		MusicPlayer.Stop();
+		// The battle music comes back in on FIGHT!, like the first time. Training has no FIGHT!, and
+		// its music plays on through a reset (TrainingMode starts it).
+		if (!Training) MusicPlayer.Stop();
 		MusicPlayer.SetPaused(false);
 
 		BuildMatch();
