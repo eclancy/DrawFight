@@ -96,8 +96,9 @@ public partial class RigParade : Node2D
 	static ItemData FilmItem(string name)
 	{
 		if (name == null || !name.StartsWith("item:")) return null;
-		int index = ItemCatalog.IndexOf(name.Substring(5));
-		return index >= 0 && ItemCatalog.Get(index).Swing != null ? ItemCatalog.Get(index) : null;
+		// Find, not the catalog alone: a doodle brawl's drawn items (doodle_1...) can be filmed too.
+		ItemData item = ItemCatalog.Find(name.Substring(5));
+		return item?.Swing != null ? item : null;
 	}
 
 	/// <summary>
