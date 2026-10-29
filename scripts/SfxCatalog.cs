@@ -23,7 +23,7 @@ public static class SfxCatalog
 		"count_tick", "count_go", "ko_blast", "respawn", "game_set",
 		"ui_move", "ui_select", "ui_back", "ui_ready", "pause", "voice",
 		"zap", "jets", "missile", "steam", "overheat", "furnace_blast", "burn", "creak",
-		"clang", "shield_break", "minibot_pop", "splash", "boing", "stomp",
+		"clang", "shield_break", "target_break", "minibot_pop", "splash", "boing", "stomp",
 		"item_pickup", "item_spray", "item_snip", "item_heal", "item_gust", "item_crumple",
 		"magnet_clink", "fridge_hum", "smoke_alarm", "steam_whistle", "power_chord",
 	};

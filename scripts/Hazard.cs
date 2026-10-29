@@ -848,6 +848,25 @@ public partial class Hazard : Node2D
 		return false;
 	}
 
+	/// <summary>
+	/// Whether this reaches into <paramref name="box"/> now, as it would reach a fighter: a target
+	/// in Targets mode (TargetsRun). A cloud and a puddle never hit - what comes out of them does.
+	/// </summary>
+	public bool Reaches(Rect2 box)
+	{
+		if (match == null || expiring || move.Special == SpecialKind.Cloud || move.Special == SpecialKind.Puddle) return false;
+		if (move.Special == SpecialKind.Fling && Stopped) return false;
+		return Touches(box, out _);
+	}
+
+	/// <summary>It broke a target: spent as a hit on a fighter would spend it (QueryHits).</summary>
+	public void BrokeTarget()
+	{
+		if (move.Special == SpecialKind.Walker) Detonate();
+		else if (move.Special == SpecialKind.Fling) Stop();
+		else if (!move.Beam && (!Lingers || move.SpentOnHit)) Expire();
+	}
+
 	/// <summary>A trap burns and an explosion blasts; both keep hitting until they fade.</summary>
 	bool Lingers => move.Special == SpecialKind.Trap || move.Special == SpecialKind.Bomb
 		|| move.Special == SpecialKind.Shockwave || move.Special == SpecialKind.Vent || move.FromGround;

@@ -177,17 +177,8 @@ public partial class ModesScreen : Node2D
 			HorizontalAlignment.Center, card.Size.X - 40.0f, 28, 2, MenuTheme.Soft);
 	}
 
-	/// <summary>A target: red and white rings, inked round the outside.</summary>
-	public static void DrawTarget(CanvasItem canvas, Vector2 at, float radius)
-	{
-		var red = new Color(0.90f, 0.30f, 0.28f);
-		var white = new Color(0.99f, 0.97f, 0.93f);
-		for (int ring = 0; ring < 4; ring++)
-		{
-			canvas.DrawCircle(at, radius * (1.0f - ring * 0.24f), ring % 2 == 0 ? red : white);
-		}
-		canvas.DrawArc(at, radius, 0.0f, Mathf.Tau, 48, MenuTheme.Ink, 5.0f, true);
-	}
+	/// <summary>A target, as the courses have them (TargetsRun.DrawTarget).</summary>
+	public static void DrawTarget(CanvasItem canvas, Vector2 at, float radius) => TargetsRun.DrawTarget(canvas, at, radius, 5);
 
 	void DrawItem(string id, Vector2 centre, float longest, float angle)
 	{

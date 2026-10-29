@@ -504,6 +504,17 @@ def shield_break():
     return S.layer([(crack, 0.0, 1.0), (shards, 0.0, 0.6), (wobble, 0.03, 0.35)])
 
 
+def target_break():
+    """A target broken (Targets mode): a sharp crack of card, a few bright chips flying off, and
+    the countdown's little bell on E then A over it - ten of these in a run should sound like
+    getting somewhere, not like getting hurt."""
+    crack = slap(0.05, cutoff=4600.0, k=50.0, seed=SEED + 91)
+    chips = S.layer([(metal(2600 + 420 * i, 0.12, k=22.0), 0.015 + 0.03 * i, 0.45 - 0.08 * i)
+                     for i in range(4)])
+    return S.layer([(crack, 0.0, 1.0), (chips, 0.0, 0.5), (bell(E6, 0.3), 0.0, 0.5),
+                    (bell(A6, 0.45), 0.06, 0.7)])
+
+
 def stomp():
     """A robot's footfall: a heavy, low thud with a dull clank of steel on top - every step of
     DoomBot's walk. Short and low, because it plays twice a stride."""
@@ -746,6 +757,8 @@ REGISTRY = [
     ("clang", "hit", -10.0, clang, False),
     # A few times a match at most.
     ("shield_break", "hit", -7.0, shield_break, False),
+    # Ten a run, a few seconds apart: with the hits.
+    ("target_break", "hit", -9.0, target_break, False),
     # Twice a stride: well down in the mix.
     ("stomp", "move", -16.0, stomp, False),
     ("minibot_pop", "special", -9.0, minibot_pop, False),
