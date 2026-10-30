@@ -79,14 +79,20 @@ public partial class GameCamera : Camera2D
 			if (fighter.IsWaitingToRespawn) continue;
 
 			Vector2 p = fighter.GlobalPosition.Clamp(Bounds.Position, Bounds.End);
+			// The margin round each middle is made for someone ordinary-sized; a giant (a boss fight's)
+			// is framed from his head to his feet, or the top of the screen cuts his head off.
+			Rect2 body = fighter.BodyRect();
+			float top = Mathf.Min(p.Y, body.Position.Y + Margin * 0.5f);
+			float bottom = Mathf.Max(p.Y, body.End.Y - Margin * 0.5f);
 			if (!any)
 			{
-				min = max = p;
+				min = new Vector2(p.X, top);
+				max = new Vector2(p.X, bottom);
 				any = true;
 				continue;
 			}
-			min = new Vector2(Mathf.Min(min.X, p.X), Mathf.Min(min.Y, p.Y));
-			max = new Vector2(Mathf.Max(max.X, p.X), Mathf.Max(max.Y, p.Y));
+			min = new Vector2(Mathf.Min(min.X, p.X), Mathf.Min(min.Y, top));
+			max = new Vector2(Mathf.Max(max.X, p.X), Mathf.Max(max.Y, bottom));
 		}
 
 		if (!any) return;

@@ -873,6 +873,65 @@ public partial class MoveData : Resource
 	}
 
 	/// <summary>
+	/// A copy of what a move sends out - a shot, a trap, a MiniBot, a blast, a cloud - for a fighter
+	/// grown k times his size (a boss fight's giant, the magnifying glass; Eric, 2026-10-29: every
+	/// ability grows with him). Drawn and hitting k times as big, and flying k times as far in the
+	/// same frames - its speed and its gravity both - so its whole path is his own, grown; a beam is
+	/// k times as long. Damage is left alone. What it rains, bursts into or drops is grown as that
+	/// is spawned (MatchManager.SpawnHazard), so nothing grows twice.
+	/// </summary>
+	public MoveData GrownHazard(float k)
+	{
+		MoveData copy = Copy();
+		copy.FxRadius = FxRadius * k;
+		copy.FxArtSize = FxArtSize * k;
+		copy.Reach = Reach * k;
+		copy.SpecialSpeed = SpecialSpeed * k;
+		copy.SpecialGravity = SpecialGravity * k;
+		copy.SlideFriction = SlideFriction * k;
+		copy.LaunchLift = LaunchLift * k;
+		return copy;
+	}
+
+	/// <summary>
+	/// A copy of a move for a fighter grown k times his size, as he does it himself: arms and
+	/// chains reaching k times as far, a flail swung on a chain k times as long, what he holds drawn
+	/// k times as big, a girder k times as wide. His rises and hops go k times as high - the square
+	/// root of k on the speed, since his gravity is his own and not grown - except on a tether,
+	/// whose aim is the angle of its speed to its rise. The hitbox is not touched: it is grown where
+	/// it is used (Fighter.giantScale), and what the move sends out is grown as it is sent
+	/// (GrownHazard).
+	/// </summary>
+	public MoveData GrownBody(float k)
+	{
+		MoveData copy = Copy();
+		float rise = Mathf.Sqrt(k);
+		copy.TetherLength = TetherLength * k;
+		copy.SwingLength = SwingLength * k;
+		copy.SwingArtSize = SwingArtSize * k;
+		copy.HeldArtSize = HeldArtSize * k;
+		copy.HeldArtOffset = HeldArtOffset * k;
+		copy.PlatformWidth = PlatformWidth * k;
+		copy.BurstLift = BurstLift * rise;
+		copy.HopOnHit = HopOnHit * rise;
+		if (TetherLength <= 0.0f) copy.SpecialRise = SpecialRise * rise;
+		return copy;
+	}
+
+	/// <summary>An exact copy: Scaled by nothing, and the few things Scaled does not carry.</summary>
+	MoveData Copy()
+	{
+		MoveData copy = Scaled(new MoveScale(1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f));
+		copy.StartupFrames = StartupFrames;
+		copy.EndlagFrames = EndlagFrames;
+		copy.BeamSweepFrom = BeamSweepFrom;
+		copy.Erases = Erases;
+		copy.HopOnHit = HopOnHit;
+		copy.TauntPose = TauntPose;
+		return copy;
+	}
+
+	/// <summary>
 	/// A copy of a projectile resized for a fighter's current size: a bigger beam that hits
 	/// harder when tall, a thinner weaker one when short. Knockback growth is left alone so
 	/// size never turns a zoning tool into a finisher.

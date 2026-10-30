@@ -626,6 +626,8 @@ public partial class GameRoot : Node2D
 			CpuLevels = levels.ToArray(),
 			SeatSkins = skins.ToArray(),
 		};
+		// Everyone who sat down, against the giant - on his stage, with no teams or items.
+		if (Mode == GameMode.Boss) BossFight.Prepare(match);
 		Show(match);
 	}
 

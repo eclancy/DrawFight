@@ -740,8 +740,8 @@ public partial class CharacterSelectScreen : Node2D
 	string ButtonUnder(Vector2 at)
 	{
 		if (QuitBox.HasPoint(at)) return "quit";
-		if (!ForStory && TeamsBox.HasPoint(at)) return "teams";
-		if (!ForStory && ItemsBox.HasPoint(at)) return "items";
+		if (!ForStory && !Boss && TeamsBox.HasPoint(at)) return "teams";
+		if (!ForStory && !Boss && ItemsBox.HasPoint(at)) return "items";
 		for (int d = 0; d < Difficulties.Length; d++) if (ForStory && DifficultyBox(d).HasPoint(at)) return "d" + d;
 		for (int i = 0; i < slots.Length && !ForStory; i++)
 		{
@@ -887,6 +887,7 @@ public partial class CharacterSelectScreen : Node2D
 	/// </summary>
 	bool TryTeamButtons(Vector2 point, Slot by)
 	{
+		if (Boss) return false;
 		if (TeamsBox.HasPoint(point))
 		{
 			TeamBattle = !TeamBattle;
@@ -966,8 +967,13 @@ public partial class CharacterSelectScreen : Node2D
 			seated++;
 			anyHuman |= slot.Human;
 		}
+		// Against the giant one is enough, and everyone is on the same side - no teams.
+		if (Boss) return seated >= 1 && anyHuman;
 		return seated >= 2 && anyHuman && (!TeamBattle || TeamsSeated() >= 2);
 	}
+
+	/// <summary>Picking for a boss fight (GameRoot.Mode): one to four, all against giant DoomBot.</summary>
+	static bool Boss => GameRoot.Instance.Mode == GameMode.Boss;
 
 	public override void _PhysicsProcess(double delta)
 	{
@@ -1048,7 +1054,7 @@ public partial class CharacterSelectScreen : Node2D
 				continue;
 			}
 
-			if (!ForStory && ItemsBox.HasPoint(cursor.Position))
+			if (!ForStory && !Boss && ItemsBox.HasPoint(cursor.Position))
 			{
 				ItemSettings items = GameRoot.Instance.Items;
 				items.Frequency = (ItemFrequency)(((int)items.Frequency + 1) % 4);
@@ -1135,8 +1141,9 @@ public partial class CharacterSelectScreen : Node2D
 		// The prompt pulses gently so it catches the eye without shouting. Everyone picked, but all
 		// on one team, it says what is missing instead.
 		promptFrames = everyoneReady ? promptFrames + 1 : 0;
-		bool oneTeam = !ForStory && TeamBattle && !everyoneReady && TeamsSeated() < 2 && EveryonePicked();
-		startPrompt.Text = oneTeam ? "Everyone's on one team!" : ForStory ? "Press Start to begin!" : "Press Start to fight!";
+		bool oneTeam = !ForStory && !Boss && TeamBattle && !everyoneReady && TeamsSeated() < 2 && EveryonePicked();
+		startPrompt.Text = oneTeam ? "Everyone's on one team!" : ForStory ? "Press Start to begin!"
+			: Boss ? "Press Start to fight DoomBot!" : "Press Start to fight!";
 		startPrompt.Visible = everyoneReady || oneTeam;
 		startPrompt.Scale = Vector2.One * (1.0f + 0.05f * Mathf.Sin(promptFrames * 0.12f));
 
@@ -1159,7 +1166,9 @@ public partial class CharacterSelectScreen : Node2D
 			GameRoot.Instance.SeatDevices[i] = slots[i].Human ? slots[i].Device?.Key : null;
 			GameRoot.Instance.SeatNames[i] = slots[i].Human ? slots[i].PlayerName : null;
 		}
-		GameRoot.Instance.GoStageSelect();
+		// The boss fight has its own stage (BossFight), so it goes straight in.
+		if (Boss) GameRoot.Instance.GoMatch();
+		else GameRoot.Instance.GoStageSelect();
 	}
 
 	/// <summary>Two or more seated, and every one of them has picked.</summary>
@@ -1327,7 +1336,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (ForStory && i > 0) continue;
 			Rect2 panel = PanelRect(i, viewport);
 			// In a team fight a seat is washed in its team's colour, and edged in it once picked.
-			bool teamed = TeamBattle && !ForStory && slot.Joined;
+			bool teamed = TeamBattle && !ForStory && !Boss && slot.Joined;
 			Color edge = teamed ? MenuTheme.TeamTint(Teams[i]) : slot.Tint;
 			DrawRect(panel, teamed ? new Color(MenuTheme.TeamTint(Teams[i]), 0.16f) : new Color(1.0f, 1.0f, 1.0f, slot.Joined ? 0.55f : 0.3f));
 			CrayonBrush.InkRect(this, panel, slot.Locked ? edge : MenuTheme.Rule,
@@ -1360,7 +1369,7 @@ public partial class CharacterSelectScreen : Node2D
 			}
 		}
 
-		if (!ForStory)
+		if (!ForStory && !Boss)
 		{
 			bool teamsHot = false;
 			foreach (Slot slot in slots) teamsHot |= slot.Human && slot.Cursor != null && TeamsBox.HasPoint(slot.Cursor.Position);
@@ -1373,7 +1382,7 @@ public partial class CharacterSelectScreen : Node2D
 			MenuTheme.DrawButton(this, ItemsBox, "Items: " + ItemSettings.Describe(frequency), 81, itemsHot,
 				frequency != ItemFrequency.Off, fontSize: 34);
 		}
-		else
+		else if (ForStory)
 		{
 			DrawString(ThemeDB.FallbackFont, new Vector2(RowLeft, DifficultyBox(0).GetCenter().Y + 12.0f), "Difficulty", HorizontalAlignment.Left, -1, 34, MenuTheme.Soft);
 			for (int d = 0; d < Difficulties.Length; d++)
