@@ -640,6 +640,10 @@ public partial class GameRoot : Node2D
 			levels.Add(Mathf.Clamp(level, 1, 9));
 			lives.Add(theirLives);
 		}
+		var seats = new List<int>();
+		for (int i = 0; i < fighters.Count; i++) seats.Add(i == 0 ? 0 : -1);
+		var partners = new List<int>();
+		AddStoryPartners(fighters, cpu, teams, levels, lives, seats, partners);
 		Show(new MatchManager
 		{
 			StageIndex = chapter.Stage,
@@ -647,11 +651,51 @@ public partial class GameRoot : Node2D
 			CpuPlayers = cpu.ToArray(),
 			Teams = teams.ToArray(),
 			CpuLevels = levels.ToArray(),
+			Seats = seats.ToArray(),
+			Partners = partners.ToArray(),
 			BossPlayer = boss,
 			Story = Story,
 			StartStocks = lives.ToArray(),
 			Items = StoryItems(),
 		});
+	}
+
+	/// <summary>
+	/// Online, a story is played together (Eric, 2026-10-29): whoever picked it plays its fighter,
+	/// and every other computer in the session gets a partner on their side in the fights - played
+	/// on that computer's first controller, as the next fighter along who is not in the chapter, so
+	/// nobody is two of the same. Partners stand out of the scenes, which were written for the
+	/// story's own cast (MatchManager.Partners), and join in on FIGHT!.
+	/// </summary>
+	void AddStoryPartners(List<int> fighters, List<bool> cpu, List<int> teams, List<int> levels, List<int> lives, List<int> seats, List<int> partners)
+	{
+		if (!NetSession.Playing) return;
+		string owner = SeatDevices[0] ?? "";
+		string[] ownerParts = owner.Split(':');
+		int ownerMachine = ownerParts.Length == 3 ? ownerParts[1].ToInt() : -1;
+		List<string> devices = NetSession.Instance.DeviceKeys();
+		int seat = 1;
+		foreach (int machine in NetSession.Instance.Members)
+		{
+			if (machine == ownerMachine || seat >= MaxPlayers) continue;
+			string device = devices.Find(d => d.StartsWith($"net:{machine}:"));
+			if (device == null) continue;
+			int pick = -1;
+			for (int step = 1; step <= FighterCatalog.Count && pick < 0; step++)
+			{
+				int i = (fighters[0] + step) % FighterCatalog.Count;
+				if (!fighters.Contains(i) && !Unlocks.IsLocked(i)) pick = i;
+			}
+			if (pick < 0) continue;
+			SeatDevices[seat] = device;
+			partners.Add(fighters.Count);
+			fighters.Add(pick);
+			cpu.Add(false);
+			teams.Add(teams[0]);
+			levels.Add(0);
+			lives.Add(lives[0]);
+			seats.Add(seat++);
+		}
 	}
 
 	/// <summary>

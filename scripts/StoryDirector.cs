@@ -133,6 +133,7 @@ public partial class StoryDirector : Node
 			if (child is Item item) item.Vanish();
 		}
 		foreach (Fighter fighter in Match.Fighters) fighter.SettleForScene();
+		Match.ShowPartners(false);
 		foreach (Fighter fighter in Match.Fighters)
 		{
 			// The scene says what they do now, not the win before it.

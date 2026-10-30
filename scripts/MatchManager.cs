@@ -73,6 +73,31 @@ public partial class MatchManager : Node2D
 	/// <summary>How well each CPU plays, 1 to 9 (CpuInputSource.Level); null for the usual 4.</summary>
 	public int[] CpuLevels;
 
+	/// <summary>
+	/// Online, the players' partners in a story (GameRoot.AddStoryPartners), by fighter: out of the
+	/// scenes, which were written for the story's own cast, and beside the player on FIGHT!.
+	/// </summary>
+	public int[] Partners = new int[0];
+
+	public bool IsPartner(Fighter f) => System.Array.IndexOf(Partners, f.PlayerIndex) >= 0;
+
+	/// <summary>A partner stood out of a scene - unseen and still - or brought back in beside the player.</summary>
+	public void ShowPartners(bool fighting)
+	{
+		foreach (Fighter f in Fighters)
+		{
+			if (!IsPartner(f)) continue;
+			f.Visible = fighting;
+			f.ProcessMode = fighting ? ProcessModeEnum.Inherit : ProcessModeEnum.Disabled;
+			if (fighting && Fighters.Count > 0)
+			{
+				float x = GroundNear(Fighters[0].GlobalPosition.X - 140.0f * (System.Array.IndexOf(Partners, f.PlayerIndex) + 1));
+				f.GlobalPosition = new Vector2(x, FloorAt(x) - f.Data.BodySize.Y * 0.5f);
+				f.Face(Fighters[0].Facing);
+			}
+		}
+	}
+
 	/// <summary>Which player is a story's boss, whose last stock is a last stand; -1 for none.</summary>
 	public int BossPlayer = -1;
 
@@ -374,6 +399,7 @@ public partial class MatchManager : Node2D
 	public void BeginStoryFight()
 	{
 		foreach (Fighter fighter in Fighters) fighter.ReadyForFight();
+		ShowPartners(true);
 		ShowHud(true);
 		cpus = null;
 		AssignControllers();
