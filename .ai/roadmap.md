@@ -175,7 +175,10 @@ Testing: `--grant=ID` earns one for a run, `--skins=blueflame,,mk2` boots a `--m
 
 ## Deliberately deferred
 
-- **Online play.** Fighting-game netcode is its own project. The fixed-frame architecture from
+- ~~**Online play.**~~ In, on Eric's call (2026-10-29): the whole session in lockstep through a
+  room code on ecec.dev - see `.ai/online.md`. What follows was the reason to wait, and the
+  fixed-frame rule is exactly what made it possible.
+  Fighting-game netcode is its own project. The fixed-frame architecture from
   M1 leaves the door open; nothing else should assume it.
 - **Non-humanoid fighters.** Build the single-sprite path when he actually draws one, not
   speculatively.

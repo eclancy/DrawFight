@@ -26,7 +26,9 @@ needed one yet.
 **Screen flow** is owned by `GameRoot`, which swaps screens as its own children rather than
 changing Godot scenes: title → main menu, then either versus (character select, two to four
 players → stage select (→ item settings) → match → title), a story ("Whose story?" → each chapter a match that opens
-on its scene → main menu), or draw a fighter (your drawings → the drawing screen → sending it
+on its scene → main menu), more modes (training, the boss fight, targets, doodle brawl - see
+`.ai/modes.md`), online (a room code → every copy plays the session together - see
+`.ai/online.md`), or draw a fighter (your drawings → the drawing screen → sending it
 in, or straight to sending photos of a drawing done on paper). Selections live in ordinary fields on `GameRoot`, so there is no global for a screen to
 forget to write.
 `ControllerAssignment` hands out pads for menus and matches alike — a pad that works in a fight
@@ -56,6 +58,13 @@ content decision. Do not restate its contents here.
 - `.ai/releasing.md` — the downloadable Windows build, GitHub Releases, and how every copy
   updates itself from ecec.dev. **Read before changing `UpdateScreen`, the export preset, or
   anything under `tools/release/`.**
+- `.ai/modes.md` — everything to play besides versus and stories: the versus rules (lives,
+  time, health), training, the boss fight, targets and doodle brawl. **Read before changing a
+  mode or adding one.**
+- `.ai/online.md` — online play: the whole session in lockstep through a room code on ecec.dev,
+  and what must be the same on every copy. **Read before changing `NetSession`, or anything
+  random, saved or read straight off the keyboard or mouse** - online, any of those can put two
+  copies out of step.
 - `.ai/roadmap.md` — milestones and what is deliberately deferred
 
 `for-nephew/` is written **for a 10-12 year old**, not for us. Keep the tone direct and never
@@ -183,6 +192,15 @@ retired it, 2026-10-25: the website and the game are enough.) Kid-facing pages s
 - **`"$GODOT_BIN" --path . -- --names --shot=60`** — every fighter's name in their own letters
   (`NameStyle`, drawn by `NameLettering`): big, at card, bubble and HUD size, and at HUD size on
   grass, brick and a night sky, DoomBot's cold to red-hot. **This is how a name style is checked.**
+- **`--modes`** opens More modes, and **`--mode=training|boss|targets|doodle`** makes fighter select
+  and a `--match` that mode's; **`--rule=time:20`**, **`--rule=stamina:100`** or **`--rule=stock`** sets
+  the versus rules for one run. Each mode's own flags (`--dummy=`, `--course=`, `--doodletest`...)
+  are in `.ai/modes.md`.
+- **Online, without a second computer:** run the relay from the website repo (`cd play && node
+  server.js`), then two copies with `DRAWFIGHT_PLAY_URL=ws://127.0.0.1:3003/api/play/ws`,
+  `--online=host` and `--online=join:CODE`, both with `--onlinestart=2 --onlinetest=match` and the
+  same match flags. They log every frame to `.shots/net_N.log`; the logs must match. See
+  `.ai/online.md`. **This is how a change is checked for keeping copies in step.**
 - **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--options`, `--controls`, `--changelog`, `--suggest`, `--drawings`** each boot straight to
   that screen, so a screen can be checked without clicking through the flow to reach it;
   **`--draw`** and **`--send`** open the newest saved drawing (or a new one) in the drawing or
