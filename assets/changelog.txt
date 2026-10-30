@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.16.0 | 2026-10-30
+Play online: start a game, give your friends the code, and play versus, the boss fight, a doodle brawl or a story together - up to four computers. More modes on the main menu: Training, a giant DoomBot boss fight, Targets and Doodle brawl, where you draw the items you fight with. Versus can now be timed (most KOs wins) or on health, in Options. Everyone online needs this version.
+
 == 0.15.0 | 2026-10-26
 DrawFight now runs on Linux too. Circy keeps his team colour when he is knocked over, CHANGE on a CPU goes along the row in order, and any key or mouse click gets you past the title.
 
