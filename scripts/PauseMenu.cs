@@ -91,8 +91,10 @@ public partial class PauseMenu : CanvasLayer
 		Refresh();
 	}
 
-	public override void _Process(double delta)
+	public override void _PhysicsProcess(double delta)
 	{
+		// Online, a frame the session is holding still (NetSession.Waiting) is not a frame at all.
+		if (NetSession.Waiting) return;
 		foreach (MenuNav nav in navs)
 		{
 			nav.Poll();

@@ -51,9 +51,8 @@ public partial class ChallengerScreen : Node2D
 
 	public override void _Ready()
 	{
-		IInputSource first = ControllerAssignment.ForPlayers(1)[0];
-		navs.Add(new MenuNav(first));
-		if (first is not KeyboardInputSource) navs.Add(new MenuNav(KeyboardInputSource.Player1()));
+		// Every controller, so any of them goes on - and online, the session's own (NetSession).
+		foreach (IInputSource source in ControllerAssignment.Everyone()) navs.Add(new MenuNav(source));
 
 		Vector2 size = GetViewportRect().Size;
 		holder = new Node2D { Position = Unlocked ? new Vector2(size.X * 0.30f, 690.0f) : new Vector2(size.X * 0.70f, 700.0f) };

@@ -110,6 +110,8 @@ public static class GameOptions
 
 	public static void Save()
 	{
+		// Online, the rules are the host's for the session, and this computer's own come back after.
+		if (NetSession.Playing) return;
 		var config = new ConfigFile();
 		config.Load(Path);
 		config.SetValue(Section, "fullscreen", Fullscreen);
@@ -175,6 +177,8 @@ public static class PlayerNames
 
 	public static void Save()
 	{
+		// Online, the list is everyone's names from every computer, and is not this one's to keep.
+		if (NetSession.Playing) return;
 		var config = new ConfigFile();
 		config.Load(Path);
 		config.SetValue("names", "list", All.ToArray());

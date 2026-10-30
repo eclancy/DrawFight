@@ -453,6 +453,8 @@ public sealed class ItemSettings
 
 	public void Save()
 	{
+		// Online, the item settings are the host's for the session.
+		if (NetSession.Playing) return;
 		var config = new ConfigFile();
 		config.Load(Path);
 		config.SetValue("items", "frequency", (int)Frequency);

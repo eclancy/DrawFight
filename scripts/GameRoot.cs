@@ -123,6 +123,9 @@ public partial class GameRoot : Node2D
 
 	Node currentScreen;
 
+	/// <summary>The screen up now: a match, a menu.</summary>
+	public Node CurrentScreen => currentScreen;
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -216,6 +219,9 @@ public partial class GameRoot : Node2D
 			if (arg == "--itemsettings") startAt = "items";
 			if (arg == "--menu") startAt = "menu";
 			if (arg == "--modes") startAt = "modes";
+			// "--online=host" or "--online=join:KQZMW": straight into a session, to test it - with
+			// DRAWFIGHT_PLAY_URL pointing at a relay run locally (.ai/online.md).
+			if (arg.StartsWith("--online=")) { onlineAs = arg.Substring(9); startAt = "online"; }
 			// "--rule=time", "--rule=time:20" (a 20-second clock, to watch it run out), "--rule=stamina",
 			// "--rule=stamina:100", "--rule=stock": versus rules for this run only - not saved.
 			if (arg.StartsWith("--rule="))
@@ -332,6 +338,11 @@ public partial class GameRoot : Node2D
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
 			case "modes": GoModes(null); break;
+			case "online":
+				if (onlineAs == "host") NetSession.Host();
+				else if (onlineAs.StartsWith("join:")) NetSession.Join(onlineAs.Substring(5));
+				GoOnline();
+				break;
 			case "doodle": GoDoodle(); break;
 			case "doodle=choice": Show(new DoodleScreen { OpenOnChoice = true }); break;
 			case "courses":
@@ -370,7 +381,21 @@ public partial class GameRoot : Node2D
 	void OnJoyConnectionChanged(long device, bool connected)
 	{
 		GD.Print($"GameRoot: pad {device} {(connected ? "connected" : "disconnected")}");
+		// Online, a pad plugged in here reaches every copy through the session, on the same frame
+		// everywhere (NetSession), and that is when the screens hear of it - not now, on this one.
+		if (NetSession.Playing) return;
+		ControllersChanged();
+	}
 
+	/// <summary>A controller came or went somewhere in an online session - on every copy at once.</summary>
+	public void SessionDevicesChanged()
+	{
+		ControllersChanged();
+		if (currentScreen is OnlineHomeScreen) GoOnlineHome();
+	}
+
+	void ControllersChanged()
+	{
 		// Menus build their input sources once, on entry, so the simplest correct response to
 		// a pad appearing is to rebuild the screen that is up. A match reassigns in place.
 		if (currentScreen is MatchManager match) match.ReassignControllers();
@@ -390,7 +415,78 @@ public partial class GameRoot : Node2D
 	public void GoMainMenu()
 	{
 		Mode = GameMode.Versus;
+		// Online, home is what to play together, and only leaving goes further back.
+		if (NetSession.Playing)
+		{
+			GoOnlineHome();
+			return;
+		}
 		Show(new MainMenuScreen());
+	}
+
+	/// <summary>Playing online (from the main menu): hosting, joining, and the lobby - and where a session ends up.</summary>
+	public void GoOnline(string message = null) => Show(new OnlineScreen { Message = message });
+
+	/// <summary>Online, in a session: what to play together (OnlineHomeScreen).</summary>
+	public void GoOnlineHome()
+	{
+		Mode = GameMode.Versus;
+		Story = null;
+		// "--onlinetest=match": every copy straight into the fight this run's flags describe
+		// (--fighters, --cpu, --stage, --rule), the CPUs playing it - to watch the copies stay in
+		// step without anyone at the controls. Every copy must be given the same flags.
+		if (HasFlag("--onlinetest=match") && !onlineTested)
+		{
+			onlineTested = true;
+			ApplyMatchFlags();
+			GoMatch();
+			return;
+		}
+		Show(new OnlineHomeScreen());
+	}
+
+	string onlineAs = "";
+	bool onlineTested;
+
+	/// <summary>The fighters, CPUs, teams and stage this run's flags asked for, again - a session starts by clearing them.</summary>
+	void ApplyMatchFlags()
+	{
+		foreach (string arg in OS.GetCmdlineUserArgs())
+		{
+			if (arg.StartsWith("--stage=")) SelectedStage = arg.Substring(8).ToInt();
+			if (arg.StartsWith("--fighters="))
+			{
+				string[] picks = arg.Substring(11).Split(',');
+				for (int i = 0; i < SelectedFighters.Length; i++) SelectedFighters[i] = i < picks.Length ? picks[i].ToInt() : -1;
+			}
+			if (arg == "--cpu") for (int i = 1; i < CpuPlayers.Length; i++) CpuPlayers[i] = true;
+			if (arg == "--teams") TeamBattle = true;
+		}
+	}
+
+	/// <summary>
+	/// Every choice back to how the game starts - the seats, teams, stage, story - so that every copy
+	/// of the game in an online session starts from the same place, and is left the same after.
+	/// </summary>
+	public void ResetChoices()
+	{
+		SelectedFighters = new[] { 0, 1, -1, -1 };
+		CpuPlayers = new bool[MaxPlayers];
+		SeatDevices = new string[MaxPlayers];
+		SeatNames = new string[MaxPlayers];
+		SeatSkins = new string[MaxPlayers];
+		SeatTeams = new[] { 0, 1, 0, 1 };
+		CpuDifficulty = new[] { 1, 1, 1, 1 };
+		TeamBattle = false;
+		VersusStarter = null;
+		MenuReturnKey = null;
+		SelectedStage = 0;
+		Story = null;
+		StoryDirectStart = false;
+		Mode = GameMode.Versus;
+		ClockSeconds = 0;
+		OnlyItem = "";
+		Doodles.Clear();
 	}
 
 	/// <summary>Training, the boss fight, targets and doodle brawl (from the main menu).</summary>

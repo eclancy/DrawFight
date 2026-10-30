@@ -89,16 +89,33 @@ public static class Achievements
 	static ConfigFile Config()
 	{
 		if (config != null) return config;
-		config = new ConfigFile();
-		if (!Unlocks.ForceLocked) config.Load(Path);
+		config = Unlocks.ForceLocked ? new ConfigFile() : SaveFiles.Load(Path);
 		// --locked plays on an empty save: nothing carried over from the stories either.
-		if (!config.HasSectionKey("save", "version") && !Unlocks.ForceLocked) EarnedBefore();
+		if (!config.HasSectionKey("save", "version") && !Unlocks.ForceLocked && !SaveFiles.Shared) EarnedBefore();
 		return config;
 	}
 
 	static void Save()
 	{
-		if (!Unlocks.ForceLocked) Config().Save(Path);
+		if (!Unlocks.ForceLocked) SaveFiles.Save(Config(), Path);
+	}
+
+	/// <summary>
+	/// Earned while playing online, by this computer's own players: kept back until the session is
+	/// over and then earned for real, into this computer's own save (Reload). Earning them into
+	/// the host's save that everyone is playing on would give one copy a skin the others lack -
+	/// and put them out of step.
+	/// </summary>
+	static readonly List<System.Action> earnedOnline = new List<System.Action>();
+
+	/// <summary>Read afresh: online, the host's (SaveFiles); after, this computer's own again, with anything earned online added.</summary>
+	public static void Reload()
+	{
+		config = null;
+		if (SaveFiles.Shared) return;
+		var later = new List<System.Action>(earnedOnline);
+		earnedOnline.Clear();
+		foreach (System.Action earn in later) earn();
 	}
 
 	public static Achievement Find(string id) => System.Array.Find(All, a => a.Id == id);
@@ -118,6 +135,11 @@ public static class Achievements
 	public static void Grant(string id)
 	{
 		Achievement a = Find(id);
+		if (SaveFiles.Shared)
+		{
+			earnedOnline.Add(() => Grant(id));
+			return;
+		}
 		if (a == null || Earned(id) || Practising) return;
 		Config().SetValue("earned", id, true);
 		Save();
@@ -133,6 +155,11 @@ public static class Achievements
 	public static void Count(string id, int by = 1)
 	{
 		Achievement a = Find(id);
+		if (SaveFiles.Shared)
+		{
+			earnedOnline.Add(() => Count(id, by));
+			return;
+		}
 		if (a == null || Earned(id) || Practising) return;
 		int now = (int)Config().GetValue("count", a.Counter, 0) + by;
 		Config().SetValue("count", a.Counter, now);
@@ -147,6 +174,11 @@ public static class Achievements
 	public static void Tick(string id, string item, int goal)
 	{
 		Achievement a = Find(id);
+		if (SaveFiles.Shared)
+		{
+			earnedOnline.Add(() => Tick(id, item, goal));
+			return;
+		}
 		if (a == null || Earned(id) || Practising) return;
 		var set = new HashSet<string>(((string)Config().GetValue("sets", a.Counter, "")).Split(',', System.StringSplitOptions.RemoveEmptyEntries));
 		if (set.Add(item))
@@ -184,7 +216,9 @@ public static class Achievements
 
 	/// <summary>A person, playing - not the computer, and not a story scene moving them about.</summary>
 	public static bool ByPlayer(Fighter fighter) =>
-		fighter != null && fighter.Match != null && !fighter.Match.InStoryScene && fighter.Match.IsHuman(fighter.PlayerIndex);
+		fighter != null && fighter.Match != null && !fighter.Match.InStoryScene && fighter.Match.IsHuman(fighter.PlayerIndex)
+		// Online, only this computer's own players earn anything here.
+		&& (!NetSession.Playing || fighter.Controller is NetInputSource net && net.IsMine);
 
 	/// <summary>
 	/// A save from before there were achievements: the stories it has already finished, and the

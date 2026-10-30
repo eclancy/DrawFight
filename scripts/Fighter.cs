@@ -4720,7 +4720,7 @@ public partial class Fighter : CharacterBody2D
 		return pick;
 	}
 
-	readonly System.Random tauntRng = new System.Random();
+	readonly System.Random tauntRng = GameRandom.New();
 
 	/// <summary>The four swords on offer, each pointing the way it sits, popping open around him.</summary>
 	void DrawChoiceMenu(CanvasItem canvas)

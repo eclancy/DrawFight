@@ -27,15 +27,22 @@ public static class Unlocks
 	static ConfigFile Config()
 	{
 		if (config != null) return config;
-		config = new ConfigFile();
-		config.Load(Path);
-		if (!config.HasSectionKey("save", "version")) EarnedBefore();
+		config = SaveFiles.Load(Path);
+		if (!config.HasSectionKey("save", "version") && !SaveFiles.Shared) EarnedBefore();
 		return config;
 	}
 
 	static void Save()
 	{
-		if (!ForceLocked) Config().Save(Path);
+		if (!ForceLocked) SaveFiles.Save(Config(), Path);
+	}
+
+	/// <summary>Read afresh: online, the host's (SaveFiles); after, this computer's own again.</summary>
+	public static void Reload()
+	{
+		config = null;
+		earned.Clear();
+		met.Clear();
 	}
 
 	/// <summary>Whether this fighter still has to be earned.</summary>

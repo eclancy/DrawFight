@@ -229,12 +229,7 @@ public static class StoryProgress
 {
 	const string Path = "user://story.cfg";
 
-	static ConfigFile Load()
-	{
-		var config = new ConfigFile();
-		config.Load(Path);
-		return config;
-	}
+	static ConfigFile Load() => SaveFiles.Load(Path);
 
 	public static int ChapterReached(string id) => (int)Load().GetValue(id, "at", 0);
 
@@ -250,6 +245,6 @@ public static class StoryProgress
 			at = 0;
 		}
 		config.SetValue(id, "at", at);
-		config.Save(Path);
+		SaveFiles.Save(config, Path);
 	}
 }

@@ -35,9 +35,8 @@ public partial class StoryCompleteScreen : Node2D
 
 	public override void _Ready()
 	{
-		IInputSource first = ControllerAssignment.ForPlayers(1)[0];
-		navs.Add(new MenuNav(first));
-		if (first is not KeyboardInputSource) navs.Add(new MenuNav(KeyboardInputSource.Player1()));
+		// Every controller, so any of them goes on - and online, the session's own (NetSession).
+		foreach (IInputSource source in ControllerAssignment.Everyone()) navs.Add(new MenuNav(source));
 
 		int index = Run != null ? StoryScript.IndexOf(Run.PlayerId) : -1;
 		data = index >= 0 ? FighterCatalog.Get(index) : null;

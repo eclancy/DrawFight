@@ -24,9 +24,8 @@ public partial class AchievementsScreen : Node2D
 
 	public override void _Ready()
 	{
-		IInputSource first = ControllerAssignment.ForPlayers(1)[0];
-		navs.Add(new MenuNav(first));
-		if (first is not KeyboardInputSource) navs.Add(new MenuNav(KeyboardInputSource.Player1()));
+		// Every controller, so any of them goes on - and online, the session's own (NetSession).
+		foreach (IInputSource source in ControllerAssignment.Everyone()) navs.Add(new MenuNav(source));
 
 		// The fighters a tile earns, standing small at its right end: a silhouette until earned.
 		for (int i = 0; i < Achievements.All.Length; i++)

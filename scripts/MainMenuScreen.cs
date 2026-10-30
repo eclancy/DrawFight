@@ -12,13 +12,13 @@ using Godot;
 /// </summary>
 public partial class MainMenuScreen : Node2D
 {
-	enum Choice { Versus, Story, Modes, Draw }
-	const int Choices = 4;
+	enum Choice { Versus, Story, Online, Modes, Draw }
+	const int Choices = 5;
 
 	static readonly Rect2 QuitBox = new Rect2(1640.0f, 64.0f, 200.0f, 76.0f);
-	const float CardWidth = 362.0f;
+	const float CardWidth = 288.0f;
 	const float CardHeight = 600.0f;
-	const float CardGap = 30.0f;
+	const float CardGap = 25.0f;
 	const float CardTop = 250.0f;
 
 	/// <summary>The options: a small gear beside QUIT (Eric, 2026-10-17).</summary>
@@ -57,8 +57,8 @@ public partial class MainMenuScreen : Node2D
 
 		// Circy and Triguy: Elim's drawings, facing off on the versus card.
 		Rect2 versus = CardRect(Choice.Versus);
-		rigs.Add(AddRig(FighterCatalog.Get(2), versus.Position + new Vector2(110.0f, 244.0f), 1));
-		rigs.Add(AddRig(FighterCatalog.Get(5), versus.Position + new Vector2(250.0f, 244.0f), -1));
+		rigs.Add(AddRig(FighterCatalog.Get(2), versus.Position + new Vector2(82.0f, 244.0f), 1));
+		rigs.Add(AddRig(FighterCatalog.Get(5), versus.Position + new Vector2(206.0f, 244.0f), -1));
 
 		cursorLayer = MenuCursor.MakeOverlay(this, canvas =>
 		{
@@ -200,6 +200,12 @@ public partial class MainMenuScreen : Node2D
 				SfxPlayer.Ui("ui_select");
 				GameRoot.Instance.GoStorySelect();
 				break;
+			case Choice.Online:
+				leaving = true;
+				SfxPlayer.Ui("ui_select");
+				GameRoot.Instance.MenuReturnKey = key;
+				GameRoot.Instance.GoOnline();
+				break;
 			case Choice.Modes:
 				leaving = true;
 				SfxPlayer.Ui("ui_select");
@@ -218,7 +224,8 @@ public partial class MainMenuScreen : Node2D
 
 		DrawCard(Choice.Versus, "Versus", "Fight a friend, or the computer.");
 		DrawCard(Choice.Story, "Story", "Fight for a place on the fridge.");
-		DrawCard(Choice.Modes, "More modes", "Training, targets, a boss, and more.");
+		DrawCard(Choice.Online, "Online", "Play with friends far away.");
+		DrawCard(Choice.Modes, "More modes", "Training, targets and more.");
 		DrawCard(Choice.Draw, "Draw your own", "A fighter or a stage, sent in.");
 
 		MenuTheme.DrawButton(this, QuitBox, "QUIT", 77, Pointed(QuitBox), fontSize: 38);
@@ -270,17 +277,22 @@ public partial class MainMenuScreen : Node2D
 				CrayonBrush.PencilFill(this, new Rect2(art.Position.X, art.End.Y - 40.0f, art.Size.X, 18.0f), new Color(0.45f, 0.75f, 0.42f), 611);
 				break;
 			case Choice.Story:
-				DrawItem("popup_book_open", art.GetCenter() + new Vector2(0.0f, 10.0f), 300.0f, 0.0f, 1.0f);
+				DrawItem("popup_book_open", art.GetCenter() + new Vector2(0.0f, 10.0f), 240.0f, 0.0f, 1.0f);
+				break;
+			case Choice.Online:
+				// Paper airplanes, flying back and forth: messages between friends.
+				DrawItem("paper_airplane", art.GetCenter() + new Vector2(-30.0f, -50.0f), 190.0f, -0.25f, 1.0f);
+				DrawItem("paper_airplane", art.GetCenter() + new Vector2(40.0f, 80.0f), 150.0f, 2.9f, 1.0f);
 				break;
 			case Choice.Modes:
-				DrawItem("paper_airplane", art.GetCenter() + new Vector2(-40.0f, -60.0f), 230.0f, -0.2f, 1.0f);
-				DrawItem("gold_star", art.GetCenter() + new Vector2(80.0f, 60.0f), 150.0f, 0.15f, 1.0f);
-				DrawItem("crayon_red", art.GetCenter() + new Vector2(-60.0f, 110.0f), 170.0f, 0.4f, 1.0f);
+				DrawItem("gold_star", art.GetCenter() + new Vector2(50.0f, -50.0f), 130.0f, 0.15f, 1.0f);
+				DrawItem("metre_stick", art.GetCenter() + new Vector2(-50.0f, 10.0f), 220.0f, -0.5f, 1.0f);
+				DrawItem("crayon_red", art.GetCenter() + new Vector2(40.0f, 100.0f), 140.0f, 0.4f, 1.0f);
 				break;
 			case Choice.Draw:
-				DrawItem("canvas", art.GetCenter() + new Vector2(-40.0f, 0.0f), 260.0f, 0.0f, 1.0f);
-				DrawItem("pencil", art.GetCenter() + new Vector2(90.0f, 40.0f), 220.0f, 0.35f, 1.0f);
-				DrawItem("paint_bucket", art.GetCenter() + new Vector2(85.0f, 110.0f), 100.0f, 0.0f, 1.0f);
+				DrawItem("canvas", art.GetCenter() + new Vector2(-30.0f, 0.0f), 210.0f, 0.0f, 1.0f);
+				DrawItem("pencil", art.GetCenter() + new Vector2(72.0f, 32.0f), 176.0f, 0.35f, 1.0f);
+				DrawItem("paint_bucket", art.GetCenter() + new Vector2(68.0f, 90.0f), 80.0f, 0.0f, 1.0f);
 				break;
 		}
 

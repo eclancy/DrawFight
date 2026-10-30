@@ -202,7 +202,7 @@ public partial class CharacterSelectScreen : Node2D
 		// Each portrait faces whichever way it likes, picked afresh every time the screen opens -
 		// a row all facing the same way looked like a lineup (Eric, 2026-10-04). Never all one way.
 		var facing = new int[cards.Length];
-		var rng = new System.Random();
+		var rng = GameRandom.New();
 		for (int i = 0; i < facing.Length; i++) facing[i] = rng.Next(2) == 0 ? -1 : 1;
 		if (System.Array.TrueForAll(facing, f => f == facing[0])) facing[rng.Next(facing.Length)] *= -1;
 
@@ -361,7 +361,8 @@ public partial class CharacterSelectScreen : Node2D
 			if (seat != null) Sit(first, seat);
 		}
 
-		var quitLabel = MenuTheme.MakeLabel("QUIT", QuitBox.Position, 40, MenuTheme.Text);
+		// Online, it goes back to what to play: quitting here would quit every computer's game.
+		var quitLabel = MenuTheme.MakeLabel(NetSession.Playing ? "BACK" : "QUIT", QuitBox.Position, 40, MenuTheme.Text);
 		quitLabel.Size = QuitBox.Size;
 		quitLabel.HorizontalAlignment = HorizontalAlignment.Center;
 		quitLabel.VerticalAlignment = VerticalAlignment.Center;
@@ -705,7 +706,8 @@ public partial class CharacterSelectScreen : Node2D
 	/// <summary>Someone playing on the keyboard types their name: letters, numbers, Backspace, Enter to keep it, Escape to leave it.</summary>
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (typingSlot == null || @event is not InputEventKey key || !key.Pressed) return;
+		// Online, a name is spelled on the keys on screen: what this keyboard types reaches no other copy.
+		if (typingSlot == null || @event is not InputEventKey key || !key.Pressed || NetSession.Playing) return;
 		GetViewport().SetInputAsHandled();
 		switch (key.Keycode)
 		{
@@ -861,7 +863,7 @@ public partial class CharacterSelectScreen : Node2D
 			if (!seat.Joined && CpuButton(i, 0).HasPoint(point))
 			{
 				seat.Joined = seat.IsCpu = true;
-				seat.Index = NextUnlocked((int)(GD.Randi() % (uint)FighterCatalog.Count));
+				seat.Index = NextUnlocked(GameRandom.New().Next(FighterCatalog.Count));
 				return true;
 			}
 
@@ -1053,6 +1055,12 @@ public partial class CharacterSelectScreen : Node2D
 
 			if (!cursor.Confirm) continue;
 
+			if (QuitBox.HasPoint(cursor.Position) && NetSession.Playing)
+			{
+				SfxPlayer.Ui("ui_back");
+				GameRoot.Instance.GoMainMenu();
+				return;
+			}
 			if (QuitBox.HasPoint(cursor.Position))
 			{
 				quitPrompt.Open = true;

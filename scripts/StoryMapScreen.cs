@@ -32,12 +32,9 @@ public partial class StoryMapScreen : Node2D
 
 	public override void _Ready()
 	{
-		// The first pad, and the keyboard - but with no pad plugged in, the first "pad" is the
-		// keyboard itself, and reading it twice moved two chapters a press.
-		IInputSource first = ControllerAssignment.ForPlayers(1)[0];
-		navs = first is KeyboardInputSource
-			? new[] { new MenuNav(first) }
-			: new[] { new MenuNav(first), new MenuNav(KeyboardInputSource.Player1()) };
+		// Every controller, each read once - reading the keyboard twice moved two chapters a press -
+		// and online, the session's own (NetSession).
+		navs = System.Array.ConvertAll(ControllerAssignment.Everyone(), source => new MenuNav(source));
 		if (Run != null) selected = Mathf.Clamp(Run.At, 0, LastOpen);
 	}
 

@@ -161,7 +161,7 @@ public partial class MatchManager : Node2D
 	public DoodleItems Doodles;
 
 	int itemTimer = -1;
-	readonly System.Random itemRng = new System.Random();
+	readonly System.Random itemRng = GameRandom.New();
 
 	/// <summary>
 	/// A random item that may appear; never a pencil case out of a pencil case. A rare one
@@ -999,6 +999,8 @@ public partial class MatchManager : Node2D
 	{
 		// Start is read from each fighter's own controller (see OnStartPressed), not from here.
 		if (@event is not InputEventKey key || !key.Pressed || key.Echo) return;
+		// Online, only the hitboxes: the rest change the fight on this one copy alone.
+		if (NetSession.Playing && key.PhysicalKeycode != Key.F1) return;
 
 		switch (key.PhysicalKeycode)
 		{

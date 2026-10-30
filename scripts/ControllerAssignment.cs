@@ -22,6 +22,9 @@ public static class ControllerAssignment
 	/// </summary>
 	public static List<string> Devices()
 	{
+		// Online, every controller on every computer in the session ("net:1:2"), the same list on
+		// every copy - so a seat sat in on one is sat in on all (NetSession).
+		if (NetSession.Playing) return NetSession.Instance.DeviceKeys();
 		var list = new List<string>();
 		foreach (int pad in Input.GetConnectedJoypads()) list.Add($"pad:{pad}");
 		list.Add("keys:1");
@@ -43,6 +46,11 @@ public static class ControllerAssignment
 	/// <summary>A controller by its name (Devices), or null for none.</summary>
 	public static IInputSource Open(string key)
 	{
+		if (key != null && key.StartsWith("net:"))
+		{
+			string[] parts = key.Split(':');
+			return parts.Length == 3 ? new NetInputSource(parts[1].ToInt(), parts[2].ToInt()) : null;
+		}
 		if (key == "keys:1") return KeyboardInputSource.Player1();
 		if (key != null && key.StartsWith("pad:")) return new GamepadInputSource(key.Substring(4).ToInt(), Layout);
 		return null;
@@ -50,10 +58,18 @@ public static class ControllerAssignment
 
 	/// <summary>Whether that controller is here: the keyboard always is; a pad while it is plugged in.</summary>
 	public static bool IsConnected(string key) =>
-		key != null && (key.StartsWith("keys:") || key.StartsWith("pad:") && Input.GetConnectedJoypads().Contains(key.Substring(4).ToInt()));
+		key != null && key.StartsWith("net:") ? NetSession.Playing && NetSession.Instance.DeviceKeys().Contains(key)
+		: key != null && (key.StartsWith("keys:") || key.StartsWith("pad:") && Input.GetConnectedJoypads().Contains(key.Substring(4).ToInt()));
 
 	public static IInputSource[] ForPlayers(int count)
 	{
+		if (NetSession.Playing)
+		{
+			List<string> keys = Devices();
+			var online = new IInputSource[count];
+			for (int i = 0; i < count && i < keys.Count; i++) online[i] = Open(keys[i]);
+			return online;
+		}
 		Godot.Collections.Array<int> pads = Input.GetConnectedJoypads();
 		var sources = new IInputSource[count];
 		int keyboardsUsed = 0;
@@ -80,6 +96,7 @@ public static class ControllerAssignment
 		{
 			GamepadInputSource pad => $"pad {pad.Device + 1}",
 			KeyboardInputSource => "keyboard",
+			NetInputSource => "online",
 			CpuInputSource => "CPU",
 			_ => "none",
 		};

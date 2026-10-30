@@ -55,6 +55,9 @@ public sealed class DoodleSet
 	/// <summary>A seat's item, started blank the first time it is asked for.</summary>
 	public Doodle For(int seat) => seats[seat] ??= new Doodle();
 
+	/// <summary>Every page blank again - online, every copy starts a session the same.</summary>
+	public void Clear() => System.Array.Clear(seats);
+
 	/// <summary>Hand every fighter one of the drawn items as the fight starts (--doodlehold): to look at them held and swung.</summary>
 	public bool TestHold;
 
@@ -314,7 +317,7 @@ public sealed class DoodleItems
 	public DoodleItems(List<ItemData> items)
 	{
 		this.items = items;
-		next = items.Count > 0 ? new System.Random().Next(items.Count) : 0;
+		next = items.Count > 0 ? GameRandom.New().Next(items.Count) : 0;
 	}
 
 	public int Count => items.Count;

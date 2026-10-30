@@ -108,7 +108,17 @@ public partial class DoodleScreen : Node2D
 		canvas = new Node2D { ZIndex = -1 };
 		AddChild(canvas);
 		canvas.Draw += DrawCanvas;
-		cursorLayer = MenuCursor.MakeOverlay(this, c => pointers?.Draw(c));
+		cursorLayer = MenuCursor.MakeOverlay(this, c =>
+		{
+			pointers?.Draw(c);
+			// Online, someone else's mouse: its pointer, so everyone can see where they draw.
+			if (OnlineMouse is NetInputSource net && !net.IsMine)
+			{
+				Vector2 at = NetSession.Instance.MouseOf(net.Machine).at;
+				c.DrawCircle(at, 9.0f, MenuTheme.PlayerTint(Seat));
+				c.DrawArc(at, 9.0f, 0.0f, Mathf.Tau, 20, MenuTheme.Text, 2.0f);
+			}
+		});
 		StartTurn();
 		if (OpenOnChoice) Done();
 	}
@@ -132,8 +142,11 @@ public partial class DoodleScreen : Node2D
 		IInputSource source = GameRoot.Instance.SourceForSeat(Seat);
 		padCursors.Clear();
 		padCursors.Add(new MenuCursor(source, Seat, MenuTheme.PlayerTint(Seat), View.GetCenter()));
-		// A pad player's pointer is up straight away; anyone on the keyboard draws with the mouse.
-		OnePointer.StartWith(source is GamepadInputSource);
+		// A pad player's pointer is up straight away; anyone on the keyboard draws with the mouse -
+		// online, the mouse of the computer whose keyboard it is (NetSession).
+		OnlineMouse = source is NetInputSource { Slot: 0 } ? source : null;
+		mouseWasDown = false;
+		OnePointer.StartWith(source is GamepadInputSource || source is NetInputSource { Slot: > 0 });
 		pointers = new OnePointer(padCursors);
 		padWasHeld = true;
 		if (!Doc.IsBlank) Toast("Your item from last time. Done keeps it.");
@@ -149,8 +162,31 @@ public partial class DoodleScreen : Node2D
 		cursorLayer.QueueRedraw();
 	}
 
+	/// <summary>Online, the drawing player's keyboard, whose computer's mouse draws - or null.</summary>
+	IInputSource OnlineMouse;
+	bool mouseWasDown;
+	Vector2 mouseWas;
+
+	/// <summary>
+	/// Online, the drawing player's mouse comes with their keyboard's frame, the same on every
+	/// copy, and draws exactly as this computer's own mouse would (_UnhandledInput).
+	/// </summary>
+	void FollowOnlineMouse()
+	{
+		if (OnlineMouse is not NetInputSource net || NetSession.Instance == null) return;
+		(Vector2 at, bool down) = NetSession.Instance.MouseOf(net.Machine);
+		if (at != mouseWas || down != mouseWasDown) pointers.MouseUsed();
+		if (at != mouseWas) MoveTo(at, 1.0f);
+		if (down && !mouseWasDown) Press(at, 1.0f);
+		else if (!down && mouseWasDown) Release(at);
+		pointer = at;
+		mouseWas = at;
+		mouseWasDown = down;
+	}
+
 	public override void _PhysicsProcess(double delta)
 	{
+		if (NetSession.Playing) FollowOnlineMouse();
 		bool wasPad = OnePointer.UsingPad;
 		Vector2 was = PadCursor?.Position ?? Vector2.Zero;
 		MenuCursor pad = pointers.Tick(GetViewportRect().Size, pointer);
@@ -178,6 +214,8 @@ public partial class DoodleScreen : Node2D
 
 	public override void _Input(InputEvent @event)
 	{
+		// Online, nothing this computer's keyboard or mouse does reaches the others directly.
+		if (NetSession.Playing) return;
 		// Escape here, before anything else sees it: elsewhere in the game it quits.
 		if (@event is InputEventKey key && key.Pressed && !key.Echo && key.Keycode == Key.Escape)
 		{
@@ -189,6 +227,7 @@ public partial class DoodleScreen : Node2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		if (NetSession.Playing) return;
 		if (@event is InputEventMouse && OnePointer.UsingPad)
 		{
 			if (painting && PadCursor != null) Release(PadCursor.Position);
