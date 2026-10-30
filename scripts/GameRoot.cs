@@ -841,6 +841,8 @@ public partial class GameRoot : Node2D
 			Rule = Mode is GameMode.Versus or GameMode.Doodle ? GameOptions.Rule : VersusRule.Stock,
 		};
 		if (Mode == GameMode.Doodle) Doodles.Arm(match);
+		// Everyone who sat down, against the giant - on his stage, with no teams or items.
+		if (Mode == GameMode.Boss) BossFight.Prepare(match);
 		Show(match);
 	}
 

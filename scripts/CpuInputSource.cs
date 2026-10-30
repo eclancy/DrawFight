@@ -264,8 +264,8 @@ public sealed class CpuInputSource : IInputSource
 
 		// Someone sitting in block right in front: grab them - that is what a grab is for. It has
 		// to face them, and the grab reaches an arm's length past the front of its body.
-		if (self.IsOnFloor() && target.IsBlocking && self.Facing == toward && Mathf.Abs(dy) < 80.0f
-			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + Fighter.GrabOut + Fighter.GrabCatchRadius * 0.6f
+		if (self.IsOnFloor() && target.IsBlocking && target.Grabbable && self.Facing == toward && Mathf.Abs(dy) < 80.0f
+			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + (Fighter.GrabOut + Fighter.GrabCatchRadius * 0.6f) * self.ReachScale
 			&& Randf() < AttackChance)
 		{
 			heldStick = Vector2.Zero;
@@ -275,8 +275,8 @@ public sealed class CpuInputSource : IInputSource
 		}
 
 		// Hard, next to someone who is not blocking: sometimes grab, for a throw.
-		if (GrabChance > 0.0f && self.IsOnFloor() && !target.IsLaunched && self.Facing == toward && Mathf.Abs(dy) < 80.0f
-			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + Fighter.GrabOut
+		if (GrabChance > 0.0f && self.IsOnFloor() && !target.IsLaunched && target.Grabbable && self.Facing == toward && Mathf.Abs(dy) < 80.0f
+			&& distance < self.BodyRect().Size.X * 0.5f + target.BodyRect().Size.X * 0.5f + Fighter.GrabOut * self.ReachScale
 			&& Randf() < GrabChance)
 		{
 			heldStick = Vector2.Zero;
@@ -418,11 +418,14 @@ public sealed class CpuInputSource : IInputSource
 		if (move == null) return;
 		if (move.HitboxRadius > 0.0f)
 		{
-			Vector2 centre = self.GlobalPosition + new Vector2(move.HitboxOffset.X * facing + slide, move.HitboxOffset.Y);
+			// A giant's hits reach as far as he is drawn, not as far as the move's own numbers.
+			float k = self.ReachScale;
+			Vector2 centre = self.GlobalPosition + new Vector2(move.HitboxOffset.X * facing * k + slide, move.HitboxOffset.Y * k);
 			Vector2 nearest = new Vector2(
 				Mathf.Clamp(centre.X, body.Position.X, body.End.X),
 				Mathf.Clamp(centre.Y, body.Position.Y, body.End.Y));
-			if (nearest.DistanceSquaredTo(centre) > move.HitboxRadius * move.HitboxRadius) return;
+			float radius = move.HitboxRadius * k;
+			if (nearest.DistanceSquaredTo(centre) > radius * radius) return;
 		}
 		else
 		{
@@ -442,6 +445,9 @@ public sealed class CpuInputSource : IInputSource
 	/// </summary>
 	bool ShotLands(MoveData move, int facing, Rect2 body)
 	{
+		// A giant's shots fly as he sends them: bigger, faster and further (Fighter.GrownShot).
+		float k = self.ReachScale;
+		move = self.GrownShot(move);
 		float feet = self.BodyRect().End.Y;
 		float ahead = (body.GetCenter().X - self.GlobalPosition.X) * facing;
 
@@ -457,7 +463,7 @@ public sealed class CpuInputSource : IInputSource
 		{
 			if (side < 0 && !move.Mirrored) break;
 			int dir = facing * side;
-			var start = self.GlobalPosition + new Vector2(move.HitboxOffset.X * dir, move.HitboxOffset.Y);
+			var start = self.GlobalPosition + new Vector2(move.HitboxOffset.X * dir, move.HitboxOffset.Y) * k;
 
 			if (move.FromGround)
 			{
@@ -538,7 +544,7 @@ public sealed class CpuInputSource : IInputSource
 			MoveData move = self.Data.Move(slot);
 			if (move != null && move.HitboxRadius > 0.0f) gap = Mathf.Max(gap, move.HitboxOffset.X);
 		}
-		return gap;
+		return gap * self.ReachScale;
 	}
 
 	static readonly MoveSlot[] GapMoves = { MoveSlot.Jab, MoveSlot.ForwardTilt };
@@ -766,8 +772,16 @@ public sealed class CpuInputSource : IInputSource
 		PhysicsDirectSpaceState2D space = self.GetWorld2D().DirectSpaceState;
 		Vector2 from = self.GlobalPosition;
 		Vector2 to = from + new Vector2(direction * (self.BodyRect().Size.X * 0.5f + 40.0f), 0.0f);
-		return space.IntersectRay(PhysicsRayQueryParameters2D.Create(from, to, 0b01)).Count > 0;
+		if (space.IntersectRay(PhysicsRayQueryParameters2D.Create(from, to, 0b01)).Count > 0) return true;
+		// At the knees as well: a block lower than a giant's middle - the playground's sandbox - is
+		// still a wall to him, and the ray from his middle passes over it.
+		float knee = self.BodyRect().End.Y - KneeHeight;
+		if (knee <= from.Y) return false;
+		return space.IntersectRay(PhysicsRayQueryParameters2D.Create(new Vector2(from.X, knee), new Vector2(to.X, knee), 0b01)).Count > 0;
 	}
+
+	/// <summary>How far up off the floor the second wall check looks.</summary>
+	const float KneeHeight = 40.0f;
 
 	/// <summary>Floor it wants behind it before it will back away - about a whole decision's walk.</summary>
 	const float BackOffClearance = 220.0f;

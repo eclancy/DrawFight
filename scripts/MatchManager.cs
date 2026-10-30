@@ -101,6 +101,13 @@ public partial class MatchManager : Node2D
 	/// <summary>Which player is a story's boss, whose last stock is a last stand; -1 for none.</summary>
 	public int BossPlayer = -1;
 
+	/// <summary>
+	/// A boss fight (BossFight.Prepare): BossPlayer is the giant, with a health bar, and everyone
+	/// else is against him. Its rules, built afresh with the match.
+	/// </summary>
+	public bool BossMode;
+	public BossFight Boss { get; private set; }
+
 	/// <summary>The stage, for a story scene to strip the drawings off (Stage.Bare).</summary>
 	public Stage Stage => stage;
 
@@ -313,7 +320,7 @@ public partial class MatchManager : Node2D
 			if (skin != null && skin.Becomes < 0) Fighters[i].SkinColour = skin.Colour;
 		}
 		AssignControllers();
-		if (Course == null) Achievements.Tick("vs_all_stages", StageIndex.ToString(), StageCatalog.Count);
+		if (Course == null && !BossMode) Achievements.Tick("vs_all_stages", StageIndex.ToString(), StageCatalog.Count);
 		bool named = false;
 		for (int i = 0; i < Fighters.Count; i++)
 		{
@@ -352,9 +359,17 @@ public partial class MatchManager : Node2D
 		AddChild(camera);
 		fx.Camera = camera;
 
+		if (BossMode)
+		{
+			Boss = new BossFight();
+			AddChild(Boss);
+			Boss.Setup(this);
+		}
+
 		hud = new MatchHud { Rule = Story == null ? Rule : VersusRule.Stock, Match = this, NoStocks = Training };
 		AddChild(hud);
-		hud.Build(Fighters, seats: Story == null && Course == null);
+		// The giant is last, and has his health bar instead of a column.
+		hud.Build(Boss?.Players ?? Fighters, seats: Story == null && Course == null);
 		int seconds = GameRoot.Instance != null && GameRoot.Instance.ClockSeconds > 0 ? GameRoot.Instance.ClockSeconds : GameOptions.Minutes * 60;
 		clockFrames = seconds * 60;
 		scores.Clear();
@@ -547,6 +562,8 @@ public partial class MatchManager : Node2D
 	public Hazard SpawnHazard(Fighter owner, MoveData move, Vector2 position, Vector2 velocity,
 		float damageScale = 1.0f)
 	{
+		// What a grown fighter sends out is grown with him - bigger, and as far again (Fighter.GrownHazard).
+		if (owner != null) move = owner.GrownHazard(move, ref velocity);
 		var hazard = new Hazard();
 		AddChild(hazard);
 		hazard.Launch(owner, move, this, position, velocity, move.SpecialGravity, move.SpecialLifetime);
@@ -814,7 +831,7 @@ public partial class MatchManager : Node2D
 				}
 			}
 			director?.OnFightOver(last);
-			if (director == null) VersusAchievements(last);
+			if (director == null && Boss == null) VersusAchievements(last);
 		}
 	}
 
@@ -886,7 +903,7 @@ public partial class MatchManager : Node2D
 
 		// Training shows the last hit in words of its own (TrainingMode).
 		status = ShowHitboxes && !Training ? $"last KB {lastKnockback:0}" : "";
-		hud.Refresh(Fighters, status);
+		hud.Refresh(Boss?.Players ?? Fighters, status);
 		UpdateBanner();
 	}
 
@@ -903,7 +920,8 @@ public partial class MatchManager : Node2D
 			{
 				hud.SetBannerHigh(true);
 				// One winner's name in his own letters; a team or a draw in the banner's.
-				if (!TeamBattle && victor != null) hud.SetWinner(victor.Data, "Press Start to pick fighters");
+				if (Boss != null) Boss.ShowResult(hud, victor);
+				else if (!TeamBattle && victor != null) hud.SetWinner(victor.Data, "Press Start to pick fighters");
 				else hud.SetBanner(winner, "Press Start to pick fighters");
 			}
 			return;

@@ -110,7 +110,8 @@ public partial class Fighter
 		&& moveFrame >= currentMove.StartupFrames - 2 && moveFrame <= currentMove.StartupFrames + currentMove.ActiveFrames;
 
 	/// <summary>Damage he deals, on top of a move's own: a giant hits harder.</summary>
-	float ItemPower => giantScale > 1.01f ? 1.0f + 0.3f * (giantScale - 1.0f) / (GiantScale - 1.0f) : 1.0f;
+	float ItemPower => IsBoss ? BossFight.Power
+		: giantScale > 1.01f ? 1.0f + 0.3f * (giantScale - 1.0f) / (GiantScale - 1.0f) : 1.0f;
 
 	/// <summary>Glue underfoot: slow on his feet, and his jumps barely leave the ground.</summary>
 	float Stuck => glueFrames > 0 ? 0.14f : 1.0f;
@@ -915,7 +916,7 @@ void fragment() {
 		healLeft = 0.0f;
 		healFrames = 0;
 		giantFrames = 0;
-		if (giantScale != 1.0f) SetGiantScale(1.0f);
+		if (giantScale != RestScale) SetGiantScale(RestScale);
 	}
 
 	// --- Each frame -----------------------------------------------------------------------------
@@ -967,18 +968,19 @@ void fragment() {
 		}
 		if (healFrames > 0) healFrames--;
 
-		// Growing and shrinking: the boost's first and last frames.
+		// Growing and shrinking: the boost's first and last frames - and a boss growing to his giant
+		// size (RestScale), at the same rate.
 		if (giantFrames > 0)
 		{
 			giantFrames--;
-			float target = giantFrames > GrowFrames ? GiantScale : 1.0f;
+			float target = giantFrames > GrowFrames ? GiantScale : RestScale;
 			float step = (GiantScale - 1.0f) / GrowFrames;
 			float next = Mathf.MoveToward(giantScale, target, step);
 			if (!Mathf.IsEqualApprox(next, giantScale)) SetGiantScale(next);
 		}
-		else if (giantScale != 1.0f)
+		else if (giantScale != RestScale)
 		{
-			SetGiantScale(Mathf.MoveToward(giantScale, 1.0f, (GiantScale - 1.0f) / GrowFrames));
+			SetGiantScale(Mathf.MoveToward(giantScale, RestScale, (GiantScale - 1.0f) / GrowFrames));
 		}
 
 		// A swing item worn right down, or used as many times as it can be, is gone.

@@ -47,7 +47,21 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	public Color SideTint => Match != null && Match.TeamBattle ? MenuTheme.TeamTint(Match.TeamOf(this)) : MenuTheme.PlayerTint(Seat);
 
-	public float Percent { get; private set; }
+	/// <summary>
+	/// His damage. A boss keeps none: whatever would go on it - a hit, a burn, his own overheating -
+	/// comes off his health bar instead (BossFight.Hurt), so one line covers every way he is hurt.
+	/// </summary>
+	public float Percent
+	{
+		get => percent;
+		private set
+		{
+			if (Boss == null) percent = value;
+			else if (value > percent) Boss.Hurt(value - percent);
+		}
+	}
+	float percent;
+
 	public int Stocks { get; set; }
 
 	/// <summary>Sudden death starts everyone left at 300% (MatchManager.SuddenDeath): one hit and gone.</summary>
@@ -1845,7 +1859,7 @@ public partial class Fighter : CharacterBody2D
 			airDashLinger = 8;
 			Velocity = airDashVelocity * 0.5f;
 		}
-		move = SizedNormal(move);
+		move = SizedNormal(GrownOwnMove(move));
 		currentMove = move;
 		chosenPose = move.PoseArts.Length > 0 ? move.PoseArts[poseRng.Next(move.PoseArts.Length)] : null;
 		currentSlot = slot;
@@ -1998,7 +2012,8 @@ public partial class Fighter : CharacterBody2D
 	{
 		if (hazardSpawned || Match == null) return;
 
-		Vector2 origin = GlobalPosition + new Vector2(move.HitboxOffset.X * Facing, move.HitboxOffset.Y);
+		// Where it comes out grows with him, as what comes out does (MatchManager.SpawnHazard).
+		Vector2 origin = GlobalPosition + new Vector2(move.HitboxOffset.X * Facing, move.HitboxOffset.Y) * giantScale;
 
 		switch (move.Special)
 		{
@@ -2039,7 +2054,7 @@ public partial class Fighter : CharacterBody2D
 					// One quake, from where the hammer hits the floor. It carries the charge, a
 					// little weaker than the slam itself, and the camera shakes with it.
 					hazardSpawned = true;
-					var impact = new Vector2(GlobalPosition.X + move.HitboxOffset.X * Facing,
+					var impact = new Vector2(GlobalPosition.X + move.HitboxOffset.X * giantScale * Facing,
 						GlobalPosition.Y + bodySize.Y * 0.5f);
 					float power = ChargeScale * move.ShockwavePower;
 					Hazard quake = Match.SpawnHazard(this, move, impact, new Vector2(move.SpecialSpeed, 0.0f), power);
@@ -2075,7 +2090,7 @@ public partial class Fighter : CharacterBody2D
 					// A kicked trap - a traffic cone - goes down on the floor and skids out along it,
 					// and counts as the same hit as the kick that sent it.
 					bool slides = move.SlideFriction > 0.0f;
-					if (slides) origin.Y = GlobalPosition.Y + bodySize.Y * 0.5f - move.FxArtSize * 0.5f;
+					if (slides) origin.Y = GlobalPosition.Y + bodySize.Y * 0.5f - move.FxArtSize * giantScale * 0.5f;
 					Hazard trap = Match.SpawnHazard(this, move, origin,
 						slides ? new Vector2(Facing * move.SpecialSpeed, 0.0f) : Vector2.Zero);
 					if (slides) trap.ShareHits(alreadyHitThisMove);
@@ -2096,7 +2111,7 @@ public partial class Fighter : CharacterBody2D
 				{
 					// Set down on the floor in front of him, already walking.
 					hazardSpawned = true;
-					var at = new Vector2(origin.X, GlobalPosition.Y + bodySize.Y * 0.5f - move.FxArtSize * 0.5f);
+					var at = new Vector2(origin.X, GlobalPosition.Y + bodySize.Y * 0.5f - move.FxArtSize * giantScale * 0.5f);
 					Track(move, Match.SpawnHazard(this, move, at, new Vector2(Facing * move.SpecialSpeed, 0.0f)));
 					break;
 				}
@@ -2128,7 +2143,7 @@ public partial class Fighter : CharacterBody2D
 			{
 				float a = Mathf.DegToRad(degrees);
 				var velocity = new Vector2(Mathf.Cos(a) * dir, -Mathf.Sin(a)) * move.SpecialSpeed;
-				var start = GlobalPosition + new Vector2(move.HitboxOffset.X * dir, move.HitboxOffset.Y);
+				var start = GlobalPosition + new Vector2(move.HitboxOffset.X * dir, move.HitboxOffset.Y) * giantScale;
 
 				Hazard shot = Match.SpawnHazard(this, move, start, velocity, ChargeScale);
 				shot.ShareHits(alreadyHitThisMove);
@@ -2782,6 +2797,9 @@ public partial class Fighter : CharacterBody2D
 		if (move.Special != SpecialKind.Vent) attacker?.AddHeat(damage * Heat.PerDamageDealt);
 		AddHeat(damage * Heat.PerDamageTaken);
 
+		// A boss fight's giant is never launched: a small hit clangs off, a big one staggers him.
+		if (IsBoss && BossTakesHit(attacker, attackerFacing, contactPoint, damage, blocked)) return;
+
 		// Hard hat on: a small hit bounces off. The damage still counts - only the flinch is gone.
 		if (!blocked && IsArmoredAgainst(damage))
 		{
@@ -2796,7 +2814,7 @@ public partial class Fighter : CharacterBody2D
 
 		if (blocked) knockback *= Mathf.Min(1.0f, Tuning.BlockKnockbackMultiplier * Data.BlockLeak);
 		// Drawn giant, he is heavier: knocked a good deal less far.
-		if (giantScale > 1.01f) knockback *= Mathf.Lerp(1.0f, 0.65f, (giantScale - 1.0f) / (GiantScale - 1.0f));
+		if (giantScale > 1.01f) knockback *= Mathf.Lerp(1.0f, 0.65f, Mathf.Min(1.0f, (giantScale - 1.0f) / (GiantScale - 1.0f)));
 		Vector2 launch = Knockback.LaunchVelocity(knockback, move.LaunchAngleDegrees, attackerFacing, lastStick);
 		if (!blocked && knockback >= DropItemKnockback) DropHeldItem(false, launch);
 
@@ -3100,7 +3118,7 @@ public partial class Fighter : CharacterBody2D
 		// What can be hit is what is drawn: the box reaches up to the top of the drawing, which
 		// stands taller than the body box (see Configure). A hit that visibly lands on someone's
 		// head should land. Eric's call, 2026-10-04.
-		float drawn = rig != null && rig.Loaded ? Data.BodySize.Y * (1.18f * Data.VisualScale - 1.0f) : 0.0f;
+		float drawn = rig != null && rig.Loaded ? Data.BodySize.Y * giantScale * (1.18f * Data.VisualScale - 1.0f) : 0.0f;
 		return new Rect2(GlobalPosition.X - bodySize.X * 0.5f, GlobalPosition.Y - bodySize.Y * 0.5f - drawn,
 			bodySize.X, bodySize.Y + drawn);
 	}
@@ -3161,7 +3179,7 @@ public partial class Fighter : CharacterBody2D
 			t = (0.5f + 0.5f * t) * (1.0f + (currentMove.ChargeSize - 1.0f) * charge) * 0.8f;
 		}
 		Vector2 at = BeamOrigin() - GlobalPosition;
-		float radius = currentMove.FxRadius * SizeLevels.ProjectileSize(sizeLevel) * (0.3f + 0.9f * t);
+		float radius = currentMove.FxRadius * giantScale * SizeLevels.ProjectileSize(sizeLevel) * (0.3f + 0.9f * t);
 		float pulse = 1.0f + 0.12f * Mathf.Sin(moveFrame * 1.3f);
 
 		Color glow = currentMove.FxColor;
@@ -3428,7 +3446,7 @@ public partial class Fighter : CharacterBody2D
 		flungFrom = (sits ?? GlobalPosition + new Vector2(0.0f, -bodySize.Y * 0.6f)) - GlobalPosition;
 		// Out ahead of his hand, level with where it sat on him - so when he leaps to it, it lands
 		// exactly back where it was, and a hit is at the height of his head.
-		Vector2 from = GlobalPosition + new Vector2(currentMove.HitboxOffset.X * Facing, flungFrom.Y);
+		Vector2 from = GlobalPosition + new Vector2(currentMove.HitboxOffset.X * giantScale * Facing, flungFrom.Y);
 		flung = Match.SpawnHazard(this, SizedFor(currentMove), from, new Vector2(Facing * currentMove.SpecialSpeed, 0.0f));
 		flung.ArtSize = rig?.ExtraGlobalSize(flungExtra) ?? 0.0f;
 		leaping = false;
@@ -3639,7 +3657,7 @@ public partial class Fighter : CharacterBody2D
 	{
 		foreach (Fighter other in Match.Fighters)
 		{
-			if (other == this || !other.CanBeHit || other.heldBy != null || Match.Allies(this, other)) continue;
+			if (other == this || !other.CanBeHit || other.heldBy != null || !other.Grabbable || Match.Allies(this, other)) continue;
 			// A bomb is not something you pick up.
 			if (other.CurrentMove != null && other.CurrentMove.Special == SpecialKind.Bomb) continue;
 
@@ -3675,7 +3693,7 @@ public partial class Fighter : CharacterBody2D
 
 		if (moveFrame <= activeStart)
 		{
-			if (grabbed == null) CatchAt(GrabTip());
+			if (grabbed == null) CatchAt(GrabTip(), 36.0f * giantScale);
 			return false;
 		}
 
@@ -3808,7 +3826,7 @@ public partial class Fighter : CharacterBody2D
 	/// had to be nearly touching), at about the middle of an ordinary fighter - so a giant's grab
 	/// still finds someone his chest is above.
 	/// </summary>
-	Vector2 GrabReach() => GlobalPosition + new Vector2(Facing * (bodySize.X * 0.5f + GrabOut),
+	Vector2 GrabReach() => GlobalPosition + new Vector2(Facing * (bodySize.X * 0.5f + GrabOut * giantScale),
 		bodySize.Y * 0.5f - Mathf.Min(bodySize.Y * 0.55f, 72.0f));
 
 	/// <summary>How far past the front of the body a grab's catch is, and how wide.</summary>
@@ -3831,7 +3849,7 @@ public partial class Fighter : CharacterBody2D
 		if (amount <= 0.0f) return;
 		// Held, the hands are on the near side of whoever it is.
 		Vector2 target = grabbed != null ? grabbed.GlobalPosition - new Vector2(Facing * grabbed.bodySize.X * 0.35f, 0.0f)
-			: GrabReach() + new Vector2(Facing * GrabCatchRadius * 0.5f, 0.0f);
+			: GrabReach() + new Vector2(Facing * GrabCatchRadius * giantScale * 0.5f, 0.0f);
 		rig.ReachArm(RigBone.ArmFrontUpper, RigBone.ArmFrontLower, target, amount);
 		rig.ReachArm(RigBone.ArmBackUpper, RigBone.ArmBackLower, target + new Vector2(-Facing * 12.0f, -14.0f), amount);
 	}
@@ -3849,7 +3867,7 @@ public partial class Fighter : CharacterBody2D
 		{
 			if (moveFrame > activeStart && moveFrame <= activeEnd)
 			{
-				CatchAt(GrabReach(), currentMove.HitboxRadius);
+				CatchAt(GrabReach(), currentMove.HitboxRadius * giantScale);
 				if (grabbed != null)
 				{
 					grabHoldFrames = GrabHoldFrames;
@@ -4602,7 +4620,8 @@ public partial class Fighter : CharacterBody2D
 	/// </summary>
 	void DrawPlayerTag(CanvasItem canvas)
 	{
-		if (Match == null || !Match.ShowPlayerTags || !Visible || IsWaitingToRespawn) return;
+		// The giant is named on his health bar instead.
+		if (Match == null || !Match.ShowPlayerTags || !Visible || IsWaitingToRespawn || IsBoss) return;
 		float zoom = Mathf.Max(0.25f, GetViewport()?.GetCamera2D()?.Zoom.X ?? 1.0f);
 		float k = 1.0f / zoom;
 		Color tint = SideTint;
@@ -5197,7 +5216,7 @@ public partial class Fighter : CharacterBody2D
 	void DrawActiveFx(CanvasItem canvas)
 	{
 		if (State != FighterState.Attacking || currentMove == null) return;
-		Vector2 hit = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y);
+		Vector2 hit = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y) * giantScale;
 
 		switch (currentMove.ActiveFx)
 		{
@@ -5205,13 +5224,13 @@ public partial class Fighter : CharacterBody2D
 				DrawSparks(canvas, hit);
 				break;
 			case ActiveFx.Electric when IsActiveFrame(3):
-				DrawElectric(canvas, hit, currentMove.HitboxRadius);
+				DrawElectric(canvas, hit, CurrentHitboxRadius);
 				break;
 			case ActiveFx.Flame when currentMove.Corkscrew && IsActiveFrame(2):
 				DrawFireShroud(canvas);
 				break;
 			case ActiveFx.Flame when IsActiveFrame(5):
-				DrawFlameBurst(canvas, CurrentHitboxCentre() - GlobalPosition, currentMove.HitboxRadius);
+				DrawFlameBurst(canvas, CurrentHitboxCentre() - GlobalPosition, CurrentHitboxRadius);
 				break;
 			// Lit as the spin starts, a little before the hit, and dying out just after it.
 			case ActiveFx.FireRing when moveFrame > currentMove.StartupFrames - 3 && IsActiveFrame(4):
@@ -5228,7 +5247,7 @@ public partial class Fighter : CharacterBody2D
 		if (HitsHot(currentMove) && IsActiveFrame(5)
 			&& currentMove.ActiveFx != ActiveFx.Flame && currentMove.ActiveFx != ActiveFx.FireRing && currentMove.ActiveFx != ActiveFx.Electric)
 		{
-			DrawFlameBurst(canvas, CurrentHitboxCentre() - GlobalPosition, currentMove.HitboxRadius * 0.8f);
+			DrawFlameBurst(canvas, CurrentHitboxCentre() - GlobalPosition, CurrentHitboxRadius * 0.8f);
 		}
 	}
 
@@ -5240,7 +5259,7 @@ public partial class Fighter : CharacterBody2D
 		for (int i = 0; i < Count; i++)
 		{
 			float angle = Mathf.Tau * i / Count + CrayonBrush.Noise(31, i) * 0.5f;
-			float reach = (22.0f + 46.0f * Mathf.Abs(CrayonBrush.Noise(37, i))) * (0.3f + t);
+			float reach = (22.0f + 46.0f * Mathf.Abs(CrayonBrush.Noise(37, i))) * (0.3f + t) * giantScale;
 			Vector2 dir = Vector2.Right.Rotated(angle);
 			Vector2 tip = at + dir * reach;
 			Vector2 tail = at + dir * reach * Mathf.Max(0.0f, t - 0.25f);
@@ -5571,7 +5590,7 @@ public partial class Fighter : CharacterBody2D
 		if (!IsActiveFrame()) return;
 		// From the drawing's own shoulder where it has one, so the arm comes out where it hangs.
 		Vector2 from = (rig?.JointGlobal(RigBone.ArmFrontUpper) ?? HookOrigin()) - GlobalPosition;
-		Vector2 to = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y);
+		Vector2 to = new Vector2(currentMove.HitboxOffset.X * Facing, currentMove.HitboxOffset.Y) * giantScale;
 		DrawStretchedArm(from, to, RigBone.ArmFrontLower);
 	}
 
