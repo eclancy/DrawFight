@@ -178,7 +178,8 @@ public partial class StoryDirector : Node
 		if (who == "player") return Match.Fighters.Count > 0 ? Match.Fighters[0] : null;
 		foreach (Fighter fighter in Match.Fighters)
 		{
-			if (StoryScript.IdOf(fighter.Data) == who) return fighter;
+			// An online partner is never in a scene, even one who is someone a scene names.
+			if (StoryScript.IdOf(fighter.Data) == who && !Match.IsPartner(fighter)) return fighter;
 		}
 		return null;
 	}

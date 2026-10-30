@@ -442,6 +442,18 @@ public partial class GameRoot : Node2D
 			GoMatch();
 			return;
 		}
+		// "--onlinetest=story:edgelord": every copy straight into that story's first chapter, the
+		// host's first controller its player and every other computer a partner.
+		string story = System.Array.Find(OS.GetCmdlineUserArgs(), a => a.StartsWith("--onlinetest=story:"));
+		if (story != null && !onlineTested)
+		{
+			onlineTested = true;
+			Story = StoryRun.For(story.Substring(19));
+			SeatDevices[0] = NetSession.Instance.DeviceKeys().Find(d => d.StartsWith("net:0:"));
+			StoryDirectStart = true;
+			GoStoryChapter();
+			return;
+		}
 		Show(new OnlineHomeScreen());
 	}
 
@@ -461,6 +473,7 @@ public partial class GameRoot : Node2D
 			}
 			if (arg == "--cpu") for (int i = 1; i < CpuPlayers.Length; i++) CpuPlayers[i] = true;
 			if (arg == "--teams") TeamBattle = true;
+			if (arg == "--mode=boss") Mode = GameMode.Boss;
 		}
 	}
 
