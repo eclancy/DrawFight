@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.16.1 | 2026-11-01
+Training no longer leaves its dummy behind as a CPU in your next versus fight.
+
 == 0.16.0 | 2026-10-30
 Play online: start a game, give your friends the code, and play versus, the boss fight, a doodle brawl or a story together - up to four computers. More modes on the main menu: Training, a giant DoomBot boss fight, Targets and Doodle brawl, where you draw the items you fight with. Versus can now be timed (most KOs wins) or on health, in Options. Everyone online needs this version.
 
