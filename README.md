@@ -108,7 +108,9 @@ attack, right click or `K` special, `Shift` or `L` block, `E` or middle click gr
 on the keyboard; everyone else needs a pad. Options > Controls lists all of it.
 
 After **Start**, the main menu: **Versus**, **Story**, **Online**, **More modes** or **Draw your
-own** (a fighter or a stage), with **Report a bug** up top for telling us what went wrong.
+own** (a fighter or a stage), with **Report a bug** up top for telling us what went wrong. A report can bring a screenshot of
+the last match, as it was when you paused or left it - shown first, and only sent if you leave
+"Include a screenshot" ticked. It is kept in memory, never saved.
 
 **More modes**: **Training** (a dummy to practise on - standing, walking, jumping, blocking or
 fighting back - with every hit, combo and knockback shown, and nothing earned), **Boss fight**

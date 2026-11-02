@@ -92,7 +92,7 @@ public static class FighterIntake
 	/// in words that can go straight on screen - the server's own message when it gave one.
 	/// </summary>
 	/// <param name="route">Where on the server: "/api/draw" for a fighter, "/api/draw/stage" for a
-	/// stage, "/api/draw/suggest" for a suggestion (no pictures).</param>
+	/// stage, "/api/draw/suggest" for a bug report (one screenshot at most, which the server keeps the first of).</param>
 	public static async Task<string> Send(IReadOnlyList<KeyValuePair<string, string>> fields,
 		IReadOnlyList<(string file, byte[] png)> pictures, string route = "/api/draw")
 	{
