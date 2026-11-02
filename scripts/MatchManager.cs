@@ -1141,10 +1141,26 @@ public partial class MatchManager : Node2D
 				("Pick fighters", () => Leave(GameRoot.Instance.GoCharacterSelect)),
 				("Main menu", () => Leave(GameRoot.Instance.GoMainMenu)));
 		}
+		// The frame on screen now is the last one of play, before the pause page covers it.
+		SnapshotForBugReport(true);
 		AddChild(pauseMenu);
 		GetTree().Paused = true;
 		SfxPlayer.Ui("pause");
 		MusicPlayer.SetPaused(true);
+	}
+
+	/// <summary>
+	/// Leaves the frame on screen behind for a bug report (BugSnapshot) - on pausing, and on being
+	/// left (GameRoot.Show). Left from the pause page, the picture taken on pausing stands, without
+	/// the page over it. The parade is a tool, not play, and leaves none.
+	/// </summary>
+	public void SnapshotForBugReport(bool pausing = false)
+	{
+		if (camera == null || (!pausing && pauseMenu != null)) return;
+		string what = Training ? "training" : targets != null ? "targets run" : Story != null ? "story fight"
+			: Boss != null ? "boss fight" : "match";
+		string when = pausing ? ", when you paused" : matchOver ? ", at the end" : "";
+		BugSnapshot.Take(GetViewport(), $"From your last {what}{when}");
 	}
 
 	void Resume()
