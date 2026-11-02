@@ -2,6 +2,9 @@
 # (ChangelogScreen). tools/release/release.sh adds a version here when it is released, from the
 # notes it is given. A version starts with "== VERSION | DATE"; each line under it is one change.
 
+== 0.16.3 | 2026-11-02
+Report a bug can now send a screenshot of your last match, so it's easier to see what went wrong.
+
 == 0.16.2 | 2026-11-02
 Starting or joining an online game now checks for a newer version first, so everyone plays on the same one.
 
