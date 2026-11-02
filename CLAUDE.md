@@ -202,7 +202,10 @@ retired it, 2026-10-25: the website and the game are enough.) Kid-facing pages s
   same match flags. They log every frame to `.shots/net_N.log`; the logs must match. See
   `.ai/online.md`. **This is how a change is checked for keeping copies in step.**
 - **`--match`, `--select`, `--stages`, `--parade`, `--menu`, `--options`, `--controls`, `--changelog`, `--suggest`, `--drawings`** each boot straight to
-  that screen, so a screen can be checked without clicking through the flow to reach it;
+  that screen, so a screen can be checked without clicking through the flow to reach it.
+  **`--match --bugsnap=400 --shot=560`** leaves a match for "Report a bug" at frame 400, so the
+  report has its screenshot to offer (`BugSnapshot`); add **`--bugsend`** (or **`--bugsend=noshot`**)
+  to send a test report by itself - it only does so with `DRAWFIGHT_INTAKE_URL` set, never to ecec.dev;
   **`--draw`** and **`--send`** open the newest saved drawing (or a new one) in the drawing or
   sending screen, and **`--newstage`** a new stage drawing. **`--fighters=2,0`**
   picks the matchup (player one, player two - up to four, `--fighters=2,0,1,3`) by catalog

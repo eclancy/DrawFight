@@ -260,6 +260,9 @@ public partial class GameRoot : Node2D
 			if (arg == "--icon") startAt = "icon";
 			if (arg == "--names") startAt = "names";
 			if (arg == "--suggest") startAt = "suggest";
+			// "--bugsnap=90": leave the match for the bug report at frame 90, so the report has a
+			// picture to offer (BugSnapshot) - with --match and a later --shot.
+			if (arg.StartsWith("--bugsnap=")) bugSnapAt = arg.Substring(10).ToInt();
 			if (arg == "--newstage") startAt = "newstage";
 			if (arg == "--drawings") startAt = "drawings";
 			if (arg == "--draw") startAt = "draw";
@@ -874,6 +877,8 @@ public partial class GameRoot : Node2D
 	{
 		if (currentScreen != null)
 		{
+			// A match leaves its last frame behind for a bug report (BugSnapshot).
+			if (currentScreen is MatchManager match) match.SnapshotForBugReport();
 			RemoveChild(currentScreen);
 			currentScreen.QueueFree();
 		}
@@ -898,6 +903,7 @@ public partial class GameRoot : Node2D
 
 	public int ScreenshotRequestFrames = -1;
 	int framesElapsed;
+	int bugSnapAt = -1;
 
 	/// <summary>Frames to screenshot along the way (--shots), each written as shot_FRAME.</summary>
 	readonly List<int> ShotFrames = new List<int>();
@@ -912,6 +918,11 @@ public partial class GameRoot : Node2D
 			&& Input.MouseMode != Input.MouseModeEnum.Hidden)
 		{
 			Input.MouseMode = Input.MouseModeEnum.Hidden;
+		}
+		if (bugSnapAt > 0 && framesElapsed >= bugSnapAt && currentScreen is MatchManager)
+		{
+			bugSnapAt = -1;
+			GoSuggest();
 		}
 		if (ShotFrames.Contains(framesElapsed)) CallDeferred(nameof(Capture), $"shot_{framesElapsed:00000}");
 		if (ScreenshotRequestFrames > 0 && framesElapsed >= ScreenshotRequestFrames)

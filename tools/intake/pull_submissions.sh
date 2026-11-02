@@ -38,7 +38,7 @@ done
 
 # Stages drawn in the game, and suggestions typed in it, into incoming/ (gitignored, like
 # fighters/incoming/): a stage is a photo of each page plus its sheet, a suggestion is a short
-# suggestion.md.
+# suggestion.md, with a screenshot.jpg when the player chose to send one.
 for kind in stages suggestions; do
 	mkdir -p "$HERE/incoming/$kind"
 	for id in $(ssh "${SSH_OPTS[@]}" "$HOST" "ls -1 $REMOTE/$kind 2>/dev/null"); do
