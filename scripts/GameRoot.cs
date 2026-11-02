@@ -810,7 +810,16 @@ public partial class GameRoot : Node2D
 			return;
 		}
 		bool training = Mode == GameMode.Training;
-		if (training) TrainingMode.SeatDummy(SelectedFighters, CpuPlayers);
+		// Training's own dummy sits in copies of the seats: in the real ones it stayed on into the
+		// next versus fight as a CPU nobody picked.
+		int[] selectedFighters = SelectedFighters;
+		bool[] cpuPlayers = CpuPlayers;
+		if (training)
+		{
+			selectedFighters = (int[])SelectedFighters.Clone();
+			cpuPlayers = (bool[])CpuPlayers.Clone();
+			TrainingMode.SeatDummy(selectedFighters, cpuPlayers);
+		}
 		// The seats somebody sat in, in seat order: P1 and P3 fighting are fighters 0 and 1, and
 		// keep seats 0 and 2 - their numbers, colours and controllers.
 		var fighters = new System.Collections.Generic.List<int>();
@@ -822,16 +831,16 @@ public partial class GameRoot : Node2D
 		var skins = new System.Collections.Generic.List<string>();
 		for (int seat = 0; seat < MaxPlayers; seat++)
 		{
-			if (SelectedFighters[seat] < 0) continue;
+			if (selectedFighters[seat] < 0) continue;
 			// A skin that is a fighter of its own - DoomBot in Mk. II's armour - is him, swapped in.
 			Skin skin = Skins.Find(SeatSkins[seat] ?? "");
-			fighters.Add(skin != null && skin.Becomes >= 0 ? skin.Becomes : SelectedFighters[seat]);
+			fighters.Add(skin != null && skin.Becomes >= 0 ? skin.Becomes : selectedFighters[seat]);
 			skins.Add(SeatSkins[seat] ?? "");
-			cpu.Add(CpuPlayers[seat]);
+			cpu.Add(cpuPlayers[seat]);
 			levels.Add(LevelFor(CpuDifficulty[seat]));
 			seats.Add(seat);
 			teams.Add(SeatTeams[seat]);
-			names.Add(CpuPlayers[seat] ? null : SeatNames[seat]);
+			names.Add(cpuPlayers[seat] ? null : SeatNames[seat]);
 		}
 		// A team fight needs two teams in it; everyone on one is everyone for themselves.
 		bool teamBattle = TeamBattle && !training && new System.Collections.Generic.HashSet<int>(teams).Count >= 2;

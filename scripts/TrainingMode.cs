@@ -89,8 +89,8 @@ public partial class TrainingMode : CanvasLayer
 
 	/// <summary>
 	/// Training always has someone to hit. With nobody on the computer, a dummy sits in the first
-	/// empty seat as the next fighter along from the first person's - in the seat, so going back
-	/// to fighter select shows it there to be changed.
+	/// empty seat as the next fighter along from the first person's. GoMatch hands it copies of the
+	/// seats, so the dummy is the fight's alone and never turns up afterwards as a CPU in versus.
 	/// </summary>
 	public static void SeatDummy(int[] fighters, bool[] cpu)
 	{

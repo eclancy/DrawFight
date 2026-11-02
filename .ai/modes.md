@@ -39,8 +39,8 @@ Smash's training mode is the model: you, a dummy to hit, and every hit shown. Fi
 says "Training: pick your fighter" and "Press Start to train!", has no Teams or Items buttons, and
 lets one person start on their own. A CPU seat picks the dummy's fighter; with none, a dummy sits
 in the first empty seat anyway, as the next unlocked fighter after the first person's
-(`TrainingMode.SeatDummy`, from `GameRoot.GoMatch`), and is still there to be changed on the way
-back to fighter select. Locked fighters stay unpickable. Then stage select as usual.
+(`TrainingMode.SeatDummy`, from `GameRoot.GoMatch`) - for that fight only, on copies of the
+seats. Once it was sat in the real seats, and stayed on as a CPU in the next versus fight. Locked fighters stay unpickable. Then stage select as usual.
 
 The match (`MatchManager.Training`) is straight in - no 3-2-1, the stage's music from the first
 frame - with items off and hitboxes on. A KO is the whole KO, blast, shake and all, but no life is
