@@ -56,6 +56,10 @@ public partial class UpdateScreen : Node2D
 	static bool Windows => OS.GetName() == "Windows";
 	static bool Linux => OS.GetName() == "Linux";
 
+	/// <summary>Where to go when there is nothing to install: the title, at startup; from Online,
+	/// on into the game being started or joined.</summary>
+	public System.Action Then;
+
 	enum Phase { Checking, Downloading, Installing, Restart, Done }
 
 	// Written by the worker thread, read by the main thread. Everything the screen needs is a
@@ -97,7 +101,8 @@ public partial class UpdateScreen : Node2D
 		switch (phase)
 		{
 			case Phase.Done:
-				GameRoot.Instance.GoTitle();
+				if (Then != null) Then();
+				else GameRoot.Instance.GoTitle();
 				return;
 
 			case Phase.Restart:
@@ -153,15 +158,49 @@ public partial class UpdateScreen : Node2D
 		}
 	}
 
+	/// <summary>
+	/// The newest version, when it is newer than this one; null when this is the newest or the
+	/// check failed. Online asks before every game it starts or joins (OnlineScreen): only the same
+	/// version can play together, and a copy left open since before a release would not know.
+	/// </summary>
+	public static async Task<string> NewerVersion()
+	{
+		try
+		{
+			using HttpClient http = CheckClient();
+			using JsonDocument doc = JsonDocument.Parse(await http.GetStringAsync(CheckUrl));
+			string latest = doc.RootElement.GetProperty("version").GetString() ?? "";
+			return IsNewer(latest, CurrentVersion) ? latest : null;
+		}
+		catch (Exception e)
+		{
+			GD.Print($"UpdateScreen: no check ({e.GetType().Name}: {e.Message})");
+			return null;
+		}
+	}
+
+	static HttpClient CheckClient()
+	{
+		var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+		http.DefaultRequestHeaders.UserAgent.ParseAdd($"DrawFight/{CurrentVersion}");
+		return http;
+	}
+
+	/// <summary>DRAWFIGHT_UPDATE_URL points a build at a test server instead - see .ai/releasing.md.</summary>
+	static string CheckUrl
+	{
+		get
+		{
+			string url = OS.GetEnvironment("DRAWFIGHT_UPDATE_URL");
+			return string.IsNullOrEmpty(url) ? VersionUrl : url;
+		}
+	}
+
 	/// <summary>True when a new version is unpacked and the restart script is written.</summary>
 	async Task<bool> Update()
 	{
-		using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-		http.DefaultRequestHeaders.UserAgent.ParseAdd($"DrawFight/{CurrentVersion}");
-
-		// DRAWFIGHT_UPDATE_URL points a build at a test server instead - see .ai/releasing.md.
-		string url = OS.GetEnvironment("DRAWFIGHT_UPDATE_URL");
-		if (string.IsNullOrEmpty(url)) url = VersionUrl;
+		using HttpClient http = CheckClient();
+		string url = CheckUrl;
 		using JsonDocument doc = JsonDocument.Parse(await http.GetStringAsync(url));
 		JsonElement release = doc.RootElement;
 		string latest = release.GetProperty("version").GetString() ?? "";

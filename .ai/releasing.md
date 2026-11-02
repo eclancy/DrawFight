@@ -108,6 +108,12 @@ Anything that goes wrong, including no internet, GitHub being down, or a folder 
 write to, just goes on to the title screen. **An update is never worth not being able to play.**
 The current version shows in the bottom-left corner of the title screen.
 
+**Online checks again.** Start a game and Join a game make the same check first
+(`UpdateScreen.NewerVersion`), and a newer version goes through the same update screen and restart.
+Only the same version can play together online, and a copy left open since before a release would
+not otherwise know (Eric's call, 2026-11-02). A check or update that fails carries on into the
+game, as at startup.
+
 Tested end to end on 2026-10-01: a 0.0.9 build updated itself to 0.1.0 from a local server, and
 its `.pck` and DLL came out byte-identical to the 0.1.0 export. With the server down, it went
 straight to the title.

@@ -15,8 +15,13 @@ public partial class OnlineScreen : Node2D
 	/// <summary>Why the last session ended, or null.</summary>
 	public string Message;
 
-	enum Step { Choose, Code, Lobby }
+	enum Step { Choose, Code, Checking, Lobby }
 	Step step = Step.Choose;
+
+	/// <summary>The check for a newer version under way, and the code it is joining once it is
+	/// done (null to start a game).</summary>
+	System.Threading.Tasks.Task<string> checking;
+	string checkingFor;
 
 	/// <summary>The code being typed.</summary>
 	string code = "";
@@ -63,6 +68,8 @@ public partial class OnlineScreen : Node2D
 		// The session has started: from here every copy plays it together, and this screen waits.
 		if (NetSession.Playing) { QueueRedraw(); return; }
 		if (step == Step.Lobby && !NetSession.Active) step = Step.Choose;
+		if (step == Step.Checking && checking.IsCompleted && !leaving) Checked();
+		if (leaving) return;
 
 		Vector2 viewport = GetViewportRect().Size;
 		touch.Tick();
@@ -102,9 +109,7 @@ public partial class OnlineScreen : Node2D
 				if (HostBox.HasPoint(at))
 				{
 					SfxPlayer.Ui("ui_select");
-					Message = null;
-					NetSession.Host();
-					step = Step.Lobby;
+					Begin(null);
 				}
 				else if (JoinBox.HasPoint(at))
 				{
@@ -141,13 +146,61 @@ public partial class OnlineScreen : Node2D
 		{
 			if (code.Length < CodeLength) { SfxPlayer.Ui("ui_back"); return; }
 			SfxPlayer.Ui("ui_select");
-			NetSession.Join(code);
-			step = Step.Lobby;
+			Begin(code);
 			return;
 		}
 		if (code.Length >= CodeLength) return;
 		code += key;
 		SfxPlayer.Ui("ui_move");
+	}
+
+	/// <summary>
+	/// Start or join a game - once this copy is sure it is the newest version, when it is one that
+	/// updates itself. Only the same version can play together, and a copy left open since before a
+	/// release would not know there is a new one. A check that fails goes on to the game anyway.
+	/// </summary>
+	public void Begin(string joinCode)
+	{
+		Message = null;
+		if (!UpdateScreen.ShouldCheck())
+		{
+			Connect(joinCode);
+			return;
+		}
+		checkingFor = joinCode;
+		checking = UpdateScreen.NewerVersion();
+		step = Step.Checking;
+	}
+
+	void Checked()
+	{
+		string newer = checking.Result;
+		string joinCode = checkingFor;
+		checking = null;
+		if (newer == null)
+		{
+			Connect(joinCode);
+			return;
+		}
+		// The update screen installs it and restarts the game. If it cannot - a folder it cannot
+		// write to - it comes back here and goes on, and the relay says if the versions differ.
+		leaving = true;
+		GameRoot.Instance.Show(new UpdateScreen
+		{
+			Then = () =>
+			{
+				var screen = new OnlineScreen();
+				GameRoot.Instance.Show(screen);
+				screen.Connect(joinCode);
+			},
+		});
+	}
+
+	void Connect(string joinCode)
+	{
+		if (joinCode == null) NetSession.Host();
+		else NetSession.Join(joinCode);
+		step = Step.Lobby;
 	}
 
 	void Back()
@@ -156,6 +209,8 @@ public partial class OnlineScreen : Node2D
 		switch (step)
 		{
 			case Step.Code:
+			case Step.Checking:
+				checking = null;
 				step = Step.Choose;
 				break;
 			case Step.Lobby:
@@ -215,6 +270,10 @@ public partial class OnlineScreen : Node2D
 					keys.Add(new MenuTheme.ButtonSpec(box, KeyText(i), 920 + i, Pointed(box), KeyText(i) == "JOIN" && code.Length == CodeLength, i < Letters.Length ? 44 : 30, null));
 				}
 				MenuTheme.DrawButtons(this, keys);
+				break;
+
+			case Step.Checking:
+				MenuTheme.DrawCentredText(this, new Rect2(0.0f, 480.0f, 1920.0f, 100.0f), "Checking for updates" + new string('.', frame / 20 % 4), 56, MenuTheme.Soft);
 				break;
 
 			case Step.Lobby:

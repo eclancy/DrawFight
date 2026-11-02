@@ -338,10 +338,12 @@ public partial class GameRoot : Node2D
 			case "newstage": OpenDrawing(Drawing.New(stage: true)); break;
 			case "menu": GoMainMenu(); break;
 			case "modes": GoModes(null); break;
+			// The same way in as pressing Start a game or Join a game, update check and all.
 			case "online":
-				if (onlineAs == "host") NetSession.Host();
-				else if (onlineAs.StartsWith("join:")) NetSession.Join(onlineAs.Substring(5));
-				GoOnline();
+				var online = new OnlineScreen();
+				Show(online);
+				if (onlineAs == "host") online.Begin(null);
+				else if (onlineAs.StartsWith("join:")) online.Begin(onlineAs.Substring(5));
 				break;
 			case "doodle": GoDoodle(); break;
 			case "doodle=choice": Show(new DoodleScreen { OpenOnChoice = true }); break;

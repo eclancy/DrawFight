@@ -54,7 +54,9 @@ disagree the session ends, saying so, rather than playing on apart.
 - **Online** on the main menu (`OnlineScreen`): **Start a game** gets a five-letter code from the
   relay; **Join a game** types one in (on the letter keys, or a keyboard). The lobby shows the code
   and how many computers are in; the host presses **Start** once there are two or more. Each
-  computer's own screen - the session is not in lockstep yet.
+  computer's own screen - the session is not in lockstep yet. Both buttons first check for a newer
+  version and, if there is one, update and restart (`.ai/releasing.md`), so a copy left open since
+  before a release does not end up on the wrong version.
 - **Playing online** (`OnlineHomeScreen`), on every copy once it starts: Versus, Boss fight,
   Doodle brawl or Story, picked by anyone. **Leave** ends it for everyone; B does nothing, so
   nobody ends it by accident. Everywhere that would go to the main menu goes here instead.
